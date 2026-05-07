@@ -1,0 +1,23 @@
+{
+  "name": "diwan-event-server",
+  "version": "1.0.0",
+  "description": "Integration & IoT Gateway for Diwan Event Enterprise",
+  "main": "_core/index.js",
+  "type": "commonjs",
+  "scripts": {
+    "dev": "ts-node _core/index.ts",
+    "hardware": "ts-node hardware/hardwareGateway.ts",
+    "build": "tsc"
+  },
+  "dependencies": {
+    "ws": "^8.18.0",
+    "node-fetch": "^2.7.0",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5",
+    "ts-node": "^10.9.2",
+    "@types/ws": "^8.5.10",
+    "@types/node": "^20.12.7"
+  }
+}

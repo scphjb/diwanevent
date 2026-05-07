@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بوابة المشارك | {{ settings.event_name }}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: {{ settings.primary_color or '#D4AF37' }};
+            --secondary: {{ settings.secondary_color or '#022C22' }};
+            --bg: #011612;
+            --glass: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text: #ffffff;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Cairo', sans-serif; }
+        body { background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+
+        .container { max-width: 500px; margin: 0 auto; padding: 1.5rem; }
+
+        /* Login Screen */
+        #login-screen {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 90vh; text-align: center;
+        }
+        .logo { width: 120px; margin-bottom: 2rem; filter: drop-shadow(0 0 10px var(--primary)); }
+        .login-card {
+            background: var(--glass); backdrop-filter: blur(15px); border: 1px solid var(--glass-border);
+            padding: 2.5rem; border-radius: 2rem; width: 100%;
+        }
+        .login-card h2 { margin-bottom: 1rem; color: var(--primary); }
+        .login-card p { margin-bottom: 2rem; opacity: 0.7; font-size: 0.9rem; }
+        
+        .input-group { position: relative; margin-bottom: 1.5rem; }
+        .input-group input {
+            width: 100%; padding: 1rem 3rem 1rem 1rem; border-radius: 1rem;
+            background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border);
+            color: white; font-size: 1.1rem; text-align: center;
+        }
+        .input-group i { position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); color: var(--primary); }
+
+        .btn-main {
+            width: 100%; padding: 1rem; border-radius: 1rem; border: none;
+            background: linear-gradient(135deg, var(--primary), #b08d2b);
+            color: var(--secondary); font-weight: bold; font-size: 1.1rem; cursor: pointer;
+            transition: 0.3s;
+        }
+        .btn-main:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(212, 175, 55, 0.3); }
+
+        /* Portal Content */
+        #portal-content { display: none; }
+        
+        .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; }
+        .user-welcome h3 { color: var(--primary); }
+        .user-welcome p { opacity: 0.6; font-size: 0.8rem; }
+        .logout-btn { background: var(--glass); border: none; color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer; }
+
+        /* Tabs */
+        .tabs-nav {
+            display: flex; background: var(--glass); border-radius: 1rem; padding: 0.4rem;
+            margin-bottom: 1.5rem; gap: 0.5rem;
+        }
+        .tab-btn {
+            flex: 1; padding: 0.8rem 0.2rem; border-radius: 0.8rem; border: none;
+            background: transparent; color: white; cursor: pointer; transition: 0.3s;
+            display: flex; flex-direction: column; align-items: center; font-size: 0.75rem; gap: 0.4rem;
+        }
+        .tab-btn i { font-size: 1.2rem; }
+        .tab-btn.active { background: var(--primary); color: var(--secondary); }
+
+        .tab-pane { display: none; animation: fadeIn 0.4s ease; }
+        .tab-pane.active { display: block; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Card Styles */
+        .glass-card {
+            background: var(--glass); backdrop-filter: blur(10px); border: 1px solid var(--glass-border);
+            border-radius: 1.5rem; padding: 1.5rem; margin-bottom: 1.5rem;
+        }
+        
+        /* Badge Tab */
+        .badge-preview { text-align: center; }
+        .qr-container { background: white; padding: 1rem; border-radius: 1rem; display: inline-block; margin: 1rem 0; }
+        .qr-container img { width: 180px; height: 180px; }
+        .status-badge { display: inline-block; padding: 0.4rem 1rem; border-radius: 2rem; font-size: 0.85rem; margin-top: 0.5rem; }
+        .status-present { background: #10b98122; color: #10b981; border: 1px solid #10b98144; }
+        .status-absent { background: #f59e0b22; color: #f59e0b; border: 1px solid #f59e0b44; }
+
+        .action-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.5rem; }
+        .btn-action {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 1rem; border-radius: 1rem; border: 1px solid var(--glass-border);
+            background: rgba(255,255,255,0.03); color: white; text-decoration: none; font-size: 0.85rem; gap: 0.5rem;
+            transition: 0.3s;
+        }
+        .btn-action:hover { background: rgba(255,255,255,0.08); }
+
+        /* Networking Styles */
+        .networking-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--glass-border);
+            border-radius: 1rem;
+            padding: 1rem;
+            margin-bottom: 0.8rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .net-info h5 { color: var(--primary); margin-bottom: 0.2rem; }
+        .net-info p { font-size: 0.75rem; opacity: 0.6; }
+        .btn-connect {
+            background: var(--primary);
+            color: var(--secondary);
+            border: none;
+            padding: 0.4rem 0.8rem;
+            border-radius: 0.5rem;
+            font-size: 0.8rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .btn-connect.pending { background: var(--glass); color: white; opacity: 0.5; }
+        .btn-connect.accepted { background: #10b981; color: white; }
+        
+        .opt-in-banner {
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), transparent);
+            border: 1px solid var(--primary);
+            padding: 1rem;
+            border-radius: 1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 20px;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 20px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider { background-color: var(--primary); }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        .net-section-title { font-size: 0.9rem; font-weight: bold; margin: 1.5rem 0 0.8rem; border-right: 3px solid var(--primary); padding-right: 0.5rem; }
+    
+        .btn-action i { font-size: 1.5rem; color: var(--primary); }
+
+        /* Agenda Tab */
+        .agenda-item {
+            display: flex; gap: 1rem; border-right: 3px solid var(--glass-border);
+            padding-right: 1rem; margin-bottom: 1.5rem; position: relative;
+        }
+        .agenda-item.now { border-right-color: var(--primary); }
+        .agenda-item.now::before {
+            content: "الان"; position: absolute; top: 0; right: -40px;
+            background: var(--primary); color: var(--secondary); font-size: 0.7rem;
+            padding: 2px 6px; border-radius: 4px; font-weight: bold;
+        }
+        .agenda-time { font-size: 0.8rem; opacity: 0.6; min-width: 60px; }
+        .agenda-info h4 { font-size: 1rem; margin-bottom: 0.2rem; }
+        .agenda-info p { font-size: 0.8rem; opacity: 0.7; }
+        .speaker-small { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; }
+        .speaker-small img { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; }
+        .speaker-small span { font-size: 0.75rem; color: var(--primary); }
+
+        /* Info Tab */
+        .info-row { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+        .info-row i { color: var(--primary); width: 20px; }
+        .info-row div span { display: block; font-size: 0.7rem; opacity: 0.6; }
+
+        /* Interaction Tab */
+        .q-input {
+            width: 100%; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border);
+            border-radius: 1rem; padding: 1rem; color: white; margin-bottom: 1rem; min-height: 100px;
+        }
+
+        /* Loading */
+        .loader {
+            border: 3px solid rgba(255,255,255,0.1); border-top: 3px solid var(--primary);
+            border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite;
+            display: none; margin: 0 auto;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .toast {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: #ef4444; color: white; padding: 0.8rem 2rem; border-radius: 2rem;
+            font-size: 0.9rem; display: none; z-index: 1000; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Login Screen -->
+        <div id="login-screen">
+            <img src="{{ settings.logo_url or '/static/img/logo.png' }}" class="logo" alt="Logo">
+            <div class="login-card">
+                <h2 data-i18n="أهلاً بك">أهلاً بك</h2>
+                <p data-i18n="يرجى إدخال كود البادج أو رقم الهاتف للدخول لبوابتك الشخصية">يرجى إدخال كود البادج أو رقم الهاتف للدخول لبوابتك الشخصية</p>
+                
+                <div class="input-group">
+                    <i class="fas fa-id-card"></i>
+                    <input type="text" id="login-identifier" placeholder="مثال: 12345 أو 0661..." onkeypress="if(event.key==='Enter') login()">
+                </div>
+                
+                <button class="btn-main" id="login-btn" onclick="login()">
+                    <span data-i18n="دخول">دخول</span>
+                    <div class="loader" id="login-loader"></div>
+                </button>
+            </div>
+        </div>
+
+        <!-- Portal Content -->
+        <div id="portal-content">
+            <div class="header">
+                <div class="user-welcome">
+                    <p>مرحباً بك،</p>
+                    <h3 id="user-name">---</h3>
+                </div>
+                <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
+
+            <nav class="tabs-nav">
+                <button class="tab-btn active" onclick="switchTab('tab-card', this)">
+                    <i class="fas fa-id-badge"></i> <span data-i18n="بطاقتي">بطاقتي</span>
+                </button>
+                <button class="tab-btn" onclick="switchTab('tab-agenda', this)">
+                    <i class="fas fa-calendar-alt"></i> <span data-i18n="البرنامج">البرنامج</span>
+                </button>
+                <button class="tab-btn" onclick="switchTab('tab-info', this)">
+                    <i class="fas fa-info-circle"></i> <span data-i18n="معلومات">معلومات</span>
+                </button>
+                <button class="tab-btn" onclick="switchTab('tab-qa', this)">
+                    <i class="fas fa-comment-dots"></i> <span data-i18n="تفاعل">تفاعل</span>
+                </button>
+                <button class="tab-btn" onclick="switchTab('tab-networking', this)">
+                    <i class="fas fa-users"></i> <span data-i18n="تشبيك">تشبيك</span>
+                </button>
+                <a href="/wall" class="tab-btn" style="text-decoration: none; color: inherit;">
+                    <i class="fas fa-photo-video"></i> <span data-i18n="الجدار">الجدار</span>
+                </a>
+            </nav>
+
+            <!-- Tab: Card -->
+            <div id="tab-card" class="tab-pane active">
+                <div class="glass-card badge-preview">
+                    <div id="presence-badge" class="status-badge status-absent">⏳ لم يسجل الحضور بعد</div>
+                    <div class="qr-container">
+                        <img id="user-qr" src="" alt="QR Code">
+                    </div>
+                    <h2 id="user-role-display" style="color: var(--primary); margin-bottom: 0.5rem;">---</h2>
+                    <p id="user-seat" style="opacity: 0.8;"></p>
+                    
+                    <div class="action-buttons">
+                        <a id="btn-download-badge" href="#" class="btn-action">
+                            <i class="fas fa-file-pdf"></i>
+                            <span data-i18n="تحميل البادج">تحميل البادج</span>
+                        </a>
+                        <a id="btn-download-cert" href="#" class="btn-action" style="opacity: 0.5; pointer-events: none;">
+                            <i class="fas fa-certificate"></i>
+                            <span data-i18n="الشهادة">الشهادة</span>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="glass-card">
+                    <div class="info-row">
+                        <i class="fas fa-university"></i>
+                        <div>
+                            <span id="label-council" data-i18n="الجهة">الجهة</span>
+                            <strong id="user-council">---</strong>
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <i class="fas fa-gavel"></i>
+                        <div>
+                            <span id="label-court" data-i18n="القسم">القسم</span>
+                            <strong id="user-court">---</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Agenda -->
+            <div id="tab-agenda" class="tab-pane">
+                <div class="glass-card" id="agenda-list">
+                    <!-- Loaded via API -->
+                    <div class="loader" style="display: block; margin: 2rem auto;"></div>
+                </div>
+            </div>
+
+            <!-- Tab: Info -->
+            <div id="tab-info" class="tab-pane">
+                <div class="glass-card">
+                    <h4 style="color: var(--primary); margin-bottom: 1rem;">تفاصيل الفعالية</h4>
+                    <div class="info-row">
+                        <i class="fas fa-calendar"></i>
+                        <div><span data-i18n="التاريخ">التاريخ</span><strong>{{ settings.event_date }}</strong></div>
+                    </div>
+                    <div class="info-row">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <div><span data-i18n="المكان">المكان</span><strong>{{ settings.location }}</strong></div>
+                    </div>
+                </div>
+
+                <div class="glass-card" id="hotels-list">
+                    <h4 style="color: var(--primary); margin-bottom: 1rem;" data-i18n="الفنادق المتاحة">الفنادق المتاحة</h4>
+                    <!-- Loaded via API if possible or static -->
+                    {% if settings.show_docs %}
+                    <p style="font-size: 0.8rem; opacity: 0.7;" data-i18n="يرجى مراجعة بوابة المعلومات للحصول على قائمة الفنادق.">يرجى مراجعة بوابة المعلومات للحصول على قائمة الفنادق.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Tab: Q&A -->
+            <div id="tab-qa" class="tab-pane">
+                <div class="glass-card">
+                    <h4 style="color: var(--primary); margin-bottom: 1rem;" data-i18n="اطرح سؤالاً">اطرح سؤالاً</h4>
+                    <textarea id="question-text" class="q-input" data-i18n-placeholder="اكتب سؤالك هنا للمتحدثين..." placeholder="اكتب سؤالك هنا للمتحدثين..."></textarea>
+                    <button class="btn-main" onclick="submitQuestion()" data-i18n="إرسال السؤال">إرسال السؤال</button>
+                </div>
+                
+                <div id="pinned-questions">
+                    <!-- Pinned questions appear here -->
+                </div>
+            </div>
+
+            <!-- Tab: Networking -->
+            <div id="tab-networking" class="tab-pane">
+                <div class="opt-in-banner">
+                    <div>
+                        <h4 data-i18n="الظهور في الدليل">الظهور في الدليل</h4>
+                        <p style="font-size: 0.7rem; opacity: 0.7;" data-i18n="اسمح للمشاركين الآخرين برؤية ملفك المهني والتواصل معك">اسمح للمشاركين الآخرين برؤية ملفك المهني والتواصل معك</p>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="net-opt-in-toggle" onchange="toggleNetworking(this.checked)">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div id="net-directory-section" style="display:none;">
+                    <div class="glass-card" style="padding: 1rem;">
+                        <div class="input-group" style="margin-bottom: 0;">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="net-search" data-i18n-placeholder="ابحث بالاسم أو الجهة..." placeholder="ابحث بالاسم أو الجهة..." oninput="searchDirectory(this.value)">
+                        </div>
+                    </div>
+
+                    <div class="net-section-title" data-i18n="طلبات التواصل الواردة">طلبات التواصل الواردة</div>
+                    <div id="net-requests-list">
+                        <!-- Pending requests -->
+                    </div>
+
+                    <div class="net-section-title" data-i18n="اكتشف زملاء جدد">اكتشف زملاء جدد</div>
+                    <div id="net-directory-list">
+                        <!-- Directory results -->
+                    </div>
+
+                    <div class="net-section-title" data-i18n="جهات اتصالي">جهات اتصالي</div>
+                    <div id="net-connections-list">
+                        <!-- Accepted connections -->
+                    </div>
+                </div>
+                
+                <div id="net-off-message" class="glass-card" style="text-align:center; padding: 3rem 1rem; opacity: 0.5;">
+                    <i class="fas fa-user-slash" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                    <p data-i18n="يجب تفعيل ميزة الظهور أولاً للبدء في التشبيك">يجب تفعيل ميزة الظهور أولاً للبدء في التشبيك</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script src="/static/js/app_i18n.js"></script>
+    <script>
+        let currentParticipant = null;
+
+        function esc(str) {
+            if (!str) return "";
+            const div = document.createElement("div");
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        // Auto-detect language
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedLang = localStorage.getItem('diwan_admin_lang') || 'ar';
+            if(savedLang !== 'ar' && typeof translateDOM === 'function') {
+                setTimeout(() => translateDOM(savedLang), 100);
+            }
+        });
+
+        async function login() {
+            const id = document.getElementById('login-identifier').value.trim();
+            const lang = localStorage.getItem('diwan_admin_lang') || 'ar';
+            const dict = adminTranslations[lang] || {};
+
+            if(!id) return showToast(dict['يرجى إدخال الكود أو رقم الهاتف'] || 'يرجى إدخال الكود أو رقم الهاتف');
+
+            const btn = document.getElementById('login-btn');
+            const loader = document.getElementById('login-loader');
+            btn.querySelector('span').style.display = 'none';
+            loader.style.display = 'block';
+
+            try {
+                console.log("Attempting login with identifier:", id);
+                const res = await fetch('/api/portal/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({identifier: id})
+                });
+                
+                if (!res.ok) {
+                    console.error("Login failed with status:", res.status);
+                    const errorData = await res.json().catch(() => ({}));
+                    showToast(dict[errorData.message] || errorData.message || dict['الكود غير صحيح'] || 'الكود غير صحيح');
+                    return;
+                }
+
+                const data = await res.json();
+                if(data.status === 'success') {
+                    currentParticipant = data.participant;
+                    renderPortal();
+                    localStorage.setItem('diwan_portal_id', id);
+                } else {
+                    showToast(dict['الكود غير صحيح'] || 'الكود غير صحيح');
+                }
+            } catch(e) {
+                console.error("Login fetch error:", e);
+                showToast(dict['خطأ في الاتصال بالخادم'] || 'خطأ في الاتصال بالخادم');
+            } finally {
+                btn.querySelector('span').style.display = 'inline';
+                loader.style.display = 'none';
+            }
+        }
+
+        function renderPortal() {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('portal-content').style.display = 'block';
+
+            document.getElementById('user-name').textContent = currentParticipant.full_name;
+            document.getElementById('user-role-display').textContent = currentParticipant.role || 'مشارك';
+            document.getElementById('user-council').textContent = currentParticipant.council;
+            document.getElementById('user-court').textContent = currentParticipant.court;
+            document.getElementById('user-qr').src = `/api/qr/${encodeURIComponent(currentParticipant.order_num)}`;
+            document.getElementById('user-seat').textContent = currentParticipant.seat_info ? `المقعد: ${currentParticipant.seat_info}` : '';
+            
+            const presence = document.getElementById('presence-badge');
+            const certBtn = document.getElementById('btn-download-cert');
+            if(currentParticipant.is_present) {
+                presence.className = 'status-badge status-present';
+                presence.innerHTML = '✅ مسجل الحضور';
+                certBtn.style.opacity = '1';
+                certBtn.style.pointerEvents = 'auto';
+                certBtn.href = `/api/participant/certificate/${encodeURIComponent(currentParticipant.order_num)}`;
+            }
+
+            document.getElementById('btn-download-badge').href = `/api/participant/badge/${encodeURIComponent(currentParticipant.order_num)}`;
+            
+            loadAgenda();
+            initNetworking();
+        }
+
+        // --- Networking Logic ---
+        async function initNetworking() {
+            try {
+                const res = await fetch(`/api/networking/opt-in-status/${currentParticipant.qr_code}`);
+                const data = await res.json();
+                const isVisible = data.is_visible;
+                document.getElementById('net-opt-in-toggle').checked = isVisible;
+                updateNetUI(isVisible);
+                if(isVisible) {
+                    loadDirectory();
+                    loadMyConnections();
+                }
+            } catch(e) { console.error(e); }
+        }
+
+        function updateNetUI(isVisible) {
+            document.getElementById('net-directory-section').style.display = isVisible ? 'block' : 'none';
+            document.getElementById('net-off-message').style.display = isVisible ? 'none' : 'block';
+        }
+
+        async function toggleNetworking(isVisible) {
+            updateNetUI(isVisible);
+            await fetch('/api/networking/opt-in', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({qr_code: currentParticipant.qr_code, is_visible: isVisible})
+            });
+            if(isVisible) {
+                loadDirectory();
+                loadMyConnections();
+            }
+        }
+
+        let searchTimeout = null;
+        function searchDirectory(q) {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => loadDirectory(q), 500);
+        }
+
+        async function loadDirectory(q = "") {
+            const list = document.getElementById('net-directory-list');
+            const res = await fetch(`/api/networking/directory?q=${encodeURIComponent(q)}&exclude_qr=${currentParticipant.qr_code}`);
+            const data = await res.json();
+            
+            list.innerHTML = '';
+            if(data.results.length === 0) {
+                list.innerHTML = '<p style="text-align:center; opacity:0.5; padding:1rem;">لا توجد نتائج مطابقة</p>';
+                return;
+            }
+
+            data.results.forEach(r => {
+                const card = document.createElement('div');
+                card.className = 'networking-card';
+                let btnHtml = '';
+                
+                if(r.connection_status === 'accepted') {
+                    btnHtml = `<button class="btn-connect accepted"><i class="fas fa-check"></i></button>`;
+                } else if(r.connection_status === 'pending') {
+                    btnHtml = `<button class="btn-connect pending" disabled><i class="fas fa-clock"></i></button>`;
+                } else {
+                    btnHtml = `<button class="btn-connect" onclick="sendConnect('${r.qr_code}', this)"><i class="fas fa-user-plus"></i></button>`;
+                }
+
+                card.innerHTML = `
+                    <div class="net-info">
+                        <h5>${esc(r.full_name)}</h5>
+                        <p>${esc(r.council)} | ${esc(r.court)}</p>
+                    </div>
+                    ${btnHtml}
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        async function sendConnect(targetQr, btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            const res = await fetch('/api/networking/connect', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({requester_qr: currentParticipant.qr_code, requested_qr: targetQr})
+            });
+            const data = await res.json();
+            if(data.status === 'success') {
+                btn.className = 'btn-connect pending';
+                btn.innerHTML = '<i class="fas fa-clock"></i>';
+                showToast('تم إرسال طلب التواصل');
+            } else {
+                showToast('خطأ في إرسال الطلب');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-user-plus"></i>';
+            }
+        }
+
+        async function loadMyConnections() {
+            const reqList = document.getElementById('net-requests-list');
+            const conList = document.getElementById('net-connections-list');
+            
+            const res = await fetch(`/api/networking/my-connections/${currentParticipant.qr_code}`);
+            const data = await res.json();
+            
+            reqList.innerHTML = '';
+            conList.innerHTML = '';
+
+            let hasPending = false;
+            let hasAccepted = false;
+
+            data.connections.forEach(c => {
+                if(c.status === 'pending' && c.requested_qr === currentParticipant.qr_code) {
+                    hasPending = true;
+                    const card = document.createElement('div');
+                    card.className = 'networking-card';
+                    card.innerHTML = `
+                        <div class="net-info">
+                            <h5>${esc(c.other_name)}</h5>
+                            <p>${esc(c.other_council)}</p>
+                        </div>
+                        <div style="display:flex; gap:0.5rem;">
+                            <button class="btn-connect" style="background:#10b981; color:white;" onclick="respondReq(${c.id}, 'accepted')"><i class="fas fa-check"></i></button>
+                            <button class="btn-connect" style="background:#f87171; color:white;" onclick="respondReq(${c.id}, 'declined')"><i class="fas fa-times"></i></button>
+                        </div>
+                    `;
+                    reqList.appendChild(card);
+                } else if(c.status === 'accepted') {
+                    hasAccepted = true;
+                    const card = document.createElement('div');
+                    card.className = 'networking-card';
+                    card.innerHTML = `
+                        <div class="net-info">
+                            <h5>${c.other_name}</h5>
+                            <p>${c.other_role} | ${c.other_council}</p>
+                            <p style="margin-top:0.3rem; color:var(--primary); font-weight:bold;">
+                                <i class="fas fa-phone"></i> ${c.other_phone || '---'}
+                            </p>
+                        </div>
+                        <a href="tel:${c.other_phone}" class="btn-connect" style="background:var(--primary);"><i class="fas fa-phone"></i></a>
+                    `;
+                    conList.appendChild(card);
+                }
+            });
+
+            if(!hasPending) reqList.innerHTML = '<p style="font-size:0.8rem; opacity:0.5; padding:0.5rem;">لا توجد طلبات واردة</p>';
+            if(!hasAccepted) conList.innerHTML = '<p style="font-size:0.8rem; opacity:0.5; padding:0.5rem;">لم تتصل بأحد بعد</p>';
+        }
+
+        async function respondReq(connId, action) {
+            await fetch('/api/networking/respond', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({connection_id: connId, responder_qr: currentParticipant.qr_code, action: action})
+            });
+            loadMyConnections();
+            loadDirectory();
+        }
+
+        async function loadAgenda() {
+            const list = document.getElementById('agenda-list');
+            try {
+                const res = await fetch("/api/portal/agenda/{{ settings.id }}");
+                const data = await res.json();
+                
+                if(data.sessions.length === 0) {
+                    list.innerHTML = '<p style="text-align:center; opacity:0.5; padding:2rem;">لا توجد جلسات مجدولة حالياً</p>';
+                    return;
+                }
+
+                list.innerHTML = '';
+                const now = new Date();
+                
+                data.sessions.forEach(s => {
+                    const start = new Date(s.start_time);
+                    const end = new Date(s.end_time);
+                    const isNow = now >= start && now <= end;
+                    const timeStr = start.toLocaleTimeString('ar-DZ', {hour: '2-digit', minute:'2-digit'});
+                    
+                    let speakerHtml = '';
+                    if (s.speaker_name) {
+                        const imgHtml = s.speaker_photo 
+                            ? `<img src="${s.speaker_photo}">` 
+                            : '<i class="fas fa-user-circle"></i>';
+                        speakerHtml = `
+                            <div class="speaker-small">
+                                ${imgHtml}
+                                <span>${esc(s.speaker_name)}</span>
+                            </div>
+                        `;
+                    }
+
+                    const item = document.createElement('div');
+                    item.className = `agenda-item ${isNow ? 'now' : ''}`;
+                    item.innerHTML = `
+                        <div class="agenda-time">${esc(timeStr)}</div>
+                        <div class="agenda-info">
+                            <h4>${esc(s.title)}</h4>
+                            <p>${esc(s.description || '')}</p>
+                            ${speakerHtml}
+                        </div>
+                    `;
+                    list.appendChild(item);
+                });
+            } catch(e) {
+                list.innerHTML = 'خطأ في تحميل البرنامج';
+            }
+        }
+
+        function switchTab(paneId, btn) {
+            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(paneId).classList.add('active');
+            btn.classList.add('active');
+        }
+
+        async function submitQuestion() {
+            const text = document.getElementById('question-text').value.trim();
+            if(!text) return showToast('يرجى كتابة السؤال');
+            
+            try {
+                const res = await fetch('/api/questions/submit', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        text: text,
+                        author_name: currentParticipant.full_name,
+                        event_id: Number("{{ settings.id or 0 }}")
+                    })
+                });
+                if(res.ok) {
+                    showToast('تم إرسال سؤالك للمتحدثين بنجاح', '#10b981');
+                    document.getElementById('question-text').value = '';
+                }
+            } catch(e) {
+                showToast('خطأ في الإرسال');
+            }
+        }
+
+        function showToast(msg, color = '#ef4444') {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.style.background = color;
+            t.style.display = 'block';
+            setTimeout(() => t.style.display = 'none', 3000);
+        }
+
+        function logout() {
+            localStorage.removeItem('diwan_portal_id');
+            location.reload();
+        }
+
+        // Auto-login if session exists
+        window.onload = () => {
+            const saved = localStorage.getItem('diwan_portal_id');
+            if(saved) {
+                document.getElementById('login-identifier').value = saved;
+                login();
+            }
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بوابتي - الحصول على بطاقة الحضور (QR)</title>
+    <link href="/static/vendor/fonts/local-fonts.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/vendor/fontawesome.css">
+
+    <style>
+        :root {
+            --emerald: #021a16;
+            --emerald-light: #04382e;
+            --gold: #d4af37;
+            --gold-light: #f3e5ab;
+            --bg: #0a0a0a;
+            --card-bg: rgba(2, 26, 22, 0.8);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Cairo', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-image: linear-gradient(135deg, var(--emerald) 0%, var(--bg) 100%);
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+            margin-top: 1rem;
+        }
+
+        .header h1 {
+            color: var(--gold);
+            font-family: 'Amiri', serif;
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 400px;
+            background: var(--card-bg);
+            border: 1px solid var(--gold);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            backdrop-filter: blur(10px);
+        }
+
+        /* Search View */
+        #search-view {
+            display: block;
+        }
+
+        .search-box {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 15px 45px 15px 15px;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid var(--gold);
+            color: white;
+            border-radius: 10px;
+            font-size: 1rem;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        .search-box input:focus {
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
+        }
+
+        .search-box i {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gold);
+        }
+
+        .results {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .result-item {
+            padding: 15px;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+            cursor: pointer;
+            transition: 0.2s;
+            border-radius: 8px;
+        }
+
+        .result-item:hover {
+            background: rgba(212, 175, 55, 0.1);
+        }
+
+        .result-name {
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: white;
+            margin-bottom: 5px;
+        }
+
+        .result-details {
+            font-size: 0.85rem;
+            color: var(--gold-light);
+            display: flex;
+            gap: 10px;
+        }
+
+        .loading, .no-results {
+            text-align: center;
+            color: #aaa;
+            padding: 20px;
+            display: none;
+        }
+
+        /* QR View */
+        #qr-view {
+            display: none;
+            text-align: center;
+        }
+
+        .qr-container {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            display: inline-block;
+            margin: 20px 0;
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+        }
+
+        .qr-name {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: var(--gold);
+            margin-bottom: 5px;
+        }
+
+        .qr-details {
+            font-size: 0.9rem;
+            color: #ddd;
+            margin-bottom: 20px;
+        }
+
+        .btn-back {
+            background: transparent;
+            color: var(--gold);
+            border: 1px solid var(--gold);
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            transition: 0.3s;
+        }
+
+        .btn-back:hover {
+            background: rgba(212, 175, 55, 0.1);
+        }
+        
+        .instruction {
+            margin-top: 15px;
+            font-size: 0.9rem;
+            color: #aaa;
+            line-height: 1.5;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- News Ticker -->
+    <div id="ticker-bar" style="background: var(--gold); color: #000; padding: 10px 0; overflow: hidden; position: relative; width: 100%; display: none;">
+        <div id="ticker-text" style="display: inline-block; white-space: nowrap; font-weight: 900; font-size: 1.2rem; animation: ticker-scroll 25s linear infinite; padding-left: 100%;">
+            <!-- Ticker content here -->
+        </div>
+    </div>
+
+    <style>
+        @keyframes ticker-scroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-100%); }
+        }
+    </style>
+
+    <div class="header">
+        <div style="margin-bottom: 10px;">
+            <img id="event-logo" src="/static/assets/logo.png" style="max-height: 80px; display: none;" onerror="this.style.display='none'" onload="this.style.display='inline-block'">
+        </div>
+        <h1 data-i18n="الخدمة الذاتية للحضور">الخدمة الذاتية للحضور</h1>
+        <p id="event-title" data-i18n="جاري تحميل اسم الحدث...">جاري تحميل اسم الحدث...</p>
+        
+        <div style="margin-top: 1rem;">
+            <select id="admin-lang-select" onchange="switchAdminLang(this.value)" style="background: rgba(0,0,0,0.3); color: white; border: 1px solid rgba(212,175,55,0.3); padding: 0.5rem 1rem; border-radius: 1rem; outline: none; cursor: pointer; font-family: inherit;">
+                <option value="ar" style="color: black;">العربية</option>
+                <option value="en" style="color: black;">English</option>
+                <option value="fr" style="color: black;">Français</option>
+                <option value="es" style="color: black;">Español</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="container">
+        
+        <!-- Search Section -->
+        <div id="search-view">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="search-input" data-i18n-placeholder="اكتب اسمك للبحث..." placeholder="اكتب اسمك للبحث..." autocomplete="off">
+            </div>
+            
+            <div id="loading" class="loading"><i class="fas fa-spinner fa-spin"></i> <span data-i18n="جاري البحث...">جاري البحث...</span></div>
+            <div id="no-results" class="no-results" data-i18n="لم يتم العثور على أي نتيجة بهذا الاسم">لم يتم العثور على أي نتيجة بهذا الاسم</div>
+            
+            <div class="results" id="results-list">
+                <!-- Results populated by JS -->
+            </div>
+        </div>
+
+        <!-- QR Code Section -->
+        <div id="qr-view">
+            <div class="qr-name" id="display-name">---</div>
+            <div class="qr-details" id="display-details">---</div>
+            
+            <div class="qr-container" id="qrcode"></div>
+            
+            <div class="instruction">
+                <i class="fas fa-info-circle" style="color:var(--gold);"></i> 
+                <span data-i18n="يرجى إظهار هذا الرمز للمنظم عند طاولة الاستقبال لتسجيل حضورك">يرجى إظهار هذا الرمز للمنظم عند طاولة الاستقبال لتسجيل حضورك</span>
+            </div>
+
+            <button class="btn-back" onclick="goBack()">
+                <i class="fas fa-undo"></i> <span data-i18n="لست أنت؟ بحث جديد">لست أنت؟ بحث جديد</span>
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        let label1 = "الصفة";
+        let label2 = "الاختصاص";
+        let label3 = "الاختصاص الفرعي";
+        let label4 = "الموقع/المقعد";
+        let searchTimeout;
+        const input = document.getElementById('search-input');
+        const resultsList = document.getElementById('results-list');
+        const loading = document.getElementById('loading');
+        const noResults = document.getElementById('no-results');
+
+        input.addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            const query = e.target.value.trim();
+            
+            if(query.length < 2) {
+                resultsList.innerHTML = '';
+                noResults.style.display = 'none';
+                return;
+            }
+
+            loading.style.display = 'block';
+            resultsList.innerHTML = '';
+            noResults.style.display = 'none';
+
+            searchTimeout = setTimeout(() => {
+                fetchResults(query);
+            }, 400);
+        });
+
+        async function fetchResults(query) {
+            try {
+                const response = await fetch(`/api/public/search?q=${encodeURIComponent(query)}`);
+                const data = await response.json();
+                
+                loading.style.display = 'none';
+                resultsList.innerHTML = '';
+
+                if(data.length === 0) {
+                    noResults.style.display = 'block';
+                    return;
+                }
+
+                const lang = localStorage.getItem('diwan_admin_lang') || 'ar';
+                const dict = adminTranslations[lang] || {};
+                const l1 = dict[label1] || label1;
+                const l2 = dict[label2] || label2;
+                const l3 = dict[label3] || label3;
+
+                data.forEach(user => {
+                    const item = document.createElement('div');
+                    item.className = 'result-item';
+                    item.innerHTML = `
+                        <div class="result-name">${user.full_name}</div>
+                        <div class="result-details">
+                            <div style="color:var(--gold);">${l1}: ${user.role || '---'}</div>
+                            <div style="font-size:0.8rem; opacity:0.8;">${l2}: ${user.council} | ${l3}: ${user.court}</div>
+                        </div>
+                    `;
+                    item.onclick = () => showQR(user);
+                    resultsList.appendChild(item);
+                });
+            } catch (err) {
+                loading.style.display = 'none';
+                noResults.style.display = 'block';
+                noResults.innerText = (adminTranslations[localStorage.getItem('diwan_admin_lang') || 'ar'] || {})['حدث خطأ في الاتصال، حاول مرة أخرى'] || 'حدث خطأ في الاتصال، حاول مرة أخرى';
+            }
+        }
+
+        function showQR(user) {
+            document.getElementById('search-view').style.display = 'none';
+            document.getElementById('qr-view').style.display = 'block';
+            
+            const lang = localStorage.getItem('diwan_admin_lang') || 'ar';
+            const dict = adminTranslations[lang] || {};
+            const l1 = dict[label1] || label1;
+            const l2 = dict[label2] || label2;
+            const l3 = dict[label3] || label3;
+            const l4 = dict[label4] || label4;
+
+            document.getElementById('display-name').innerText = user.full_name;
+            document.getElementById('display-details').innerHTML = `
+                <div style="color:var(--gold); font-size:1.3rem; margin-bottom:5px;">${l1}: ${user.role || '---'}</div>
+                <div style="opacity:0.8;">${l2}: ${user.council} - ${l3}: ${user.court}</div>
+                <div style="margin-top:10px; font-size:1.5rem; font-weight:bold; color:var(--gold);">${l4}: ${user.seat_info || '---'}</div>
+            `;
+            
+            const qrContainer = document.getElementById('qrcode');
+            qrContainer.innerHTML = `<img src="/api/qr/${encodeURIComponent(user.order_num)}" alt="QR Code" style="width:200px; height:200px; object-fit:contain;">`;
+        }
+
+        function goBack() {
+            document.getElementById('search-view').style.display = 'block';
+            document.getElementById('qr-view').style.display = 'none';
+            input.value = '';
+            resultsList.innerHTML = '';
+            input.focus();
+        }
+        async function loadEventInfo() {
+            try {
+                const response = await fetch('/api/stats');
+                const data = await response.json();
+                if (data.stats && data.stats.event_name) {
+                    const lang = localStorage.getItem('diwan_admin_lang') || 'ar';
+                    const dict = adminTranslations[lang] || {};
+                    document.getElementById('event-title').innerText = data.stats.event_name;
+                    label1 = data.stats.org_label_1 || "الصفة";
+                    label2 = data.stats.org_label_2 || "الاختصاص";
+                    label3 = data.stats.org_label_3 || "الاختصاص الفرعي";
+                    label4 = data.stats.org_label_4 || "الموقع/المقعد";
+                    
+                    // Update Ticker
+                    const tickerBar = document.getElementById('ticker-bar');
+                    const tickerText = document.getElementById('ticker-text');
+                    const announcement = data.stats.announcement_text || '';
+                    if (announcement.trim() !== '') {
+                        tickerText.innerText = announcement;
+                        tickerBar.style.display = 'block';
+                    } else {
+                        tickerBar.style.display = 'none';
+                    }
+                }
+            } catch(e) {}
+        }
+        loadEventInfo();
+    </script>
+    <script src="/static/js/app_i18n.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const select = document.getElementById('admin-lang-select');
+            if(select) select.value = localStorage.getItem('diwan_admin_lang') || 'ar';
+        });
+    </script>
+</body>
+</html>

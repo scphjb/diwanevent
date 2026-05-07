@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الجمعية العامة العادية للمحضرين القضائيين - غرفة الشرق 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Amiri:wght@400;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/dist/css/all.min.css">
+    <link rel="stylesheet" href="/static/theme2026/styles.css">
+</head>
+
+<body>
+
+    <div id="announcement-bar" class="announcement-bar">
+        <i class="fas fa-bullhorn"></i>
+        <span id="announcement-text">جاري تحميل التنبيهات...</span>
+    </div>
+
+    <nav>
+        <div class="nav-container">
+            <div class="logo">الجمعية العامة 2026</div>
+            <ul class="nav-links" id="nav-links">
+                <li><a href="#hero">الرئيسية</a></li>
+                <li><a href="#attendance">الإحصائيات</a></li>
+                <li><a href="#stay">الفنادق</a></li>
+                <li><a href="#docs">الوثائق</a></li>
+                <li><a href="#qa">الأسئلة</a></li>
+                {% if organizer_logged_in %}
+                <li><a href="/admin" style="color: #f4cf6d;"><i class="fas fa-cog"></i> الإدارة</a></li>
+                <li><a href="/scanner" style="color: #f4cf6d;"><i class="fas fa-qrcode"></i> الماسح</a></li>
+                {% else %}
+                <li><a href="/login" style="opacity: 0.6; font-size: 0.9rem;"><i class="fas fa-lock"></i> دخول المنظمين</a></li>
+                {% endif %}
+            </ul>
+            <div class="mobile-menu-btn" onclick="toggleMenu()">
+                <span>قائمة</span>
+                <i class="fas fa-bars"></i>
+            </div>
+        </div>
+    </nav>
+
+    <section id="hero" style="background: linear-gradient(rgba(2, 26, 22, 0.75), rgba(2, 26, 22, 0.9)), url('/static/theme2026//static/assets/sheraton.jpg'); background-size: cover; background-position: center;">
+        <div class="hero-content">
+            <h1>الجمعية العامة العادية للمحضرين القضائيين</h1>
+            <p>غرفة الشرق - دورة 2026 - تحت شعار "عصرنة المهنة وتفعيل الحماية القانونية"</p>
+            <div class="countdown" id="countdown">
+                <!-- Countdown will be injected here -->
+            </div>
+            <div style="margin-top: 2rem;">
+                <a href="#attendance" class="btn">عرض حالة الحضور</a>
+            </div>
+        </div>
+    </section>
+
+    <section id="attendance">
+        <h2 class="section-title">إحصائيات الحضور اللحظية</h2>
+        <div class="live-counter" id="main-counter">0</div>
+        <p>عدد الحاضرين حتى الآن من إجمالي المدعوين</p>
+        <div class="progress-container">
+            <div class="progress-bar" id="progress-bar"></div>
+        </div>
+        <div id="quorum-message" style="margin-top: 1rem; color: var(--gold); font-weight: bold; display: none;">
+            تم اكتمال النصاب القانوني بنجاح
+        </div>
+    </section>
+
+    <section id="stay">
+        <h2 class="section-title">الاستقبال والإقامة</h2>
+        <div class="stay-grid">
+            <div class="hotel-card">
+                <img src="/static/theme2026//static/assets/sheraton.jpg" class="hotel-img" alt="Sheraton">
+                <div class="hotel-name">فندق شيراتون</div>
+                <div class="hotel-meta"><span>عنابة</span><span>★★★★★</span></div>
+                <p>المقر الرئيسي لفعاليات الجمعية العامة والافتتاح الرسمي.</p>
+            </div>
+            <div class="hotel-card">
+                <img src="/static/theme2026//static/assets/sabri.jpg" class="hotel-img" alt="Sabri">
+                <div class="hotel-name">فندق صبري</div>
+                <div class="hotel-meta"><span>شاطئ رفاس</span><span>★★★★</span></div>
+                <p>إقامة مريحة للمشاركين بالقرب من ساحل البحر.</p>
+            </div>
+             <div class="hotel-card">
+                <img src="/static/theme2026//static/assets/seybouse.jpg" class="hotel-img" alt="Seybouse">
+                <div class="hotel-name">فندق سيبوس</div>
+                <div class="hotel-meta"><span>وسط المدينة</span><span>★★★★</span></div>
+                <p>إقامة عريقة في قلب مدينة عنابة.</p>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <p>جميع الحقوق محفوظة &copy; 2026 - الغرفة الجهوية للمحضرين القضائيين للشرق</p>
+    </footer>
+
+    <script>
+        function toggleMenu() {
+            document.getElementById('nav-links').classList.toggle('active');
+        }
+
+        // Fetch stats from local API
+        async function updateStats() {
+            try {
+                const response = await fetch('/api/stats');
+                const data = await response.json();
+                
+                document.getElementById('main-counter').innerText = data.present_count;
+                const percent = (data.present_count / data.total_invited) * 100;
+                document.getElementById('progress-bar').style.width = percent + '%';
+                
+                if (data.show_quorum && data.present_count >= data.quorum) {
+                    document.getElementById('quorum-message').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error fetching stats:', error);
+            }
+        }
+
+        // Update stats every 10 seconds
+        setInterval(updateStats, 10000);
+        updateStats();
+
+        // Simple Countdown
+        const targetDate = new Date('2026-05-20T09:00:00').getTime();
+        function updateCountdown() {
+            const now = new Date().getTime();
+            const distance = targetDate - now;
+            
+            if (distance < 0) {
+                document.getElementById('countdown').innerHTML = "الحدث جارٍ الآن";
+                return;
+            }
+
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+
+            document.getElementById('countdown').innerHTML = `
+                <div class="count-box"><span>${minutes}</span><label>دقيقة</label></div>
+                <div class="count-box"><span>${hours}</span><label>ساعة</label></div>
+                <div class="count-box"><span>${days}</span><label>يوم</label></div>
+            `;
+        }
+        setInterval(updateCountdown, 60000);
+        updateCountdown();
+    </script>
+</body>
+</html>

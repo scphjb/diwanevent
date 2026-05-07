@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ديوان | مركز التسجيل الرقمي</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gold: #D4AF37;
+            --emerald-deep: #022C22;
+            --emerald-mid: #064E3B;
+            --emerald-light: #10B981;
+            --danger: #FF4E4E;
+            --white: #FFFFFF;
+            --glass: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.08);
+            --shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Cairo', sans-serif; }
+
+        body {
+            background: radial-gradient(circle at top right, #065F46, #022C22, #000);
+            background-attachment: fixed;
+            color: var(--white);
+            min-height: 100vh;
+            display: flex; flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        header {
+            background: rgba(0,0,0,0.3); backdrop-filter: blur(20px);
+            padding: 1rem 1.5rem; border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center; sticky: top; z-index: 100;
+        }
+        .brand { font-weight: 900; color: var(--gold); display: flex; align-items: center; gap: 10px; font-size: 1.2rem; }
+        .back-btn { color: #fff; text-decoration: none; font-size: 0.9rem; opacity: 0.6; }
+
+        .container { max-width: 800px; margin: 0 auto; padding: 1.5rem; width: 100%; flex: 1; }
+
+        /* --- Scanner View --- */
+        .section-card { background: var(--glass); border: 1px solid var(--border); border-radius: 2rem; padding: 1.5rem; margin-bottom: 1.5rem; backdrop-filter: blur(10px); }
+        .section-title { font-size: 1.1rem; font-weight: 800; color: var(--gold); margin-bottom: 1.2rem; display: flex; align-items: center; gap: 10px; }
+
+        .scanner-frame { position: relative; border-radius: 1.5rem; overflow: hidden; border: 2px solid var(--gold); background: #000; height: 300px; }
+        #reader { width: 100%; height: 100%; }
+        .scanner-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; border: 40px solid rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; }
+        .scan-box { width: 180px; height: 180px; border: 2px solid var(--gold); position: relative; }
+        .scan-line { width: 100%; height: 2px; background: var(--gold); position: absolute; top: 0; animation: scanMove 2s infinite linear; }
+        @keyframes scanMove { 0% { top: 0; } 50% { top: 100%; } 100% { top: 0; } }
+
+        /* --- Inputs --- */
+        .search-area { position: relative; width: 100%; }
+        .input-wrap { background: rgba(0,0,0,0.3); border: 1px solid var(--border); padding: 1rem; border-radius: 1.2rem; display: flex; gap: 10px; align-items: center; margin-bottom: 1rem; transition: 0.3s; }
+        .input-wrap:focus-within { border-color: var(--gold); background: rgba(0,0,0,0.5); }
+        .input-wrap input { flex: 1; background: transparent; border: none; color: #fff; outline: none; font-size: 1.1rem; }
+        
+        .results-dropdown { 
+            position: absolute; top: 105%; left: 0; width: 100%; 
+            background: var(--emerald-deep); border: 1px solid var(--gold); 
+            border-radius: 1.2rem; max-height: 300px; overflow-y: auto; 
+            z-index: 1000; display: none; backdrop-filter: blur(25px);
+        }
+        .result-item { padding: 1rem; border-bottom: 1px solid var(--border); cursor: pointer; }
+        .result-item:hover { background: rgba(255,255,255,0.05); }
+
+        /* --- Quick Actions --- */
+        .quick-row { display: grid; grid-template-columns: 1.5fr 1fr; gap: 10px; margin-top: 1rem; }
+        .btn-gold { background: linear-gradient(135deg, var(--gold) 0%, #B8860B 100%); color: #000; border: none; padding: 1rem; border-radius: 1.2rem; font-weight: 800; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .btn-gold:active { transform: scale(0.95); }
+
+        /* --- Result Overlay --- */
+        .feedback-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: none; align-items: center; justify-content: center; z-index: 4000; backdrop-filter: blur(20px); }
+        .feedback-card { background: var(--emerald-deep); border: 3px solid var(--gold); padding: 3rem 1.5rem; border-radius: 3rem; text-align: center; width: 90%; max-width: 450px; box-shadow: 0 0 100px rgba(0,0,0,0.8); }
+
+        /* --- Footer Controls --- */
+        .bottom-nav { position: sticky; bottom: 0; padding: 1rem; background: rgba(0,0,0,0.4); backdrop-filter: blur(20px); border-top: 1px solid var(--border); display: flex; justify-content: space-around; }
+        .mode-btn { background: transparent; border: 1px solid var(--border); color: #fff; padding: 10px 20px; border-radius: 2rem; font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+        .mode-btn.active { border-color: var(--gold); background: rgba(212,175,55,0.15); }
+    </style>
+</head>
+<body>
+
+    <header style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; border-bottom: 1px solid var(--border);">
+        <div class="brand" style="display: flex; align-items: center; gap: 1rem;">
+            <div><i class="fas fa-barcode"></i> <span id="scanner-brand">ديوان</span> | <span data-i18n="مركز التسجيل">مركز التسجيل</span></div>
+            <select id="admin-lang-select" onchange="switchAdminLang(this.value)" style="background: rgba(0,0,0,0.3); color: white; border: 1px solid rgba(212,175,55,0.3); padding: 0.3rem 0.8rem; border-radius: 1rem; outline: none; cursor: pointer; font-family: inherit; font-size: 0.8rem;">
+                <option value="ar" style="color: black;">العربية</option>
+                <option value="en" style="color: black;">English</option>
+                <option value="fr" style="color: black;">Français</option>
+                <option value="es" style="color: black;">Español</option>
+            </select>
+        </div>
+        <a href="/admin" class="back-btn"><i class="fas fa-chevron-right"></i> <span data-i18n="لوحة التحكم">لوحة التحكم</span></a>
+    </header>
+
+    <div class="container">
+        
+        <!-- QR Section -->
+        <div class="section-card">
+            <div class="section-title"><i class="fas fa-qrcode"></i> <span data-i18n="مسح الرمز الرقمي">مسح الرمز الرقمي</span></div>
+            <div class="scanner-frame">
+                <div id="reader"></div>
+                <div class="scanner-overlay">
+                    <div class="scan-box"><div class="scan-line"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Manual Section -->
+        <div class="section-card">
+            <div class="section-title"><i class="fas fa-keyboard"></i> <span data-i18n="الإدخال والبحث اليدوي">الإدخال والبحث اليدوي</span></div>
+            
+            <div class="search-area">
+                <div class="input-wrap">
+                    <i class="fas fa-search" style="opacity: 0.4;"></i>
+                    <input type="text" id="name-search" data-i18n-placeholder="ابحث بالاسم..." placeholder="ابحث بالاسم..." oninput="handleSearch(this.value)">
+                </div>
+                <div id="results-dropdown" class="results-dropdown"></div>
+            </div>
+
+            <div class="quick-row">
+                <div class="input-wrap" style="margin-bottom:0;">
+                    <i class="fas fa-hashtag" style="opacity: 0.4;"></i>
+                    <input type="text" id="direct-num" data-i18n-placeholder="رقم الترتيب" placeholder="رقم الترتيب" maxlength="6" inputmode="numeric">
+                </div>
+                <button class="btn-gold" onclick="submitDirectNum()"><i class="fas fa-check"></i> <span data-i18n="تسجيل">تسجيل</span></button>
+            </div>
+        </div>
+
+        <!-- History -->
+        <div style="padding: 0 1rem 2rem;">
+            <div style="font-size: 0.9rem; opacity: 0.4; margin-bottom: 10px;"><i class="fas fa-history"></i> <span data-i18n="آخر المسارات الناجحة">آخر المسارات الناجحة</span></div>
+            <div id="local-history" style="display: flex; flex-direction: column; gap: 8px;"></div>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <button id="mode-checkin" class="mode-btn active" onclick="setMode('check_in')"><i class="fas fa-sign-in-alt"></i> <span data-i18n="دخول الحفل">دخول الحفل</span></button>
+        <button id="mode-checkout" class="mode-btn" onclick="setMode('check_out')"><i class="fas fa-sign-out-alt"></i> <span data-i18n="خروج">خروج</span></button>
+    </div>
+
+    <!-- Modals -->
+    <div id="confirm-modal" class="feedback-overlay">
+        <div class="feedback-card" style="padding: 2rem;">
+            <h2 style="color: var(--gold); margin-bottom: 1rem;" data-i18n="تأكيد التسجيل">تأكيد التسجيل</h2>
+            <div id="m-details" style="text-align: right; background: rgba(255,255,255,0.03); padding: 1.5rem; border-radius: 1rem; border-right: 4px solid var(--gold); margin-bottom: 1.5rem;"></div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-gold" style="flex: 1;" id="confirm-btn" data-i18n="تأكيد">تأكيد</button>
+                <button class="mode-btn" style="flex: 1; border-color: var(--danger); color: var(--danger);" onclick="document.getElementById('confirm-modal').style.display='none'" data-i18n="إلغاء">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="feedback" class="feedback-overlay" onclick="this.style.display='none'">
+        <div class="feedback-card">
+            <div id="f-icon" style="font-size: 5rem; margin-bottom: 1.5rem;"></div>
+            <h2 id="f-title" style="margin-bottom: 0.5rem;"></h2>
+            <p id="f-name" style="font-size: 1.4rem; font-weight: 800; color: var(--gold);"></p>
+            <p id="f-desc" style="opacity: 0.6; margin-top: 5px;"></p>
+        </div>
+    </div>
+
+    <audio id="snd-success" src="/assets/sounds/success.wav" preload="auto"></audio>
+    <audio id="snd-error" src="/assets/sounds/error.wav" preload="auto"></audio>
+    <audio id="snd-duplicate" src="/assets/sounds/duplicate.wav" preload="auto"></audio>
+
+    <script src="/static/js/html5-qrcode.min.js"></script>
+    <script>
+        let currentMode = 'check_in';
+        let scanner = null;
+        let selectedP = null;
+        let searchTimeout = null;
+
+        function esc(str) {
+            if (!str) return "";
+            const div = document.createElement("div");
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        // HID Scanner Support
+        let barcodeBuffer = "";
+        let lastKeyTime = Date.now();
+        window.addEventListener('keydown', (e) => {
+            if (e.target.tagName === 'INPUT') return;
+            if (Date.now() - lastKeyTime > 50) barcodeBuffer = "";
+            if (e.key === 'Enter') {
+                if (barcodeBuffer.length > 2) { processReg(barcodeBuffer, 'hid_scanner'); barcodeBuffer = ""; }
+            } else if (e.key.length === 1) barcodeBuffer += e.key;
+            lastKeyTime = Date.now();
+        });
+
+        async function startScanner() {
+            scanner = new Html5Qrcode("reader");
+            const config = { fps: 15, qrbox: { width: 180, height: 180 } };
+            try {
+                await scanner.start({ facingMode: "environment" }, config, (text) => {
+                    if (window.isScanning) return;
+                    window.isScanning = true;
+                    processReg(text, 'qr_scan');
+                    setTimeout(() => window.isScanning = false, 2500);
+                });
+            } catch (err) { console.error(err); }
+        }
+
+        async function handleSearch(q) {
+            clearTimeout(searchTimeout);
+            if (q.length < 2) { document.getElementById('results-dropdown').style.display = 'none'; return; }
+            searchTimeout = setTimeout(async () => {
+                const res = await fetch(`/api/participants/search?q=${encodeURIComponent(q)}`);
+                const data = await res.json();
+                const drop = document.getElementById('results-dropdown');
+                drop.innerHTML = '';
+                if (data.length > 0) {
+                    data.forEach(p => {
+                        const item = document.createElement('div');
+                        item.className = 'result-item';
+                        item.innerHTML = `<b>${esc(p.full_name)}</b> <small style="opacity:0.5;">(#${esc(p.order_num)})</small>`;
+                        item.onclick = () => showConfirm(p);
+                        drop.appendChild(item);
+                    });
+                    drop.style.display = 'block';
+                } else drop.style.display = 'none';
+            }, 300);
+        }
+
+        function showConfirm(p) {
+            selectedP = p;
+            const lang = localStorage.getItem('diwan_admin_lang') || 'ar';
+            const dict = adminTranslations[lang] || {};
+            const labelNum = dict['الرقم:'] || 'الرقم:';
+            
+            document.getElementById('results-dropdown').style.display = 'none';
+            document.getElementById('m-details').innerHTML = `<b>${esc(p.full_name)}</b><br><small>${esc(labelNum)} ${esc(p.order_num)}</small>`;
+            document.getElementById('confirm-modal').style.display = 'flex';
+        }
+
+        document.getElementById('confirm-btn').onclick = () => {
+            processReg(selectedP.qr_code || selectedP.order_num, 'manual_search');
+            document.getElementById('confirm-modal').style.display = 'none';
+            document.getElementById('name-search').value = '';
+        };
+
+        function submitDirectNum() {
+            const val = document.getElementById('direct-num').value;
+            if (val) { processReg(val, 'direct_num'); document.getElementById('direct-num').value = ''; }
+        }
+
+        function setMode(mode) {
+            currentMode = mode;
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('mode-' + mode).classList.add('active');
+        }
+
+        async function processReg(code, method) {
+            try {
+                const res = await fetch('/api/attendance/check-in', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ qr_code: code, entry_method: method, event_type: currentMode })
+                });
+                const data = await res.json();
+                renderFeedback(data);
+                if (data.status === 'success') addToHistory(data);
+            } catch (e) { renderFeedback({ status: 'error' }); }
+        }
+
+        function renderFeedback(data) {
+            const overlay = document.getElementById('feedback');
+            overlay.style.display = 'flex';
+            const icon = document.getElementById('f-icon');
+            const title = document.getElementById('f-title');
+            const name = document.getElementById('f-name');
+            const desc = document.getElementById('f-desc');
+
+            const lang = localStorage.getItem('diwan_admin_lang') || 'ar';
+            const dict = adminTranslations[lang] || {};
+
+            if (data.status === 'success') {
+                document.getElementById('snd-success').play().catch(()=>{});
+                icon.innerHTML = '✅'; 
+                title.innerText = dict['تم التسجيل'] || 'تم التسجيل';
+                name.innerText = data.participant_name; 
+                desc.innerText = data.council;
+            } else if (data.status === 'duplicate') {
+                document.getElementById('snd-duplicate').play().catch(()=>{});
+                icon.innerHTML = '⚠️'; 
+                title.innerText = dict['مسجل مسبقاً'] || 'مسجل مسبقاً';
+                name.innerText = data.participant_name; 
+                desc.innerText = dict['هذا العضو حاضر بالفعل'] || 'هذا العضو حاضر بالفعل';
+            } else {
+                document.getElementById('snd-error').play().catch(()=>{});
+                icon.innerHTML = '❌'; 
+                title.innerText = dict['فشل التسجيل'] || 'فشل التسجيل';
+                name.innerText = dict['غير معروف'] || 'غير معروف'; 
+                desc.innerText = dict['الرمز غير صحيح'] || 'الرمز غير صحيح';
+            }
+            setTimeout(() => overlay.style.display = 'none', 2000);
+        }
+
+        function addToHistory(data) {
+            const hist = document.getElementById('local-history');
+            const item = document.createElement('div');
+            item.style.padding = '0.8rem'; item.style.background = 'rgba(255,255,255,0.03)';
+            item.style.borderRadius = '0.8rem'; item.style.fontSize = '0.85rem';
+            item.innerHTML = `<b>${esc(data.participant_name)}</b> <small style="float:left; opacity:0.3;">${new Date().toLocaleTimeString()}</small>`;
+            hist.prepend(item);
+            if (hist.children.length > 5) hist.removeChild(hist.lastChild);
+        }
+
+        startScanner();
+
+        // Load dynamic brand
+        fetch('/api/stats').then(r => r.json()).then(data => {
+            const s = data.stats;
+            if (s) {
+                document.getElementById('scanner-brand').innerText = 'ديوان لتسيير الفعاليات';
+                document.title = 'ديوان | مركز التسجيل الرقمي';
+                // Colors are hardcoded in CSS
+            }
+        }).catch(() => {});
+    </script>
+    <script src="/static/js/app_i18n.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const select = document.getElementById('admin-lang-select');
+            if(select) select.value = localStorage.getItem('diwan_admin_lang') || 'ar';
+        });
+    </script>
+</body>
+</html>

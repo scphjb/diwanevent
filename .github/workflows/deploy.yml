@@ -1,0 +1,40 @@
+name: Diwan Event CI/CD
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r attendance_system/requirements.txt
+        pip install pytest httpx
+    - name: Run tests
+      run: |
+        cd attendance_system
+        pytest tests/
+
+  build-and-deploy:
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build Docker Image
+      run: |
+        cd attendance_system
+        docker build -t diwan-event:latest .
+    # Deployment steps to your cloud provider (e.g. AWS ECR / Render / Railway) go here
+    - name: Deploy Placeholder
+      run: echo "Ready to deploy to Cloud"

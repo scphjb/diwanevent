@@ -1,0 +1,470 @@
+{
+  "dir": "ltr",
+  "common": {
+    "app_name": "Diwan Event",
+    "app_subtitle": "Gestión de Eventos Empresariales",
+    "dashboard": "Panel de Control",
+    "events": "Eventos",
+    "participants": "Participantes",
+    "sessions": "Agenda",
+    "stats": "Analíticas",
+    "moderation": "Moderación",
+    "check-in": "Registro",
+    "wall": "Muro Social",
+    "designer": "Diseñador de Acreditaciones",
+    "polls": "Encuestas",
+    "hardware": "Hardware",
+    "display": "Pantalla Pública",
+    "developer": "Portal de Desarrolladores",
+    "settings": "Ajustes",
+    "speakers": "Ponentes",
+    "sponsors": "Patrocinadores",
+    "questions": "Preguntas",
+    "logout": "Cerrar sesión",
+    "admin_name": "Ahmed Idrissi",
+    "admin_role": "Admin del Sistema",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "loading": "Cargando...",
+    "search": "Buscar...",
+    "print": "Imprimir",
+    "send_certs": "Enviar Certificados",
+    "import": "Importar Excel",
+    "export": "Exportar Datos",
+    "all": "Todos",
+    "confirmed": "Confirmado",
+    "pending": "Pendiente",
+    "actions": "Acciones"
+  },
+  "dashboard": {
+    "welcome": "Bienvenido de nuevo a Diwan Event",
+    "overview_subtitle": "Aquí tiene un vistazo rápido al rendimiento de su evento hoy.",
+    "present": "Presentes",
+    "absent": "Ausentes",
+    "expected": "Asistencia Esperada",
+    "attendance_rate": "Tasa de Asistencia",
+    "recent_checkins": "Registros Recientes",
+    "stats_chart_placeholder": "El gráfico de estadísticas estará aquí...",
+    "hall_status": "Estado de la Sala",
+    "hall_capacity_msg": "La sala principal está casi llena (85%)",
+    "open_live_stream": "Abrir Directo"
+  },
+  "participants": {
+    "title": "Gestión de Participantes",
+    "name": "Nombre Completo",
+    "council": "Organización",
+    "status": "Estado",
+    "time": "Hora de Entrada",
+    "total_registered": "Total Participantes Registrados",
+    "search_placeholder": "Buscar por nombre, organización o ref...",
+    "no_results": "No se encontraron resultados",
+    "check_filters": "Por favor, verifique sus filtros"
+  },
+  "landing": {
+    "nav": {
+      "solutions": "Soluciones",
+      "features": "Funcionalidades",
+      "for_whom": "Para Quién",
+      "pricing": "Precios",
+      "resources": "Recursos",
+      "about": "Nosotros",
+      "request_demo": "Demo",
+      "login": "Ingresar",
+      "start_trial": "Prueba Gratis"
+    },
+    "hero": {
+      "headline": "La Plataforma de Eventos Inteligente que Transforma la Asistencia en Conexiones",
+      "subheadline": "Combine inteligencia espacial en tiempo real, networking impulsado por IA y gestión avanzada de leads para crear eventos con valor de negocio medible.",
+      "cta_primary": "Prueba Gratis",
+      "cta_secondary": "Ver Demo",
+      "social_proof": "Con la confianza de más de 500 organizadores en 40+ países"
+    },
+    "problem": {
+      "title": "La Industria de Eventos Enfrenta Desafíos Críticos",
+      "sub_headline": "Los métodos tradicionales ya no son suficientes para las exigencias del panorama moderno de eventos basado en datos.",
+      "organizer": {
+        "title": "Puntos Ciegos en Operaciones Real-Time",
+        "desc": "Los organizadores carecen de visibilidad en tiempo real sobre el flujo de personas, puntos de congestión y compromiso."
+      },
+      "exhibitor": {
+        "title": "Generación de Leads de Baja Calidad",
+        "desc": "El escaneo tradicional no proporciona inteligencia sobre la calidad, relevancia o potencial de seguimiento de los leads."
+      },
+      "participant": {
+        "title": "Oportunidades de Networking Perdidas",
+        "desc": "Los participantes asisten a eventos pero rara vez conocen a las personas adecuadas o descubren sesiones relevantes."
+      },
+      "learn_more": "Saber Más"
+    },
+    "features": {
+      "title": "Capacidades Técnicas Fundamentales",
+      "f1": {
+        "title": "Mapas de Calor y Análisis",
+        "desc": "Monitoree la densidad y movimientos en tiempo real. Reciba alertas predictivas antes de cuellos de botella.",
+        "badge": "Empresarial"
+      },
+      "f2": {
+        "title": "Matchmaking IA por Vectores",
+        "desc": "Conexiones inteligentes utilizando habilidades y perfiles profesionales. Conecte a los participantes automáticamente.",
+        "badge": "Impulsado por GPT-4o"
+      },
+      "f3": {
+        "title": "Scoring y Recuperación de Leads",
+        "desc": "Los expositores obtienen puntuaciones de calidad instantáneas, notas de voz y exportaciones listas para CRM.",
+        "badge": "Mobile-First"
+      },
+      "f4": {
+        "title": "Soporte de Escáneres Profesionales",
+        "desc": "Integración directa con Zebra, Honeywell y NFC. Procese más de 10,000 escaneos por segundo.",
+        "badge": "Edge Computing"
+      },
+      "f5": {
+        "title": "Recomendaciones Accionables",
+        "desc": "Sugerencias de IA: 'Abra la puerta 4 ahora' o 'Mueva el catering para reducir la congestión en 15 minutos.'",
+        "badge": "Tiempo Real"
+      },
+      "f6": {
+        "title": "Cumplimiento RGPD y SOC2",
+        "desc": "Seguridad de nivel empresarial, soberanía de datos, control de privacidad y pistas de auditoría.",
+        "badge": "Certificado"
+      }
+    },
+    "solutions": {
+      "title": "Soluciones a Medida para Cada Evento",
+      "s1": {
+        "title": "Conferencias y Seminarios",
+        "desc": "Gestione sesiones, ponentes y compromiso con networking en tiempo real."
+      },
+      "s2": {
+        "title": "Ferias y Exposiciones",
+        "desc": "Maximice el ROI de los expositores con captura inteligente de leads y análisis en tiempo real."
+      },
+      "s3": {
+        "title": "Convenciones Corporativas",
+        "desc": "Simplifique eventos internos a gran escala con inteligencia espacial y seguimiento."
+      },
+      "s4": {
+        "title": "Eventos de Incentivo",
+        "desc": "Cree experiencias memorables con networking de IA y recomendaciones instantáneas."
+      }
+    },
+    "workflow": {
+      "title": "Tres Pasos para Gestión Inteligente",
+      "step1": {
+        "title": "Configuración",
+        "desc": "Defina la estructura, perfiles, categorías de expositores y métricas de éxito en minutos."
+      },
+      "step2": {
+        "title": "Despliegue",
+        "desc": "Distribuya apps, interfaces web e integraciones. Los participantes se registran sin problemas."
+      },
+      "step3": {
+        "title": "Optimización",
+        "desc": "Siga mapas de calor, reciba consejos de IA y capture leads en directo."
+      }
+    },
+    "metrics": {
+      "m1": "Eventos Gestionados",
+      "m2": "Participantes Simultáneos",
+      "m3": "Matches de Networking",
+      "m4": "Satisfacción"
+    },
+    "pricing": {
+      "title": "Precios Transparentes para Todo Tamaño",
+      "sub": "Elija el plan que mejor se adapte. Escale según crezca.",
+      "starter": {
+        "title": "Starter",
+        "price": "999$/evento",
+        "desc": "Para eventos pequeños y medianos (hasta 1,000 participantes)",
+        "features": [
+          "App móvil participantes",
+          "Análisis básicos",
+          "Captura de leads (100)",
+          "Soporte email"
+        ]
+      },
+      "pro": {
+        "title": "Profesional",
+        "price": "2,999$/evento",
+        "desc": "Para eventos grandes (hasta 10,000 participantes)",
+        "features": [
+          "Todo lo de Starter, más:",
+          "Motor de networking IA",
+          "Scoring avanzado de leads",
+          "Integración de escáneres",
+          "Soporte prioritario",
+          "Branding personalizado"
+        ]
+      },
+      "enterprise": {
+        "title": "Enterprise",
+        "price": "A medida",
+        "desc": "Para eventos a gran escala (50,000+ participantes)",
+        "features": [
+          "Todo lo de Pro, plus:",
+          "Análisis prescriptivos",
+          "Despliegue Edge",
+          "Gestor de cuenta dedicado",
+          "Integraciones CRM",
+          "Garantía SLA"
+        ]
+      },
+      "cta": "Empezar",
+      "cta_trial": "Prueba Gratis",
+      "cta_sales": "Contactar Ventas",
+      "trial_note": "Todos los planes incluyen 30 días de prueba gratis. Sin tarjeta de crédito."
+    },
+    "product_experience": {
+      "badge": "Tour Interactivo del Producto",
+      "title": "Experimente el Poder del <br /> <span class=\"text-brand-primary\">Panel de Diwan</span>",
+      "sub": "Haga un recorrido autoguiado por nuestra interfaz de gestión. Vea lo fácil que es controlar cada aspecto de su evento.",
+      "tabs": {
+        "analytics": {
+          "title": "Analíticas en Vivo",
+          "label": "DATOS CLAVE",
+          "desc": "Monitoree patrones de asistencia, horarios pico y velocidad de registro en tiempo real."
+        },
+        "checkin": {
+          "title": "Gestión de Entradas",
+          "label": "OPERACIONES IN-SITU",
+          "desc": "Gestione estaciones de escaneo y colas de impresión de acreditaciones desde un centro de mando unificado."
+        },
+        "networking": {
+          "title": "Muro de Interacción",
+          "label": "PRUEBA SOCIAL",
+          "desc": "Muestre interacciones de asistentes, encuestas en vivo y feeds sociales para dinamizar el evento."
+        }
+      }
+    },
+    "attendee_app": {
+      "badge": "Experiencia Móvil",
+      "title": "Su Evento, <br /> <span class=\"text-brand-primary\">En el Bolsillo de sus Invitados</span>",
+      "sub": "Ofrezca a sus asistentes una experiencia móvil completa que los mantenga conectados, informados y comprometidos durante todo el evento.",
+      "features": {
+        "agenda": "Agenda Personalizada",
+        "networking": "Networking Inteligente",
+        "scans": "Acreditación Digital y QR",
+        "maps": "Planos Interactivos"
+      }
+    },
+    "efficiency_matrix": {
+      "title": "Ahorre Cientos de <br /> <span class=\"text-brand-primary\">Horas de Trabajo</span>",
+      "sub": "¿Por qué perder tiempo con métodos tradicionales? Diwan Event automatiza todas sus operaciones in-situ.",
+      "manual": {
+        "title": "Métodos Tradicionales",
+        "time": "15+ Minutos",
+        "label": "POR ASISTENTE",
+        "steps": ["Listas en papel", "Ingreso manual de datos", "Largas colas", "Impresión lenta de acreditaciones"]
+      },
+      "diwan": {
+        "title": "Con Diwan Event",
+        "time": "3 Segundos",
+        "label": "POR ASISTENTE",
+        "steps": ["Escaneo QR instantáneo", "Sincronización automática", "Cero colas", "Impresión ultrarrápida"]
+      }
+    },
+    "hardware_showcase": {
+      "badge": "Infraestructura In-situ",
+      "title": "Soporte Técnico <br /> <span class=\"text-brand-primary\">para Hardware Profesional</span>",
+      "sub": "Diwan Event se conecta perfectamente con equipos profesionales para operaciones in-situ rápidas, confiables y profesionales.",
+      "items": {
+        "scanners": { "title": "Escáneres Ultrarrápidos", "desc": "Soporte Honeywell y Zebra para entrada en fracciones de segundo." },
+        "printers": { "title": "Impresión Bajo Demanda", "desc": "Impresión inalámbrica de acreditaciones que se adapta a su afluencia." },
+        "kiosks": { "title": "Quioscos Autoservicio", "desc": "Reduzca costos de personal con estaciones de registro autónomas." }
+      }
+    },
+    "integrations": {
+      "badge": "Integración Total",
+      "title": "Integración Completa con su Stack Técnico",
+      "sub": "Diwan Event no vive aislado. Nos integramos con las herramientas que ya usa para asegurar que sus datos fluyan instantáneamente.",
+      "crm": { "title": "Sincronización CRM", "desc": "Exportación instantánea de leads" },
+      "api": { "title": "Cloud API", "desc": "Capacidades REST completas y abiertas" },
+      "tools": {
+        "salesforce": "Gestión de Clientes",
+        "hubspot": "Marketing",
+        "zebra": "Hardware Logístico",
+        "honeywell": "Sensores",
+        "dynamics": "Planificación Empresarial",
+        "slack": "Comunicación Interna"
+      }
+    },
+    "marquee": {
+      "badge": "El Ecosistema Técnico Más Avanzado para los Eventos del Futuro"
+    },
+    "showcase": {
+      "title": "Diseñado para Eventos <br /> <span class=\"text-brand-primary\">de Nueva Generación</span>",
+      "sub": "Experimente una plataforma que combina potencia y simplicidad, inspirada en las tecnologías mundiales de gestión de multitudes.",
+      "cta": "Ver todas las funcionalidades",
+      "active_now": "Activo Ahora",
+      "registration": {
+        "title": "Registro Instantáneo e Inteligente",
+        "desc": "Cree códigos QR y acreditaciones en segundos. Nuestro sistema maneja miles de entradas sin demoras."
+      },
+      "analytics": {
+        "title": "Análisis en Tiempo Real",
+        "desc": "Siga la asistencia, el compromiso y el flujo de personas en directo. Obtenga informes detallados al finalizar el evento."
+      },
+      "networking": {
+        "title": "Networking Inteligente",
+        "desc": "Conecte a los participantes mediante emparejamiento inteligente basado en intereses profesionales."
+      }
+    },
+    "event_types": {
+      "title": "Una Plataforma para <br /> <span class=\"text-brand-primary\">Todas las Ocasiones</span>",
+      "sub": "Ya sea que organice una reunión ejecutiva íntima o una feria internacional masiva, Diwan Event se adapta a su flujo de trabajo único.",
+      "corporate": {
+        "title": "Eventos Corporativos",
+        "desc": "Desde asambleas generales hasta lanzamientos de producto, gestione cada detalle con precisión."
+      },
+      "conference": {
+        "title": "Conferencias Internacionales",
+        "desc": "Amplíe su alcance con un sistema de registro potente y soporte multilingüe para asistentes internacionales."
+      },
+      "academic": {
+        "title": "Foros Académicos",
+        "desc": "Simplifique la presentación de artículos y el seguimiento de delegaciones para la excelencia educativa."
+      },
+      "awards": {
+        "title": "Ceremonias y Galas",
+        "desc": "Cree experiencias excepcionales con gestión VIP y planos de mesa digitales."
+      }
+    },
+    "extra_features": {
+      "title": "Todo lo que Necesita",
+      "sub": "Un conjunto completo de herramientas diseñadas para gestionar cada aspecto del ciclo de vida de su evento.",
+      "offline": { "title": "Modo Offline", "desc": "Sincronización automática al volver la conexión" },
+      "gdpr": { "title": "Cumplimiento RGPD", "desc": "Protección de datos de nivel empresarial" },
+      "setup": { "title": "Configuración Instantánea", "desc": "Empiece en menos de 30 minutos" },
+      "multi_lang": { "title": "Multilingüe", "desc": "Soporte nativo de más de 15 idiomas" },
+      "mobile": { "title": "Aplicación Móvil", "desc": "Apps iOS y Android para asistentes" },
+      "polling": { "title": "Encuestas en Vivo", "desc": "Herramientas de interacción en tiempo real" },
+      "api": { "title": "Acceso API", "desc": "Integración con cualquier software existente" },
+      "reports": { "title": "Informes Personalizados", "desc": "Cree las vistas de datos que necesita" },
+      "roles": { "title": "Gestión de Roles", "desc": "Permisos granulares para su equipo" },
+      "printing": { "title": "Impresión de Acreditaciones", "desc": "Integración de impresión in-situ" },
+      "email": { "title": "Automatización de Email", "desc": "Recorridos personalizados para asistentes" },
+      "sso": { "title": "Inicio de Sesión Único SSO", "desc": "Integración SSO segura para empresas" }
+    },
+    "faq": {
+      "title": "Preguntas Frecuentes",
+      "q1": "¿Cómo funciona el networking por IA?",
+      "a1": "Nuestro motor utiliza algoritmos de aprendizaje automático para emparejar intereses, sugiriendo las personas más relevantes.",
+      "q2": "¿Es Diwan Event compatible con RGPD?",
+      "a2": "Sí, cumplimos con los más altos estándares de protección de datos, incluido el RGPD.",
+      "still_questions": "¿Todavía tiene preguntas?",
+      "help_text": "Nuestro equipo está aquí para ayudarle 24/7.",
+      "contact_cta": "Contactar Soporte"
+    },
+    "cta_final": {
+      "title": "¿Listo para Transformar sus Eventos?",
+      "sub": "Únase a cientos de organizadores que han aumentado el compromiso y el ROI con Diwan Event."
+    },
+    "request_demo": {
+      "badge": "Solicite una Visita Privada",
+      "title": "Experimente el Futuro de la Inteligencia de Eventos",
+      "sub": "Vea cómo Diwan Event puede transformar su próximo evento con analíticas en tiempo real, networking IA y seguridad empresarial.",
+      "f1": "Recorrido personalizado por las funciones clave",
+      "f2": "Estrategia de precios a su medida",
+      "f3": "Análisis de integración con su stack técnico",
+      "f4": "Consejos expertos sobre flujo e inteligencia espacial",
+      "form": {
+        "title": "Solicitar Demo",
+        "subtitle": "Sin compromiso",
+        "name": "Nombre Completo",
+        "email": "Email Profesional",
+        "company": "Empresa",
+        "size": "Tamaño del Evento",
+        "message": "Cuéntenos sobre su evento",
+        "placeholder_message": "Objetivos, fechas, lugares...",
+        "submit": "Confirmar Solicitud",
+        "success_title": "¡Solicitud Enviada!",
+        "success_msg": "Gracias por su interés. Un consultor le contactará en 24 horas.",
+        "another": "Enviar otra solicitud",
+        "privacy": "Al enviar, acepta nuestra Política de Privacidad"
+      }
+    },
+    "common_labels": {
+      "efficiency": "Eficiencia Redefinida",
+      "capabilities": "Capacidades Clave",
+      "solutions_badge": "Soluciones a Medida",
+      "solutions_desc": "Proporcionamos módulos especializados diseñados para los requisitos únicos de cada evento.",
+      "explore_solution": "Explorar Solución",
+      "pricing_badge": "Inversión Flexible",
+      "most_popular": "Más Popular",
+      "faq_badge": "Base de Conocimientos",
+      "faq_sub": "Todo lo que necesita saber sobre nuestra plataforma y cómo escalar su próximo gran evento.",
+      "contact_support": "Contactar Soporte",
+      "cta_badge": "Únase a la Revolución",
+      "trust_1": "Sin Tarjeta de Crédito",
+      "trust_2": "Cancele en cualquier momento",
+      "trust_3": "Acceso total a funciones",
+      "integrations_badge": "Conectividad Total",
+      "integrations_title": "Conecte todo su Stack Técnico",
+      "integrations_desc": "Diwan Event no vive aislado. Nos integramos con las herramientas que ya usa para asegurar el flujo de datos.",
+      "footer": {
+        "platform": "Plataforma",
+        "industries": "Sectores",
+        "corporate": "Corporativo",
+        "medical": "Médico",
+        "education": "Educación",
+        "exhibitions": "Ferias y Conferencias",
+        "company": "Empresa",
+        "about": "Nosotros",
+        "contact": "Contacto",
+        "blog": "Blog",
+        "careers": "Empleo",
+        "legal": "Legal",
+        "privacy": "Política de Privacidad",
+        "terms": "Términos de Servicio",
+        "security": "Seguridad Digital",
+        "gdpr": "Cumplimiento RGPD",
+        "desc": "El ecosistema de gestión de eventos más sofisticado del mundo. Diseñado para entornos empresariales exigentes.",
+        "offices": "Argel, Argelia",
+        "certified": "Certificado SOC2 Tipo II",
+        "last_update": "Última actualización: Hoy"
+      },
+      "hero_mockup": {
+        "badge": "El Futuro de la Inteligencia de Eventos",
+        "live_analytics": "Analíticas en Vivo",
+        "active_system": "Sistema Activo",
+        "system_live": "Sistema en Línea",
+        "intelligence": "Inteligencia",
+        "roi_metric": "+24% ROI",
+        "analytics": "Analíticas del Evento",
+        "dashboard": "Panel en Tiempo Real",
+        "efficiency": "Eficiencia",
+        "accuracy": "Precisión",
+        "uptime": "99.9% Disponibilidad",
+        "scalable": "Infra Escalable"
+      }
+    },
+    "auth": {
+      "login": {
+        "title": "Iniciar Sesión",
+        "subtitle": "Bienvenido de nuevo a Diwan Event",
+        "username": "Usuario",
+        "password": "Contraseña",
+        "submit": "Entrar al Sistema",
+        "no_account": "¿No tiene cuenta?",
+        "register_now": "Prueba Gratis",
+        "error": "Error de inicio. Verifique sus credenciales."
+      },
+      "register": {
+        "title": "Crear Cuenta",
+        "subtitle": "Únase al futuro de la gestión de eventos",
+        "fullname": "Nombre Completo",
+        "username": "Usuario",
+        "password": "Contraseña",
+        "role": "Rol de la Cuenta",
+        "role_admin": "Organizador (Admin)",
+        "role_scanner": "Escáner (In-situ)",
+        "role_viewer": "Lector (Sólo lectura)",
+        "submit": "Crear Cuenta",
+        "have_account": "¿Ya tiene cuenta?",
+        "login_now": "Inicie sesión aquí",
+        "success": "¡Cuenta creada! Ya puede iniciar sesión.",
+        "error": "Error durante el registro. Inténtelo de nuevo."
+      }
+    }
+  }
+}

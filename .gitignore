@@ -1,0 +1,75 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyd
+*.pyo
+*.pdb
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+*.so
+
+# Virtual Environment — الأهم
+venv/
+env/
+.env
+.venv
+ENV/
+
+# لكن احتفظ بـ .env.example
+!.env.example
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+diwan.log
+logs/
+
+# QR codes & exports (generated files)
+attendance_system/qr_codes/
+attendance_system/exports/
+attendance_system/static/sponsors/
+attendance_system/static/speakers/
+attendance_system/static/qr/
+
+# Alembic
+attendance_system/alembic/versions/__pycache__/
+
+# Node modules & build
+dashboard/node_modules/
+dashboard/dist/
+dashboard/.vite/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Scripts de nettoyage (ne pas versionner)
+attendance_system/cleanup_*.py
+attendance_system/force_*.py
+attendance_system/nuclear_*.py
+attendance_system/final_cleanup.py
+attendance_system/fix_db.py
+attendance_system/fix_sequences.py
+
+# Legacy (deprecated)
+attendance_system/legacy/
+
+# Uploads temporaires
+attendance_system/uploads/

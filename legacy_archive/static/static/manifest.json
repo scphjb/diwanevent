@@ -1,0 +1,22 @@
+{
+  "name": "Diwan Event - منصة ديوان لتسيير الفعاليات",
+  "short_name": "Diwan Event",
+  "description": "Diwan Event Platform - المنصة الرسمية لإدارة الفعاليات",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#022C22",
+  "theme_color": "#D4AF37",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/static/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/static/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

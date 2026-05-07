@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>شركاء النجاح | {{ settings.event_name }}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: {{ settings.primary_color or '#D4AF37' }};
+            --secondary: {{ settings.secondary_color or '#022C22' }};
+            --bg: #000000;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Cairo', sans-serif; }
+        body { background: var(--bg); color: #fff; height: 100vh; overflow: hidden; }
+
+        .screen-container {
+            height: 100vh; width: 100vw;
+            background: radial-gradient(circle at center, var(--secondary), #000);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            position: relative;
+        }
+
+        .header-label {
+            position: absolute; top: 4rem; font-size: 2.5rem; font-weight: 700;
+            color: var(--primary); opacity: 0.8; letter-spacing: 2px;
+            animation: fadeInDown 1s ease;
+        }
+
+        .sponsor-carousel {
+            width: 80%; height: 60%;
+            display: flex; align-items: center; justify-content: center;
+            position: relative;
+        }
+
+        .sponsor-slide {
+            position: absolute; opacity: 0; transform: scale(0.9);
+            transition: all 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex; flex-direction: column; align-items: center; gap: 3rem;
+            text-align: center; width: 100%;
+        }
+
+        .sponsor-slide.active { opacity: 1; transform: scale(1); }
+
+        .sponsor-logo-box {
+            background: white; padding: 3rem; border-radius: 3rem;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.5), 0 0 40px rgba(212,175,55,0.2);
+            max-width: 800px; max-height: 400px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .sponsor-logo-box img { max-width: 100%; max-height: 100%; object-fit: contain; }
+
+        .sponsor-info h2 { font-size: 4rem; font-weight: 900; color: #fff; margin-bottom: 0.5rem; }
+        .sponsor-tier {
+            display: inline-block; padding: 0.5rem 2.5rem; border-radius: 3rem;
+            font-size: 1.5rem; font-weight: 900; text-transform: uppercase;
+        }
+        .tier-platinum { background: linear-gradient(135deg, #e5e7eb, #9ca3af); color: #000; }
+        .tier-gold { background: linear-gradient(135deg, #fef08a, #ca8a04); color: #000; }
+        .tier-silver { background: linear-gradient(135deg, #d1d5db, #6b7280); color: #fff; }
+        .tier-bronze { background: linear-gradient(135deg, #fdba74, #9a3412); color: #fff; }
+
+        .progress-bar-container {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 10px;
+            background: rgba(255,255,255,0.1);
+        }
+        .progress-bar-fill {
+            height: 100%; background: var(--primary); width: 0%;
+            transition: width linear;
+        }
+
+        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-50px); } to { opacity: 0.8; transform: translateY(0); } }
+
+        .no-sponsors { font-size: 2rem; opacity: 0.5; }
+    </style>
+</head>
+<body>
+
+    <div class="screen-container">
+        <div class="header-label">بدعم كريم من شركائنا</div>
+        
+        <div class="sponsor-carousel" id="carousel">
+            <div class="no-sponsors" id="empty-msg">جاري تحميل قائمة الرعاة...</div>
+        </div>
+
+        <div class="progress-bar-container">
+            <div class="progress-bar-fill" id="progress-fill"></div>
+        </div>
+    </div>
+
+    <script>
+        let sponsors = [];
+        let currentIndex = 0;
+        let timer = null;
+
+        function esc(str) {
+            if (!str) return "";
+            const div = document.createElement("div");
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        async function loadSponsors() {
+            try {
+                const res = await fetch('/api/sponsors');
+                const data = await res.json();
+                sponsors = data.sponsors;
+                
+                if (sponsors.length === 0) {
+                    document.getElementById('empty-msg').textContent = 'لا يوجد رعاة فاعلون حالياً';
+                    return;
+                }
+                
+                renderSponsors();
+                startCarousel();
+            } catch (e) {
+                console.error("Failed to load sponsors", e);
+            }
+        }
+
+        function renderSponsors() {
+            const container = document.getElementById('carousel');
+            container.innerHTML = '';
+            
+            sponsors.forEach((s, i) => {
+                const slide = document.createElement('div');
+                slide.className = `sponsor-slide ${i === 0 ? 'active' : ''}`;
+                slide.id = `slide-${i}`;
+                
+                slide.innerHTML = `
+                    <div class="sponsor-logo-box">
+                        <img src="${s.logo_url}" alt="${esc(s.name)}">
+                    </div>
+                    <div class="sponsor-info">
+                        <h2>${esc(s.name)}</h2>
+                        <span class="sponsor-tier tier-${esc(s.tier)}">${esc(getTierName(s.tier))}</span>
+                    </div>
+                `;
+                container.appendChild(slide);
+            });
+        }
+
+        function getTierName(tier) {
+            const names = {
+                'platinum': 'شريك بلاتيني',
+                'gold': 'شريك ذهبي',
+                'silver': 'شريك فضي',
+                'bronze': 'شريك برونزي'
+            };
+            return names[tier] || 'شريك';
+        }
+
+        function startCarousel() {
+            if (sponsors.length <= 1) {
+                if(sponsors.length === 1) {
+                    document.getElementById('progress-fill').style.width = '100%';
+                }
+                return;
+            }
+            showNext();
+        }
+
+        function showNext() {
+            const currentSponsor = sponsors[currentIndex];
+            const duration = currentSponsor.display_duration * 1000;
+            
+            // Progress bar animation
+            const fill = document.getElementById('progress-fill');
+            fill.style.transition = 'none';
+            fill.style.width = '0%';
+            
+            setTimeout(() => {
+                fill.style.transition = `width ${duration}ms linear`;
+                fill.style.width = '100%';
+            }, 50);
+
+            timer = setTimeout(() => {
+                const currentSlide = document.getElementById(`slide-${currentIndex}`);
+                currentSlide.classList.remove('active');
+                
+                currentIndex = (currentIndex + 1) % sponsors.length;
+                
+                const nextSlide = document.getElementById(`slide-${currentIndex}`);
+                nextSlide.classList.add('active');
+                
+                showNext();
+            }, duration);
+        }
+
+        window.onload = loadSponsors;
+        
+        // Refresh list every 5 minutes
+        setInterval(async () => {
+            const res = await fetch('/api/sponsors');
+            const data = await res.json();
+            if (JSON.stringify(data.sponsors) !== JSON.stringify(sponsors)) {
+                location.reload(); // Hard refresh to update everything
+            }
+        }, 300000);
+    </script>
+</body>
+</html>

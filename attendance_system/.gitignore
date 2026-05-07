@@ -1,0 +1,31 @@
+# Virtual Environment
+venv/
+env/
+.env
+
+# Python caches
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# IDE files
+.vscode/
+.idea/
+
+# Database
+# Note: attendance.db might be needed depending on your environment, but generally not in git
+attendance.db
+attendance.db-journal
+attendance.db-wal
+attendance.db-shm
+
+# Exports and Uploads
+exports/backups/
+exports/badges/
+exports/emergency_csv/
+exports/qr_codes/
+exports/reports/
+static/uploads/
+
+# macOS
+.DS_Store
