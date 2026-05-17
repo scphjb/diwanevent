@@ -99,7 +99,7 @@ services:
       CELERY_BROKER_URL: redis://redis:6379/1
       SECRET_KEY: ${SECRET_KEY}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY}
-      APP_DOMAIN: ${APP_DOMAIN:-https://diwanevent.com}
+      APP_DOMAIN: ${APP_DOMAIN:-https://diwan.net}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
       SMTP_SERVER: ${SMTP_SERVER}
       SMTP_PORT: ${SMTP_PORT:-587}

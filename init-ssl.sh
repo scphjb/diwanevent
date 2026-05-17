@@ -3,7 +3,7 @@ DOMAIN=$1
 EMAIL=$2
 
 if [ -z "$DOMAIN" ] || [ -z "$EMAIL" ]; then
-    echo "Usage: ./init-ssl.sh diwanevent.com admin@email.com"
+    echo "Usage: ./init-ssl.sh diwan.net admin@email.com"
     exit 1
 fi
 
