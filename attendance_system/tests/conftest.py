@@ -10,15 +10,26 @@ import os
 # إضافة مجلد التطبيق للمسار
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
+# ضبط متغيرات البيئة قبل الاستيراد لتجنب أخطاء Pydantic
+os.environ["SECRET_KEY"] = "test_secret_key_for_testing_only_not_real_32chars!"
+os.environ["DATABASE_URL"] = "sqlite:///./test_api.db"
+
+# استيراد كافة الموديلات صراحة لتسجيلها في الميتاداتا
+from app.models.base import Base
+from app.models.user import User
+from app.models.event import Event
+from app.models.participant import Participant, Attendance
+from app.models.others import Sponsor, AgendaSession, Speaker
+from app.models.template import BadgeTemplate
+
 from main import app
 from app.core.database import get_db
-from app.models.base import Base
 from app.core.config import settings
 
 # استخدام قاعدة بيانات SQLite في الذاكرة للاختبارات السريعة
 # ملاحظة: إذا كان هناك كود يعتمد على PostgreSQL حصراً (مثل JSONB)، يجب استخدام قاعدة بيانات PostgreSQL للاختبار.
 # حالياً سنستخدم الذاكرة للسرعة، وفي حالة فشل الاختبارات بسبب Postgres-specific types، سنحولها لـ Postgres.
-SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
+SQLALCHEMY_DATABASE_URL = "sqlite:///./test_api.db"
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
@@ -29,6 +40,7 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engin
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_db():
+    print(f"\n[DEBUG] Tables detected: {list(Base.metadata.tables.keys())}")
     Base.metadata.create_all(bind=engine)
     yield
     Base.metadata.drop_all(bind=engine)

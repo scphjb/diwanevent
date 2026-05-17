@@ -1,0 +1,374 @@
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  User, Mail, Building, CreditCard, CheckCircle2, ArrowRight,
+  ShieldCheck, Calendar, MapPin, Ticket, Sparkles, Phone, Hash, Info,
+  UserCheck, Star, Mic, Newspaper, ChevronDown
+} from 'lucide-react';
+import api from '../services/api';
+import { Button } from '../components/ui/Button';
+
+const safeFormatDate = (dateString) => {
+  try {
+    if (!dateString) return 'سيتم التحديد لاحقاً';
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return 'سيتم التحديد لاحقاً';
+    return date.toLocaleDateString('ar-DZ', { 
+      day: 'numeric', 
+      month: 'long', 
+      year: 'numeric',
+      numberingSystem: 'latn'
+    });
+  } catch (e) { return 'سيتم التحديد لاحقاً'; }
+};
+
+const PARTICIPANT_ROLES = [
+  { value: 'attendee',  label: 'مشارك عادي',     icon: '👤', desc: 'حضور الفعاليات والجلسات' },
+  { value: 'vip',       label: 'ضيف شرف',         icon: '⭐', desc: 'بروتوكول خاص وأولوية الدخول' },
+  { value: 'press',     label: 'صحافة وإعلام',    icon: '📰', desc: 'تغطية إعلامية معتمدة' },
+  { value: 'speaker',   label: 'متحدث / خبير',    icon: '🎤', desc: 'تقديم عروض وجلسات' },
+];
+
+const AttendeeRegistrationPage = () => {
+  const { eid } = useParams();
+  const eventId = eid || 1;
+  const navigate = useNavigate();
+
+  const [event, setEvent] = useState(null);
+  const [customFields, setCustomFields] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [step, setStep] = useState('form'); // 'form' | 'success' | 'otp_sent'
+
+  const [formData, setFormData] = useState({
+    full_name: '',
+    email: '',
+    phone_number: '',
+    council: '',
+    role: 'attendee',
+  });
+  const [customValues, setCustomValues] = useState({});
+  const [error, setError] = useState(null);
+  const [registrationResult, setRegistrationResult] = useState(null);
+  const [showRolePicker, setShowRolePicker] = useState(false);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [eventRes, fieldsRes] = await Promise.all([
+          api.get(`events/${eventId}`),
+          api.get(`events/${eventId}/registration-fields`).catch(() => ({ data: [] }))
+        ]);
+        setEvent(eventRes.data);
+        setCustomFields(fieldsRes.data);
+        const initialCustom = {};
+        fieldsRes.data.forEach(f => initialCustom[f.field_name] = '');
+        setCustomValues(initialCustom);
+      } catch (err) {
+        setError('تعذر جلب بيانات الفعالية.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [eventId]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setError(null);
+
+    try {
+      // 1. تسجيل المشارك
+      const regResponse = await api.post(`participants/public/register`, {
+        event_id: parseInt(eventId),
+        full_name: formData.full_name,
+        email: formData.email || null,
+        council: formData.council || 'عضو خارجي',
+        custom_values: { ...customValues, role: formData.role, phone_number: formData.phone_number }
+      });
+
+      const result = regResponse.data;
+      setRegistrationResult(result);
+
+      // 2. إذا مدفوع → توجيه للدفع
+      if (event.require_payment && event.ticket_price > 0 && event.payment_gateway && event.payment_gateway !== 'none') {
+        const payResponse = await api.post('payments/create-session', {
+          event_id: parseInt(eventId),
+          participant_id: result.participant_id,
+          success_url: `${window.location.origin}/p/${eventId}/${result.participant_id}?status=paid`,
+          cancel_url: window.location.href
+        });
+        if (payResponse.data.checkout_url) {
+          window.location.href = payResponse.data.checkout_url;
+          return;
+        }
+      }
+
+      // 3. تم إرسال الإيميل الموحد آلياً من الخلفية عند التسجيل
+      if (formData.email) {
+        setStep('otp_sent');
+      } else {
+        setStep('success');
+      }
+
+    } catch (err) {
+      setError(err.response?.data?.detail || 'حدث خطأ أثناء التسجيل.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const selectedRole = PARTICIPANT_ROLES.find(r => r.value === formData.role) || PARTICIPANT_ROLES[0];
+
+  if (loading) return (
+    <div className="min-h-screen bg-[#022C22] flex items-center justify-center">
+      <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full" />
+    </div>
+  );
+
+  if (!event) return (
+    <div className="min-h-screen bg-[#022C22] flex items-center justify-center text-white">
+      <p>تعذر تحميل بيانات الفعالية</p>
+    </div>
+  );
+
+  // ─── شاشة النجاح ─────────────────────────────────────────────────
+  if (step === 'success' || step === 'otp_sent') {
+    return (
+      <div className="min-h-screen bg-[#022C22] flex items-center justify-center p-6" dir="rtl">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-white/5 border border-white/10 rounded-[40px] p-12 max-w-md w-full text-center"
+        >
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: 'spring', stiffness: 200, delay: 0.2 }}
+            className="text-6xl mb-6"
+          >
+            {step === 'otp_sent' ? '📧' : '🎉'}
+          </motion.div>
+          <h1 className="text-3xl font-black text-white mb-3">
+            {registrationResult?.merged 
+              ? 'تم تأكيد دعوتك المسبقة!' 
+              : (step === 'otp_sent' ? 'تحقق من بريدك!' : 'تم التسجيل بنجاح!')}
+          </h1>
+          <p className="text-emerald-400/60 mb-8 text-sm leading-relaxed">
+            {registrationResult?.merged
+              ? (step === 'otp_sent' 
+                  ? `لقد وجدنا بياناتك المسبقة. تم تحديثها وإرسال رمز التحقق إلى ${formData.email}`
+                  : 'لقد وجدنا تسجيلك المسبق وتم تحديث بياناتك بنجاح.')
+              : (step === 'otp_sent'
+                  ? `أرسلنا رمز تحقق إلى ${formData.email} — استخدمه لتسجيل الدخول لبوابة المشاركين`
+                  : 'تم تسجيلك بنجاح في الفعالية. احتفظ برقمك للدخول.')}
+          </p>
+
+          {registrationResult && (
+            <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-6 mb-8 text-right">
+              <p className="text-amber-500/60 text-xs font-bold uppercase tracking-widest mb-2">رقم مشاركتك</p>
+              <p className="text-4xl font-black text-amber-400 tracking-widest font-mono">{registrationResult.order_num}</p>
+              <p className="text-white/40 text-sm mt-2">احتفظ بهذا الرقم للدخول</p>
+            </div>
+          )}
+
+          <div className="flex flex-col gap-3">
+            {step === 'otp_sent' && (
+              <Button
+                variant="gold"
+                className="w-full h-14 text-lg font-black"
+                onClick={() => navigate(`/participant-login?order_num=${registrationResult.order_num}&email=${formData.email}`)}
+              >
+                تحقق من هويتك وادخل البوابة ←
+              </Button>
+            )}
+            <button
+              onClick={() => navigate('/')}
+              className="text-white/30 text-sm hover:text-white/60 transition-colors"
+            >
+              العودة للصفحة الرئيسية
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // ─── نموذج التسجيل ─────────────────────────────────────────────────
+  return (
+    <div className="min-h-screen bg-[#022C22] text-white selection:bg-amber-500 selection:text-emerald-950 overflow-x-hidden" dir="rtl">
+      <div className="fixed inset-0 pointer-events-none opacity-20">
+        <div className="absolute top-[-10%] right-[-10%] w-[60%] h-[60%] bg-emerald-500 blur-[120px] rounded-full" />
+        <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-amber-500 blur-[100px] rounded-full" />
+      </div>
+
+      <div className="container mx-auto px-6 py-12 lg:py-20 relative z-10">
+        <div className="grid lg:grid-cols-2 gap-16 items-start">
+
+          {/* ─── Info Panel */}
+          <motion.div initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} className="space-y-8 lg:sticky lg:top-12">
+            <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-amber-500 text-sm font-bold">
+              <Sparkles size={16} /> التسجيل مفتوح الآن
+            </div>
+            <h1 className={`font-black leading-tight ${event.event_name?.length > 40 ? 'text-2xl lg:text-4xl' : 'text-4xl lg:text-6xl'}`}>
+              انضم إلينا في
+              <span className="block mt-3 text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">
+                {event.event_name}
+              </span>
+            </h1>
+
+            {!event.registration_enabled && (
+              <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400 font-bold text-sm">
+                ⛔ التسجيل مغلق حالياً لهذه الفعالية.
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-white/5 border border-white/10 p-5 rounded-3xl">
+                <Calendar className="text-amber-500 mb-3" size={20} />
+                <div className="text-xs text-white/40 mb-1 font-bold">التاريخ</div>
+                <div className="text-sm font-bold">{safeFormatDate(event.event_date)}</div>
+              </div>
+              <div className="bg-white/5 border border-white/10 p-5 rounded-3xl">
+                <MapPin className="text-amber-500 mb-3" size={20} />
+                <div className="text-xs text-white/40 mb-1 font-bold">الموقع</div>
+                <div className="text-sm font-bold">{event.location || 'سيتم التحديد لاحقاً'}</div>
+              </div>
+            </div>
+
+            <div className="bg-amber-500/10 border border-amber-500/20 p-6 rounded-[28px] flex items-center justify-between">
+              <div>
+                <div className="text-amber-500 text-xs font-black uppercase tracking-widest mb-1">قيمة التذكرة</div>
+                <div className="text-3xl font-black text-white">
+                  {event.require_payment ? `${Number(event.ticket_price || 0).toLocaleString()} ${event.currency || 'DZD'}` : 'مجاناً 🎁'}
+                </div>
+              </div>
+              <Ticket size={40} className="text-amber-500/20" />
+            </div>
+          </motion.div>
+
+          {/* ─── Form */}
+          <motion.div initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} className="bg-white/5 backdrop-blur-3xl border border-white/10 p-8 md:p-10 rounded-[40px] shadow-2xl">
+            <div className="mb-8">
+              <h2 className="text-2xl font-black mb-2">بيانات التسجيل</h2>
+              <p className="text-emerald-400/40 text-sm font-bold">يرجى إكمال النموذج أدناه</p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-5">
+
+              {/* نوع المشارك */}
+              <div className="space-y-2">
+                <label className="text-xs font-black uppercase tracking-widest text-white/30">نوع المشاركة</label>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setShowRolePicker(!showRolePicker)}
+                    className="w-full flex items-center justify-between bg-white/5 border border-white/10 rounded-2xl px-5 py-4 hover:border-amber-500/40 transition-all"
+                  >
+                    <span className="font-bold text-white">{selectedRole.icon} {selectedRole.label}</span>
+                    <ChevronDown size={16} className={`text-white/30 transition-transform ${showRolePicker ? 'rotate-180' : ''}`} />
+                  </button>
+                  <AnimatePresence>
+                    {showRolePicker && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
+                        className="absolute top-full mt-2 w-full bg-[#0a3d2b] border border-white/10 rounded-2xl overflow-hidden z-50 shadow-2xl"
+                      >
+                        {PARTICIPANT_ROLES.map(role => (
+                          <button
+                            key={role.value} type="button"
+                            onClick={() => { setFormData(p => ({ ...p, role: role.value })); setShowRolePicker(false); }}
+                            className={`w-full flex items-center gap-4 px-5 py-4 text-right hover:bg-white/5 transition-all ${formData.role === role.value ? 'bg-amber-500/10' : ''}`}
+                          >
+                            <span className="text-xl">{role.icon}</span>
+                            <div>
+                              <div className="font-bold text-white text-sm">{role.label}</div>
+                              <div className="text-white/30 text-xs">{role.desc}</div>
+                            </div>
+                          </button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </div>
+
+              {/* الاسم */}
+              <div className="space-y-2">
+                <label className="text-xs font-black uppercase tracking-widest text-white/30">الاسم الكامل *</label>
+                <div className="relative group">
+                  <User className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-amber-500" size={18} />
+                  <input required type="text" value={formData.full_name} onChange={e => setFormData({ ...formData, full_name: e.target.value })} placeholder="الاسم الثلاثي..." className="w-full bg-white/5 border border-white/10 rounded-2xl pr-12 pl-6 py-4 outline-none focus:border-amber-500 transition-all font-bold text-right" />
+                </div>
+              </div>
+
+              {/* الجهة */}
+              <div className="space-y-2">
+                <label className="text-xs font-black uppercase tracking-widest text-white/30">الجهة / المؤسسة *</label>
+                <div className="relative group">
+                  <Building className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-amber-500" size={18} />
+                  <input required type="text" value={formData.council} onChange={e => setFormData({ ...formData, council: e.target.value })} placeholder="اسم الجهة أو المؤسسة..." className="w-full bg-white/5 border border-white/10 rounded-2xl pr-12 pl-6 py-4 outline-none focus:border-amber-500 transition-all font-bold text-right" />
+                </div>
+              </div>
+
+              {/* البريد والهاتف */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-black uppercase tracking-widest text-white/30">البريد الإلكتروني</label>
+                  <div className="relative group">
+                    <Mail className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-amber-500" size={16} />
+                    <input type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} placeholder="email@example.com" className="w-full bg-white/5 border border-white/10 rounded-2xl pr-11 pl-4 py-4 outline-none focus:border-amber-500 transition-all font-bold text-right text-sm" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-black uppercase tracking-widest text-white/30">رقم الهاتف</label>
+                  <div className="relative group">
+                    <Phone className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-amber-500" size={16} />
+                    <input type="tel" value={formData.phone_number} onChange={e => setFormData({ ...formData, phone_number: e.target.value })} placeholder="+213..." className="w-full bg-white/5 border border-white/10 rounded-2xl pr-11 pl-4 py-4 outline-none focus:border-amber-500 transition-all font-bold text-right text-sm" />
+                  </div>
+                </div>
+              </div>
+
+              {/* الحقول المخصصة */}
+              {customFields.map(field => (
+                <div key={field.id} className="space-y-2">
+                  <label className="text-xs font-black uppercase tracking-widest text-white/30">{field.display_label} {field.is_required ? '*' : ''}</label>
+                  <input required={field.is_required} type={field.field_type} value={customValues[field.field_name] || ''} onChange={e => setCustomValues({ ...customValues, [field.field_name]: e.target.value })} placeholder={`أدخل ${field.display_label}...`} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 outline-none focus:border-amber-500 transition-all font-bold text-right" />
+                </div>
+              ))}
+
+              {/* تنبيه بيانات التواصل */}
+              {!formData.email && !formData.phone_number && (
+                <div className="flex items-start gap-3 px-4 py-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl">
+                  <span className="text-amber-500 mt-0.5 shrink-0">⚠️</span>
+                  <p className="text-amber-400/80 text-xs font-bold leading-relaxed">
+                    يُنصح بإدخال البريد أو الهاتف لاستلام رمز الدخول لبوابة المشاركين
+                  </p>
+                </div>
+              )}
+
+              {error && (
+                <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400 text-sm font-bold text-center">{error}</div>
+              )}
+
+              <Button type="submit" disabled={submitting || !event.registration_enabled} className="w-full h-16 bg-amber-500 hover:bg-amber-600 text-emerald-950 rounded-[24px] text-lg font-black flex items-center justify-center gap-3 shadow-2xl shadow-amber-500/20 mt-2">
+                {submitting
+                  ? <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} className="w-6 h-6 border-4 border-emerald-950/20 border-t-emerald-950 rounded-full" />
+                  : <>{event.require_payment ? '💳 تأكيد التسجيل والانتقال للدفع' : '🎟 إتمام التسجيل مجاناً'}</>
+                }
+              </Button>
+
+              <div className="flex items-center justify-center gap-2 text-white/20 text-[10px] font-black uppercase tracking-widest pt-1">
+                <ShieldCheck size={12} /> تشفير آمن للبيانات والمعلومات الشخصية
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default AttendeeRegistrationPage;

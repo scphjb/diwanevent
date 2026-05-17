@@ -11,8 +11,8 @@ class Participant(Base, TimestampMixin):
     qr_code = Column(String, nullable=False, index=True)
     full_name = Column(String, nullable=False)
     role = Column(String)
-    council = Column(String, nullable=False)
-    court = Column(String, nullable=False)
+    organization = Column(String, nullable=False)
+    department = Column(String, nullable=False)  # القسم / التخصص / الوحدة
     seat_info = Column(String)
     id_number = Column(String)
     email = Column(String)
@@ -39,12 +39,14 @@ class Participant(Base, TimestampMixin):
     # Relationships
     event = relationship("Event", back_populates="participants")
     attendance_records = relationship("Attendance", back_populates="participant", cascade="all, delete-orphan")
+    profile = relationship("ParticipantProfile", back_populates="participant", uselist=False, cascade="all, delete-orphan")
+    otps = relationship("ParticipantOTP", back_populates="participant", cascade="all, delete-orphan")
 
 class Attendance(Base, TimestampMixin):
     __tablename__ = "attendance"
 
     id = Column(Integer, primary_key=True, index=True)
-    participant_id = Column(Integer, ForeignKey("participants.id"))
+    participant_id = Column(Integer, ForeignKey("participants.id", ondelete="CASCADE"))
     event_type = Column(String, default='check_in')
     check_in_time = Column(DateTime, default=func.now())
     

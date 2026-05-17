@@ -8,12 +8,14 @@ import SponsorsPage from './pages/SponsorsPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import SessionsPage from './pages/SessionsPage';
 import SettingsPage from './pages/SettingsPage';
-import TemplateDesigner from './pages/TemplateDesigner';
+import BadgeDesigner from './pages/BadgeDesigner';
+import CertificateDesigner from './pages/CertificateDesigner';
 import SelfServicePage from './pages/SelfServicePage';
 import AdminDashboard from './pages/AdminDashboard';
 import ModerationPage from './pages/ModerationPage';
 import SocialWallPage from './pages/SocialWallPage';
 import PublicDisplay from './pages/PublicDisplay';
+import DisplayControlPage from './pages/DisplayControlPage';
 import HardwareManagement from './pages/HardwareManagement';
 import DeveloperPortal from './pages/DeveloperPortal';
 import ParticipantPortal from './pages/ParticipantPortal';
@@ -24,6 +26,7 @@ import EventsPage from './pages/EventsPage';
 import ProfilePage from './pages/ProfilePage';
 import LandingPage from './pages/LandingPage';
 import RegisterPage from './pages/RegisterPage';
+import AttendeeRegistrationPage from './pages/AttendeeRegistrationPage';
 import RequestDemo from './pages/RequestDemo';
 import SuperAdminLayout from './layouts/SuperAdminLayout';
 import SuperAdminDashboard from './pages/SuperAdmin/Dashboard';
@@ -33,6 +36,8 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import SuperAdminPlans from './pages/SuperAdmin/Plans';
 import SuperAdminSettings from './pages/SuperAdmin/Settings';
+import ParticipantLoginPage from './pages/ParticipantLoginPage';
+import DocumentsPage from './pages/DocumentsPage';
 
 /**
  * مكون لحماية المسارات — يدعم التحقق من التوكن والأدوار (RBAC).
@@ -56,15 +61,19 @@ const ProtectedRoute = ({ children, requiredRole }) => {
   return children;
 };
 
+import { EventProvider } from './context/EventContext';
+
 function App() {
   return (
-    <Routes>
+    <EventProvider>
+      <Routes>
       {/* ═══ المسارات العامة ═══ */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/request-demo" element={<RequestDemo />} />
+      <Route path="/participant-login" element={<ParticipantLoginPage />} />
       
       {/* ═══ المسارات المحمية (لوحة التحكم) ═══ */}
       <Route path="/dashboard" element={
@@ -91,6 +100,10 @@ function App() {
         <ProtectedRoute><SponsorsPage /></ProtectedRoute>
       } />
 
+      <Route path="/dashboard/documents" element={
+        <ProtectedRoute><DocumentsPage /></ProtectedRoute>
+      } />
+
       <Route path="/dashboard/stats" element={
         <ProtectedRoute><AnalyticsPage /></ProtectedRoute>
       } />
@@ -112,7 +125,7 @@ function App() {
       } />
 
       <Route path="/dashboard/display" element={
-        <ProtectedRoute><PublicDisplay /></ProtectedRoute>
+        <ProtectedRoute><DisplayControlPage /></ProtectedRoute>
       } />
 
       <Route path="/dashboard/hardware" element={
@@ -127,16 +140,27 @@ function App() {
         <ProtectedRoute><SettingsPage /></ProtectedRoute>
       } />
 
-      <Route path="/dashboard/designer" element={
-        <ProtectedRoute><TemplateDesigner /></ProtectedRoute>
+      <Route path="/dashboard/designer/badge" element={
+        <ProtectedRoute><BadgeDesigner /></ProtectedRoute>
+      } />
+      <Route path="/dashboard/designer/badge/:templateId" element={
+        <ProtectedRoute><BadgeDesigner /></ProtectedRoute>
+      } />
+
+      <Route path="/dashboard/designer/certificate" element={
+        <ProtectedRoute><CertificateDesigner /></ProtectedRoute>
+      } />
+      <Route path="/dashboard/designer/certificate/:templateId" element={
+        <ProtectedRoute><CertificateDesigner /></ProtectedRoute>
       } />
 
       {/* ═══ المسارات العامة (بدون مصادقة) ═══ */}
-      <Route path="/p/:eid/:pid" element={<ParticipantPortal />} />
+      <Route path="/p/:eid/:token" element={<ParticipantPortal />} />
       <Route path="/kiosk/:eid" element={<SelfServicePage />} />
       <Route path="/kiosk" element={<SelfServicePage />} />
+      <Route path="/display/:eid/:channel" element={<PublicDisplay />} />
       <Route path="/display/:eid" element={<PublicDisplay />} />
-      <Route path="/register/:eid" element={<RegisterPage />} />
+      <Route path="/register/:eid" element={<AttendeeRegistrationPage />} />
       <Route path="/register" element={<RegisterPage />} />
 
       {/* ═══ بوابة الإدارة الشاملة (Super Admin Only) ═══ */}
@@ -154,7 +178,8 @@ function App() {
       {/* ═══ التوجيهات التلقائية ═══ */}
       <Route path="/" element={<LandingPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+      </Routes>
+    </EventProvider>
   );
 }
 

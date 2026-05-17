@@ -93,7 +93,7 @@ async def hardware_websocket(websocket: WebSocket):
                             "participant": {
                                 "id": participant.id,
                                 "full_name": participant.full_name,
-                                "council": participant.council,
+                                "organization": participant.organization,
                                 "order_num": participant.order_num
                             }
                         })
@@ -111,8 +111,58 @@ async def hardware_websocket(websocket: WebSocket):
         print(f"Hardware WS Error: {e}")
 
 @router.get("/status")
-def get_hardware_status():
+def get_hardware_status(event_id: int = None):
     """
-    Returns the current state of all hardware devices.
+    إرجاع حالة أجهزة العتاد — يمكن تصفيتها حسب الفعالية.
     """
-    return list(active_devices.values())
+    devices = list(active_devices.values())
+    if event_id is not None:
+        devices = [d for d in devices if d.get('event_id') == event_id]
+    return devices
+
+
+@router.post("/ping")
+async def ping_devices(data: dict):
+    """
+    فحص جميع الأجهزة المتصلة وتحديث حالتها.
+    """
+    event_id = data.get('event_id')
+    devices = list(active_devices.values())
+    if event_id:
+        devices = [d for d in devices if d.get('event_id') == event_id]
+
+    return {
+        "message": f"تم فحص {len(devices)} جهاز",
+        "devices_pinged": len(devices),
+        "online": sum(1 for d in devices if d.get('status') == 'ONLINE'),
+        "offline": sum(1 for d in devices if d.get('status') != 'ONLINE'),
+    }
+
+
+@router.post("/control")
+async def control_device(data: dict):
+    """
+    تبديل حالة جهاز (ONLINE/OFFLINE) من لوحة التحكم.
+    """
+    device_id = data.get('device_id')
+    new_status = data.get('status', 'OFFLINE')
+
+    if device_id not in active_devices:
+        # إذا الجهاز غير موجود في الذاكرة — نُنشئه (حالة افتراضية)
+        active_devices[device_id] = {
+            "id": device_id,
+            "event_id": data.get('event_id', 1),
+            "status": new_status,
+            "type": "GENERIC",
+            "battery": 100,
+        }
+    else:
+        active_devices[device_id]["status"] = new_status
+
+    event_id = active_devices[device_id].get('event_id', 1)
+    await manager.broadcast_to_event(event_id, {
+        "type": "hardware_update",
+        "devices": [d for d in active_devices.values() if d.get('event_id') == event_id]
+    })
+
+    return {"message": f"Device {device_id} status updated to {new_status}"}

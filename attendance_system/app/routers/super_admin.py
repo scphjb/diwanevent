@@ -7,9 +7,10 @@ from app.models.user import User
 from app.models.auth import SubscriptionPlan, Subscription
 from app.models.event import Event
 from app.models.participant import Participant
+from app.models.template import BadgeTemplate
 from pydantic import BaseModel, ConfigDict
 from app.core.auth_deps import get_current_active_user
-from app.core.security import create_access_token
+from app.core.security import create_access_token, create_refresh_token
 
 router = APIRouter()
 
@@ -56,6 +57,12 @@ class PlanUpdate(BaseModel):
     features: Optional[List[str]] = None
     is_active: Optional[bool] = None
 
+class CreditUpdate(BaseModel):
+    credits: int
+
+class UserStatusUpdate(BaseModel):
+    is_active: bool
+
 
 # ═══════════════════════════════════════
 # إحصائيات المنصة
@@ -66,30 +73,40 @@ def get_platform_stats(
     current_user: User = Depends(require_super_admin),
 ):
     """إحصائيات شاملة للمنصة — محمية بصلاحية السوبر أدمن."""
-    total_organizers = db.query(User).filter(User.role == "organizer").count()
-    total_events = db.query(Event).count()
-    total_participants = db.query(Participant).count()
-    active_subscriptions = (
-        db.query(Subscription).filter(Subscription.status == "active").count()
-    )
-    total_plans = db.query(SubscriptionPlan).count()
+    try:
+        total_organizers = db.query(User).filter(User.role == "organizer").count()
+        total_events = db.query(Event).count()
+        total_participants = db.query(Participant).count()
 
-    # إيرادات الاشتراكات
-    revenue = (
-        db.query(func.sum(SubscriptionPlan.price))
-        .join(Subscription, Subscription.plan_id == SubscriptionPlan.id)
-        .filter(Subscription.status == "active")
-        .scalar()
-    ) or 0.0
+        # BUG 4 FIX: جداول الاشتراكات قد لا تكون موجودة بعد — نغلّفها بـ try/except
+        try:
+            active_subscriptions = (
+                db.query(Subscription).filter(Subscription.status == "active").count()
+            )
+            total_plans = db.query(SubscriptionPlan).count()
 
-    return {
-        "total_organizers": total_organizers,
-        "total_events": total_events,
-        "total_participants": total_participants,
-        "active_subscriptions": active_subscriptions,
-        "total_plans": total_plans,
-        "estimated_revenue": float(revenue),
-    }
+            # إيرادات الاشتراكات
+            revenue = (
+                db.query(func.sum(SubscriptionPlan.price))
+                .join(Subscription, Subscription.plan_id == SubscriptionPlan.id)
+                .filter(Subscription.status == "active")
+                .scalar()
+            ) or 0.0
+        except Exception:
+            active_subscriptions = 0
+            total_plans = 0
+            revenue = 0.0
+
+        return {
+            "total_organizers": total_organizers,
+            "total_events": total_events,
+            "total_participants": total_participants,
+            "active_subscriptions": active_subscriptions,
+            "total_plans": total_plans,
+            "estimated_revenue": float(revenue),
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"خطأ في جلب الإحصائيات: {str(e)}")
 
 
 # ═══════════════════════════════════════
@@ -173,26 +190,45 @@ def list_organizers(
     organizers = db.query(User).filter(User.role == "organizer").all()
     results = []
     for org in organizers:
-        event_count = db.query(Event).filter(Event.created_by == org.id).count()
-        participant_count = (
-            db.query(Participant)
-            .join(Event, Participant.event_id == Event.id)
-            .filter(Event.created_by == org.id)
-            .count()
-        )
-        sub = db.query(Subscription).filter(Subscription.user_id == org.id).first()
-        results.append(
-            {
+        try:
+            event_count = db.query(Event).filter(Event.created_by == org.id).count()
+            participant_count = (
+                db.query(Participant)
+                .join(Event, Participant.event_id == Event.id)
+                .filter(Event.created_by == org.id)
+                .count()
+            )
+            try:
+                sub = db.query(Subscription).filter(Subscription.user_id == org.id).first()
+                plan_name = sub.plan.name if sub and sub.plan else "بدون باقة"
+            except Exception:
+                plan_name = "بدون باقة"
+
+            results.append(
+                {
+                    "id": org.id,
+                    "email": org.email,
+                    "full_name": org.full_name or org.email,
+                    "event_count": event_count,
+                    "participant_count": participant_count,
+                    "credits": org.credits or 0,
+                    "plan": plan_name,
+                    "status": org.is_active,
+                    "created_at": str(org.created_at) if hasattr(org, "created_at") else None,
+                }
+            )
+        except Exception as e:
+            # لا نوقف الـ loop بسبب خطأ في منظم واحد
+            results.append({
                 "id": org.id,
                 "email": org.email,
-                "full_name": org.full_name,
-                "event_count": event_count,
-                "participant_count": participant_count,
-                "plan": sub.plan.name if sub and sub.plan else "بدون باقة",
+                "full_name": org.full_name or org.email,
+                "event_count": 0,
+                "participant_count": 0,
+                "plan": "بدون باقة",
                 "status": org.is_active,
-                "created_at": str(org.created_at) if hasattr(org, "created_at") else None,
-            }
-        )
+                "created_at": None,
+            })
     return results
 
 
@@ -210,6 +246,82 @@ def toggle_organizer(
     db.commit()
     action = "تفعيل" if org.is_active else "تعطيل"
     return {"message": f"تم {action} الحساب", "is_active": org.is_active}
+
+@router.patch("/organizers/{org_id}/status")
+def update_organizer_status(
+    org_id: int,
+    status_data: UserStatusUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_super_admin),
+):
+    """تحديث حالة النشاط لمنظم (تفعيل/تجميد)."""
+    org = db.query(User).filter(User.id == org_id).first()
+    if not org:
+        raise HTTPException(status_code=404, detail="المنظم غير موجود")
+    org.is_active = status_data.is_active
+    db.commit()
+    return {"message": "تم تحديث الحالة بنجاح", "is_active": org.is_active}
+
+@router.delete("/organizers/{org_id}")
+def delete_organizer(
+    org_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_super_admin),
+):
+    """حذف منظم بشكل نهائي مع بياناته."""
+    org = db.query(User).filter(User.id == org_id).first()
+    if not org:
+        raise HTTPException(status_code=404, detail="المنظم غير موجود")
+    
+    try:
+        # 1. حذف قوالب الشارات والشهادات التي أنشأها المنظم (كلاهما في جدول BadgeTemplate)
+        db.query(BadgeTemplate).filter(BadgeTemplate.created_by == org_id).delete()
+        
+        # 2. جلب كل الفعاليات الخاصة به لحذف متعلقاتها (المشاركين، إلخ)
+        events = db.query(Event).filter(Event.created_by == org_id).all()
+        for event in events:
+            # حذف المشاركين في هذه الفعالية
+            db.query(Participant).filter(Participant.event_id == event.id).delete()
+            # حذف الفعالية نفسها
+            db.delete(event)
+            
+        # 3. حذف الاشتراكات
+        db.query(Subscription).filter(Subscription.user_id == org_id).delete()
+        
+        # 4. حذف المنظم نفسه في النهاية
+        db.delete(org)
+        db.commit()
+        return {"message": "تم حذف المنظم وكل بياناته المرتبطة بنجاح"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"فشل الحذف الشامل: {str(e)}")
+
+@router.post("/impersonate/{org_id}")
+def impersonate_organizer(
+    org_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_super_admin),
+):
+    """الدخول كمنظم محدد — ميزة خاصة للسوبر أدمن."""
+    org = db.query(User).filter(User.id == org_id).first()
+    if not org:
+        raise HTTPException(status_code=404, detail="المنظم غير موجود")
+    
+    # توليد توكنات جديدة للمنظم
+    access_token = create_access_token(subject=org.email)
+    refresh_token = create_refresh_token(subject=org.email)
+    
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "bearer",
+        "user": {
+            "id": org.id,
+            "email": org.email,
+            "full_name": org.full_name,
+            "role": org.role
+        }
+    }
 
 
 @router.patch("/organizers/{org_id}/plan")
@@ -237,6 +349,23 @@ def assign_plan(
 
     db.commit()
     return {"message": f"تم تعيين باقة '{plan.name}' للمنظم", "plan": plan.name}
+
+
+@router.patch("/organizers/{org_id}/credits")
+def update_organizer_credits(
+    org_id: int,
+    data: CreditUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_super_admin),
+):
+    """تحديث رصيد المنظم (شحن أو تعديل)."""
+    org = db.query(User).filter(User.id == org_id).first()
+    if not org:
+        raise HTTPException(status_code=404, detail="المنظم غير موجود")
+    
+    org.credits = data.credits
+    db.commit()
+    return {"message": f"تم تحديث رصيد المنظم إلى {org.credits} اعتماد", "credits": org.credits}
 
 
 # ═══════════════════════════════════════

@@ -8,7 +8,7 @@ class CommunicationLog(Base, TimestampMixin):
     __tablename__ = "communication_logs"
     
     id = Column(Integer, primary_key=True)
-    participant_id = Column(Integer, ForeignKey("participants.id"), nullable=True)
+    participant_id = Column(Integer, ForeignKey("participants.id", ondelete="CASCADE"), nullable=True)
     event_id = Column(Integer, ForeignKey("event_settings.id"), nullable=False)
     
     channel = Column(String(20)) # email, whatsapp, sms, push

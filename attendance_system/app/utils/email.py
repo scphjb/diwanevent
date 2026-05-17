@@ -20,12 +20,12 @@ async def send_ticket_email(participant: dict, event: dict) -> bool:
 
     try:
         conf = ConnectionConfig(
-            MAIL_USERNAME=settings.EMAILS_FROM_EMAIL,
+            MAIL_USERNAME=settings.SMTP_USERNAME or settings.EMAILS_FROM_EMAIL,
             MAIL_PASSWORD=settings.SMTP_PASSWORD,
             MAIL_FROM=settings.EMAILS_FROM_EMAIL,
-            MAIL_PORT=587,  # Default, can be adjusted if settings had it
-            MAIL_SERVER="smtp.gmail.com", # Default
-            MAIL_FROM_NAME=settings.PROJECT_NAME,
+            MAIL_PORT=settings.SMTP_PORT,
+            MAIL_SERVER=settings.SMTP_SERVER,
+            MAIL_FROM_NAME=settings.EMAILS_FROM_NAME or settings.PROJECT_NAME,
             MAIL_STARTTLS=True,
             MAIL_SSL_TLS=False,
             USE_CREDENTIALS=True,
@@ -56,7 +56,56 @@ async def send_ticket_email(participant: dict, event: dict) -> bool:
         await fm.send_message(message)
         logger.info(f"Email sent successfully to {participant.get('email')}")
         return True
-
     except Exception as e:
-        logger.error(f"Failed to send email: {str(e)}")
+        logger.error(f"Failed to send ticket email: {e}")
+        return False
+
+async def send_email_with_attachment(email: str, subject: str, body_text: str, attachment_content: bytes, attachment_filename: str) -> bool:
+    """إرسال بريد إلكتروني مع ملف مرفق (مثل الشهادة)"""
+    if not settings.SMTP_PASSWORD or not settings.EMAILS_FROM_EMAIL:
+        logger.warning("SMTP configuration is incomplete. Skipping email.")
+        return False
+
+    try:
+        import tempfile
+        from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
+        
+        # إنشاء ملف مؤقت للمرفق لضمان قبول المكتبة له
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+            tmp.write(attachment_content)
+            tmp_path = tmp.name
+
+        conf = ConnectionConfig(
+            MAIL_USERNAME=settings.SMTP_USERNAME or settings.EMAILS_FROM_EMAIL,
+            MAIL_PASSWORD=settings.SMTP_PASSWORD,
+            MAIL_FROM=settings.EMAILS_FROM_EMAIL,
+            MAIL_PORT=settings.SMTP_PORT,
+            MAIL_SERVER=settings.SMTP_SERVER,
+            MAIL_FROM_NAME=settings.EMAILS_FROM_NAME or "Diwan Event",
+            MAIL_STARTTLS=True,
+            MAIL_SSL_TLS=False,
+            USE_CREDENTIALS=True,
+            VALIDATE_CERTS=True
+        )
+
+        message = MessageSchema(
+            subject=subject,
+            recipients=[email],
+            body=body_text,
+            subtype=MessageType.plain,
+            attachments=[tmp_path]
+        )
+
+        fm = FastMail(conf)
+        await fm.send_message(message)
+        
+        # تنظيف الملف المؤقت بعد الإرسال
+        try:
+            os.remove(tmp_path)
+        except:
+            pass
+            
+        return True
+    except Exception as e:
+        logger.error(f"Failed to send email with attachment: {e}")
         return False

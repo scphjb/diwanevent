@@ -1,9 +1,11 @@
 import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import toast, { Toaster } from 'react-hot-toast';
 import useAttendanceSocket from '../../hooks/useAttendanceSocket';
 import { Bell, ShieldAlert, Award, Info } from 'lucide-react';
 
 const AdminNotifications = ({ eventId }) => {
+  const { t } = useTranslation();
   // استخدام الـ Hook الذي أنشأناه سابقاً
   useAttendanceSocket(eventId, (message) => {
     if (message.type === 'admin_notification') {
@@ -40,7 +42,7 @@ const AdminNotifications = ({ eventId }) => {
               onClick={() => toast.dismiss(t.id)}
               className="w-full border border-transparent rounded-none rounded-l-2xl p-4 flex items-center justify-center text-sm font-medium text-emerald-400 hover:text-white transition-colors"
             >
-              إغلاق
+              {t('common.notifications.close', 'إغلاق')}
             </button>
           </div>
         </div>
@@ -57,7 +59,7 @@ const AdminNotifications = ({ eventId }) => {
     }
   };
 
-  return <Toaster position="top-left" reverseOrder={false} />;
+  return <Toaster position="top-center" reverseOrder={false} />;
 };
 
 export default AdminNotifications;

@@ -8,10 +8,10 @@ class SponsorOut(BaseModel):
     name: str
     logo_url: str
     website_url: Optional[str] = None
-    tier: str
-    display_duration: int
-    is_active: bool
-    display_order: int
+    tier: str = 'gold'
+    display_duration: Optional[int] = 8
+    is_active: bool = True
+    display_order: Optional[int] = 0
 
     model_config = ConfigDict(from_attributes=True)
 

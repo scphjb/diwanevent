@@ -38,6 +38,7 @@ class Sponsor(Base, TimestampMixin):
     display_duration = Column(Integer, default=8)
     is_active = Column(Boolean, default=True)
     display_order = Column(Integer, default=0)
+    type = Column(String, default='sponsor') # sponsor | media
 
     event = relationship("Event", back_populates="sponsors")
 
@@ -50,6 +51,7 @@ class Question(Base, TimestampMixin):
     text = Column(Text)
     answered = Column(Boolean, default=False)
     pinned = Column(Boolean, default=False)
+    is_approved = Column(Boolean, default=False)
     timestamp = Column(DateTime, default=func.now())
 
 class Poll(Base, TimestampMixin):
@@ -71,7 +73,7 @@ class PollVote(Base, TimestampMixin):
     id = Column(Integer, primary_key=True, index=True)
     poll_id = Column(Integer, ForeignKey("polls.id"))
     option_id = Column(Integer, ForeignKey("poll_options.id"))
-    participant_id = Column(Integer, ForeignKey("participants.id"))
+    participant_id = Column(Integer, ForeignKey("participants.id", ondelete="CASCADE"))
 
 class SocialPost(Base, TimestampMixin):
     __tablename__ = "social_wall"
@@ -82,15 +84,41 @@ class SocialPost(Base, TimestampMixin):
     image_url = Column(Text)
     emoji = Column(String, default='👏')
     likes_count = Column(Integer, default=0)
+    comments_count = Column(Integer, default=0)
     is_approved = Column(Boolean, default=False)
     is_pinned = Column(Boolean, default=False)
     is_hidden = Column(Boolean, default=False)
+
+    comments = relationship("PostComment", back_populates="post", cascade="all, delete-orphan")
+
+class PostComment(Base, TimestampMixin):
+    __tablename__ = "wall_comments"
+    id = Column(Integer, primary_key=True, index=True)
+    post_id = Column(Integer, ForeignKey("social_wall.id"))
+    author_name = Column(String, nullable=False)
+    content = Column(Text, nullable=False)
+    is_approved = Column(Boolean, default=True)
+
+    post = relationship("SocialPost", back_populates="comments")
+
+class UserNotification(Base, TimestampMixin):
+    __tablename__ = "user_notifications"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    event_id = Column(Integer, ForeignKey("event_settings.id"), nullable=True)
+    title = Column(String, nullable=False)
+    message = Column(Text, nullable=False)
+    level = Column(String, default='info') # info, success, warning, error
+    is_read = Column(Boolean, default=False)
+    link = Column(String, nullable=True) # Optional link to a page
 
 class PostLike(Base, TimestampMixin):
     __tablename__ = "wall_likes"
     id = Column(Integer, primary_key=True, index=True)
     post_id = Column(Integer, ForeignKey("social_wall.id"))
     session_key = Column(String, nullable=False)
+    user_name = Column(String)
+
 class AuditLog(Base, TimestampMixin):
     __tablename__ = "audit_logs"
     id = Column(Integer, primary_key=True, index=True)
@@ -103,3 +131,15 @@ class AuditLog(Base, TimestampMixin):
     ip_address = Column(String)
     
     user = relationship("User")
+
+class Document(Base, TimestampMixin):
+    __tablename__ = "event_documents"
+    id = Column(Integer, primary_key=True, index=True)
+    event_id = Column(Integer, ForeignKey("event_settings.id"))
+    title = Column(String, nullable=False)
+    description = Column(Text)
+    file_url = Column(Text, nullable=False)
+    file_type = Column(String) # pdf, docx, etc.
+    file_size = Column(String) # e.g. "2.4 MB"
+    is_active = Column(Boolean, default=True)
+    sort_order = Column(Integer, default=0)

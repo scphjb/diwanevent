@@ -40,7 +40,7 @@ def get_event_summary(
     
     # توزيع حسب الجهة مع الحضور الصحيح
     by_council = db.query(
-        Participant.council,
+        Participant.organization,
         func.count(Participant.id).label("total"),
         func.count(Attendance.id).label("present")
     ).outerjoin(
@@ -48,8 +48,38 @@ def get_event_summary(
         (Attendance.participant_id == Participant.id) & 
         (Attendance.event_type == 'check_in')
     ).filter(Participant.event_id == event_id)\
-     .group_by(Participant.council)\
+     .group_by(Participant.organization)\
      .all()
+    
+    event = db.query(Event).filter(Event.id == event_id).first()
+    from app.models.event import EventHall
+    halls = db.query(EventHall).filter(EventHall.event_id == event_id).all()
+    
+    total_halls_capacity = sum(h.capacity for h in halls)
+    # إذا وجدت قاعات، نستخدم مجموع سعاتها كـ "سعة إجمالية"، وإلا نستخدم الحقل العام
+    effective_capacity = total_halls_capacity if total_halls_capacity > 0 else (event.hall_capacity if event else 100)
+    
+    halls_stats = []
+    for h in halls:
+        count = db.query(func.count(Attendance.id)).join(Participant, Attendance.participant_id == Participant.id)\
+                  .filter(Participant.event_id == event_id, Attendance.event_type == 'check_in', Attendance.location_id == h.name).scalar()
+        halls_stats.append({
+            "name": h.name,
+            "capacity": h.capacity,
+            "count": count,
+            "rate": round(count / h.capacity * 100, 1) if h.capacity > 0 else 0
+        })
+
+    # توزيع حسب البوابات (التي قد لا تكون قاعات)
+    by_location = db.query(
+        Attendance.location_id,
+        func.count(Attendance.id).label("count")
+    ).join(Participant, Attendance.participant_id == Participant.id)\
+     .filter(
+         Participant.event_id == event_id,
+         Attendance.event_type == 'check_in',
+         Attendance.location_id != None
+     ).group_by(Attendance.location_id).all()
     
     return {
         "event_id": event_id,
@@ -57,17 +87,25 @@ def get_event_summary(
             "total_invited": total,
             "checked_in": checked_in,
             "not_present": total - checked_in,
-            "attendance_rate": round(checked_in / total * 100, 2) if total > 0 else 0
+            "hall_capacity": effective_capacity,
+            "attendance_rate": round(checked_in / total * 100, 2) if total > 0 else 0,
+            "occupancy_rate": round(checked_in / effective_capacity * 100, 2) if effective_capacity > 0 else 0,
+            "organizer_credits": current_user.credits if current_user.role != 'super_admin' else 999999
         },
         "councils_distribution": [
             {
-                "name": r.council, 
+                "name": r.organization, 
                 "total": r.total, 
                 "present": r.present,
                 "rate": round(r.present/r.total*100, 1) if r.total > 0 else 0
             }
             for r in by_council
-        ]
+        ],
+        "gates_distribution": [
+            {"gate": r.location_id, "count": r.count}
+            for r in by_location
+        ],
+        "halls_occupancy": halls_stats
     }
 
 from app.models.participant import Participant, Attendance
@@ -117,7 +155,7 @@ def get_export_raw_data(
         {
             "id": p.id,
             "name": p.full_name,
-            "organization": p.council,
+            "organization": p.organization,
             "status": "حاضر" if check_in else "لم يحضر",
             "check_in": check_in.isoformat() if check_in else None
         }

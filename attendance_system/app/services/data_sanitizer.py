@@ -5,13 +5,17 @@ from app.models.participant import Participant
 
 class DataSanitizer:
     @staticmethod
-    def sanitize_name(name: str) -> Tuple[str, str]:
+    def sanitize_name(name: Any) -> Tuple[str, str]:
         """
         تطهير الاسم: 
         1. إزالة المسافات الزائدة.
         2. تكبير الحروف الأولى للأسماء اللاتينية.
         3. تنظيف الأسماء العربية من الرموز.
         """
+        if name is None or (isinstance(name, float) and name != name): # Handle NaN
+            return "", ""
+        
+        name = str(name).strip()
         if not name: return "", ""
         
         # 1. إزالة المسافات الزائدة في البداية والنهاية والمنتصف
@@ -77,9 +81,14 @@ class DataSanitizer:
     @classmethod
     def process_row(cls, db: Session, event_id: int, row_data: Dict[str, Any]) -> Dict[str, Any]:
         """المعالج الرئيسي للسطر الواحد"""
-        raw_name = row_data.get('full_name', '')
-        raw_email = str(row_data.get('email', '')).strip().lower()
-        raw_phone = str(row_data.get('phone', ''))
+        raw_name = row_data.get('full_name')
+        
+        # Safe extraction for email and phone
+        email_val = row_data.get('email')
+        raw_email = str(email_val).strip().lower() if email_val and str(email_val).lower() != 'nan' else ''
+        
+        phone_val = row_data.get('phone')
+        raw_phone = str(phone_val).strip() if phone_val and str(phone_val).lower() != 'nan' else ''
         
         clean_name, name_note = cls.sanitize_name(raw_name)
         clean_phone = cls.normalize_phone(raw_phone)

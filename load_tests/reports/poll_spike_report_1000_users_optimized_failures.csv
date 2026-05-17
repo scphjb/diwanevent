@@ -1,0 +1,8 @@
+Method,Name,Error,Occurrences
+GET,ℹ️ GET Event Capacity Check,CatchResponseError('500'),68
+GET,📋 GET Sessions (Concurrent Read),CatchResponseError('500'),30
+GET,🔍 GET Search (Concurrent Read),CatchResponseError('500'),8
+POST,📝 POST Concurrent Register (Spike),"CatchResponseError('Registration DB Error: 500 — {""detail"":""حدث خطأ داخلي في الخادم"",""type"":""InternalServerError""}')",215
+POST,🗳️ POST Vote (Spike),"CatchResponseError('DB Error on vote: 500 — {""detail"":""حدث خطأ داخلي في الخادم"",""type"":""InternalServerError""}')",52
+GET,📊 GET Poll Results (Live),"CatchResponseError('Poll results DB error: {""detail"":""حدث خطأ داخلي في الخادم"",""type"":""InternalServerError""}')",342
+GET,🗳️ GET Active Poll (Read),CatchResponseError('500'),15

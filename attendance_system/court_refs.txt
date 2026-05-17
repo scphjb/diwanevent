@@ -1,0 +1,41 @@
+﻿
+Filename            LineNumber Line                                                                                    
+--------            ---------- ----                                                                                    
+participant.py              15     court = Column(String, nullable=False)                                              
+certificates.py             57                 "court":          p.court or "",                                        
+certificates.py             97         "court":          p.court or "",                                                
+credentials.py              40         "court": p.court or "",                                                         
+credentials.py              49         "organization": f"{p.council} - {p.court}" if p.council and p.court else (p.c...
+networking.py              105         "court": target.court,                                                          
+networking.py              759         f"NOTE:تم الاتصال عبر منصة ديوان للفعاليات | {p.court or ''}",                  
+networking.py              934         "court": p.court,                                                               
+participants.py             29         "court": p.court,                                                               
+participants.py             70             "court": p.court,                                                           
+participants.py            135         "court": participant.court,                                                     
+participants.py            222                 "court": p.court,                                                       
+participants.py            350         court='عام',                                                                    
+participants.py            458                 "court": p.court,                                                       
+participants.py            819             "court": str(row.get(field_mapping.get('court'), 'General')).strip(),       
+participants.py            838             court=raw_entry['court'],                                                   
+participants.py            933         court="On-site",                                                                
+participant_auth.py        409         "court": participant.court,                                                     
+templates.py                96         'court': 'قسم التنفيذ',                                                         
+templates.py               173             "court": p.court,                                                           
+participant.py               9     court: str = Field(..., description="القسم أو الفرع المحدد")                        
+pdf_renderer.py            206                 '[القسم]':          participant.get('court', ''),                       
+
+
+
+Filename              LineNumber Line                                                                                  
+--------              ---------- ----                                                                                  
+LeftPanel.jsx                  6   { id: 'court',      icon: '⚖️', label: 'القسم',          type: 'dynamic_text', pl...
+LeftPanel.jsx                 30       { id: 'court', type: 'dynamic_text', placeholder: 'القسم', x: 20, y: 132, wid...
+ParticipantPortal.jsx        575                               <div className="text-sm font-black text-white">{selec...
+ParticipantsPage.jsx         197     court: '',                                                                        
+ParticipantsPage.jsx         227         court: '',                                                                    
+ParticipantsPage.jsx         234         court: ['القسم', 'court', 'التخصص', 'department', 'service'],                 
+ParticipantsPage.jsx         491                         <div className="text-emerald-400/20 text-xs">{p.court || ''...
+ParticipantsPage.jsx         634                   { id: 'court', label: t('participants.import_modal.court', 'القسم...
+SelfServicePage.jsx          137                           <div className="text-emerald-400/40 text-sm">{p.council} ...
+
+

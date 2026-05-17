@@ -1,0 +1,71 @@
+# ══════════════════════════════════════════════
+#  Diwan Event — Dockerfile للإنتاج
+#  يستخدم Gunicorn + Uvicorn Workers بدلاً
+#  من Uvicorn فردي (يحل نقطة الكسر عند 50 مستخدم)
+# ══════════════════════════════════════════════
+
+# ── المرحلة 1: البناء ──────────────────────
+FROM python:3.11-slim AS builder
+
+WORKDIR /app
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt requirements.prod.txt ./
+RUN pip install --no-cache-dir --prefix=/install \
+    -r requirements.txt \
+    -r requirements.prod.txt
+
+# ── المرحلة 2: التشغيل ─────────────────────
+FROM python:3.11-slim
+
+WORKDIR /app
+COPY --from=builder /install /usr/local
+
+# مكتبات النظام: libpq، خطوط عربية، curl للـ healthcheck
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq5 \
+    fonts-liberation \
+    fonts-freefont-ttf \
+    fontconfig \
+    curl \
+    && fc-cache -f -v \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY . .
+
+# مستخدم غير جذري للأمان
+RUN adduser --disabled-password --gecos '' appuser \
+    && chown -R appuser:appuser /app
+USER appuser
+
+EXPOSE 8000
+
+# ══════════════════════════════════════════════════════════
+#  Gunicorn يُدير 5 خلايا Uvicorn متوازية
+#
+#  --workers 5          → 5 عمليات مستقلة = 5× السعة
+#  --worker-class       → Uvicorn داخل كل عملية (async)
+#  --worker-connections → أقصى اتصال لكل خيط
+#  --timeout 60         → مهلة للاستجابات الثقيلة (تحليلات)
+#  --graceful-timeout   → وقت إنهاء الطلبات الجارية قبل إعادة التشغيل
+#  --keep-alive 5       → الحفاظ على الاتصالات المفتوحة
+#  --access-logfile -   → إرسال السجلات لـ stdout (Docker يجمعها)
+# ══════════════════════════════════════════════════════════
+CMD ["sh", "-c", \
+     "gunicorn app.main:app \
+       --workers ${GUNICORN_WORKERS:-5} \
+       --worker-class uvicorn.workers.UvicornWorker \
+       --worker-connections 1000 \
+       --bind 0.0.0.0:8000 \
+       --timeout 60 \
+       --graceful-timeout 30 \
+       --keep-alive 5 \
+       --access-logfile - \
+       --error-logfile - \
+       --log-level info"]

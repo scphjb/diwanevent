@@ -1,10 +1,12 @@
 from fastapi import Request, HTTPException
-from slowapi import Limiter
-from slowapi.util import get_remote_address
 
-# محرك تحديد المعدلات (Rate Limiter)
-# يمنع أي مستخدم من تجاوز 100 طلب في الدقيقة على مسارات معينة
-limiter = Limiter(key_func=get_remote_address)
+# استيراد الـ limiter المركزي من main بدلاً من إنشاء instance جديد
+try:
+    from app.main import limiter
+except ImportError:
+    from slowapi import Limiter
+    from slowapi.util import get_remote_address
+    limiter = Limiter(key_func=get_remote_address)
 
 class EnterpriseGateway:
     @staticmethod

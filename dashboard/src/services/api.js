@@ -1,18 +1,23 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
+  baseURL: import.meta.env.VITE_API_URL || '/api/v1/',  // ← trailing slash ضروري لدمج المسارات بشكل صحيح
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Request interceptor — إضافة JWT Token لكل طلب
+// Request interceptor — إضافة JWT Token لكل طلب + معالجة FormData
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('diwan_token');
-    if (token) {
+    // لا نغير التوكن إذا كان الطلب يحتوي بالفعل على توكن (مثل توكن المشاركين في البوابة)
+    if (token && !config.headers.Authorization) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+    // عند إرسال FormData، حذف Content-Type ليولّد axios الـ boundary تلقائياً
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type'];
     }
     return config;
   },
@@ -41,12 +46,15 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       const refreshToken = localStorage.getItem('diwan_refresh_token');
 
-      // إذا لم يكن هناك refresh token — تسجيل خروج
+      // إذا لم يكن هناك refresh token — تسجيل خروج (إلا إذا كان الطلب عاماً للمشاركين)
       if (!refreshToken) {
-        localStorage.removeItem('diwan_token');
-        localStorage.removeItem('diwan_refresh_token');
-        localStorage.removeItem('diwan_user');
-        window.location.href = '/login';
+        const isPublicRequest = originalRequest.url.includes('public') || originalRequest.url.includes('networking');
+        if (!isPublicRequest) {
+          localStorage.removeItem('diwan_token');
+          localStorage.removeItem('diwan_refresh_token');
+          localStorage.removeItem('diwan_user');
+          window.location.href = '/login';
+        }
         return Promise.reject(error);
       }
 
@@ -64,7 +72,7 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const res = await axios.post('/api/v1/auth/refresh', {
+        const res = await api.post('auth/refresh', {
           refresh_token: refreshToken,
         });
 

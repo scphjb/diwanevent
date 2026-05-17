@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import DashboardLayout from '../layouts/DashboardLayout';
 import { 
   BarChart2, 
@@ -18,8 +19,11 @@ import {
   PieChart, Pie, Cell, AreaChart, Area
 } from 'recharts';
 import { cn } from '../utils/cn';
+import { useEvent } from '../context/EventContext';
 
-const AnalyticsPage = ({ eventId = 1 }) => {
+const AnalyticsPage = () => {
+  const { selectedEventId: eventId } = useEvent();
+  const { t } = useTranslation();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -29,8 +33,8 @@ const AnalyticsPage = ({ eventId = 1 }) => {
 
   const fetchStats = async () => {
     try {
-      const summary = await api.get(`/analytics/${eventId}/summary`);
-      const peaks = await api.get(`/analytics/${eventId}/peak-hours`);
+      const summary = await api.get(`analytics/${eventId}/summary`);
+      const peaks = await api.get(`analytics/${eventId}/peak-hours`);
       setData({ ...summary.data, peaks: peaks.data });
     } catch (err) {
       console.error("Failed to fetch analytics");
@@ -39,8 +43,8 @@ const AnalyticsPage = ({ eventId = 1 }) => {
     }
   };
 
-  if (loading) return <DashboardLayout><div className="p-20 text-center text-emerald-400">جاري تحليل البيانات...</div></DashboardLayout>;
-  if (!data) return <DashboardLayout><div className="p-20 text-center text-red-400">فشل في تحميل التحليلات. يرجى التأكد من تشغيل الخادم.</div></DashboardLayout>;
+  if (loading) return <DashboardLayout><div className="p-20 text-center text-emerald-400">{t('analytics.loading', 'جاري تحليل البيانات...')}</div></DashboardLayout>;
+  if (!data) return <DashboardLayout><div className="p-20 text-center text-red-400">{t('analytics.load_error', 'فشل في تحميل التحليلات.')}</div></DashboardLayout>;
 
   const COLORS = ['#10b981', '#f59e0b', '#3b82f6', '#ef4444'];
 
@@ -48,25 +52,25 @@ const AnalyticsPage = ({ eventId = 1 }) => {
     <DashboardLayout activePath="/dashboard/stats">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
         <div>
-          <h1 className="text-4xl font-bold text-white mb-2">مركز التحليلات</h1>
+          <h1 className="text-4xl font-bold text-white mb-2">{t('analytics.title', 'مركز التحليلات')}</h1>
           <p className="text-emerald-400/50 flex items-center gap-2">
             <TrendingUp className="w-4 h-4" />
-            تحليل حي لأداء الفعالية ومعدلات الحضور
+            {t('analytics.subtitle', 'تحليل حي لأداء الفعالية ومعدلات الحضور')}
           </p>
         </div>
         
         <Button variant="outline" className="flex items-center gap-2">
           <Download className="w-4 h-4" />
-          تصدير التقرير النهائي
+          {t('analytics.export_btn', 'تصدير التقرير النهائي')}
         </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
         {[
-          { label: 'إجمالي المسجلين', value: data.overview.total_invited, icon: Users, color: 'text-blue-400' },
-          { label: 'تم تسجيل دخولهم', value: data.overview.checked_in, icon: UserCheck, color: 'text-emerald-400' },
-          { label: 'نسبة الحضور', value: `${data.overview.attendance_rate}%`, icon: TrendingUp, color: 'text-amber-400' },
-          { label: 'بانتظار الوصول', value: data.overview.pending, icon: Clock, color: 'text-slate-400' },
+          { label: t('analytics.stats.total_invited', 'إجمالي المسجلين'), value: data.overview.total_invited, icon: Users, color: 'text-blue-400' },
+          { label: t('analytics.stats.checked_in', 'تم تسجيل دخولهم'), value: data.overview.checked_in, icon: UserCheck, color: 'text-emerald-400' },
+          { label: t('analytics.stats.attendance_rate', 'نسبة الحضور'), value: `${data.overview.attendance_rate}%`, icon: TrendingUp, color: 'text-amber-400' },
+          { label: t('analytics.stats.pending', 'بانتظار الوصول'), value: data.overview.not_present, icon: Clock, color: 'text-slate-400' },
         ].map((stat, i) => (
           <motion.div 
             key={i}
@@ -91,7 +95,7 @@ const AnalyticsPage = ({ eventId = 1 }) => {
         <div className="bg-white/5 border border-white/10 rounded-[40px] p-8">
           <h3 className="text-xl font-bold text-white mb-8 flex items-center gap-3">
             <Clock className="text-amber-500" />
-            ذروة الحضور خلال اليوم
+            {t('analytics.peak_title', 'ذروة الحضور خلال اليوم')}
           </h3>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -119,7 +123,7 @@ const AnalyticsPage = ({ eventId = 1 }) => {
         <div className="bg-white/5 border border-white/10 rounded-[40px] p-8">
           <h3 className="text-xl font-bold text-white mb-8 flex items-center gap-3">
             <PieChartIcon className="text-blue-500" />
-            توزيع الحضور حسب الجهات
+            {t('analytics.councils_title', 'توزيع الحضور حسب الجهات')}
           </h3>
           <div className="h-[300px] w-full flex items-center">
             <ResponsiveContainer width="100%" height="100%">
@@ -131,7 +135,7 @@ const AnalyticsPage = ({ eventId = 1 }) => {
                   innerRadius={60}
                   outerRadius={100}
                   paddingAngle={5}
-                  dataKey="value"
+                  dataKey="total"
                 >
                   {data.councils_distribution.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

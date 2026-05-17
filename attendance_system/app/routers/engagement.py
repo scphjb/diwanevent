@@ -16,7 +16,7 @@ def get_leaderboard(event_id: int, limit: int = 10, db: Session = Depends(get_db
     results = db.query(
         Participant.id,
         Participant.full_name,
-        Participant.council,
+        Participant.organization,
         func.sum(GamificationEvent.points).label("total_points")
     ).join(GamificationEvent).filter(
         Participant.event_id == event_id
@@ -26,7 +26,7 @@ def get_leaderboard(event_id: int, limit: int = 10, db: Session = Depends(get_db
         {
             "id": r.id,
             "full_name": r.full_name,
-            "council": r.council,
+            "organization": r.organization,
             "points": r.total_points
         } for r in results
     ]

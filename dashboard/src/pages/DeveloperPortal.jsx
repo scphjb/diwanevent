@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/Tabs";
 import { Terminal, Key, Webhook, Activity, BookOpen, ShieldCheck } from "lucide-react";
 import DashboardLayout from '../layouts/DashboardLayout';
@@ -8,6 +9,7 @@ import UsageMonitor from "../components/UsageMonitor";
 import ApiPlayground from "../components/ApiPlayground";
 
 const DeveloperPortal = () => {
+  const { t } = useTranslation();
   return (
     <DashboardLayout activePath="/dashboard/developer">
       <div className="max-w-7xl mx-auto px-4 py-8">
@@ -18,25 +20,25 @@ const DeveloperPortal = () => {
               <div className="p-2 bg-[#d4af37]/10 rounded-lg">
                 <Terminal className="w-5 h-5" />
               </div>
-              <span className="text-sm font-black uppercase tracking-[0.2em]">{/* Developer Hub */} مركز المطورين</span>
+              <span className="text-sm font-black uppercase tracking-[0.2em]">{t('dev_portal.title', 'مركز المطورين')}</span>
             </div>
             <h1 className="text-4xl md:text-6xl font-black text-white tracking-tight leading-tight">
-              ابنِ تطبيقاتك مع <br />
+              {t('dev_portal.hero_title', 'ابنِ تطبيقاتك مع')} <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-amber-500">
-                ديوان إيفنت
+                {t('common.app_name', 'ديوان إيفنت')}
               </span>
             </h1>
             <p className="text-slate-400 text-lg max-w-2xl leading-relaxed">
-              قم بدمج ذكاء الفعاليات المباشر في تطبيقاتك الخاصة باستخدام واجهة برمجة التطبيقات (API) ونظام الـ Webhooks المتطور لدينا.
+              {t('dev_portal.hero_subtitle', 'قم بدمج ذكاء الفعاليات المباشر في تطبيقاتك الخاصة باستخدام واجهة برمجة التطبيقات (API) ونظام الـ Webhooks المتطور لدينا.')}
             </p>
           </div>
           
           <div className="flex gap-4 w-full md:w-auto">
             <div className="bg-emerald-500/5 border border-emerald-500/10 p-6 rounded-[2.5rem] backdrop-blur-3xl flex-1 md:flex-none min-w-[200px]">
-              <div className="text-xs text-emerald-500/50 uppercase font-black mb-2 tracking-widest">حالة النظام</div>
+              <div className="text-xs text-emerald-500/50 uppercase font-black mb-2 tracking-widest">{t('dev_portal.system_status', 'حالة النظام')}</div>
               <div className="flex items-center gap-3 text-emerald-400 font-black text-lg">
                 <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
-                جميع الأنظمة تعمل بكفاءة
+                {t('dev_portal.all_systems_operational', 'جميع الأنظمة تعمل بكفاءة')}
               </div>
             </div>
           </div>
@@ -47,19 +49,19 @@ const DeveloperPortal = () => {
           <TabsList className="bg-white/5 p-2 rounded-[2.5rem] border border-white/5 backdrop-blur-2xl flex items-center gap-2 overflow-x-auto no-scrollbar">
             <TabsTrigger value="keys" className="rounded-full px-8 py-4 whitespace-nowrap flex items-center gap-3 data-[state=active]:bg-emerald-600 data-[state=active]:text-white transition-all duration-500">
               <Key className="w-4 h-4" /> 
-              <span className="font-bold">مفاتيح API</span>
+              <span className="font-bold">{t('dev_portal.tabs.api_keys', 'مفاتيح API')}</span>
             </TabsTrigger>
             <TabsTrigger value="webhooks" className="rounded-full px-8 py-4 whitespace-nowrap flex items-center gap-3 data-[state=active]:bg-emerald-600 data-[state=active]:text-white transition-all duration-500">
               <Webhook className="w-4 h-4" /> 
-              <span className="font-bold">الويب هوكس</span>
+              <span className="font-bold">{t('dev_portal.tabs.webhooks', 'الويب هوكس')}</span>
             </TabsTrigger>
             <TabsTrigger value="monitor" className="rounded-full px-8 py-4 whitespace-nowrap flex items-center gap-3 data-[state=active]:bg-emerald-600 data-[state=active]:text-white transition-all duration-500">
               <Activity className="w-4 h-4" /> 
-              <span className="font-bold">المراقبة والاستهلاك</span>
+              <span className="font-bold">{t('dev_portal.tabs.monitoring', 'المراقبة والاستهلاك')}</span>
             </TabsTrigger>
             <TabsTrigger value="playground" className="rounded-full px-8 py-4 whitespace-nowrap flex items-center gap-3 data-[state=active]:bg-emerald-600 data-[state=active]:text-white transition-all duration-500">
               <BookOpen className="w-4 h-4" /> 
-              <span className="font-bold">منطقة الاختبار</span>
+              <span className="font-bold">{t('dev_portal.tabs.playground', 'منطقة الاختبار')}</span>
             </TabsTrigger>
           </TabsList>
 
@@ -91,13 +93,13 @@ const DeveloperPortal = () => {
               <ShieldCheck className="w-12 h-12 text-emerald-400" />
             </div>
             <div className="space-y-2">
-              <h3 className="text-2xl font-black text-white">هل تحتاج إلى دعم تقني متقدم؟</h3>
-              <p className="text-slate-400 text-lg">فريق المهندسين لدينا جاهز لمساعدتك في عمليات الربط المعقدة والمخصصة.</p>
+              <h3 className="text-2xl font-black text-white">{t('dev_portal.support.title', 'هل تحتاج إلى دعم تقني متقدم؟')}</h3>
+              <p className="text-slate-400 text-lg">{t('dev_portal.support.subtitle', 'فريق المهندسين لدينا جاهز لمساعدتك في عمليات الربط المعقدة والمخصصة.')}</p>
             </div>
           </div>
           
           <button className="bg-white text-black px-12 py-5 rounded-full font-black text-lg hover:scale-105 hover:bg-emerald-400 transition-all duration-500 shadow-xl relative z-10 whitespace-nowrap">
-            تواصل مع دعم المطورين
+            {t('dev_portal.support.button', 'تواصل مع دعم المطورين')}
           </button>
         </div>
       </div>

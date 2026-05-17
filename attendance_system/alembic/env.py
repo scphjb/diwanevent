@@ -40,7 +40,7 @@ from app.models.others import (
     AgendaSession, Speaker, Sponsor, Question,
     Poll, PollOption, PollVote, SocialPost, PostLike, AuditLog,
 )
-from app.models.template import BadgeTemplate, CertificateTemplate
+from app.models.template import BadgeTemplate
 from app.core.atomic_ops import AuditTrail
 from app.core.api_key_handler import APIKey
 

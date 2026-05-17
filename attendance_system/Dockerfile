@@ -18,7 +18,15 @@ FROM python:3.11-slim
 
 WORKDIR /app
 COPY --from=builder /install /usr/local
-RUN apt-get update && apt-get install -y libpq5 && rm -rf /var/lib/apt/lists/*
+
+# خطوط عربية وأدوات PDF
+RUN apt-get update && apt-get install -y \
+    libpq5 \
+    fonts-liberation \
+    fonts-freefont-ttf \
+    fontconfig \
+    && fc-cache -f -v \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY . .
 

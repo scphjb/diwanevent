@@ -70,6 +70,11 @@ if os.path.exists(os.path.join(BASE_DIR, "locales")):
 if os.path.exists(os.path.join(BASE_DIR, "exports")):
     app.mount("/exports", StaticFiles(directory=os.path.join(BASE_DIR, "exports")), name="exports")
 
+# Mount static files (sponsor logos, speaker images, etc.)
+STATIC_DIR = os.path.join(BASE_DIR, "static")
+os.makedirs(STATIC_DIR, exist_ok=True)
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static_files")
+
 
 # ═══════════════════════════════════════
 # معالج الأخطاء العالمي (لا يكشف تفاصيل في الإنتاج)
@@ -100,8 +105,9 @@ app.add_middleware(
 # ═══════════════════════════════════════
 from app.routers import (
     auth, participants, events, polls, interaction,
-    credentials, analytics, super_admin, sessions,
-    hardware, sponsors, networking, speakers, payments,
+    credentials, analytics, super_admin, sessions, certificates,
+    hardware, sponsors, networking, speakers, payments, social,
+    notifications, templates, participant_auth, engagement
 )
 
 app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["🔐 المصادقة"])
@@ -110,6 +116,7 @@ app.include_router(participants.router, prefix=f"{settings.API_V1_STR}/participa
 app.include_router(payments.router, prefix=f"{settings.API_V1_STR}/payments", tags=["💳 الدفع"])
 app.include_router(polls.router, prefix=f"{settings.API_V1_STR}/polls", tags=["📊 الاستطلاعات"])
 app.include_router(interaction.router, prefix=f"{settings.API_V1_STR}/interaction", tags=["💬 التفاعل"])
+app.include_router(social.router, prefix=f"{settings.API_V1_STR}/social", tags=["🌐 الحائط الاجتماعي"])
 app.include_router(credentials.router, prefix=f"{settings.API_V1_STR}/credentials", tags=["🎫 الشهادات"])
 app.include_router(analytics.router, prefix=f"{settings.API_V1_STR}/analytics", tags=["📈 التحليلات"])
 app.include_router(super_admin.router, prefix=f"{settings.API_V1_STR}/super-admin", tags=["🛡️ السوبر أدمن"])
@@ -118,6 +125,19 @@ app.include_router(hardware.router, prefix="/api/v1/hardware", tags=["🖥️ ا
 app.include_router(sponsors.router, prefix="/api/v1/sponsors", tags=["🏢 الرعاة"])
 app.include_router(networking.router, prefix="/api/v1/networking", tags=["🤝 التواصل"])
 app.include_router(speakers.router, prefix="/api/v1/speakers", tags=["🎤 المتحدثون"])
+app.include_router(notifications.router, prefix=f"{settings.API_V1_STR}/notifications", tags=["🔔 التنبيهات"])
+app.include_router(templates.router)
+app.include_router(
+    participant_auth.router,
+    prefix=f"{settings.API_V1_STR}/participant-auth",
+    tags=["🎫 مصادقة المشاركين (OTP)"]
+)
+app.include_router(certificates.router, prefix=f"{settings.API_V1_STR}/certificates", tags=["📜 الشهادات"])
+app.include_router(
+    engagement.router,
+    prefix=f"{settings.API_V1_STR}/engagement",
+    tags=["🎮 التفاعل والنقاط"]
+)
 
 
 # ═══════════════════════════════════════

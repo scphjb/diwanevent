@@ -47,7 +47,7 @@ def generate_official_report(event_name, stats, participants):
             row_cells = table.add_row().cells
             row_cells[0].text = str(i + 1)
             row_cells[1].text = p.full_name
-            row_cells[2].text = p.council
+            row_cells[2].text = p.organization
             row_cells[3].text = p.attendance_records[0].check_in_time.strftime("%H:%M") if p.attendance_records else "---"
 
     buffer = BytesIO()

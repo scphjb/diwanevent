@@ -1,0 +1,239 @@
+version: '3.8'
+
+# ══════════════════════════════════════════════════════════════════
+#  Diwan Event Platform — Production Stack
+#  البنية التحتية الكاملة للإنتاج
+#
+#  الخدمات:
+#    postgres    ← قاعدة البيانات الرئيسية
+#    pgbouncer   ← إدارة Connection Pool (يحل نقطة الكسر عند 50+ مستخدم)
+#    redis       ← كاش البيانات الثابتة + طابور مهام Celery
+#    backend     ← FastAPI عبر Gunicorn (5 Workers) بدلاً من Uvicorn فردي
+#    celery      ← إرسال الإيميلات التدريجي (10 إيميل/ثانية)
+#    celery-beat ← جدولة مهام دورية (تنظيف، إحصائيات مسبقة)
+#    nginx       ← Reverse Proxy + SSL + ضغط الاستجابات
+#    certbot     ← تجديد شهادات SSL تلقائياً
+# ══════════════════════════════════════════════════════════════════
+
+services:
+
+  # ── 1. PostgreSQL ──────────────────────────────────────────────
+  postgres:
+    image: postgres:15-alpine
+    container_name: diwan_postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-diwan_db}
+      POSTGRES_USER: ${POSTGRES_USER:-diwan_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      # تحسينات الأداء لبيئة الإنتاج
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infra/postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-diwan_user} -d ${POSTGRES_DB:-diwan_db}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - backend_net
+
+  # ── 2. PgBouncer ── يحل Connection Pool Exhaustion ────────────
+  # عند 200+ مستخدم متزامن، يُوزّع PgBouncer الاتصالات بكفاءة
+  # بدلاً من فتح 200 اتصال مباشر على PostgreSQL
+  pgbouncer:
+    image: pgbouncer/pgbouncer:latest
+    container_name: diwan_pgbouncer
+    environment:
+      DATABASES_HOST: postgres
+      DATABASES_PORT: "5432"
+      DATABASES_DBNAME: ${POSTGRES_DB:-diwan_db}
+      DATABASES_USER: ${POSTGRES_USER:-diwan_user}
+      DATABASES_PASSWORD: ${POSTGRES_PASSWORD}
+      POOL_MODE: transaction # الأفضل لـ FastAPI الـ async
+      MAX_CLIENT_CONN: 1000 # أقصى عدد عملاء متزامنين
+      DEFAULT_POOL_SIZE: 25 # اتصال حقيقي بـ PostgreSQL
+      MIN_POOL_SIZE: 5
+      RESERVE_POOL_SIZE: 5
+      SERVER_IDLE_TIMEOUT: "600"
+      LOG_CONNECTIONS: "0"
+      LOG_DISCONNECTIONS: "0"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - backend_net
+
+  # ── 3. Redis ── كاش + طابور Celery ────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: diwan_redis
+    command: >
+      redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru --save 900 1 --save 300 10
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - backend_net
+
+  # ── 4. Backend — Gunicorn + 5 Uvicorn Workers ─────────────────
+  # الحل الجذري لنقطة الكسر: بدلاً من Uvicorn فردي (50 مستخدم)
+  # نستخدم Gunicorn بـ 5 خلايا عمل → سعة 500+ مستخدم متزامن
+  backend:
+    build:
+      context: ./attendance_system
+      dockerfile: Dockerfile.prod
+    container_name: diwan_backend
+    environment:
+      # قاعدة البيانات عبر PgBouncer وليس PostgreSQL مباشرة
+      DATABASE_URL: postgresql://${POSTGRES_USER:-diwan_user}:${POSTGRES_PASSWORD}@pgbouncer:5432/${POSTGRES_DB:-diwan_db}
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      SECRET_KEY: ${SECRET_KEY}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      APP_DOMAIN: ${APP_DOMAIN:-https://diwanevent.com}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+      SMTP_SERVER: ${SMTP_SERVER}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      EMAILS_FROM_NAME: ${EMAILS_FROM_NAME:-Diwan Event}
+      EMAILS_FROM_EMAIL: ${EMAILS_FROM_EMAIL}
+      CHARGILY_API_KEY: ${CHARGILY_API_KEY}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      # عدد خلايا العمل: (2 × CPU cores) + 1
+      GUNICORN_WORKERS: ${GUNICORN_WORKERS:-5}
+      PYTHONUNBUFFERED: "1"
+    volumes:
+      - ./attendance_system/assets:/app/assets:ro
+      - ./attendance_system/fonts:/app/fonts:ro
+      - app_exports:/app/exports
+      - app_logs:/app/logs
+    depends_on:
+      pgbouncer:
+        condition: service_started
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - backend_net
+      - frontend_net
+
+  # ── 5. Celery Worker — إرسال الإيميلات التدريجي ───────────────
+  # فصل مهمة إرسال الإيميلات كلياً عن خادم الويب
+  # معدل الإرسال: 10 إيميل/ثانية → 2000 إيميل في 3.5 دقيقة
+  celery:
+    build:
+      context: ./attendance_system
+      dockerfile: Dockerfile.prod
+    container_name: diwan_celery
+    command: >
+      celery -A app.tasks.celery_app worker --loglevel=info --concurrency=4 --queues=emails,default --max-tasks-per-child=1000
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-diwan_user}:${POSTGRES_PASSWORD}@pgbouncer:5432/${POSTGRES_DB:-diwan_db}
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+      SECRET_KEY: ${SECRET_KEY}
+      SMTP_SERVER: ${SMTP_SERVER}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      EMAILS_FROM_NAME: ${EMAILS_FROM_NAME:-Diwan Event}
+      EMAILS_FROM_EMAIL: ${EMAILS_FROM_EMAIL}
+    depends_on:
+      redis:
+        condition: service_healthy
+      pgbouncer:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - backend_net
+
+  # ── 6. Celery Beat — جدولة المهام الدورية ─────────────────────
+  celery-beat:
+    build:
+      context: ./attendance_system
+      dockerfile: Dockerfile.prod
+    container_name: diwan_celery_beat
+    command: >
+      celery -A app.tasks.celery_app beat --loglevel=info
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-diwan_user}:${POSTGRES_PASSWORD}@pgbouncer:5432/${POSTGRES_DB:-diwan_db}
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+      SECRET_KEY: ${SECRET_KEY}
+    depends_on:
+      - celery
+    restart: unless-stopped
+    networks:
+      - backend_net
+
+  # ── 7. Nginx — Reverse Proxy + SSL + ضغط ─────────────────────
+  nginx:
+    image: nginx:alpine
+    container_name: diwan_nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      - ./dashboard/dist:/usr/share/nginx/html:ro
+      - ./certbot/conf:/etc/letsencrypt:ro
+      - ./certbot/www:/var/www/certbot:ro
+      - nginx_logs:/var/log/nginx
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - frontend_net
+
+  # ── 8. Certbot — تجديد SSL تلقائي ─────────────────────────────
+  certbot:
+    image: certbot/certbot
+    container_name: diwan_certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    entrypoint: >
+      /bin/sh -c "trap exit TERM; while :; do
+        certbot renew --webroot -w /var/www/certbot --quiet;
+        sleep 12h & wait $${!};
+      done"
+    restart: unless-stopped
+
+# ── الشبكات ────────────────────────────────────────────────────
+networks:
+  backend_net:
+    driver: bridge
+    internal: true # لا يمكن الوصول للباك إند مباشرة من الخارج
+  frontend_net:
+    driver: bridge
+
+# ── وحدات التخزين المستمر ──────────────────────────────────────
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  app_exports:
+    driver: local
+  app_logs:
+    driver: local
+  nginx_logs:
+    driver: local

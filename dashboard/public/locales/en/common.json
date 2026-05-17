@@ -15,11 +15,12 @@
     "polls": "Polls",
     "hardware": "Hardware",
     "display": "Public Display",
-    "developer": "Developer Portal",
     "settings": "Settings",
+    "profile": "Profile",
     "speakers": "Speakers",
     "sponsors": "Sponsors",
     "questions": "Questions",
+    "developer": "Developer Hub",
     "logout": "Logout",
     "admin_name": "Ahmed Idrissi",
     "admin_role": "System Admin",
@@ -34,20 +35,77 @@
     "all": "All",
     "confirmed": "Confirmed",
     "pending": "Pending",
-    "actions": "Actions"
+    "actions": "Actions",
+    "next": "Next",
+    "sidebar": {
+      "events_group": "Events",
+      "engagement_group": "Engagement & Aesthetics",
+      "technical_group": "Technical Tools"
+    },
+    "roles": {
+      "super_admin": "Super Admin",
+      "organizer": "Event Organizer",
+      "member": "Member",
+      "fallback_name": "Diwan User"
+    },
+    "event_selector": {
+      "active_event": "Active Event",
+      "no_events": "No events found",
+      "choose_event": "Select Event",
+      "create_new": "+ Create New Event"
+    },
+    "lang_switcher": {
+      "choose_lang": "Select Language"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "clear_all": "Clear All",
+      "no_new": "No new notifications",
+      "view_all": "View all alerts",
+      "close": "Close"
+    },
+    "help": {
+      "title": "Need Help?",
+      "subtitle": "We're here to ensure your event's success.",
+      "guide_title": "Help Center",
+      "guide_desc": "Read the full guide for using the Diwan platform.",
+      "guide_action": "Browse Guide",
+      "live_support_title": "Live Support",
+      "live_support_desc": "Chat with one of our technical experts now.",
+      "live_support_action": "Start Chat",
+      "call_title": "Call Us",
+      "call_desc": "Our team is available to answer your phone inquiries.",
+      "call_action": "Show Number",
+      "email_contact": "Or contact us via email"
+    }
   },
   "dashboard": {
-    "welcome": "Welcome back to Diwan Event",
-    "overview_subtitle": "Here is a quick look at your event performance today.",
-    "present": "Present Now",
-    "absent": "Absent",
-    "expected": "Expected Attendance",
-    "attendance_rate": "Attendance Rate",
-    "recent_checkins": "Recent Check-ins",
-    "stats_chart_placeholder": "Statistics chart will be here...",
-    "hall_status": "Hall Status",
-    "hall_capacity_msg": "The main hall is almost full (85%)",
-    "open_live_stream": "Open Live Stream"
+    "welcome": "Welcome to Diwan",
+    "overview_subtitle": "Here is a summary of the event performance so far.",
+    "live_updates": "Live Updates",
+    "loading_data": "Loading event data...",
+    "no_data": "No data available for this event at the moment.",
+    "stats": {
+      "total_invited": "Total Registered",
+      "checked_in": "Present in Hall",
+      "not_present": "Absent",
+      "occupancy": "Occupancy Rate"
+    },
+    "attendance_curve": "Real-time Attendance Curve",
+    "gate": "Gate {{number}}",
+    "room_status": "Hall Status",
+    "status_messages": {
+      "full": "The hall is at full capacity.",
+      "almost_full": "The hall is almost full.",
+      "good": "Good and steady attendance flow.",
+      "early": "The hall is starting to receive guests."
+    },
+    "system_alerts": "System Alerts",
+    "alerts": {
+      "sync_success": "Successfully synced data for {{count}} participants.",
+      "checked_in_count": "{{count}} participants have checked in so far.",
+      "waiting_start": "Waiting for participant check-ins to begin."
+    }
   },
   "participants": {
     "title": "Participants Management",
@@ -57,8 +115,555 @@
     "time": "Check-in Time",
     "total_registered": "Total Registered Participants",
     "search_placeholder": "Search by name, organization or ref...",
+    "viewing": "Showing {{count}} of {{total}} participants",
     "no_results": "No results found",
-    "check_filters": "Please check your filters"
+    "check_filters": "Please check your filters",
+    "confirm_send_all": "Are you sure you want to send certificates to all attendees?",
+    "process_started": "Certificate sending process started in the background",
+    "export_error": "Failed to export data",
+    "print_error": "Failed to generate bulk badges",
+    "bulk_print": "Bulk Print",
+    "download_cert": "Download Certificate",
+    "check_in_success": "Attendance registered successfully and updated in statistics",
+    "check_in_error": "Failed to register attendance: ",
+    "undo_check_in_confirm": "Are you sure you want to undo check-in for this participant?",
+    "undo_check_in_success": "Check-in undone successfully",
+    "undo_check_in_error": "Failed to undo check-in: ",
+    "delete_confirm": "Are you sure you want to permanently delete this participant's data?",
+    "delete_error": "Failed to delete participant",
+    "no_event_selected": "No event selected",
+    "select_event_desc": "Please select an event from the top menu to begin.",
+    "check_in": "Check-in",
+    "undo_check_in": "Undo Check-in",
+    "delete_participant": "Delete Participant",
+    "import_modal": {
+      "title": "Excel Field Mapping",
+      "subtitle": "Please select the appropriate column for each system field to ensure import accuracy.",
+      "full_name": "Full Name *",
+      "council": "Organization / Entity",
+      "court": "Department / Speciality",
+      "email": "Email Address",
+      "phone": "Phone Number",
+      "select_col": "-- Select Column --",
+      "execute": "Confirm Bulk Import",
+      "executing": "Importing...",
+      "success": "✅ Import successful!\n\nAdded: {{added}}\nSkipped (Duplicates): {{skipped}}",
+      "error": "Import failed",
+      "analyze_error": "Failed to analyze file",
+      "name_required": "At least 'Full Name' field must be mapped"
+    }
+  },
+  "events": {
+    "title": "Your Events",
+    "subtitle": "Manage all your conferences and events",
+    "create_new": "Create New Event",
+    "create_success": "Event created successfully ✅",
+    "create_error": "Failed to create event: ",
+    "delete_confirm": "Are you sure you want to delete event \"{{name}}\"?\nThis action cannot be undone.",
+    "delete_error": "Failed to delete event: ",
+    "location_not_set": "Location not specified",
+    "coming_soon": "Soon",
+    "enter": "Enter",
+    "delete_title": "Delete Event",
+    "status_active": "Active",
+    "add_modal": {
+      "title": "Launch New Event",
+      "name_label": "Event Title",
+      "name_placeholder": "e.g., International Tech Summit 2026",
+      "location_label": "Location",
+      "location_placeholder": "Dubai, Exhibition Center",
+      "date_label": "Date",
+      "submit": "Create Now"
+    }
+  },
+  "sessions": {
+    "title": "Event Agenda",
+    "subtitle": "Manage sessions and workshops ({{count}} sessions programmed)",
+    "main_hall": "Main Hall",
+    "no_speaker": "—",
+    "no_location": "—",
+    "add_session": "Add New Session",
+    "edit_session": "Edit Session",
+    "delete_confirm": "Are you sure you want to delete this session?",
+    "delete_error": "Failed to delete session",
+    "search_placeholder": "Search for session or speaker...",
+    "no_event_selected": "No event selected",
+    "select_event_desc": "Please select an event first from the top menu.",
+    "no_results": "No matching results",
+    "try_another": "Try another search term.",
+    "no_sessions_yet": "No sessions added yet",
+    "start_adding": "Start by adding agenda sessions to your event.",
+    "add_first": "Add First Session",
+    "modal": {
+      "add_title": "Add New Session",
+      "edit_title": "Edit Session",
+      "subtitle": "Enter session details below",
+      "form": {
+        "title": "Session Title",
+        "title_required": "Session title is required",
+        "speaker": "Speaker Name",
+        "location": "Hall / Location",
+        "start_time": "Start Time",
+        "end_time": "End Time",
+        "times_required": "Start and end times are required",
+        "description": "Session Description",
+        "description_placeholder": "Optional...",
+        "save_success": "Session saved successfully",
+        "save_error": "Failed to save session. Try again.",
+        "saving": "Saving...",
+        "submit_add": "Add Session",
+        "submit_edit": "Save Changes"
+      }
+    }
+  },
+  "settings": {
+    "title": "Event Settings",
+    "subtitle": "Customize identity and advanced system options",
+    "saving": "Saving...",
+    "saved": "Saved",
+    "save_changes": "Save Changes",
+    "save_error": "Failed to save settings",
+    "loading": "Loading settings...",
+    "load_error": "Failed to load settings.",
+    "tabs": {
+      "general": "General Settings",
+      "design": "Visual Identity",
+      "registration": "Registration Form",
+      "payments": "Payments & Tickets",
+      "welcome": "Welcome Screen",
+      "labels": "Custom Labels",
+      "advanced": "Advanced Actions"
+    },
+    "general": {
+      "title": "General Settings",
+      "desc": "Basic event information.",
+      "event_name": "Event Name",
+      "registration_enabled": "Enable Public Registration",
+      "event_date": "Event Date",
+      "location": "Location"
+    },
+    "registration": {
+      "title": "Build Registration Form",
+      "desc": "Define the data you require from participants during self-registration.",
+      "new_field_label": "Field Label (e.g., Phone Number)",
+      "placeholder": "Display name...",
+      "field_type": "Field Type",
+      "types": {
+        "text": "Text",
+        "number": "Number",
+        "date": "Date"
+      },
+      "is_required": "Required?",
+      "add_field": "Add Field",
+      "add_error": "Failed to add field",
+      "no_custom_fields": "No custom fields currently. Default fields are (Name, Email, Organization).",
+      "required_badge": "Required",
+      "optional_badge": "Optional",
+      "delete_confirm": "Are you sure you want to delete this field?",
+      "delete_error": "Failed to delete field",
+      "note": "Note: Core fields (Full Name, Email, Organization) are fixed to ensure reports and badges work correctly. Fields added here will appear as extra data in the participant's file."
+    },
+    "design": {
+      "title": "Visual Identity",
+      "desc": "Customize colors and logo.",
+      "logo_label": "Event Logo",
+      "change_logo": "Change Logo",
+      "upload_logo": "Upload Logo",
+      "upload_error": "Failed to upload logo",
+      "primary_color": "Primary Color"
+    },
+    "payments": {
+      "title": "Payments & Tickets",
+      "desc": "Payment gateway and ticket settings.",
+      "require_payment": "Enable Mandatory Payment",
+      "ticket_price": "Ticket Price",
+      "currency": "Currency",
+      "chargily_api_key": "Chargily Pay API Key"
+    },
+    "welcome": {
+      "title": "Welcome Screen",
+      "desc": "What guests see when scanning or entering the hall.",
+      "welcome_title": "Welcome Title",
+      "welcome_subtitle": "Subtitle"
+    },
+    "labels": {
+      "title": "Custom Labels",
+      "desc": "Change core field labels.",
+      "org_label_1": "Label 1 (Organization)",
+      "org_label_2": "Label 2 (Department)",
+      "org_label_3": "Label 3 (Rank)",
+      "org_label_4": "Label 4 (Location)"
+    },
+    "advanced": {
+      "title": "Advanced Actions",
+      "desc": "Critical operations for managing event state.",
+      "freeze_title": "Freeze List",
+      "freeze_desc": "When frozen, no one can register or edit data.",
+      "unfreeze": "Unfreeze List ❄️",
+      "freeze": "Freeze List ❄️",
+      "freeze_error": "Failed to freeze list",
+      "reset_attendance_title": "Reset Attendance",
+      "reset_attendance_desc": "Warning: All attendance records will be cleared and set to 'absent'.",
+      "reset_confirm": "Are you sure you want to reset all attendance records?",
+      "reset_success": "Records reset successfully",
+      "reset_error": "Failed to reset records",
+      "reset_btn": "Reset Records ⚠️"
+    }
+  },
+  "speakers": {
+    "title": "Speakers & Experts",
+    "subtitle": "Manage the list of speakers in sessions and workshops",
+    "add_btn": "Add Speaker",
+    "edit_btn": "Edit",
+    "delete_btn": "Delete",
+    "no_speakers": "No speakers at the moment",
+    "no_speakers_desc": "Start by adding the first speaker for the event.",
+    "main_topic": "Main Topic",
+    "official_speaker": "Official Speaker",
+    "save_error": "Failed to save data",
+    "delete_confirm": "Are you sure you want to delete this speaker?",
+    "delete_error": "Deletion failed",
+    "loading": "Loading data...",
+    "modal": {
+      "title_add": "Add New Speaker",
+      "title_edit": "Edit Speaker Data",
+      "name": "Full Name",
+      "job_title": "Job Title",
+      "topic": "Presentation Topic",
+      "image": "Profile Photo",
+      "image_placeholder": "Choose speaker photo",
+      "bio": "Biography (Short)",
+      "save": "Save",
+      "cancel": "Cancel"
+    }
+  },
+  "sponsors": {
+    "title": "Success Partners",
+    "subtitle": "Manage sponsors and official partners of the event",
+    "add_btn": "Add New Sponsor",
+    "edit_title": "Edit Sponsor Data",
+    "add_title": "Add New Sponsor",
+    "no_sponsors": "No sponsors currently",
+    "no_sponsors_desc": "Start by adding the first partner for the event.",
+    "website": "Website",
+    "tier": "Tier",
+    "type": "Partnership Type",
+    "sponsor": "Official Sponsor",
+    "media": "Media Partner",
+    "save_success": "Data saved successfully ✅",
+    "save_error": "Failed to save data",
+    "delete_confirm": "Are you sure you want to delete this sponsor?",
+    "delete_error": "Deletion failed",
+    "modal": {
+      "name": "Name",
+      "tier": "Tier",
+      "type": "Partnership Type",
+      "website": "Website",
+      "logo": "Logo",
+      "choose_logo": "Choose logo image"
+    }
+  },
+  "questions": {
+    "title": "Audience Questions",
+    "subtitle": "Review and moderate questions submitted by participants",
+    "no_questions": "No questions submitted yet",
+    "search_placeholder": "Search questions...",
+    "tabs": {
+      "pending": "Pending Review",
+      "approved": "Approved",
+      "hidden": "Hidden"
+    },
+    "approve": "Approve",
+    "hide": "Hide",
+    "delete": "Delete",
+    "upvotes": "Upvotes",
+    "anonymous": "Anonymous"
+  },
+  "polls": {
+    "title": "Live Polls",
+    "subtitle": "Create and manage real-time polls for your audience",
+    "create_btn": "Create New Poll",
+    "active": "Active",
+    "ended": "Ended",
+    "total_votes": "Total Votes",
+    "no_polls": "No polls created yet",
+    "start_desc": "Start engaging your audience by creating your first poll.",
+    "modal": {
+      "title": "Create Poll",
+      "question": "Question",
+      "question_placeholder": "Write your question here...",
+      "options": "Options",
+      "option": "Option",
+      "add_option": "Add Option",
+      "submit": "Create Poll"
+    }
+  },
+  "analytics": {
+    "title": "Analytics Center",
+    "subtitle": "Live analysis of event performance and attendance rates",
+    "export_btn": "Export Final Report",
+    "loading": "Analyzing data...",
+    "load_error": "Failed to load analytics. Please ensure the server is running.",
+    "stats": {
+      "total_invited": "Total Registered",
+      "checked_in": "Checked In",
+      "attendance_rate": "Attendance Rate",
+      "pending": "Awaiting Arrival"
+    },
+    "peak_title": "Attendance Peak During Day",
+    "councils_title": "Attendance by Organization"
+  },
+  "social_moderation": {
+    "title": "Social Wall Moderation",
+    "subtitle": "You have {{count}} posts awaiting review",
+    "refresh": "Refresh List",
+    "pending_review": "Awaiting Review",
+    "approve": "Approve Post",
+    "reject": "Reject",
+    "no_posts": "All posts are currently reviewed",
+    "save_error": "Moderation process failed"
+  },
+  "hardware": {
+    "title": "Hardware Management",
+    "subtitle": "Monitor devices and scanners connected to the system",
+    "live": "Live",
+    "refresh": "Update Status",
+    "scan_network": "Scan Network",
+    "scanning": "Scanning...",
+    "scan_success": "Successfully scanned {{count}} devices",
+    "stats": {
+      "online": "Connected Devices",
+      "offline": "Disconnected Devices",
+      "low_battery": "Devices Needing Charge"
+    },
+    "table": {
+      "title": "Device List",
+      "count": "{{count}} registered devices",
+      "device": "Device",
+      "status": "Status",
+      "battery": "Battery",
+      "last_ping": "Last Connection",
+      "control": "Control",
+      "no_devices": "No devices currently connected",
+      "auto_appear": "Devices will automatically appear when connected to the network",
+      "turn_off": "Turn Off Device",
+      "turn_on": "Turn On Device"
+    }
+  },
+  "display_control": {
+    "title": "Display Control Unit",
+    "subtitle": "Control what the audience sees on multiple displays in real-time",
+    "current_scene": "Current Scene:",
+    "not_set": "Not set",
+    "select_scene": "Select scene to display on",
+    "launch_screen": "Launch this screen (new window)",
+    "now_playing": "Now Showing",
+    "push_error": "Failed to push command to screen",
+    "channels": {
+      "main": "Main Screen (Hall)",
+      "lobby": "Lobby Screen",
+      "networking": "Networking Area",
+      "sponsors": "Sponsors Screen (Dedicated)",
+      "registration": "Registration Screen",
+      "media": "Media & Press Screen"
+    },
+    "scenes": {
+      "stats": "Attendance Stats",
+      "wall": "Social Wall",
+      "questions": "Session Question",
+      "polls": "Polls",
+      "sponsors": "Sponsors",
+      "welcome": "Welcome Screen",
+      "registration": "Registration Gateway",
+      "media": "Media Partners"
+    }
+  },
+  "checkin": {
+    "title": "On-Site Check-in",
+    "subtitle": "Search by name, registration number, or scan QR",
+    "invalid_qr": "Invalid QR code or participant not found",
+    "checkin_failed": "Check-in failed",
+    "walkin_success": "✅ Successfully registered {{name}} and confirmed attendance",
+    "walkin_failed": "Walk-in registration failed: ",
+    "camera_scanner": "Camera Scanner",
+    "auto_print": {
+      "enabled": "Auto-Print: Enabled",
+      "disabled": "Auto-Print: Disabled"
+    },
+    "new_walkin": "New Participant (Walk-in)",
+    "search_placeholder": "Search participant...",
+    "status": {
+      "checked_in": "Checked In"
+    },
+    "btn": {
+      "checkin_now": "Check-in Now"
+    },
+    "walkin_modal": {
+      "title": "New Walk-in Registration",
+      "full_name": "Full Name",
+      "council": "Council / Organization",
+      "email": "Email Address (Optional)",
+      "submit": "Complete Registration & Print"
+    },
+    "scanner_modal": {
+      "title": "Smart QR Scanner",
+      "hint": "Place the QR code inside the box to scan"
+    }
+  },
+  "dev_portal": {
+    "title": "Developer Hub",
+    "hero_title": "Build your apps with",
+    "hero_subtitle": "Integrate live event intelligence into your own applications using our advanced API and Webhooks system.",
+    "system_status": "System Status",
+    "all_systems_operational": "All systems operational",
+    "tabs": {
+      "api_keys": "API Keys",
+      "webhooks": "Webhooks",
+      "monitoring": "Monitoring & Usage",
+      "playground": "Playground"
+    },
+    "support": {
+      "title": "Need advanced technical support?",
+      "subtitle": "Our engineering team is ready to help you with complex custom integrations.",
+      "button": "Contact Developer Support"
+    },
+    "api_keys": {
+      "heading": "Access Keys (API Keys)",
+      "desc": "Manage access keys to connect your external applications to the Diwan system.",
+      "create_btn": "Create New Key",
+      "last_used": "Last Used",
+      "rate_limit": "Rate Limit",
+      "revoke": "Revoke Key",
+      "edit_perms": "Edit Permissions",
+      "copy_key": "Copy Key",
+      "saved_btn": "I have saved the key safely",
+      "security_warning": "Important Security Warning!",
+      "security_desc": "This is the only time your secret key will be shown. Copy it now and store it in a safe place.",
+      "demo": {
+        "mobile_app": "Mobile App - Primary Integration",
+        "analytics_dash": "Analytics Dashboard",
+        "two_hours_ago": "2 hours ago",
+        "now": "Now",
+        "status_active": "Active",
+        "rate_limit_mobile": "1,000 req/min",
+        "rate_limit_analytics": "5,000 req/min"
+      }
+    },
+    "webhooks": {
+      "heading": "Webhook Endpoints",
+      "desc": "Subscribe to live event notifications and receive them as soon as they happen.",
+      "add_btn": "Add Endpoint URL",
+      "last_delivery": "Last Delivery",
+      "success_rate": "Success Rate",
+      "delivery_logs": "Delivery Logs",
+      "status_stable": "Stable",
+      "status_warning": "Warning",
+      "event_checkin": "Participant Entry",
+      "event_start": "Event Started",
+      "event_exhibitor": "Exhibitor Data Captured",
+      "two_mins_ago": "2 minutes ago",
+      "one_hour_ago": "1 hour ago"
+    },
+    "monitor": {
+      "total_requests": "Total Requests (24h)",
+      "avg_response": "Avg Response Time",
+      "uptime": "Uptime",
+      "peak_rps": "Peak Req/s",
+      "chart_title": "API Traffic (Last 24 Hours)",
+      "chart_desc": "Live monitoring of request performance and time distribution.",
+      "successful": "Successful Requests",
+      "errors": "Errors"
+    },
+    "playground": {
+      "search_placeholder": "Search for an endpoint...",
+      "request_details": "Request Details",
+      "run_request": "Run Request",
+      "curl_label": "cURL Command",
+      "response_label": "Expected Server Response",
+      "auth_title": "Current Authentication Mode",
+      "auth_desc": "A test key is automatically used to try the API.",
+      "change_key": "Change Test Key",
+      "ep_events": "List active events",
+      "ep_checkin": "Register a new participant check-in",
+      "ep_heatmap": "Fetch live heatmap data"
+    }
+  },
+  "questions": {
+    "title": "Questions & Discussions",
+    "subtitle": "Manage audience questions directed at speakers",
+    "anonymous": "Anonymous",
+    "mark_unanswered": "Mark as Unanswered",
+    "mark_answered": "Mark as Answered",
+    "unpin": "Unpin Question",
+    "pin": "Pin Question",
+    "no_questions": "No questions submitted yet",
+    "activate_desc": "Make sure the Q&A feature is enabled in the participant portal.",
+    "tabs": {
+      "pending": "Pending Review",
+      "answered": "Answered"
+    }
+  },
+  "badge_designer": {
+    "title": "Badge Designer",
+    "background_label": "Badge Background",
+    "upload_hint": "Drag image here",
+    "edit_elements": "Edit Elements",
+    "full_name": "Full Name",
+    "council": "Organization/Institution",
+    "qr_code": "QR Code",
+    "save_template": "Save Template",
+    "saving": "Saving...",
+    "save_success": "Template saved successfully!",
+    "save_error": "Failed to save template",
+    "placeholder_hint": "Upload a background image to start",
+    "participant_name_placeholder": "Participant Full Name",
+    "organization_placeholder": "Department or Organization"
+  },
+  "public_display": {
+    "live_wall": "Live Social Wall",
+    "live_subtitle": "Live from participant app",
+    "waiting_interaction": "Waiting for audience interaction...",
+    "participant": "Event Participant",
+    "checkin_time": "Check-in Time",
+    "now_live": "Live Attendance Now",
+    "completion_rate": "Completion Rate",
+    "awaiting_arrival": "Awaiting Arrival",
+    "recent_checkins": "Recent Check-ins",
+    "waiting_participants": "Waiting for participants to arrive...",
+    "session_question": "Current Session Question",
+    "live_from_platform": "Live from participant platform",
+    "waiting_questions": "Waiting for audience questions...",
+    "live_poll": "Instant Live Poll",
+    "votes": "Votes",
+    "option": "Option",
+    "sponsors_title": "Success Partners & Sponsors",
+    "welcome": "Welcome",
+    "welcome_default": "Welcome and Greetings",
+    "enjoy_time": "We wish you an enjoyable and useful time",
+    "registration_gateway": "Registration Gateway",
+    "scan_to_confirm": "Scan code to confirm attendance, get certificate, and participate live",
+    "media_partners": "Media Partners & Coverage",
+    "waiting_media": "Waiting for media partners confirmation...",
+    "welcome_visitor": "Welcome: {{name}}",
+    "powered_by": "Powered by Diwan Event"
+  },
+  "developer": {
+    "title": "Developer Hub",
+    "hero_title": "Build your apps with",
+    "hero_subtitle": "Integrate live event intelligence into your own applications using our advanced API and Webhooks system.",
+    "system_status": "System Status",
+    "all_systems_operational": "All systems operational",
+    "tabs": {
+      "api_keys": "API Keys",
+      "webhooks": "Webhooks",
+      "monitoring": "Monitoring & Usage",
+      "playground": "Playground"
+    },
+    "support": {
+      "title": "Need advanced technical support?",
+      "subtitle": "Our engineering team is ready to help you with complex and custom integrations.",
+      "button": "Contact Developer Support"
+    }
   },
   "landing": {
     "nav": {
@@ -484,5 +1089,93 @@
         "error": "Error during registration. Please try again."
       }
     }
+  },
+  "profile": {
+    "title": "Profile",
+    "subtitle": "Manage your personal information and security settings",
+    "tabs": {
+      "personal": "Personal Information",
+      "security": "Security & Privacy",
+      "alerts": "Alert History",
+      "settings": "Notification Settings"
+    },
+    "personal": {
+      "title": "Personal Information",
+      "subtitle": "System Admin • Diwan Event",
+      "fullName": "Full Name",
+      "email": "Email Address",
+      "phone": "Phone Number",
+      "jobTitle": "Job Title",
+      "save": "Save Changes",
+      "role_fallback": "System Admin • Diwan Event",
+      "job_title_placeholder": "Event Manager",
+      "name_fallback": "Ahmed Idrissi"
+    },
+    "security": {
+      "password_title": "Change Password",
+      "password_last_change": "Last changed 3 months ago",
+      "update_btn": "Update",
+      "2fa_title": "Two-Factor Authentication (2FA)",
+      "2fa_subtitle": "Extra protection for your account",
+      "2fa_setup": {
+        "title": "Two-Factor Authentication Setup",
+        "desc": "Scan the following QR code using your authenticator app (Google Authenticator or Authy)",
+        "manual_entry": "Or enter the code manually",
+        "verify_label": "6-digit verification code",
+        "enable_btn": "Enable Authentication",
+        "cancel_btn": "Cancel"
+      },
+      "modal": {
+        "title": "Change Password",
+        "subtitle": "Please enter your current and new password",
+        "current_label": "Current Password",
+        "new_label": "New Password",
+        "confirm_label": "Confirm New Password",
+        "submit": "Confirm Change"
+      },
+      "passwords_mismatch": "New passwords do not match",
+      "password_success": "Password changed successfully",
+      "password_error": "Failed to change password",
+      "2fa_disabled": "2FA has been disabled",
+      "2fa_disable_error": "Failed to disable 2FA",
+      "2fa_setup_error": "Failed to start 2FA setup",
+      "2fa_enabled": "2FA has been enabled successfully",
+      "2fa_verify_error": "Incorrect verification code"
+    },
+    "notifications": {
+      "title": "Notification Settings",
+      "subtitle": "Choose how and when you want to receive notifications from the platform.",
+      "email_reg_title": "New Registration Alerts",
+      "email_reg_desc": "Receive an email when a new participant registers for your event.",
+      "sys_alerts_title": "System Alerts",
+      "sys_alerts_desc": "Get notifications about server status and synchronization.",
+      "security_alerts_title": "Security & Privacy",
+      "security_alerts_desc": "Alert you of suspicious login attempts or password changes.",
+      "browser_push_title": "Browser Notifications",
+      "browser_push_desc": "Enable direct desktop notifications.",
+      "save_btn": "Save Notification Preferences",
+      "save_success": "Notification preferences saved successfully"
+    },
+    "alerts_history": {
+      "title": "Alert History",
+      "subtitle": "Review all recent notifications and operations"
+    }
+  },
+  "badge_designer": {
+    "title": "Badge Template Designer",
+    "tools_title": "Design Tools",
+    "full_name": "Full Name",
+    "council": "Organization/Council",
+    "qr_code": "QR Code",
+    "save_template": "Save Template",
+    "saving": "Saving...",
+    "save_success": "Template saved successfully!",
+    "save_error": "Failed to save template",
+    "background_label": "Badge Background (A6)",
+    "upload_hint": "Drag image here",
+    "edit_elements": "Edit Elements",
+    "participant_name_placeholder": "Participant Full Name",
+    "organization_placeholder": "Organization/Council Name",
+    "placeholder_hint": "Upload a background image to start"
   }
 }

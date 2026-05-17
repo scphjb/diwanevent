@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useParams } from 'react-router-dom';
 import { 
   Search, 
   User, 
+  Users,
   QrCode, 
   ChevronRight, 
   Info, 
@@ -27,6 +28,22 @@ const SelfServicePage = () => {
   const [results, setResults] = useState([]);
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [settings, setSettings] = useState({
+    welcome_title: 'بوابة الخدمة الذاتية',
+    welcome_subtitle: 'ابحث عن بياناتك وحمل بطاقتك'
+  });
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const response = await api.get(`events/${eventId}/settings`);
+        if (response.data) setSettings(response.data);
+      } catch (err) {
+        console.error('Failed to fetch settings');
+      }
+    };
+    fetchSettings();
+  }, [eventId]);
 
   useEffect(() => {
     if (query.length >= 2) {
@@ -42,8 +59,8 @@ const SelfServicePage = () => {
   const handleSearch = async () => {
     setLoading(true);
     try {
-      const data = await participantService.getParticipants(eventId, { query: query });
-      setResults(data);
+      const data = await participantService.publicSearch(eventId, query);
+      setResults(Array.isArray(data) ? data : (data.items || []));
     } catch (err) {
       console.error('Search failed');
     } finally {
@@ -68,8 +85,8 @@ const SelfServicePage = () => {
         <div className="w-20 h-20 bg-amber-500/10 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-amber-500/20 shadow-2xl">
            <Monitor className="w-10 h-10 text-amber-500" />
         </div>
-        <h1 className="text-4xl font-black mb-2 tracking-tighter">بوابة الخدمة الذاتية</h1>
-        <p className="text-emerald-400/50 font-bold uppercase tracking-widest text-sm">ابحث عن بياناتك وحمل بطاقتك</p>
+        <h1 className="text-4xl font-black mb-2 tracking-tighter">{settings.welcome_title}</h1>
+        <p className="text-emerald-400/50 font-bold uppercase tracking-widest text-sm">{settings.welcome_subtitle}</p>
       </header>
 
       <main className="w-full max-w-2xl relative z-10">
@@ -112,12 +129,12 @@ const SelfServicePage = () => {
                       className="w-full bg-white/5 border border-white/10 hover:bg-white/10 p-8 rounded-[35px] flex items-center justify-between group transition-all"
                     >
                       <div className="flex items-center gap-6">
-                        <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 font-black text-xl group-hover:bg-amber-500 group-hover:text-emerald-950 transition-colors">
-                           {p.full_name[0]}
+                        <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 group-hover:bg-amber-500 group-hover:text-emerald-950 transition-colors border border-emerald-500/10">
+                           <Users className="w-7 h-7" />
                         </div>
                         <div className="text-right">
                           <div className="text-xl font-bold">{p.full_name}</div>
-                          <div className="text-emerald-400/40 text-sm">{p.council} • {p.court}</div>
+                          <div className="text-emerald-400/40 text-sm">{p.organization} • {p.department}</div>
                         </div>
                       </div>
                       <ChevronRight className="w-8 h-8 text-white/20 group-hover:text-amber-500 transition-colors rtl:rotate-180" />
@@ -144,7 +161,7 @@ const SelfServicePage = () => {
                 <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-transparent via-amber-500 to-transparent" />
                 
                 <h3 className="text-3xl font-black mb-2">{selected.full_name}</h3>
-                <p className="text-emerald-400/40 font-bold mb-10 tracking-widest">{selected.council}</p>
+                <p className="text-emerald-400/40 font-bold mb-10 tracking-widest">{selected.organization}</p>
 
                 <div className="bg-white p-8 rounded-[40px] inline-block shadow-2xl mb-10">
                    <img 
@@ -171,8 +188,7 @@ const SelfServicePage = () => {
                     variant="gold" 
                     className="h-20 text-xl font-black rounded-[28px] gap-3"
                     onClick={() => {
-                      const id = String(selected.id).replace(/[^a-zA-Z0-9-]/g, '');
-                      window.open(credentialService.getPrintUrl(id), '_blank');
+                      if(selected?.order_num) window.open(credentialService.getBadgeUrl(selected.order_num), '_blank');
                     }}
                   >
                     <Printer className="w-7 h-7" />
@@ -202,7 +218,7 @@ const SelfServicePage = () => {
       </main>
 
       <footer className="mt-20 text-emerald-400/20 font-black uppercase tracking-[0.5em] text-xs">
-        Diwan Event Platform • Self Service Console 2.0
+        Diwan Event Platform • Self Service Console
       </footer>
     </div>
   );

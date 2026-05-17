@@ -58,7 +58,7 @@ const ProductExperience = () => {
     },
     {
       id: 'networking',
-      title: L({ ar: 'التشبيك الذكي', en: 'Smart Networking', fr: 'Réseautage', es: 'Networking' }),
+      title: L({ ar: 'التواصل الاحترافي الذكي', en: 'Smart Networking', fr: 'Réseautage', es: 'Networking' }),
       desc: L({ 
         ar: 'اربط المشاركين ببعضهم البعض بناءً على اهتماماتهم المشتركة.', 
         en: 'Connect participants based on their shared professional interests.',

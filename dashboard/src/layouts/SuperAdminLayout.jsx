@@ -14,6 +14,9 @@ import {
 const SuperAdminLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const user = JSON.parse(localStorage.getItem('diwan_user') || '{}');
+  const userName = user.full_name || user.email || 'المدير العام';
+  const userRole = user.role === 'super_admin' ? 'المدير العام' : 'منظم';
 
   const handleLogout = () => {
     localStorage.removeItem('diwan_token');
@@ -29,7 +32,7 @@ const SuperAdminLayout = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#022C22] text-[#F0F4F2] flex flex-row-reverse font-sans" dir="rtl">
+    <div className="min-h-screen bg-[#022C22] text-[#F0F4F2] flex flex-row font-sans" dir="rtl">
       
       {/* Sidebar */}
       <aside className="w-72 bg-[#0A3D2B] border-l border-white/5 flex flex-col z-20">
@@ -106,8 +109,8 @@ const SuperAdminLayout = () => {
 
             <div className="flex items-center gap-4">
               <div className="text-left hidden sm:block">
-                <p className="text-xs font-black text-white leading-none mb-1 text-right">أدمن المنصة</p>
-                <p className="text-[10px] text-[#D4AF37] font-bold text-right uppercase">Root Access</p>
+                <p className="text-xs font-black text-white leading-none mb-1 text-right">{userName}</p>
+                <p className="text-[10px] text-[#D4AF37] font-bold text-right uppercase">{userRole}</p>
               </div>
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#1A8A6A] to-[#D4AF37] p-[2px]">
                 <div className="w-full h-full rounded-full bg-[#0A3D2B] flex items-center justify-center">

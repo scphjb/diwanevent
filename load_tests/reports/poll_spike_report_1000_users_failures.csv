@@ -1,0 +1,8 @@
+Method,Name,Error,Occurrences
+GET,🗳️ GET Active Poll (Read),CatchResponseError('0'),420
+POST,📝 POST Concurrent Register (Spike),CatchResponseError('Connection dropped'),4339
+GET,🔍 GET Search (Concurrent Read),CatchResponseError('0'),248
+GET,📋 GET Sessions (Concurrent Read),CatchResponseError('0'),697
+POST,🗳️ POST Vote (Spike),CatchResponseError('Connection dropped / timeout'),8581
+GET,📊 GET Poll Results (Live),CatchResponseError('Connection dropped'),4204
+GET,ℹ️ GET Event Capacity Check,CatchResponseError('0'),1040

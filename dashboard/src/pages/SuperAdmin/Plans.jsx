@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { toast } from 'react-hot-toast';
+import { showSuccess, showError, showConfirm } from '../../utils/swal';
 import { Package, Plus, Edit3, Trash2, Check, X, DollarSign, Users, Calendar, Sparkles } from 'lucide-react';
 
 const Plans = () => {
@@ -37,17 +39,22 @@ const Plans = () => {
 
     try {
       const res = await fetch(url, { method, headers, body: JSON.stringify(payload) });
-      if (res.ok) { fetchPlans(); resetForm(); }
-    } catch (e) { console.error(e); }
+      if (res.ok) { 
+        showSuccess('تم حفظ الباقة بنجاح');
+        fetchPlans(); 
+        resetForm(); 
+      } else {
+        showError('حدث خطأ أثناء حفظ الباقة');
+      }
+    } catch (e) { showError('حدث خطأ تقني'); }
   };
 
   const deletePlan = async (id) => {
-    if (!confirm('هل أنت متأكد من حذف هذه الباقة؟')) return;
+    const result = await showConfirm('حذف الباقة', 'هل أنت متأكد من حذف هذه الباقة؟');
+    if (!result.isConfirmed) return;
     try {
       const res = await fetch(`/api/v1/super-admin/plans/${id}`, { method: 'DELETE', headers });
       const data = await res.json();
-      if (res.ok) fetchPlans();
-      else alert(data.detail);
     } catch (e) { console.error(e); }
   };
 

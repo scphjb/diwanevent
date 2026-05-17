@@ -11,11 +11,11 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    host: '0.0.0.0',   // ✅ يستمع على كل الشبكة وليس localhost فقط
     proxy: {
       '/api': {
         target: 'http://localhost:8000',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '/api/v1')
+        changeOrigin: true
       },
       '/ws': {
         target: 'ws://localhost:8000',

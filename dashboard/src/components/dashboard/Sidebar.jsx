@@ -1,11 +1,12 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../hooks/useAuth';
-import { 
-  Home, 
-  Users, 
-  Calendar, 
-  Settings, 
+import {
+  Home,
+  Users,
+  Calendar,
+  Settings,
+  Award,
   LogOut,
   ShieldAlert,
   Globe,
@@ -20,7 +21,8 @@ import {
   Heart,
   HelpCircle,
   TrendingUp,
-  CreditCard
+  CreditCard,
+  FileText
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { useTranslation } from 'react-i18next';
@@ -28,34 +30,36 @@ import { Link } from 'react-router-dom';
 import LanguageSwitcher from './LanguageSwitcher';
 
 const menuItems = [
-  { icon: LayoutDashboard, label: 'الفعاليات', path: '/dashboard/events' },
-  { icon: Home, label: 'لوحة التحكم', path: '/dashboard' },
-  { icon: Users, label: 'المشاركين', path: '/dashboard/participants' },
-  { icon: UserCheck, label: 'تسجيل الدخول', path: '/dashboard/check-in' },
-  { icon: Calendar, label: 'الجلسات', path: '/dashboard/sessions' },
-  { icon: Mic, label: 'المتحدثون', path: '/dashboard/speakers' },
-  { icon: Heart, label: 'الرعاة', path: '/dashboard/sponsors' },
-  { icon: TrendingUp, label: 'التحليلات', path: '/dashboard/stats' },
+  { icon: LayoutDashboard, path: '/dashboard/events' },
+  { icon: Home, path: '/dashboard' },
+  { icon: Users, path: '/dashboard/participants' },
+  { icon: UserCheck, path: '/dashboard/check-in' },
+  { icon: Calendar, path: '/dashboard/sessions' },
+  { icon: Mic, path: '/dashboard/speakers' },
+  { icon: Heart, path: '/dashboard/sponsors' },
+  { icon: TrendingUp, path: '/dashboard/stats' },
 ];
 
 const engagementItems = [
-  { icon: MessageSquare, label: 'حائط التواصل', path: '/dashboard/wall' },
-  { icon: HelpCircle, label: 'الأسئلة', path: '/dashboard/questions' },
-  { icon: ShieldAlert, label: 'الإشراف', path: '/dashboard/moderation' },
-  { icon: Palette, label: 'مصمم القوالب', path: '/dashboard/designer' },
-  { icon: BarChart2, label: 'استطلاعات الرأي', path: '/dashboard/polls' },
+  { icon: MessageSquare, path: '/dashboard/wall' },
+  { icon: HelpCircle, path: '/dashboard/questions' },
+  { icon: ShieldAlert, path: '/dashboard/moderation' },
+  { icon: Palette, path: '/dashboard/designer/badge' },
+  { icon: Award, path: '/dashboard/designer/certificate' },
+  { icon: BarChart2, path: '/dashboard/polls' },
+  { icon: FileText, path: '/dashboard/documents' },
 ];
 
 const technicalItems = [
-  { icon: Cpu, label: 'إدارة العتاد', path: '/dashboard/hardware' },
-  { icon: Monitor, label: 'شاشة العرض', path: '/dashboard/display' },
-  { icon: Globe, label: 'بوابة المطورين', path: '/dashboard/developer' },
+  { icon: Cpu, path: '/dashboard/hardware' },
+  { icon: Monitor, path: '/dashboard/display' },
+  { icon: Globe, path: '/dashboard/developer' },
 ];
 
 const Sidebar = ({ activePath }) => {
   const { t } = useTranslation();
   const { user, isAdmin } = useAuth();
-  
+
   const handleLogout = () => {
     localStorage.removeItem('diwan_token');
     window.location.href = '/login';
@@ -84,8 +88,8 @@ const Sidebar = ({ activePath }) => {
 
       {/* Navigation Links */}
       <nav className="flex-1 px-4 py-4 space-y-2 overflow-y-auto custom-scrollbar">
-        
-        <div className="px-4 mb-3 text-[10px] uppercase tracking-widest text-emerald-500/50 font-bold">الفعاليات</div>
+
+        <div className="px-4 mb-3 text-[10px] uppercase tracking-widest text-emerald-500/50 font-bold">{t('common.sidebar.events_group')}</div>
         {menuItems.map((item) => {
           const isActive = activePath === item.path;
           return (
@@ -94,8 +98,8 @@ const Sidebar = ({ activePath }) => {
               to={item.path}
               className={cn(
                 "flex items-center gap-4 px-4 py-3 rounded-2xl transition-all group",
-                isActive 
-                  ? "bg-emerald-600/20 text-emerald-400 border border-emerald-600/30" 
+                isActive
+                  ? "bg-emerald-600/20 text-emerald-400 border border-emerald-600/30"
                   : "text-emerald-100/40 hover:text-emerald-100 hover:bg-white/5"
               )}
             >
@@ -110,7 +114,7 @@ const Sidebar = ({ activePath }) => {
 
         {/* Engagement Section */}
         <div className="mt-6 pt-6 border-t border-white/5">
-          <div className="px-4 mb-3 text-[10px] uppercase tracking-widest text-emerald-500/50 font-bold">التفاعل والجمالية</div>
+          <div className="px-4 mb-3 text-[10px] uppercase tracking-widest text-emerald-500/50 font-bold">{t('common.sidebar.engagement_group')}</div>
           {engagementItems.map((item) => {
             const isActive = activePath === item.path;
             return (
@@ -119,8 +123,8 @@ const Sidebar = ({ activePath }) => {
                 to={item.path}
                 className={cn(
                   "flex items-center gap-4 px-4 py-3 rounded-2xl transition-all group",
-                  isActive 
-                    ? "bg-emerald-600/20 text-emerald-400 border border-emerald-600/30" 
+                  isActive
+                    ? "bg-emerald-600/20 text-emerald-400 border border-emerald-600/30"
                     : "text-emerald-100/40 hover:text-emerald-100 hover:bg-white/5"
                 )}
               >
@@ -133,7 +137,7 @@ const Sidebar = ({ activePath }) => {
 
         {/* Technical Section */}
         <div className="mt-6 pt-6 border-t border-white/5">
-          <div className="px-4 mb-3 text-[10px] uppercase tracking-widest text-emerald-500/50 font-bold">الأدوات التقنية</div>
+          <div className="px-4 mb-3 text-[10px] uppercase tracking-widest text-emerald-500/50 font-bold">{t('common.sidebar.technical_group')}</div>
           {technicalItems.map((item) => {
             const isActive = activePath === item.path;
             return (
@@ -142,8 +146,8 @@ const Sidebar = ({ activePath }) => {
                 to={item.path}
                 className={cn(
                   "flex items-center gap-4 px-4 py-3 rounded-2xl transition-all group",
-                  isActive 
-                    ? "bg-emerald-600/20 text-emerald-400 border border-emerald-600/30" 
+                  isActive
+                    ? "bg-emerald-600/20 text-emerald-400 border border-emerald-600/30"
                     : "text-emerald-100/40 hover:text-emerald-100 hover:bg-white/5"
                 )}
               >
@@ -158,9 +162,8 @@ const Sidebar = ({ activePath }) => {
 
       {/* User / Logout Section */}
       <div className="p-6 mt-auto">
-        <LanguageSwitcher />
         <div className="bg-white/5 rounded-2xl p-4 border border-white/5 mt-4">
-          <button 
+          <button
             onClick={handleLogout}
             className="flex items-center gap-3 w-full text-red-400 hover:text-red-300 transition-colors"
           >

@@ -1,9 +1,9 @@
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, Request
 from sqlalchemy.orm import Session
+from typing import Optional
 from app.core.database import get_db
 from app.core.auth_deps import get_current_active_user
 from app.models.user import User
-from app.models.rbac import UserEventRole, Role, Permission
 
 def require_permission(permission_code: str):
     """
@@ -18,37 +18,59 @@ def require_permission(permission_code: str):
     ):
     """
     def checker(
-        event_id: int,
+        request: Request,
         current_user: User = Depends(get_current_active_user),
-        db: Session = Depends(get_db)
+        db: Session = Depends(get_db),
+        event_id: Optional[int] = None,   # query param أو path param (اختياري)
     ) -> None:
         # super_admin يملك كل شيء
         if current_user.role == 'super_admin':
             return
-        
-        # جلب دور المستخدم في هذه الفعالية
+
+        # حاول استخراج event_id من path params إذا لم يأتِ كـ query
+        resolved_event_id = event_id
+        if resolved_event_id is None:
+            path_event_id = request.path_params.get('event_id')
+            if path_event_id is not None:
+                try:
+                    resolved_event_id = int(path_event_id)
+                except (ValueError, TypeError):
+                    pass
+
+        # BUG 3 FIX: ✅ المنظم يملك كل صلاحيات فعالياته الخاصة تلقائياً
+        if current_user.role == 'organizer':
+            if resolved_event_id is None:
+                # لا يمكن التحقق من الملكية — نسمح بالمرور لأن المنظم لديه حق الكتابة
+                return
+            from app.models.event import Event
+            event = db.query(Event).filter(
+                Event.id == resolved_event_id,
+                Event.created_by == current_user.id
+            ).first()
+            if event:
+                return  # ← منظم الفعالية → مسموح تلقائياً
+
+        # إذا لا يوجد event_id ولا يمكن التحقق
+        if resolved_event_id is None:
+            raise HTTPException(status_code=403, detail="لا يمكن التحقق من الصلاحية — event_id مفقود")
+
+        # التحقق عبر RBAC للأدوار الأخرى (scanner, viewer)
+        from app.models.rbac import UserEventRole, Role
         user_event_role = db.query(UserEventRole).filter(
             UserEventRole.user_id == current_user.id,
-            UserEventRole.event_id == event_id
+            UserEventRole.event_id == resolved_event_id
         ).first()
-        
+
         if not user_event_role:
-            # التحقق من ملكية الفعالية كخيار بديل إذا لم يكن هناك دور محدد في جدول RBAC
-            from app.models.event import Event
-            event = db.query(Event).filter(Event.id == event_id).first()
-            if event and event.created_by == current_user.id:
-                return
-            
             raise HTTPException(status_code=403, detail="لا صلاحية لك على هذه الفعالية")
-        
-        # التحقق من الصلاحية المحددة
+
         role = db.query(Role).filter(Role.id == user_event_role.role_id).first()
         perm_codes = [p.code for p in role.permissions] if role else []
-        
+
         if permission_code not in perm_codes:
             raise HTTPException(
                 status_code=403,
                 detail=f"الصلاحية المطلوبة: {permission_code}"
             )
-    
+
     return checker

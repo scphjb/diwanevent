@@ -9,6 +9,8 @@ from .dynamic_indexer import IndexUsageStats
 from .communication import CommunicationLog
 from .integration import WebhookSubscription
 from .others import AgendaSession, Speaker, Sponsor, Question, Poll, PollOption, PollVote, SocialPost, PostLike, AuditLog
-from .template import BadgeTemplate, CertificateTemplate
+from .template import BadgeTemplate
+from .engagement import GamificationEvent, SponsorLead
 from app.core.atomic_ops import AuditTrail
 from app.core.api_key_handler import APIKey
+from .otp import ParticipantOTP

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import DashboardLayout from '../layouts/DashboardLayout';
 import { 
   Check, 
@@ -12,14 +13,17 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '../components/ui/Button';
 import api from '../services/api';
 import useAttendanceSocket from '../hooks/useAttendanceSocket';
+import { useEvent } from '../context/EventContext';
 
-const ModerationPage = ({ eventId = 1 }) => {
+const ModerationPage = () => {
+  const { selectedEventId: eventId } = useEvent();
+  const { t } = useTranslation();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const fetchPending = async () => {
     try {
-      const response = await api.get(`/social/${eventId}/moderation`);
+      const response = await api.get(`social/${eventId}/moderation`);
       setPosts(response.data);
     } catch (err) {
       console.error('Failed to fetch pending posts');
@@ -42,12 +46,12 @@ const ModerationPage = ({ eventId = 1 }) => {
 
   const handleModerate = async (postId, approved) => {
     try {
-      await api.patch(`/social/${postId}/moderate`, null, {
-        params: { approved }
+      await api.patch(`social/${postId}/moderate`, null, {
+        params: { approved, event_id: eventId }
       });
       setPosts(prev => prev.filter(p => p.id !== postId));
     } catch (err) {
-      alert('فشلت عملية الإشراف');
+      alert(t('social_moderation.save_error', 'فشلت عملية الإشراف'));
     }
   };
 
@@ -55,15 +59,15 @@ const ModerationPage = ({ eventId = 1 }) => {
     <DashboardLayout activePath="/dashboard/moderation">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
         <div>
-          <h1 className="text-4xl font-bold text-white mb-2">إدارة الحائط الاجتماعي</h1>
+          <h1 className="text-4xl font-bold text-white mb-2">{t('social_moderation.title', 'إدارة الحائط الاجتماعي')}</h1>
           <p className="text-emerald-400/50 flex items-center gap-2">
             <ShieldAlert className="w-4 h-4" />
-            لديك {posts.length} منشورات بانتظار المراجعة
+            {t('social_moderation.subtitle', { count: posts.length })}
           </p>
         </div>
         <Button variant="outline" onClick={fetchPending} className="flex items-center gap-2">
           <RefreshCw className="w-4 h-4" />
-          تحديث القائمة
+          {t('social_moderation.refresh', 'تحديث القائمة')}
         </Button>
       </div>
 
@@ -88,7 +92,7 @@ const ModerationPage = ({ eventId = 1 }) => {
                       <h4 className="font-bold text-white">{post.author_name}</h4>
                       <span className="text-emerald-400/30 text-xs flex items-center gap-1">
                         <Clock className="w-3 h-3" />
-                        بانتظار المراجعة
+                        {t('social_moderation.pending_review', 'بانتظار المراجعة')}
                       </span>
                     </div>
                   </div>
@@ -112,7 +116,7 @@ const ModerationPage = ({ eventId = 1 }) => {
                   className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white h-14 rounded-2xl gap-2"
                 >
                   <Check className="w-5 h-5" />
-                  قبول المنشور
+                  {t('social_moderation.approve', 'قبول المنشور')}
                 </Button>
                 <Button 
                   onClick={() => handleModerate(post.id, false)}
@@ -129,7 +133,7 @@ const ModerationPage = ({ eventId = 1 }) => {
       {!loading && posts.length === 0 && (
         <div className="h-64 flex flex-col items-center justify-center bg-white/5 rounded-[40px] border border-dashed border-white/10">
           <Check className="w-12 h-12 text-emerald-500/20 mb-4" />
-          <p className="text-emerald-400/20 font-bold">كل المنشورات مراجعة حالياً</p>
+          <p className="text-emerald-400/20 font-bold">{t('social_moderation.no_posts', 'كل المنشورات مراجعة حالياً')}</p>
         </div>
       )}
     </DashboardLayout>

@@ -13,8 +13,8 @@ const AdminDashboard = () => {
     const fetchAdminData = async () => {
       try {
         const [statsRes, orgsRes] = await Promise.all([
-          api.get('/super-admin/stats'),
-          api.get('/super-admin/organizers')
+          api.get('super-admin/stats'),
+          api.get('super-admin/organizers')
         ]);
         setStats(statsRes.data);
         setOrganizers(orgsRes.data);

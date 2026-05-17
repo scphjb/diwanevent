@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import DashboardLayout from '../layouts/DashboardLayout';
 import { 
   Users, 
+  User,
   Search, 
   Filter, 
   FileDown, 
@@ -14,7 +15,10 @@ import {
   Award,
   Send,
   Printer,
-  AlertTriangle
+  AlertTriangle,
+  LayoutDashboard,
+  Zap,
+  Edit
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '../components/ui/Button';
@@ -24,58 +28,130 @@ import api from '../services/api';
 import useAttendanceSocket from '../hooks/useAttendanceSocket';
 import { cn } from '../utils/cn';
 import { useTranslation } from 'react-i18next';
+import { formatTime } from '../utils/time';
 import { useAuth } from '../hooks/useAuth';
 
+import { useEvent } from '../context/EventContext';
+import { showSuccess, showError, showConfirm, showToast } from '../utils/swal';
+import templateService from '../services/templateService';
+
 const ParticipantsPage = () => {
+  const fileInputRef = useRef(null);
+  const { selectedEventId: eventId } = useEvent();
   const { t, i18n } = useTranslation();
-  const { currentEventId: eventId } = useAuth();
   const [participants, setParticipants] = useState([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [activeTemplate, setActiveTemplate] = useState(null);
 
   // Real-time Updates via WebSocket
   useAttendanceSocket(eventId, (data) => {
     if (data.type === 'check_in') {
       setParticipants(prev => prev.map(p => 
-        p.id === data.participant.id ? { ...p, payment_status: 'paid', check_in_time: new Date() } : p
+        p.id === data.participant.id ? { ...p, payment_status: 'paid', check_in_time: new Date().toISOString() } : p
       ));
     }
   });
 
   const handleExport = async () => {
     try {
-      const response = await api.get(`/analytics/${eventId}/export-data`, { responseType: 'blob' });
+      const response = await api.get(`analytics/${eventId}/export-data`, { responseType: 'blob' });
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', `participants_event_${eventId}.xlsx`);
       document.body.appendChild(link);
       link.click();
+      showToast(t('participants.export_success', 'تم تصدير البيانات بنجاح'));
     } catch (err) {
-      alert("فشل تصدير البيانات");
+      showError(t('participants.export_error', 'فشل تصدير البيانات'));
     }
   };
 
   const handleBulkPrint = async () => {
+    if (!activeTemplate) {
+      showError(t('participants.no_template', 'لم يتم العثور على قالب بادج لهذه الفعالية'), t('participants.create_template_first', 'يرجى إنشاء وحفظ قالب في المصمم أولاً.'));
+      return;
+    }
     try {
-      const response = await api.get(`/participants/badges/all?event_id=${eventId}`, { responseType: 'blob' });
-      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+      showToast(t('participants.printing_started', 'جاري تجهيز الملف...'), 'info');
+      const url = await templateService.printAll(activeTemplate.id, eventId);
       window.open(url, '_blank');
     } catch (err) {
-      alert("فشل إنشاء ملف الشارات المجمع");
+      showError(t('participants.print_error', 'فشل إنشاء ملف الشارات المجمع'));
     }
   };
 
-  useEffect(() => {
-    fetchParticipants();
-  }, [eventId]);
+  const handlePrint = async (participantId) => {
+    if (!activeTemplate) {
+      showError(t('participants.no_template', 'لم يتم العثور على قالب بادج'));
+      return;
+    }
+    try {
+      const url = await templateService.printAll(activeTemplate.id, eventId, participantId);
+      window.open(url, '_blank');
+    } catch (err) {
+      showError(t('participants.print_error', 'فشل طباعة الشارة'));
+    }
+  };
+
+  const handleSendCertificates = async () => {
+    const result = await showConfirm(
+      t('participants.confirm_send_all', 'هل أنت متأكد من إرسال الشهادات لجميع الحاضرين؟'),
+      t('participants.confirm_send_desc', 'سيتم إرسال الشهادات في الخلفية لجميع الأشخاص الذين سجلوا حضورهم.')
+    );
+    if (!result.isConfirmed) return;
+    try {
+      await api.post(`certificates/${eventId}/send-all`);
+      showSuccess(t('participants.process_started', 'بدأت العملية'), t('participants.process_desc', 'جاري إرسال الشهادات في الخلفية.'));
+    } catch (err) {
+      showError(t('common.error'));
+    }
+  };
+
+  const handleBulkActivate = async () => {
+    const pendingParticipants = participants.filter(p => p.payment_status !== 'paid');
+    if (pendingParticipants.length === 0) {
+      showToast(t('participants.no_pending', 'لا يوجد مشاركون معلقون لتفعيلهم.'), 'info');
+      return;
+    }
+
+    const result = await showConfirm(
+      t('participants.confirm_bulk_activate', `تفعيل ${pendingParticipants.length} مشارك`),
+      t('participants.bulk_activate_desc', `هل أنت متأكد؟ سيتم خصم ${pendingParticipants.length} اعتماد من رصيدك.`)
+    );
+    if (!result.isConfirmed) return;
+
+    try {
+      setLoading(true);
+      const response = await api.post('participants/bulk-activate', pendingParticipants.map(p => p.id));
+      showSuccess(t('participants.bulk_activate_success', 'تم التفعيل بنجاح'), t('participants.bulk_activate_detail', `تم تفعيل ${response.data.activated_count} مشارك. الرصيد المتبقي: ${response.data.remaining_credits}`));
+      fetchParticipants();
+    } catch (err) {
+      showError(t('participants.bulk_activate_error', 'فشل التفعيل الجماعي'), err.response?.data?.detail || t('common.check_credits', 'يرجى التحقق من الرصيد.'));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchParticipants = async () => {
+    if (!eventId) {
+      setParticipants([]);
+      setLoading(false);
+      return;
+    }
     try {
       setLoading(true);
       const data = await participantService.getParticipants(eventId);
-      setParticipants(data);
+      if (data && data.items) {
+        setParticipants(data.items);
+        setTotalCount(data.total);
+      } else {
+        setParticipants(Array.isArray(data) ? data : []);
+        setTotalCount(Array.isArray(data) ? data.length : 0);
+      }
     } catch (err) {
       console.error('Failed to fetch participants', err);
     } finally {
@@ -83,50 +159,235 @@ const ParticipantsPage = () => {
     }
   };
 
+  useEffect(() => {
+    fetchParticipants();
+    
+    // جلب القالب النشط للفعالية
+    if (eventId) {
+      templateService.listTemplates({ event_id: eventId, type: 'badge' })
+        .then(list => {
+          if (list.length > 0) {
+            setActiveTemplate(list[0]);
+          } else {
+            setActiveTemplate(null);
+          }
+        });
+    }
+  }, [eventId]);
+
   const filteredParticipants = participants.filter(p => {
-    const matchesSearch = p.full_name.toLowerCase().includes(search.toLowerCase()) || 
-                          p.council.toLowerCase().includes(search.toLowerCase());
+    const name = (p.full_name || '').toLowerCase();
+    const organization = (p.organization || '').toLowerCase();
+    const ref = (p.order_num || '').toLowerCase();
+    const q = search.toLowerCase();
+    const matchesSearch = name.includes(q) || organization.includes(q) || ref.includes(q);
     const matchesStatus = statusFilter === 'all' || 
-                         (statusFilter === 'paid' && p.payment_status === 'paid') ||
+                         (statusFilter === 'checked_in' && p.check_in_time) ||
+                         (statusFilter === 'paid' && p.payment_status === 'paid' && !p.check_in_time) ||
                          (statusFilter === 'pending' && p.payment_status !== 'paid');
     return matchesSearch && matchesStatus;
   });
+
+  const [activeMenu, setActiveMenu] = useState(null);
+  const [showMappingModal, setShowMappingModal] = useState(false);
+  const [availableColumns, setAvailableColumns] = useState([]);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [mapping, setMapping] = useState({
+    full_name: '',
+    organization: '',
+    department: '',
+    role: '',
+    email: '',
+    phone: ''
+  });
+  const [isImporting, setIsImporting] = useState(false);
+  const [editingParticipant, setEditingParticipant] = useState(null);
+  const [editForm, setEditForm] = useState({
+    full_name: '',
+    organization: '',
+    department: '',
+    role: '',
+    email: '',
+    phone_number: '',
+    seat_info: '',
+  });
+
+  useEffect(() => {
+    const handleClickOutside = () => setActiveMenu(null);
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
+
+  const handleMenuClick = (e, id) => {
+    e.stopPropagation();
+    setActiveMenu(activeMenu === id ? null : id);
+  };
 
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
     try {
-      await participantService.importExcel(eventId, file);
-      fetchParticipants(); // Refresh list
-      alert(t('participants.import_success', 'تم استيراد المشاركين بنجاح'));
+      const result = await participantService.analyzeImport(file);
+      setAvailableColumns(result.columns);
+      setSelectedFile(file);
+      
+      // Auto-mapping attempt
+      const newMapping = { 
+        full_name: '',
+        organization: '',
+        department: '',
+        role: '',
+        email: '',
+        phone: ''
+      };
+      const column_map = {
+        full_name: ['الاسم الكامل', 'full_name', 'الاسم', 'name', 'nom'],
+        organization:   ['الجهة', 'organization', 'المؤسسة', 'organization', 'company', 'organisme'],
+        department:['القسم', 'department', 'التخصص', 'الوحدة', 'service', 'unite'],
+        role:      ['الصفة', 'role', 'المنصب', 'الدور', 'poste', 'fonction'],
+        email:     ['البريد الإلكتروني', 'email', 'البريد', 'e-mail', 'courriel'],
+        phone:     ['الهاتف', 'phone', 'رقم الهاتف', 'phone_number', 'tel'],
+      };
+
+      Object.keys(column_map).forEach(key => {
+        const found = result.columns.find(col => 
+          column_map[key].some(alias => col.toString().toLowerCase().trim() === alias.toLowerCase())
+        );
+        if (found) newMapping[key] = found;
+      });
+
+      setMapping(newMapping);
+      setShowMappingModal(true);
     } catch (err) {
-      alert(t('participants.import_failed', 'فشل استيراد الملف'));
+      showError(t('participants.import_modal.analyze_error', 'فشل تحليل الملف'));
+    } finally {
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
-  const handlePrint = async (participantId) => {
+  const handleExecuteImport = async () => {
+    if (!mapping.full_name) {
+      showError(t('participants.import_modal.name_required', "يجب ربط حقل 'الاسم الكامل' على الأقل"));
+      return;
+    }
+
+    setIsImporting(true);
     try {
-      const blob = await participantService.printBadge(participantId);
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.target = '_blank';
-      link.click();
+      const result = await participantService.importExcel(eventId, selectedFile, mapping);
+      setShowMappingModal(false);
+      fetchParticipants();
+      showSuccess(t('participants.import_modal.success', 'تم الاستيراد بنجاح'), t('participants.import_modal.detail', `✅ تمت إضافة: ${result.added}\nمكررون: ${result.skipped}`));
     } catch (err) {
-      console.error('Failed to print badge', err);
+      showError(t('participants.import_modal.error', "فشل الاستيراد"));
+    } finally {
+      setIsImporting(false);
     }
   };
 
-  const handleSendCertificates = async () => {
-    if (!window.confirm(t('participants.confirm_send_all', 'هل أنت متأكد من إرسال الشهادات لجميع الحاضرين؟'))) return;
+  const handleManualCheckIn = async (id) => {
     try {
-      await api.post(`/certificates/${eventId}/send-all`);
-      alert(t('participants.process_started', 'بدأت عملية إرسال الشهادات في الخلفية'));
+      await participantService.checkIn(id);
+      showToast(t('participants.check_in_success', 'تم تسجيل الحضور بنجاح'));
+      fetchParticipants();
     } catch (err) {
-      alert(t('participants.process_failed', 'فشل بدء العملية'));
+      showError(t('participants.check_in_error', 'فشل تسجيل الحضور'), (err.response?.data?.detail || err.message));
+    }
+    setActiveMenu(null);
+  };
+
+  const handleUndoCheckIn = async (id) => {
+    const result = await showConfirm(
+      t('participants.undo_check_in_confirm', 'إلغاء تسجيل الحضور'),
+      t('participants.undo_check_in_desc', 'هل أنت متأكد من إلغاء تسجيل الحضور لهذا المشارك؟')
+    );
+    if (!result.isConfirmed) return;
+    try {
+      await participantService.undoCheckIn(id);
+      showToast(t('participants.undo_check_in_success', 'تم إلغاء تسجيل الحضور'));
+      fetchParticipants();
+    } catch (err) {
+      showError(t('participants.undo_check_in_error', 'فشل إلغاء الحضور'), (err.response?.data?.detail || err.message));
+    }
+    setActiveMenu(null);
+  };
+
+  const handleEditClick = async (p) => {
+    setActiveMenu(null);
+    try {
+      setLoading(true);
+      const details = await participantService.getParticipant(p.id);
+      setEditingParticipant(p);
+      setEditForm({
+        full_name: details.full_name || '',
+        organization: details.organization || '',
+        department: details.department || '',
+        role: details.role || '',
+        email: details.email || '',
+        phone_number: details.phone_number || '',
+        seat_info: details.seat_info || '',
+      });
+    } catch (err) {
+      showError('فشل جلب بيانات المشارك للتعديل');
+    } finally {
+      setLoading(false);
     }
   };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      setLoading(true);
+      await participantService.updateParticipant(editingParticipant.id, editForm);
+      showToast(t('participants.edit_success', 'تم تعديل بيانات المشارك بنجاح'));
+      setEditingParticipant(null);
+      fetchParticipants();
+    } catch (err) {
+      showError(err.response?.data?.detail || 'فشل تعديل بيانات المشارك');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    const result = await showConfirm(
+      t('participants.delete_confirm', 'حذف المشارك'),
+      t('participants.delete_desc', 'هل أنت متأكد من حذف بيانات هذا المشارك نهائياً؟')
+    );
+    if (!result.isConfirmed) return;
+    try {
+      await api.delete(`participants/${eventId}/participants/${id}`);
+      showToast(t('participants.delete_success', 'تم حذف المشارك بنجاح'));
+      fetchParticipants();
+    } catch (err) {
+      showError(t('participants.delete_error', 'فشل حذف المشارك'));
+    }
+    setActiveMenu(null);
+  };
+
+  if (loading) {
+    return (
+      <DashboardLayout activePath="/dashboard/participants">
+        <div className="p-20 text-center text-emerald-400 animate-pulse">
+          {t('common.loading', 'جاري تحميل قائمة المشاركين...')}
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!eventId) {
+    return (
+      <DashboardLayout activePath="/dashboard/participants">
+        <div className="p-20 text-center">
+          <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6">
+            <AlertTriangle className="w-8 h-8 text-amber-500" />
+          </div>
+          <h3 className="text-white font-bold text-xl mb-2">{t('participants.no_event_selected', 'لم يتم اختيار فعالية')}</h3>
+          <p className="text-emerald-400/30">{t('participants.select_event_desc', 'يرجى اختيار فعالية من القائمة العلوية للبدء.')}</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout activePath="/dashboard/participants">
@@ -136,11 +397,19 @@ const ParticipantsPage = () => {
           <h1 className="text-4xl font-bold text-white mb-2">{t('participants.title')}</h1>
           <p className="text-emerald-400/50 flex items-center gap-2">
             <Users className="w-4 h-4" />
-            {t('participants.total_registered')}: {participants.length}
+            {t('participants.total_registered')}: {totalCount}
           </p>
         </div>
         
         <div className="flex items-center gap-3">
+          <Button 
+            variant="outline" 
+            className="flex items-center gap-2 border-emerald-500/50 text-white bg-emerald-600/20 hover:bg-emerald-600 hover:text-white"
+            onClick={handleBulkActivate}
+          >
+            <Zap className="w-4 h-4 text-emerald-400" />
+            {t('common.bulk_activate', 'تفعيل الكل')}
+          </Button>
           <Button 
             variant="outline" 
             className="flex items-center gap-2 border-amber-500/30 text-amber-500 hover:bg-amber-500/10"
@@ -164,17 +433,19 @@ const ParticipantsPage = () => {
           <div className="relative">
             <input 
               type="file" 
-              id="excel-upload" 
+              ref={fileInputRef}
               className="hidden" 
               accept=".xlsx, .xls" 
               onChange={handleFileUpload}
             />
-            <label htmlFor="excel-upload">
-              <Button variant="gold" className="flex items-center gap-2 cursor-pointer">
-                <FileUp className="w-4 h-4" />
-                {t('common.import')}
-              </Button>
-            </label>
+            <Button 
+              variant="gold" 
+              className="flex items-center gap-2 h-14 px-8"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <FileUp className="w-5 h-5" />
+              {t('common.import')}
+            </Button>
           </div>
         </div>
       </div>
@@ -194,9 +465,10 @@ const ParticipantsPage = () => {
         <div className="flex items-center gap-3">
           <div className="flex bg-emerald-950/50 p-1.5 rounded-2xl border border-white/5">
             {[
-              { id: 'all', label: t('common.all') },
-              { id: 'paid', label: t('common.confirmed') },
-              { id: 'pending', label: t('common.pending') }
+              { id: 'all', label: t('common.all', 'الكل') },
+              { id: 'checked_in', label: 'حاضر الآن (بالداخل)' },
+              { id: 'paid', label: 'مفعل (في انتظار الحضور)' },
+              { id: 'pending', label: 'غير مفعل' }
             ].map(tab => (
               <button
                 key={tab.id}
@@ -226,7 +498,7 @@ const ParticipantsPage = () => {
             <thead>
               <tr className="bg-white/5 text-emerald-400/50 text-xs uppercase tracking-widest border-b border-white/5">
                 <th className="px-8 py-6 font-bold">{t('common.participants')}</th>
-                <th className="px-8 py-6 font-bold">{t('participants.council')}</th>
+                <th className="px-8 py-6 font-bold">{t('participants.organization', 'الجهة / المؤسسة')}</th>
                 <th className="px-8 py-6 font-bold">{t('participants.status')}</th>
                 <th className="px-8 py-6 font-bold">{t('participants.time')}</th>
                 <th className="px-8 py-6 font-bold text-center">{t('common.actions')}</th>
@@ -251,14 +523,14 @@ const ParticipantsPage = () => {
                     >
                       <td className="px-8 py-6">
                         <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-full bg-emerald-600/20 flex items-center justify-center text-emerald-400 font-bold border border-emerald-500/20">
-                            {p.full_name?.[0] || '?'}
+                          <div className="w-10 h-10 rounded-full bg-emerald-600/20 flex items-center justify-center text-emerald-400 border border-emerald-500/20 group-hover:bg-amber-500/20 group-hover:text-amber-500 transition-all">
+                            <Users className="w-5 h-5" />
                           </div>
                           <div>
                             <div className="text-white font-bold flex items-center gap-2">
-                              {p.full_name}
-                              {p.is_flagged && (
-                                <AlertTriangle className="w-4 h-4 text-amber-500" title="بيانات تحتاج مراجعة" />
+                              {p.full_name || '—'}
+                              {p.is_flagged === true && (
+                                <AlertTriangle className="w-4 h-4 text-amber-500" title={t('participants.needs_review', 'بيانات تحتاج مراجعة')} />
                               )}
                             </div>
                             <div className="text-emerald-400/30 text-xs">{p.order_num}</div>
@@ -266,22 +538,29 @@ const ParticipantsPage = () => {
                         </div>
                       </td>
                       <td className="px-8 py-6">
-                        <div className="text-emerald-100/70">{p.council}</div>
-                        <div className="text-emerald-400/20 text-xs">{p.court}</div>
+                        <div className="text-emerald-100/70">{p.organization || '—'}</div>
+                        <div className="text-emerald-400/20 text-xs">{p.department || ''}</div>
                       </td>
                       <td className="px-8 py-6">
                         <span className={cn(
                           "inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold",
-                          p.payment_status === 'paid' 
+                          p.check_in_time 
                             ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" 
-                            : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                            : p.payment_status === 'paid'
+                              ? "bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                              : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
                         )}>
-                          {p.payment_status === 'paid' ? <CheckCircle className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
-                          {p.payment_status === 'paid' ? t('common.confirmed') : t('common.pending')}
+                          {p.check_in_time ? <Award className="w-3 h-3" /> : p.payment_status === 'paid' ? <Zap className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
+                          {p.check_in_time 
+                            ? "حاضر الآن (داخل القاعة)" 
+                            : p.payment_status === 'paid' 
+                              ? "مفعل (في انتظار الحضور)" 
+                              : "غير مفعل (لم يخصم رصيد)"
+                          }
                         </span>
                       </td>
                       <td className="px-8 py-6 font-mono text-sm text-emerald-400/50">
-                        {p.check_in_time ? new Date(p.check_in_time).toLocaleTimeString(i18n.language === 'ar' ? 'ar-EG' : 'en-US') : '--:--'}
+                        {formatTime(p.check_in_time)}
                       </td>
                       <td className="px-8 py-6 text-center">
                         <div className="flex items-center justify-center gap-2">
@@ -293,15 +572,64 @@ const ParticipantsPage = () => {
                             <Printer className="w-5 h-5" />
                           </button>
                           <button 
-                            onClick={() => window.open(`/api/v1/certificates/download/${p.id}`, '_blank')}
+                            onClick={() => participantService.downloadCertificate(p.id)}
                             className="p-2 rounded-xl bg-amber-500/10 text-amber-500 hover:bg-amber-500 hover:text-white transition-all shadow-sm"
                             title={t('common.download_cert', 'تحميل الشهادة')}
                           >
                             <Award className="w-5 h-5" />
                           </button>
-                          <button className="p-2 rounded-xl hover:bg-white/10 text-emerald-400/50 hover:text-white transition-all">
-                            <MoreVertical className="w-5 h-5" />
-                          </button>
+                          <div className="relative">
+                            <button 
+                              onClick={(e) => handleMenuClick(e, p.id)}
+                              className="p-2 rounded-xl hover:bg-white/10 text-emerald-400/50 hover:text-white transition-all"
+                            >
+                              <MoreVertical className="w-5 h-5" />
+                            </button>
+                            <AnimatePresence>
+                              {activeMenu === p.id && (
+                                <motion.div 
+                                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                                  exit={{ opacity: 0, scale: 0.95 }}
+                                  transition={{ duration: 0.1 }}
+                                  onClick={e => e.stopPropagation()}
+                                  className="absolute left-0 mt-2 w-48 bg-[#022c22] border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden py-2"
+                                >
+                                  {!p.check_in_time ? (
+                                    <button 
+                                      onClick={() => handleManualCheckIn(p.id)}
+                                      className="w-full text-right px-4 py-3 text-sm text-emerald-400 font-bold hover:bg-emerald-500/10 flex items-center gap-3 transition-colors"
+                                    >
+                                      <CheckCircle className="w-4 h-4" />
+                                      {t('participants.check_in', 'تسجيل الحضور')}
+                                    </button>
+                                  ) : (
+                                    <button 
+                                      onClick={() => handleUndoCheckIn(p.id)}
+                                      className="w-full text-right px-4 py-3 text-sm text-amber-400 font-bold hover:bg-amber-500/10 flex items-center gap-3 transition-colors"
+                                    >
+                                      <Clock className="w-4 h-4" />
+                                      {t('participants.undo_check_in', 'إلغاء الحضور')}
+                                    </button>
+                                  )}
+                                  <button 
+                                    onClick={() => handleEditClick(p)}
+                                    className="w-full text-right px-4 py-3 text-sm text-emerald-300 font-bold hover:bg-emerald-500/10 flex items-center gap-3 transition-colors"
+                                  >
+                                    <Edit className="w-4 h-4" />
+                                    {t('participants.edit_participant', 'تعديل البيانات')}
+                                  </button>
+                                  <button 
+                                    onClick={() => handleDelete(p.id)}
+                                    className="w-full text-right px-4 py-3 text-sm text-red-400 font-bold hover:bg-red-500/10 flex items-center gap-3 transition-colors"
+                                  >
+                                    <XCircle className="w-4 h-4" />
+                                    {t('participants.delete_participant', 'حذف المشارك')}
+                                  </button>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
                         </div>
                       </td>
                     </motion.tr>
@@ -324,7 +652,7 @@ const ParticipantsPage = () => {
         
         {/* Pagination Placeholder */}
         <div className="p-6 bg-white/5 border-t border-white/5 flex items-center justify-between text-sm text-emerald-400/30 font-medium">
-          <div>{t('participants.viewing', { count: filteredParticipants.length, total: participants.length })}</div>
+          <div>{t('participants.viewing', { count: filteredParticipants.length, total: totalCount })}</div>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" disabled>{t('common.previous', 'السابق')}</Button>
             <Button variant="outline" size="sm" className="border-emerald-500/50 text-emerald-400">1</Button>
@@ -332,6 +660,207 @@ const ParticipantsPage = () => {
           </div>
         </div>
       </div>
+      {/* Mapping Modal */}
+      <AnimatePresence>
+        {showMappingModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-emerald-950/90 backdrop-blur-xl"
+              onClick={() => setShowMappingModal(false)}
+            />
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="bg-[#022c22] border border-white/10 w-full max-w-2xl rounded-[40px] shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh]"
+            >
+              <div className="p-8 border-b border-white/5 shrink-0">
+                <h2 className="text-2xl font-black text-white flex items-center gap-3">
+                  <FileUp className="text-amber-500" />
+                  {t('participants.import_modal.title', 'ربط حقول الإكسيل')}
+                </h2>
+                <p className="text-emerald-400/40 text-sm mt-2">{t('participants.import_modal.subtitle', 'يرجى تحديد العمود المناسب لكل حقل في النظام لضمان دقة الاستيراد.')}</p>
+              </div>
+
+              <div className="p-8 space-y-6 overflow-y-auto flex-1 custom-scrollbar">
+                {[
+                  { id: 'full_name',  label: 'الاسم الكامل *',         icon: Users },
+                  { id: 'organization',    label: 'الجهة / المؤسسة',         icon: LayoutDashboard },
+                  { id: 'department', label: 'القسم / التخصص',          icon: MoreVertical },
+                  { id: 'role',       label: 'الصفة / المنصب',          icon: Award },
+                  { id: 'email',      label: 'البريد الإلكتروني',        icon: Send },
+                  { id: 'phone',      label: 'رقم الهاتف',              icon: FileUp }
+                ].map(field => (
+                  <div key={field.id} className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center p-4 bg-white/5 rounded-2xl border border-white/5">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+                        <field.icon className="w-5 h-5 text-emerald-400" />
+                      </div>
+                      <span className="font-bold text-white">{field.label}</span>
+                    </div>
+                    <select 
+                      className="bg-emerald-950 border border-white/10 rounded-xl h-12 px-4 outline-none text-emerald-400 font-medium focus:border-emerald-500 transition-all"
+                      value={mapping[field.id]}
+                      onChange={(e) => setMapping({ ...mapping, [field.id]: e.target.value })}
+                    >
+                      <option value="">{t('participants.import_modal.select_col', '-- اختر العمود --')}</option>
+                      {availableColumns.map(col => (
+                        <option key={col} value={col}>{col}</option>
+                      ))}
+                    </select>
+                  </div>
+                ))}
+              </div>
+
+              <div className="p-8 border-t border-white/5 bg-black/20 flex gap-4 shrink-0">
+                <Button 
+                  variant="outline" 
+                  className="flex-1 h-14 rounded-2xl"
+                  onClick={() => setShowMappingModal(false)}
+                >
+                  {t('common.cancel')}
+                </Button>
+                <Button 
+                  variant="gold" 
+                  className="flex-[2] h-14 rounded-2xl text-lg"
+                  onClick={handleExecuteImport}
+                  disabled={isImporting}
+                >
+                  {isImporting ? t('participants.import_modal.executing', 'جاري الاستيراد...') : t('participants.import_modal.execute', 'تأكيد الاستيراد المجمع')}
+                </Button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+      {/* Edit Participant Modal */}
+      <AnimatePresence>
+        {editingParticipant && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-emerald-950/90 backdrop-blur-xl"
+              onClick={() => setEditingParticipant(null)}
+            />
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="bg-[#022c22] border border-white/10 w-full max-w-2xl rounded-[40px] shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh]"
+            >
+              <div className="p-8 border-b border-white/5 shrink-0">
+                <h2 className="text-2xl font-black text-white flex items-center gap-3">
+                  <Edit className="text-emerald-400 w-6 h-6" />
+                  {t('participants.edit_modal_title', 'تعديل بيانات المشارك')}
+                </h2>
+                <p className="text-emerald-400/40 text-sm mt-2">{t('participants.edit_modal_desc', 'قم بتحديث بيانات المشارك وتعديل معلوماته المسجلة في النظام.')}</p>
+              </div>
+
+              <form onSubmit={handleEditSubmit} className="flex flex-col flex-1 overflow-hidden">
+                <div className="p-8 space-y-6 overflow-y-auto flex-1 custom-scrollbar">
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold text-emerald-400">{t('participants.name', 'الاسم الكامل *')}</label>
+                    <Input 
+                      required
+                      placeholder="الاسم الكامل للمشارك"
+                      className="bg-white/5 border-white/10 h-12"
+                      value={editForm.full_name}
+                      onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-sm font-bold text-emerald-400">{t('participants.organization_label', 'الجهة / المؤسسة')}</label>
+                      <Input 
+                        placeholder="الجهة أو الكيان التابع له"
+                        className="bg-white/5 border-white/10 h-12"
+                        value={editForm.organization}
+                        onChange={(e) => setEditForm({ ...editForm, organization: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-bold text-emerald-400">{t('participants.department_label', 'القسم / التخصص')}</label>
+                      <Input 
+                        placeholder="القسم أو التخصص الوظيفي"
+                        className="bg-white/5 border-white/10 h-12"
+                        value={editForm.department}
+                        onChange={(e) => setEditForm({ ...editForm, department: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-sm font-bold text-emerald-400">{t('participants.role_label', 'الصفة / الدور')}</label>
+                      <Input 
+                        placeholder="الصفة (VIP, متحدث, إلخ)"
+                        className="bg-white/5 border-white/10 h-12"
+                        value={editForm.role}
+                        onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-bold text-emerald-400">{t('participants.seat_info_label', 'رقم المقعد')}</label>
+                      <Input 
+                        placeholder="رقم القاعة أو الكرسي"
+                        className="bg-white/5 border-white/10 h-12"
+                        value={editForm.seat_info}
+                        onChange={(e) => setEditForm({ ...editForm, seat_info: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-sm font-bold text-emerald-400">{t('participants.email', 'البريد الإلكتروني')}</label>
+                      <Input 
+                        type="email"
+                        placeholder="البريد الإلكتروني للمشارك"
+                        className="bg-white/5 border-white/10 h-12"
+                        value={editForm.email}
+                        onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-bold text-emerald-400">{t('participants.phone', 'رقم الهاتف')}</label>
+                      <Input 
+                        placeholder="رقم الهاتف للتواصل"
+                        className="bg-white/5 border-white/10 h-12"
+                        value={editForm.phone_number}
+                        onChange={(e) => setEditForm({ ...editForm, phone_number: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-8 border-t border-white/5 bg-black/20 flex gap-4 shrink-0">
+                  <Button 
+                    type="button"
+                    variant="outline" 
+                    className="flex-1 h-14 rounded-2xl"
+                    onClick={() => setEditingParticipant(null)}
+                  >
+                    {t('common.cancel')}
+                  </Button>
+                  <Button 
+                    type="submit"
+                    variant="gold" 
+                    className="flex-[2] h-14 rounded-2xl text-lg"
+                  >
+                    {t('common.save', 'حفظ التعديلات')}
+                  </Button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </DashboardLayout>
   );
 };

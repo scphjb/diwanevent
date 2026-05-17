@@ -34,8 +34,8 @@ def test_chargily_webhook_valid_signature(client, db):
         qr_code="QR-123",
         event_id=event.id,
         payment_status="pending",
-        council="C",
-        court="C"
+        organization="C",
+        department="C"
     )
     db.add(participant)
     db.commit()

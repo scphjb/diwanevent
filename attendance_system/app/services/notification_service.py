@@ -1,7 +1,8 @@
 from typing import Dict, Any, Optional
 from app.core.websockets import manager
 from sqlalchemy.orm import Session
-from app.models.participant import Participant
+from sqlalchemy import func, distinct
+from app.models.participant import Participant, Attendance
 
 class NotificationService:
     @staticmethod
@@ -25,18 +26,22 @@ class NotificationService:
     @classmethod
     async def check_attendance_milestones(cls, db: Session, event_id: int):
         """التحقق من نسب الحضور وإرسال تنبيهات عند الوصول للأهداف"""
+        # حساب الإجمالي
         total = db.query(Participant).filter(Participant.event_id == event_id).count()
-        checked_in = db.query(Participant).filter(
-            Participant.event_id == event_id, 
-            Participant.payment_status == 'paid'
-        ).count()
+        
+        # حساب الحضور الفعلي باستخدام جدول Attendance (تجنب تكرار المسح لنفس الشخص)
+        checked_in = db.query(func.count(distinct(Attendance.participant_id)))\
+            .join(Participant, Attendance.participant_id == Participant.id)\
+            .filter(
+                Participant.event_id == event_id,
+                Attendance.event_type == 'check_in'
+            ).scalar() or 0
         
         if total == 0: return
 
         rate = (checked_in / total) * 100
         
         # نرسل تنبيهات عند الوصول لنسب محددة
-        # ملاحظة: في بيئة الإنتاج يمكن تخزين الـ milestones التي تم إرسالها لتجنب التكرار
         if 50.0 <= rate < 51.0:
             await cls.send_admin_alert(
                 event_id, "milestone", "إنجاز 50%", 

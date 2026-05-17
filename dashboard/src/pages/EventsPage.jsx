@@ -8,15 +8,24 @@ import {
   Settings, 
   ExternalLink,
   ChevronRight,
-  Clock
+  Clock,
+  Trash2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import api from '../services/api';
+import eventService from '../services/eventService';
 import { cn } from '../utils/cn';
+import { useEvent } from '../context/EventContext';
+import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { showSuccess, showError, showConfirm } from '../utils/swal';
 
 const EventsPage = () => {
+  const { setSelectedEventId, selectedEventId } = useEvent();
+  const { t } = useTranslation();
+  const navigate = useNavigate();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -28,7 +37,7 @@ const EventsPage = () => {
 
   const fetchEvents = async () => {
     try {
-      const response = await api.get('/events/');
+      const response = await api.get('events/');
       setEvents(response.data);
     } catch (err) {
       console.error("Failed to fetch events");
@@ -42,7 +51,8 @@ const EventsPage = () => {
     setLoading(true);
     try {
       console.log("Creating event with data:", newEvent);
-      await api.post('/events/', null, {
+      // BUG 1 FIX: أزلنا الـ / الأمامية لأنها تُلغي baseURL
+      await api.post('events/', null, {
         params: { 
           name: newEvent.name, 
           location: newEvent.location, 
@@ -52,35 +62,57 @@ const EventsPage = () => {
       setShowAddModal(false);
       setNewEvent({ name: '', location: '', date: '' });
       await fetchEvents();
-      alert("تم إنشاء الفعالية بنجاح ✅");
+      showSuccess(t('events.create_success', 'تم إنشاء الفعالية بنجاح ✅'));
     } catch (err) {
       console.error("Creation error:", err.response?.data || err.message);
-      alert("فشل إنشاء الفعالية: " + (err.response?.data?.detail || "خطأ غير معروف"));
+      showError(t('events.create_error', 'فشل إنشاء الفعالية: ') + (err.response?.data?.detail || "خطأ غير معروف"));
     } finally {
       setLoading(false);
     }
   };
 
+  // BUG 2 FIX: handler لحذف الفعالية
+  const handleDeleteEvent = async (eventId, eventName) => {
+    const result = await showConfirm(
+      t('events.delete_confirm_title', 'حذف الفعالية'),
+      t('events.delete_confirm', `هل أنت متأكد من حذف فعالية "${eventName}"؟\nهذا الإجراء لا يمكن التراجع عنه.`, { name: eventName })
+    );
+    if (!result.isConfirmed) return;
+    try {
+      await eventService.deleteEvent(eventId);
+      setEvents(prev => prev.filter(e => e.id !== eventId));
+      // إذا كانت الفعالية المحذوفة هي المحددة حالياً:
+      if (selectedEventId === eventId) setSelectedEventId(null);
+    } catch (err) {
+      alert(t('events.delete_error', 'فشل حذف الفعالية: ') + (err.response?.data?.detail || err.message));
+    }
+  };
+
+
   const handleSwitchEvent = (id) => {
-    // In a real app, this would update a context or localStorage
-    localStorage.setItem('current_event_id', id);
-    window.location.href = '/dashboard';
+    setSelectedEventId(id);
+    navigate('/dashboard');
+  };
+
+  const handleSettings = (id) => {
+    setSelectedEventId(id);
+    navigate('/dashboard/settings');
   };
 
   return (
     <DashboardLayout activePath="/dashboard/events">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
         <div>
-          <h1 className="text-4xl font-bold text-white mb-2">فعالياتك</h1>
+          <h1 className="text-4xl font-bold text-white mb-2">{t('events.title', 'فعالياتك')}</h1>
           <p className="text-emerald-400/50 flex items-center gap-2">
             <Calendar className="w-4 h-4" />
-            إدارة كافة المؤتمرات والفعاليات الخاصة بك
+            {t('events.subtitle', 'إدارة كافة المؤتمرات والفعاليات الخاصة بك')}
           </p>
         </div>
         
         <Button variant="gold" className="flex items-center gap-2 h-14 px-8" onClick={() => setShowAddModal(true)}>
           <Plus className="w-5 h-5" />
-          إنشاء فعالية جديدة
+          {t('events.create_new', 'إنشاء فعالية جديدة')}
         </Button>
       </div>
 
@@ -100,7 +132,7 @@ const EventsPage = () => {
                     <Calendar className="w-6 h-6" />
                   </div>
                   <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest bg-amber-500/10 px-3 py-1 rounded-full">
-                    Active
+                    {t('events.status_active', 'Active')}
                   </span>
                 </div>
                 
@@ -111,11 +143,11 @@ const EventsPage = () => {
                 <div className="space-y-3 mb-8">
                   <div className="flex items-center gap-3 text-emerald-400/30 text-sm">
                     <MapPin className="w-4 h-4" />
-                    {event.location || 'لم يتم تحديد الموقع'}
+                    {event.location || t('events.location_not_set', 'لم يتم تحديد الموقع')}
                   </div>
                   <div className="flex items-center gap-3 text-emerald-400/30 text-sm">
                     <Clock className="w-4 h-4" />
-                    {event.event_date || 'قريباً'}
+                    {event.event_date || t('events.coming_soon', 'قريباً')}
                   </div>
                 </div>
               </div>
@@ -126,10 +158,24 @@ const EventsPage = () => {
                   variant="gold"
                   onClick={() => handleSwitchEvent(event.id)}
                 >
-                  دخول
+                  {t('events.enter', 'دخول')}
                 </Button>
-                <Button className="h-12 w-12 rounded-xl p-0" variant="outline">
+                <Button 
+                  className="h-12 w-12 rounded-xl p-0" 
+                  variant="outline"
+                  onClick={() => handleSettings(event.id)}
+                  title={t('common.settings')}
+                >
                   <Settings className="w-5 h-5" />
+                </Button>
+                {/* BUG 2 FIX: زر الحذف */}
+                <Button 
+                  className="h-12 w-12 rounded-xl p-0 hover:bg-red-500/20 hover:border-red-500/40 hover:text-red-400 transition-colors" 
+                  variant="outline"
+                  onClick={() => handleDeleteEvent(event.id, event.event_name)}
+                  title={t('events.delete_title', 'حذف الفعالية')}
+                >
+                  <Trash2 className="w-5 h-5" />
                 </Button>
               </div>
             </motion.div>
@@ -145,26 +191,26 @@ const EventsPage = () => {
             animate={{ scale: 1, opacity: 1 }}
             className="bg-[#022C22] border border-white/10 rounded-[40px] p-10 w-full max-w-xl shadow-2xl"
           >
-            <h2 className="text-2xl font-bold text-white mb-8">إطلاق فعالية جديدة</h2>
+            <h2 className="text-2xl font-bold text-white mb-8">{t('events.add_modal.title', 'إطلاق فعالية جديدة')}</h2>
             <div className="space-y-6">
               <div className="space-y-2">
-                <label className="text-sm font-bold text-emerald-100/50">عنوان الفعالية</label>
+                <label className="text-sm font-bold text-emerald-100/50">{t('events.add_modal.name_label', 'عنوان الفعالية')}</label>
                 <Input 
                   value={newEvent.name} 
                   onChange={(e) => setNewEvent(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="مثلاً: المؤتمر الدولي للقضاء 2026"
+                  placeholder={t('events.add_modal.name_placeholder', 'مثلاً: المؤتمر الدولي للقضاء 2026')}
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-bold text-emerald-100/50">الموقع</label>
+                <label className="text-sm font-bold text-emerald-100/50">{t('events.add_modal.location_label', 'الموقع')}</label>
                 <Input 
                   value={newEvent.location} 
                   onChange={(e) => setNewEvent(prev => ({ ...prev, location: e.target.value }))}
-                  placeholder="الجزائر العاصمة، فندق الأوراسي"
+                  placeholder={t('events.add_modal.location_placeholder', 'الجزائر العاصمة، فندق الأوراسي')}
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-bold text-emerald-100/50">التاريخ</label>
+                <label className="text-sm font-bold text-emerald-100/50">{t('events.add_modal.date_label', 'التاريخ')}</label>
                 <Input 
                   type="date"
                   value={newEvent.date} 
@@ -173,8 +219,8 @@ const EventsPage = () => {
               </div>
 
               <div className="flex gap-4 pt-6">
-                <Button className="flex-1" variant="gold" onClick={handleCreateEvent}>إنشاء الآن</Button>
-                <Button className="flex-1" variant="outline" onClick={() => setShowAddModal(false)}>إلغاء</Button>
+                <Button className="flex-1" variant="gold" onClick={handleCreateEvent}>{t('events.add_modal.submit', 'إنشاء الآن')}</Button>
+                <Button className="flex-1" variant="outline" onClick={() => setShowAddModal(false)}>{t('common.cancel')}</Button>
               </div>
             </div>
           </motion.div>

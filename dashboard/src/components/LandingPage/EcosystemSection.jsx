@@ -21,7 +21,7 @@ const EcosystemSection = () => {
     },
     {
       title: L({ ar: "للمشاركين", en: "For Participants", fr: "Pour les Participants", es: "Para Participantes" }),
-      desc: L({ ar: "تجربة دخول سلسة، تشبيك مهني، ووصول فوري للمعلومات.", en: "Seamless entry, professional networking, and instant access to info.", fr: "Entrée fluide, réseautage professionnel et accès instantané à l'information.", es: "Entrada fluida, networking profesional y acceso instantáneo a la información." }),
+      desc: L({ ar: "تجربة دخول سلسة، تواصل احترافي، ووصول فوري للمعلومات.", en: "Seamless entry, professional networking, and instant access to info.", fr: "Entrée fluide, réseautage professionnel et accès instantané à l'information.", es: "Entrada fluida, networking profesional y acceso instantáneo a la información." }),
       icon: Users,
       color: "text-blue-400"
     },

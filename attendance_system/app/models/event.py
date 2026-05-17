@@ -9,16 +9,19 @@ class Event(Base, TimestampMixin):
     created_by = Column(Integer, ForeignKey("users.id"))
     organization_id = Column(Integer, default=1)
     event_name = Column(String, default='حدث جديد')
+    organizer_text = Column(Text, default='') # نصوص الجهات المنظمة (عدة أسطر)
     event_date = Column(Date)
     location = Column(Text)
     status = Column(String, default='active')
     prefix = Column(String, default='')
+    language = Column(String, default='ar') # ar, en
     total_invited = Column(Integer, default=0)
     quorum = Column(Integer, default=0)
     list_frozen = Column(Boolean, default=False)
     frozen_by = Column(String)
     frozen_at = Column(DateTime)
     show_quorum = Column(Boolean, default=True)
+    hall_capacity = Column(Integer, default=100) # سعة القاعة الفعلية
     
     # Custom Labels
     org_label_1 = Column(String, default='الجهة')
@@ -33,6 +36,10 @@ class Event(Base, TimestampMixin):
     show_countdown = Column(Boolean, default=True)
     show_qa = Column(Boolean, default=True)
     show_docs = Column(Boolean, default=True)
+    show_leaderboard = Column(Boolean, default=True)
+    show_networking = Column(Boolean, default=True)
+    show_social_wall = Column(Boolean, default=True)
+    show_polls = Column(Boolean, default=True)
     
     # Branding
     app_name = Column(String, default='Diwan Event')
@@ -73,10 +80,21 @@ class Event(Base, TimestampMixin):
     participants = relationship("Participant", back_populates="event", cascade="all, delete-orphan")
     sessions = relationship("AgendaSession", back_populates="event")
     sponsors = relationship("Sponsor", back_populates="event")
-    badge_templates = relationship("BadgeTemplate", back_populates="event", cascade="all, delete-orphan")
-    certificate_templates = relationship("CertificateTemplate", back_populates="event", cascade="all, delete-orphan")
+    templates = relationship("BadgeTemplate", back_populates="event", cascade="all, delete-orphan")
     
     # Enterprise Relationships
     custom_field_definitions = relationship("CustomFieldDefinition", back_populates="event", cascade="all, delete-orphan")
     user_roles = relationship("UserEventRole", back_populates="event", cascade="all, delete-orphan")
+    halls = relationship("EventHall", back_populates="event", cascade="all, delete-orphan")
+
+class EventHall(Base, TimestampMixin):
+    __tablename__ = "event_halls"
+
+    id = Column(Integer, primary_key=True, index=True)
+    event_id = Column(Integer, ForeignKey("event_settings.id"), nullable=False)
+    name = Column(String, nullable=False)
+    capacity = Column(Integer, default=100)
+    hall_type = Column(String, default='main') # main, sub, workshop, etc.
+    
+    event = relationship("Event", back_populates="halls")
 

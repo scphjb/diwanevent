@@ -5,10 +5,10 @@ from datetime import datetime
 class ParticipantBase(BaseModel):
     full_name: str = Field(..., description="الاسم الكامل للمشارك كما سيظهر على الشارة")
     role: Optional[str] = Field(None, description="المسمى الوظيفي أو الدور")
-    council: str = Field(..., description="الجهة أو المؤسسة التابع لها")
-    court: str = Field(..., description="القسم أو الفرع المحدد")
+    organization: str = Field(..., description="الجهة أو المؤسسة التابع لها")
+    department: str = Field(..., description="القسم أو التخصص أو الوحدة التنظيمية")
     seat_info: Optional[str] = Field(None, description="رقم الموقع أو القاعة أو الكرسي")
-    email: Optional[EmailStr] = Field(None, description="البريد الإلكتروني لإرسال التذاكر")
+    email: Optional[str] = Field(None, description="البريد الإلكتروني لإرسال التذاكر")
     phone_number: Optional[str] = Field(None, description="رقم الهاتف للتواصل")
 
 class ParticipantCreate(ParticipantBase):

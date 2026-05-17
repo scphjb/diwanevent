@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import DashboardLayout from '../layouts/DashboardLayout';
 import { 
   Heart, 
@@ -16,27 +17,36 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import api from '../services/api';
 import { cn } from '../utils/cn';
+import { useEvent } from '../context/EventContext';
+import Swal, { showSuccess, showError, showConfirm } from '../utils/swal';
+import { getImageUrl } from '../utils/image';
 
 const SponsorsPage = () => {
+  const { selectedEventId: eventId } = useEvent();
+  const { t } = useTranslation();
   const [sponsors, setSponsors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [newSponsor, setNewSponsor] = useState({
     name: '',
     tier: 'gold',
+    type: 'sponsor', // new field
     website_url: '',
     display_duration: 8
   });
   const [logoFile, setLogoFile] = useState(null);
-  const eventId = 1;
+
+  const [editingSponsor, setEditingSponsor] = useState(null);
 
   useEffect(() => {
-    fetchSponsors();
-  }, []);
+    if (eventId) {
+      fetchSponsors();
+    }
+  }, [eventId]);
 
   const fetchSponsors = async () => {
     try {
-      const response = await api.get(`/sponsors/${eventId}`);
+      const response = await api.get(`sponsors/${eventId}`);
       setSponsors(response.data);
     } catch (err) {
       console.error("Failed to fetch sponsors");
@@ -45,37 +55,67 @@ const SponsorsPage = () => {
     }
   };
 
+  const handleEditOpen = (sponsor) => {
+    setEditingSponsor(sponsor);
+    setNewSponsor({
+      name: sponsor.name,
+      tier: sponsor.tier,
+      type: sponsor.type || 'sponsor',
+      website_url: sponsor.website_url || '',
+      display_duration: sponsor.display_duration || 8
+    });
+    setLogoFile(null);
+    setShowAddModal(true);
+  };
+
   const handleCreateSponsor = async () => {
-    if (!newSponsor.name || !logoFile) return;
+    if (!newSponsor.name || (!editingSponsor && !logoFile)) return;
+    if (!eventId) {
+      alert(t('common.no_event_selected', 'يرجى اختيار فعالية أولاً'));
+      return;
+    }
     
     const formData = new FormData();
-    formData.append('event_id', eventId);
     formData.append('name', newSponsor.name);
     formData.append('tier', newSponsor.tier);
-    formData.append('website_url', newSponsor.website_url);
+    formData.append('type', newSponsor.type);
+    if (newSponsor.website_url) {
+      formData.append('website_url', newSponsor.website_url);
+    }
     formData.append('display_duration', newSponsor.display_duration);
-    formData.append('logo', logoFile);
+    if (logoFile) formData.append('logo', logoFile);
 
     try {
-      await api.post('/sponsors/', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      if (editingSponsor) {
+        await api.put(`sponsors/${eventId}/${editingSponsor.id}`, formData);
+      } else {
+        await api.post(`sponsors/?event_id=${eventId}`, formData);
+      }
       setShowAddModal(false);
-      setNewSponsor({ name: '', tier: 'gold', website_url: '', display_duration: 8 });
+      setEditingSponsor(null);
+      setNewSponsor({ name: '', tier: 'gold', type: 'sponsor', website_url: '', display_duration: 8 });
       setLogoFile(null);
       fetchSponsors();
+      showSuccess(t('sponsors.save_success', 'تم حفظ البيانات بنجاح ✅'));
     } catch (err) {
-      alert("فشل إضافة الراعي");
+      showError(t('sponsors.save_error', 'فشل حفظ البيانات'));
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("هل أنت متأكد من حذف هذا الراعي؟")) return;
+  const handleDelete = async (sponsorId) => {
     try {
-      await api.delete(`/sponsors/${id}`);
-      fetchSponsors();
+      const result = await showConfirm(
+        t('sponsors.delete_confirm_title', 'حذف الراعي'),
+        t('sponsors.delete_confirm', 'هل أنت متأكد من حذف هذا الراعي؟')
+      );
+      
+      if (result.isConfirmed) {
+        await api.delete(`sponsors/${eventId}/${sponsorId}`);
+        fetchSponsors();
+        showSuccess(t('sponsors.delete_success', 'تم حذف الراعي بنجاح'));
+      }
     } catch (err) {
-      alert("فشل الحذف");
+      showError(t('sponsors.delete_error', 'فشل الحذف'));
     }
   };
 
@@ -89,16 +129,16 @@ const SponsorsPage = () => {
     <DashboardLayout activePath="/dashboard/sponsors">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
         <div>
-          <h1 className="text-4xl font-bold text-white mb-2">شركاء النجاح</h1>
+          <h1 className="text-4xl font-bold text-white mb-2">{t('sponsors.title', 'شركاء النجاح')}</h1>
           <p className="text-emerald-400/50 flex items-center gap-2">
             <Heart className="w-4 h-4" />
-            إدارة الرعاة والشركاء الرسميين للفعالية
+            {t('sponsors.subtitle', 'إدارة الرعاة والشركاء الرسميين للفعالية')}
           </p>
         </div>
         
-        <Button variant="gold" className="flex items-center gap-2 h-14 px-8" onClick={() => setShowAddModal(true)}>
+        <Button variant="gold" className="flex items-center gap-2 h-14 px-8" onClick={() => { setEditingSponsor(null); setNewSponsor({ name: '', tier: 'gold', type: 'sponsor', website_url: '', display_duration: 8 }); setShowAddModal(true); }}>
           <Plus className="w-5 h-5" />
-          إضافة راع جديد
+          {t('sponsors.add_btn', 'إضافة راع جديد')}
         </Button>
       </div>
 
@@ -113,23 +153,36 @@ const SponsorsPage = () => {
               className="bg-white/5 border border-white/10 rounded-[32px] p-6 group hover:bg-white/10 transition-all flex flex-col"
             >
               <div className="aspect-square rounded-2xl bg-white/5 mb-6 overflow-hidden flex items-center justify-center p-4 border border-white/5">
-                <img src={sponsor.logo_url} alt={sponsor.name} className="max-w-full max-h-full object-contain filter grayscale group-hover:grayscale-0 transition-all duration-500" />
+                <img src={getImageUrl(sponsor.logo_url)} alt={sponsor.name} className="max-w-full max-h-full object-contain filter grayscale group-hover:grayscale-0 transition-all duration-500" />
               </div>
               
               <div className="flex-1">
                 <div className="flex items-center justify-between mb-2">
-                  <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-black uppercase border", tierColors[sponsor.tier] || tierColors.gold)}>
-                    {sponsor.tier}
-                  </span>
-                  <button onClick={() => handleDelete(sponsor.id)} className="p-2 text-red-400/20 hover:text-red-400 transition-colors">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  <div className="flex gap-2">
+                    <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-black uppercase border", tierColors[sponsor.tier] || tierColors.gold)}>
+                      {sponsor.tier}
+                    </span>
+                    <span className={cn(
+                      "px-2 py-0.5 rounded-full text-[10px] font-black uppercase border",
+                      (sponsor.type || 'sponsor') === 'media' ? "text-orange-400 border-orange-500/20 bg-orange-500/10" : "text-emerald-400 border-emerald-500/20 bg-emerald-500/10"
+                    )}>
+                      {(sponsor.type || 'sponsor') === 'media' ? t('sponsors.media', 'إعلامي') : t('sponsors.sponsor', 'راعي')}
+                    </span>
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={() => handleEditOpen(sponsor)} className="p-2 text-amber-400/20 hover:text-amber-400 transition-colors">
+                      <Plus className="w-4 h-4 rotate-45 scale-125" />
+                    </button>
+                    <button onClick={() => handleDelete(sponsor.id)} className="p-2 text-red-400/20 hover:text-red-400 transition-colors">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
                 <h3 className="text-lg font-bold text-white mb-1">{sponsor.name}</h3>
                 {sponsor.website_url && (
                   <a href={sponsor.website_url} target="_blank" rel="noreferrer" className="text-emerald-400/30 text-xs flex items-center gap-1 hover:text-emerald-400 transition-colors">
                     <ExternalLink className="w-3 h-3" />
-                    الموقع الإلكتروني
+                    {t('sponsors.website', 'الموقع الإلكتروني')}
                   </a>
                 )}
               </div>
@@ -141,8 +194,8 @@ const SponsorsPage = () => {
       {sponsors.length === 0 && !loading && (
         <div className="text-center py-20 bg-white/5 rounded-[32px] border border-white/10">
           <Heart className="w-16 h-16 text-emerald-400/10 mx-auto mb-4" />
-          <h3 className="text-xl font-bold text-white">لا يوجد رعاة حالياً</h3>
-          <p className="text-emerald-400/30 mt-2">ابدأ بإضافة أول شريك للفعالية.</p>
+          <h3 className="text-xl font-bold text-white">{t('sponsors.no_sponsors', 'لا يوجد رعاة حالياً')}</h3>
+          <p className="text-emerald-400/30 mt-2">{t('sponsors.no_sponsors_desc', 'ابدأ بإضافة أول شريك للفعالية.')}</p>
         </div>
       )}
 
@@ -154,18 +207,20 @@ const SponsorsPage = () => {
             animate={{ scale: 1, opacity: 1 }}
             className="bg-[#022C22] border border-white/10 rounded-[40px] p-10 w-full max-w-xl shadow-2xl"
           >
-            <h2 className="text-2xl font-bold text-white mb-8">إضافة راع جديد</h2>
+            <h2 className="text-2xl font-bold text-white mb-8">
+              {editingSponsor ? t('sponsors.edit_title', 'تعديل بيانات الراعي') : t('sponsors.add_title', 'إضافة راع جديد')}
+            </h2>
             <div className="space-y-6">
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-emerald-100/50">الاسم</label>
+                  <label className="text-sm font-bold text-emerald-100/50">{t('sponsors.modal.name', 'الاسم')}</label>
                   <Input 
                     value={newSponsor.name} 
                     onChange={(e) => setNewSponsor(prev => ({ ...prev, name: e.target.value }))}
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-emerald-100/50">الفئة</label>
+                  <label className="text-sm font-bold text-emerald-100/50">{t('sponsors.modal.tier', 'الفئة')}</label>
                   <select 
                     className="w-full h-12 bg-white/5 border border-white/10 rounded-xl px-4 text-white outline-none focus:border-emerald-500"
                     value={newSponsor.tier}
@@ -179,7 +234,19 @@ const SponsorsPage = () => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-bold text-emerald-100/50">الموقع الإلكتروني</label>
+                <label className="text-sm font-bold text-emerald-100/50">{t('sponsors.modal.type', 'نوع الشراكة')}</label>
+                <select 
+                  className="w-full h-12 bg-white/5 border border-white/10 rounded-xl px-4 text-white outline-none focus:border-emerald-500"
+                  value={newSponsor.type}
+                  onChange={(e) => setNewSponsor(prev => ({ ...prev, type: e.target.value }))}
+                >
+                  <option value="sponsor" className="bg-[#022C22]">{t('sponsors.sponsor', 'راعي رسمي (Sponsor)')}</option>
+                  <option value="media" className="bg-[#022C22]">{t('sponsors.media', 'شريك إعلامي (Media Partner)')}</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-emerald-100/50">{t('sponsors.modal.website', 'الموقع الإلكتروني')}</label>
                 <Input 
                   placeholder="https://..." 
                   value={newSponsor.website_url} 
@@ -188,7 +255,7 @@ const SponsorsPage = () => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-bold text-emerald-100/50">الشعار (Logo)</label>
+                <label className="text-sm font-bold text-emerald-100/50">{t('sponsors.modal.logo', 'الشعار (Logo)')}</label>
                 <div 
                   className={cn(
                     "w-full h-32 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all",
@@ -204,7 +271,7 @@ const SponsorsPage = () => {
                   ) : (
                     <>
                       <ImageIcon className="w-8 h-8 text-emerald-400/20 mb-2" />
-                      <span className="text-xs text-emerald-400/30">اختر صورة الشعار</span>
+                      <span className="text-xs text-emerald-400/30">{t('sponsors.modal.choose_logo', 'اختر صورة الشعار')}</span>
                     </>
                   )}
                   <input 
@@ -218,8 +285,10 @@ const SponsorsPage = () => {
               </div>
 
               <div className="flex gap-4 pt-6">
-                <Button className="flex-1" variant="gold" onClick={handleCreateSponsor}>إضافة</Button>
-                <Button className="flex-1" variant="outline" onClick={() => setShowAddModal(false)}>إلغاء</Button>
+                <Button className="flex-1" variant="gold" onClick={handleCreateSponsor}>
+                  {editingSponsor ? t('common.save', 'حفظ التعديلات') : t('common.save', 'إضافة')}
+                </Button>
+                <Button className="flex-1" variant="outline" onClick={() => { setShowAddModal(false); setEditingSponsor(null); }}>{t('common.cancel', 'إلغاء')}</Button>
               </div>
             </div>
           </motion.div>

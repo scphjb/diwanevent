@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 /**
  * Hook مخصص لإدارة اتصال الـ WebSocket وتحديث البيانات لحظياً.
@@ -8,6 +8,11 @@ import { useState, useEffect, useCallback } from 'react';
 const useAttendanceSocket = (eventId, onMessage) => {
     const [socket, setSocket] = useState(null);
     const [status, setStatus] = useState('connecting');
+    const savedCallback = useRef();
+
+    useEffect(() => {
+        savedCallback.current = onMessage;
+    }, [onMessage]);
 
     const connect = useCallback(() => {
         const wsBaseUrl = import.meta.env.VITE_WS_URL || `ws://${window.location.hostname}:8000`;
@@ -21,7 +26,8 @@ const useAttendanceSocket = (eventId, onMessage) => {
 
         ws.onmessage = (event) => {
             const data = JSON.parse(event.data);
-            if (onMessage) onMessage(data);
+            console.log("WebSocket received:", data); // Debug log
+            if (savedCallback.current) savedCallback.current(data);
         };
 
         ws.onclose = () => {

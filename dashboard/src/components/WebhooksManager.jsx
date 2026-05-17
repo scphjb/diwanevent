@@ -1,37 +1,39 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Webhook, Plus, ExternalLink, Activity, ToggleLeft as Toggle, RotateCcw, AlertCircle, CheckCircle } from "lucide-react";
 import { Button } from "./ui/Button";
 import { Badge } from "./ui/Badge";
 
 const WebhooksManager = () => {
-  const [webhooks] = useState([
+  const { t } = useTranslation();
+  const webhooks = [
     { 
       id: '1', 
       url: 'https://api.zapier.com/hooks/catch/12345', 
-      events: ['دخول المشاركين', 'بدء الفعالية'], 
-      status: 'مستقر',
-      lastDelivery: 'منذ دقيقتين',
+      events: [t('dev_portal.webhooks.event_checkin', 'دخول المشاركين'), t('dev_portal.webhooks.event_start', 'بدء الفعالية')], 
+      status: 'stable',
+      lastDelivery: t('dev_portal.webhooks.two_mins_ago', 'منذ دقيقتين'),
       successRate: '99.8%'
     },
     { 
       id: '2', 
       url: 'https://hooks.slack.com/services/T000/B000', 
-      events: ['التقاط بيانات العارضين'], 
-      status: 'تحذير',
-      lastDelivery: 'منذ ساعة',
+      events: [t('dev_portal.webhooks.event_exhibitor', 'التقاط بيانات العارضين')], 
+      status: 'warning',
+      lastDelivery: t('dev_portal.webhooks.one_hour_ago', 'منذ ساعة'),
       successRate: '85.2%'
     },
-  ]);
+  ];
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
         <div>
-          <h2 className="text-3xl font-black text-white mb-2">نقاط الويب هوكس (Webhooks)</h2>
-          <p className="text-slate-400 font-medium text-sm">اشترك في أحداث الفعالية المباشرة واستلم التنبيهات فور حدوثها.</p>
+          <h2 className="text-3xl font-black text-white mb-2">{t('dev_portal.webhooks.heading', 'نقاط الويب هوكس (Webhooks)')}</h2>
+          <p className="text-slate-400 font-medium text-sm">{t('dev_portal.webhooks.desc', 'اشترك في أحداث الفعالية المباشرة واستلم التنبيهات فور حدوثها.')}</p>
         </div>
         <Button className="bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl px-8 py-6 h-auto font-black shadow-lg shadow-indigo-900/20 transition-all hover:scale-105">
-          <Plus className="w-5 h-5 ml-2" /> إضافة رابط استلام
+          <Plus className="w-5 h-5 ml-2" /> {t('dev_portal.webhooks.add_btn', 'إضافة رابط استلام')}
         </Button>
       </div>
 
@@ -49,12 +51,12 @@ const WebhooksManager = () => {
                   <div className="flex-1 min-w-0">
                     <h3 className="text-xl font-black text-white truncate max-w-2xl mb-3 font-mono">{hook.url}</h3>
                     <div className="flex flex-wrap items-center gap-4 mt-2">
-                      <Badge variant="outline" className={`rounded-full border-0 px-5 py-1.5 font-bold text-xs ${hook.status === 'مستقر' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}`}>
-                        {hook.status === 'مستقر' ? <CheckCircle className="w-3 h-3 ml-2" /> : <AlertCircle className="w-3 h-3 ml-2" />}
-                        {hook.status}
+                      <Badge variant="outline" className={`rounded-full border-0 px-5 py-1.5 font-bold text-xs ${hook.status === 'stable' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}`}>
+                        {hook.status === 'stable' ? <CheckCircle className="w-3 h-3 ml-2" /> : <AlertCircle className="w-3 h-3 ml-2" />}
+                        {hook.status === 'stable' ? t('dev_portal.webhooks.status_stable', 'مستقر') : t('dev_portal.webhooks.status_warning', 'تحذير')}
                       </Badge>
                       <span className="text-xs text-slate-500 font-bold flex items-center gap-2 bg-white/5 px-4 py-1.5 rounded-full">
-                        <Activity className="w-3 h-3" /> آخر إرسال: {hook.lastDelivery}
+                        <Activity className="w-3 h-3" /> {t('dev_portal.webhooks.last_delivery', 'آخر إرسال')}: {hook.lastDelivery}
                       </span>
                     </div>
                   </div>
@@ -71,7 +73,7 @@ const WebhooksManager = () => {
 
               <div className="flex items-center justify-between w-full lg:w-auto gap-12 border-t lg:border-t-0 border-white/5 pt-8 lg:pt-0">
                 <div className="text-right">
-                  <div className="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-1">معدل النجاح</div>
+                  <div className="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-1">{t('dev_portal.webhooks.success_rate', 'معدل النجاح')}</div>
                   <div className="text-3xl font-black text-white tracking-tighter">{hook.successRate}</div>
                 </div>
 
@@ -83,7 +85,7 @@ const WebhooksManager = () => {
                     <Toggle className="w-5 h-5" />
                   </Button>
                   <Button className="h-14 rounded-2xl px-10 bg-white text-black font-black hover:scale-105 transition-all shadow-xl">
-                    سجلات الإرسال
+                    {t('dev_portal.webhooks.delivery_logs', 'سجلات الإرسال')}
                   </Button>
                 </div>
               </div>

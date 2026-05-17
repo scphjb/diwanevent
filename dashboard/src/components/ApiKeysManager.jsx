@@ -1,14 +1,30 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Plus, Copy, Trash2, ShieldAlert, Eye, EyeOff, CheckCircle2, Globe, Key } from "lucide-react";
 import { Button } from "./ui/Button";
 import { Alert, AlertDescription, AlertTitle } from "./ui/Alert";
 import { cn } from "../utils/cn";
 
 const ApiKeysManager = () => {
-  const [keys, setKeys] = useState([
-    { id: '1', name: 'تطبيق الهاتف - الربط الأساسي', key: 'dw_key_a7x9...2m', lastUsed: 'منذ ساعتين', rateLimit: '1,000 طلب/دقيقة', status: 'نشط' },
-    { id: '2', name: 'لوحة تحكم التحليلات', key: 'dw_key_p9k2...8q', lastUsed: 'الآن', rateLimit: '5,000 طلب/دقيقة', status: 'نشط' },
-  ]);
+  const { t } = useTranslation();
+  const keys = [
+    { 
+      id: '1', 
+      name: t('dev_portal.api_keys.demo.mobile_app', 'تطبيق الهاتف - الربط الأساسي'), 
+      key: 'dw_key_a7x9...2m', 
+      lastUsed: t('dev_portal.api_keys.demo.two_hours_ago', 'منذ ساعتين'), 
+      rateLimit: t('dev_portal.api_keys.demo.rate_limit_mobile', '1,000 طلب/دقيقة'), 
+      status: t('dev_portal.api_keys.demo.status_active', 'نشط') 
+    },
+    { 
+      id: '2', 
+      name: t('dev_portal.api_keys.demo.analytics_dash', 'لوحة تحكم التحليلات'), 
+      key: 'dw_key_p9k2...8q', 
+      lastUsed: t('dev_portal.api_keys.demo.now', 'الآن'), 
+      rateLimit: t('dev_portal.api_keys.demo.rate_limit_analytics', '5,000 طلب/دقيقة'), 
+      status: t('dev_portal.api_keys.demo.status_active', 'نشط') 
+    },
+  ];
 
   const [newKeySecret, setNewKeySecret] = useState(null);
 
@@ -20,11 +36,11 @@ const ApiKeysManager = () => {
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
         <div>
-          <h2 className="text-3xl font-black text-white mb-2">مفاتيح الوصول (API Keys)</h2>
-          <p className="text-slate-400 font-medium text-sm">إدارة مفاتيح الوصول لربط تطبيقاتك الخارجية بنظام ديوان.</p>
+          <h2 className="text-3xl font-black text-white mb-2">{t('dev_portal.api_keys.heading', 'مفاتيح الوصول (API Keys)')}</h2>
+          <p className="text-slate-400 font-medium text-sm">{t('dev_portal.api_keys.desc', 'إدارة مفاتيح الوصول لربط تطبيقاتك الخارجية بنظام ديوان.')}</p>
         </div>
         <Button onClick={handleCreateKey} className="bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl px-8 py-6 h-auto font-black shadow-lg shadow-emerald-900/20 transition-all hover:scale-105">
-          <Plus className="w-5 h-5 ml-2" /> إنشاء مفتاح جديد
+          <Plus className="w-5 h-5 ml-2" /> {t('dev_portal.api_keys.create_btn', 'إنشاء مفتاح جديد')}
         </Button>
       </div>
 
@@ -35,19 +51,19 @@ const ApiKeysManager = () => {
               <ShieldAlert className="h-8 w-8 text-amber-500" />
             </div>
             <div className="flex-1">
-              <AlertTitle className="text-amber-500 font-black text-xl mb-3">تحذير أمني هام!</AlertTitle>
+              <AlertTitle className="text-amber-500 font-black text-xl mb-3">{t('dev_portal.api_keys.security_warning', 'تحذير أمني هام!')}</AlertTitle>
               <AlertDescription className="text-slate-300 text-lg leading-relaxed">
-                هذه هي المرة الوحيدة التي سيظهر فيها مفتاحك السري. قم بنسخه الآن واحفظه في مكان آمن.
+                {t('dev_portal.api_keys.security_desc', 'هذه هي المرة الوحيدة التي سيظهر فيها مفتاحك السري. قم بنسخه الآن واحفظه في مكان آمن.')}
                 <div className="mt-6 flex flex-col md:flex-row items-center gap-4 bg-black/40 p-5 rounded-[2rem] border border-amber-500/20">
                   <code className="text-amber-200 break-all font-mono text-sm flex-1 text-center md:text-right px-4">{newKeySecret}</code>
                   <div className="flex gap-2">
                     <Button variant="ghost" className="rounded-xl hover:bg-amber-500/20 text-amber-500" onClick={() => navigator.clipboard.writeText(newKeySecret)}>
-                      <Copy className="h-5 w-5 ml-2" /> نسخ المفتاح
+                      <Copy className="h-5 w-5 ml-2" /> {t('dev_portal.api_keys.copy_key', 'نسخ المفتاح')}
                     </Button>
                   </div>
                 </div>
                 <Button onClick={() => setNewKeySecret(null)} className="mt-6 bg-amber-500 hover:bg-amber-400 text-black font-black rounded-xl px-10">
-                  لقد قمت بحفظ المفتاح بأمان
+                  {t('dev_portal.api_keys.saved_btn', 'لقد قمت بحفظ المفتاح بأمان')}
                 </Button>
               </AlertDescription>
             </div>
@@ -70,7 +86,7 @@ const ApiKeysManager = () => {
                   <span className="font-mono bg-black/40 px-4 py-1.5 rounded-full border border-white/5 text-emerald-400/70">{apiKey.key}</span>
                   <span className="flex items-center gap-2 text-slate-500 font-bold bg-white/5 px-4 py-1.5 rounded-full">
                     <Globe className="w-4 h-4" />
-                    آخر استخدام: {apiKey.lastUsed}
+                    {t('dev_portal.api_keys.last_used', 'آخر استخدام')}: {apiKey.lastUsed}
                   </span>
                 </div>
               </div>
@@ -78,16 +94,16 @@ const ApiKeysManager = () => {
 
             <div className="flex items-center justify-between w-full lg:w-auto gap-12 relative z-10 border-t lg:border-t-0 border-white/5 pt-6 lg:pt-0">
               <div className="text-right">
-                <div className="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-1">الحصة المتاحة</div>
+                <div className="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-1">{t('dev_portal.api_keys.rate_limit', 'الحصة المتاحة')}</div>
                 <div className="text-white font-black text-lg">{apiKey.rateLimit}</div>
               </div>
               
               <div className="flex gap-3">
                 <Button variant="ghost" className="rounded-2xl h-14 px-6 hover:bg-rose-500/10 hover:text-rose-500 font-bold border border-transparent hover:border-rose-500/20">
-                  <Trash2 className="w-4 h-4 ml-2" /> إبطال المفتاح
+                  <Trash2 className="w-4 h-4 ml-2" /> {t('dev_portal.api_keys.revoke', 'إبطال المفتاح')}
                 </Button>
                 <Button variant="outline" className="rounded-2xl h-14 px-8 border-white/10 bg-white/5 hover:bg-white/10 text-white font-bold">
-                  تعديل الصلاحيات
+                  {t('dev_portal.api_keys.edit_perms', 'تعديل الصلاحيات')}
                 </Button>
               </div>
             </div>

@@ -7,13 +7,16 @@ export default {
     extend: {
       colors: {
         brand: {
-          primary: '#1A8A6A',   // Emerald
-          secondary: '#D4AF37', // Gold
+          dark: 'var(--brand-dark)',
+          primary: 'var(--brand-primary)',
+          secondary: 'var(--brand-secondary)',
+          surface: 'var(--brand-surface)',
+          text: 'var(--brand-text)',
+          muted: 'var(--brand-muted)',
           gold: {
-            DEFAULT: '#D4AF37',
+            DEFAULT: 'var(--brand-secondary)',
             light: '#F0C040'
           },
-
         }
       },
       fontFamily: {

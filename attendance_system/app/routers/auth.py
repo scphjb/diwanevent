@@ -16,6 +16,10 @@ from app.models.auth import Subscription, SubscriptionPlan
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 from app.core.auth_deps import get_current_active_user
+import pyotp
+import qrcode
+import io
+import base64
 
 router = APIRouter()
 
@@ -65,6 +69,10 @@ class ChangePasswordRequest(BaseModel):
 
 class RefreshTokenRequest(BaseModel):
     refresh_token: str
+
+
+class TwoFactorVerifyRequest(BaseModel):
+    code: str
 
 
 # ═══════════════════════════════════════
@@ -319,3 +327,73 @@ async def change_password(
     db.commit()
 
     return {"status": "success", "message": "تم تغيير كلمة المرور بنجاح"}
+
+
+# ═══════════════════════════════════════
+# المصادقة الثنائية (2FA)
+# ═══════════════════════════════════════
+@router.post("/2fa/setup")
+async def setup_2fa(
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """توليد سر 2FA ورمز QR للإعداد."""
+    if current_user.two_factor_enabled:
+        raise HTTPException(status_code=400, detail="المصادقة الثنائية مفعلة بالفعل")
+    
+    # توليد سر جديد إذا لم يكن موجوداً
+    if not current_user.two_factor_secret:
+        current_user.two_factor_secret = pyotp.random_base32()
+        db.commit()
+    
+    # إنشاء رابط TOTP
+    totp_auth_url = pyotp.totp.TOTP(current_user.two_factor_secret).provisioning_uri(
+        name=current_user.email,
+        issuer_name="Diwan Event"
+    )
+    
+    # توليد صورة QR
+    qr = qrcode.QRCode(version=1, box_size=10, border=5)
+    qr.add_data(totp_auth_url)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+    
+    buffered = io.BytesIO()
+    img.save(buffered, format="PNG")
+    img_str = base64.b64encode(buffered.getvalue()).decode()
+    
+    return {
+        "secret": current_user.two_factor_secret,
+        "qr_code": f"data:image/png;base64,{img_str}"
+    }
+
+
+@router.post("/2fa/enable")
+async def enable_2fa(
+    body: TwoFactorVerifyRequest,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """التحقق من الكود وتفعيل 2FA."""
+    if not current_user.two_factor_secret:
+        raise HTTPException(status_code=400, detail="يجب إعداد 2FA أولاً")
+    
+    totp = pyotp.TOTP(current_user.two_factor_secret)
+    if totp.verify(body.code):
+        current_user.two_factor_enabled = True
+        db.commit()
+        return {"status": "success", "message": "تم تفعيل المصادقة الثنائية بنجاح"}
+    else:
+        raise HTTPException(status_code=400, detail="رمز التحقق غير صحيح")
+
+
+@router.post("/2fa/disable")
+async def disable_2fa(
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """إلغاء تفعيل 2FA."""
+    current_user.two_factor_enabled = False
+    current_user.two_factor_secret = None
+    db.commit()
+    return {"status": "success", "message": "تم إلغاء تفعيل المصادقة الثنائية"}
