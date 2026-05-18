@@ -1,6 +1,6 @@
 import secrets as _secrets
 import os as _os
-from typing import Optional
+from typing import Optional, Union
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     ENCRYPTION_KEY: Optional[str] = None
 
     # CORS: في الإنتاج يجب تحديد النطاقات
-    ALLOWED_ORIGINS: list[str] = [
+    ALLOWED_ORIGINS: Union[list[str], str] = [
         "http://localhost:3000",
         "http://localhost:5173",
         "http://localhost:8000",
