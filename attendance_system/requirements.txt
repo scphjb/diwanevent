@@ -35,3 +35,4 @@ pydantic[email]>=2.0.0
 stripe>=8.0.0
 cryptography>=42.0.0
 pypdf==4.2.0
+pyotp==2.9.0
