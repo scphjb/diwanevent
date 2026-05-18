@@ -1,6 +1,6 @@
 ﻿from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Response
-from sqlalchemy.orm import Session
-from sqlalchemy import distinct
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import distinct, select
 from app.core.database import get_db
 from app.models.participant import Participant, Attendance
 from app.models.event import Event
@@ -15,23 +15,25 @@ async def send_certificate_email(email: str, participant_name: str, pdf_content:
     await send_email_with_attachment(email, subject, body, pdf_content, "Certificate.pdf")
 
 @router.post("/{event_id}/send-all")
-async def send_all_certificates(event_id: int, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
-    event = db.query(Event).get(event_id)
+async def send_all_certificates(event_id: int, background_tasks: BackgroundTasks, db: AsyncSession = Depends(get_db)):
+    event = await db.get(Event, event_id)
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
     
     # FIX 2: استخدام جدول Attendance للتحقق من الحضور الفعلي بدلاً من payment_status
-    checked_in_ids = db.query(distinct(Attendance.participant_id))\
-        .join(Participant, Attendance.participant_id == Participant.id)\
+    checked_in_ids = [row[0] for row in (await db.execute(
+        select(distinct(Attendance.participant_id))
+        .join(Participant, Attendance.participant_id == Participant.id)
         .filter(
             Participant.event_id == event_id,
             Attendance.event_type == 'check_in'
-        ).all()
-    checked_in_ids = [row[0] for row in checked_in_ids]
+        )
+    )).all()]
 
-    attendees = db.query(Participant).filter(
-        Participant.id.in_(checked_in_ids)
-    ).all()
+    attendees = (await db.execute(
+        select(Participant).filter(Participant.id.in_(checked_in_ids))
+    )).scalars().all()
+
     
     # FIX 8: استخدام pdf_renderer بدلاً من generate_certificate_pdf القديمة
     from app.utils.pdf_renderer import render_design_to_pdf
@@ -39,10 +41,12 @@ async def send_all_certificates(event_id: int, background_tasks: BackgroundTasks
     from app.routers.credentials import DEFAULT_CERTIFICATE_DESIGN
 
     # جلب قالب الشهادة الافتراضي للفعالية
-    cert_template = db.query(BadgeTemplate).filter(
-        BadgeTemplate.event_id == event_id,
-        BadgeTemplate.type.in_(['certificate_attendance', 'certificate'])
-    ).first()
+    cert_template = (await db.execute(
+        select(BadgeTemplate).filter(
+            BadgeTemplate.event_id == event_id,
+            BadgeTemplate.type.in_(['certificate_attendance', 'certificate'])
+        )
+    )).scalars().first()
 
     if cert_template:
         design = json.loads(cert_template.design_json)
@@ -72,22 +76,24 @@ async def send_all_certificates(event_id: int, background_tasks: BackgroundTasks
     return {"message": f"Started sending certificates to {len(attendees)} attendees."}
 
 @router.get("/download/{participant_id}")
-def download_certificate(participant_id: int, db: Session = Depends(get_db)):
-    p = db.query(Participant).get(participant_id)
+async def download_certificate(participant_id: int, db: AsyncSession = Depends(get_db)):
+    p = await db.get(Participant, participant_id)
     if not p:
         raise HTTPException(status_code=404, detail="Participant not found")
     
-    event = db.query(Event).get(p.event_id)
+    event = await db.get(Event, p.event_id)
 
     # FIX 8: استخدام pdf_renderer
     from app.utils.pdf_renderer import render_design_to_pdf
     from app.models.template import BadgeTemplate
     from app.routers.credentials import DEFAULT_CERTIFICATE_DESIGN
 
-    cert_template = db.query(BadgeTemplate).filter(
-        BadgeTemplate.event_id == p.event_id,
-        BadgeTemplate.type.in_(['certificate_attendance', 'certificate'])
-    ).first()
+    cert_template = (await db.execute(
+        select(BadgeTemplate).filter(
+            BadgeTemplate.event_id == p.event_id,
+            BadgeTemplate.type.in_(['certificate_attendance', 'certificate'])
+        )
+    )).scalars().first()
 
     design = json.loads(cert_template.design_json) if cert_template else DEFAULT_CERTIFICATE_DESIGN
     

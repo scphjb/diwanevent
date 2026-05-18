@@ -1,5 +1,6 @@
 from typing import List, Dict, Any
 from app.models.communication import CommunicationLog
+from sqlalchemy.ext.asyncio import AsyncSession
 import datetime
 
 class CommunicationHub:
@@ -8,7 +9,7 @@ class CommunicationHub:
     """
     @staticmethod
     async def send_omnichannel(
-        db, 
+        db: AsyncSession, 
         event_id: int, 
         participant_id: int, 
         message_data: Dict[str, Any],
@@ -28,7 +29,7 @@ class CommunicationHub:
                 status="processing"
             )
             db.add(log)
-            db.commit()
+            await db.commit()
             
             # تنفيذ الإرسال عبر المحول المناسب
             try:
@@ -42,7 +43,7 @@ class CommunicationHub:
                 log.status = "failed"
                 log.provider_response = {"error": str(e)}
             
-            db.commit()
+            await db.commit()
             results.append({"channel": channel, "status": log.status})
             
         return results

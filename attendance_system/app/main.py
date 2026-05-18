@@ -4,10 +4,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, FileResponse
 from app.core.config import settings
-from app.core.database import get_db, engine
+from app.core.database import get_db
 from app.models import Base
 from app.models.event import Event
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 import os
 import logging
 from fastapi import WebSocket, WebSocketDisconnect
@@ -150,8 +150,8 @@ async def health_check():
 
 
 # Helper to get event settings for legacy templates or dynamic pages
-def get_dynamic_settings(db: Session, event_id: int = 1):
-    event = db.query(Event).filter(Event.id == event_id).first()
+async def get_dynamic_settings(db: AsyncSession, event_id: int = 1):
+    event = await db.get(Event, event_id)
     if not event:
         return {
             "id": 1,

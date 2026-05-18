@@ -1,7 +1,8 @@
 import numpy as np
 from typing import List, Dict, Any
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.participant import Participant
+from sqlalchemy import select
 
 class AIMatchmakingService:
     """
@@ -18,24 +19,27 @@ class AIMatchmakingService:
         return np.dot(vec1, vec2) / (np.linalg.norm(vec1) * np.linalg.norm(vec2))
 
     @staticmethod
-    def find_matches(db: Session, participant_id: int, top_n: int = 5) -> List[Dict[str, Any]]:
+    async def find_matches(db: AsyncSession, participant_id: int, top_n: int = 5) -> List[Dict[str, Any]]:
         """
         العثور على أفضل 'N' شخص للتعارف بالنسبة لمشارك معين.
         """
-        target = db.query(Participant).filter(Participant.id == participant_id).first()
-        if not target or not target.custom_values.get("interest_embedding"):
+        target = await db.get(Participant, participant_id)
+        if not target or not target.custom_values or not target.custom_values.get("interest_embedding"):
             return []
 
         target_vector = target.custom_values["interest_embedding"]
         
         # جلب المشاركين الآخرين في نفس الفعالية
-        others = db.query(Participant).filter(
+        stmt = select(Participant).filter(
             Participant.event_id == target.event_id,
             Participant.id != participant_id
-        ).all()
+        )
+        res = await db.execute(stmt)
+        others = res.scalars().all()
 
         matches = []
         for other in others:
+            if not other.custom_values: continue
             other_vector = other.custom_values.get("interest_embedding")
             if other_vector:
                 score = AIMatchmakingService.calculate_similarity(target_vector, other_vector)

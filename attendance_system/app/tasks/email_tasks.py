@@ -40,85 +40,56 @@ def send_welcome_email_task(self, participant_data: Dict[str, Any]) -> Dict:
     try:
         import os
         import asyncio
-        from app.core.database import SessionLocal
+        from app.core.database import AsyncSessionLocal
         from app.routers.participant_auth import send_unified_welcome_email, generate_otp, create_magic_token
         from app.models.otp import ParticipantOTP
         from datetime import datetime, timedelta
+        from sqlalchemy import delete
 
-        db = SessionLocal()
-        try:
-            # 1. توليد الـ OTP للمشارك لحفظ الأمن ودخول البوابة
-            otp_code = generate_otp()
-            new_otp = ParticipantOTP(
-                participant_id=participant_data["id"],
-                email=participant_data["email"],
-                otp_code=otp_code,
-                expires_at=datetime.utcnow() + timedelta(minutes=60)
-            )
-            db.add(new_otp)
-            db.commit()
+        async def _run():
+            async with AsyncSessionLocal() as db:
+                # 1. توليد الـ OTP للمشارك لحفظ الأمن ودخول البوابة
+                otp_code = generate_otp()
+                
+                # حذف أي OTP سابق لتجنب التكرار
+                await db.execute(
+                    delete(ParticipantOTP).filter(ParticipantOTP.participant_id == participant_data["id"])
+                )
+                
+                new_otp = ParticipantOTP(
+                    participant_id=participant_data["id"],
+                    email=participant_data["email"],
+                    otp_code=otp_code,
+                    expires_at=datetime.utcnow() + timedelta(minutes=60)
+                )
+                db.add(new_otp)
+                await db.commit()
 
-            # 2. توليد Magic Link للبوابة الرقمية بنقرة واحدة
-            magic_token = create_magic_token(participant_data["id"])
-            frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
-            magic_link = f"{frontend_url}/participant-login?token={magic_token}"
+                # 2. توليد Magic Link للبوابة الرقمية بنقرة واحدة
+                magic_token = create_magic_token(participant_data["id"])
+                frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
+                magic_link = f"{frontend_url}/participant-login?token={magic_token}"
 
-            # 3. إرسال البريد الموحد غير المتزامن (استخدام asyncio لتفادي أي مشاكل مع خيوط Celery)
-            try:
-                loop = asyncio.get_event_loop()
-                if loop.is_running():
-                    # إذا كان الـ Loop نشطاً، نجدول المهمة وننتظر اكتمالها
-                    future = asyncio.run_coroutine_threadsafe(
-                        send_unified_welcome_email(
-                            email=participant_data["email"],
-                            participant_name=participant_data["full_name"],
-                            event_name=participant_data.get("event_name", "Diwan Event"),
-                            order_num=participant_data.get("order_num", ""),
-                            otp=otp_code,
-                            magic_link=magic_link,
-                            qr_code=participant_data.get("qr_code"),
-                            event_date=participant_data.get("event_date"),
-                            event_location=participant_data.get("event_location")
-                        ),
-                        loop
-                    )
-                    result = future.result()
-                else:
-                    result = loop.run_until_complete(
-                        send_unified_welcome_email(
-                            email=participant_data["email"],
-                            participant_name=participant_data["full_name"],
-                            event_name=participant_data.get("event_name", "Diwan Event"),
-                            order_num=participant_data.get("order_num", ""),
-                            otp=otp_code,
-                            magic_link=magic_link,
-                            qr_code=participant_data.get("qr_code"),
-                            event_date=participant_data.get("event_date"),
-                            event_location=participant_data.get("event_location")
-                        )
-                    )
-            except RuntimeError:
-                result = asyncio.run(
-                    send_unified_welcome_email(
-                        email=participant_data["email"],
-                        participant_name=participant_data["full_name"],
-                        event_name=participant_data.get("event_name", "Diwan Event"),
-                        order_num=participant_data.get("order_num", ""),
-                        otp=otp_code,
-                        magic_link=magic_link,
-                        qr_code=participant_data.get("qr_code"),
-                        event_date=participant_data.get("event_date"),
-                        event_location=participant_data.get("event_location")
-                    )
+                # 3. إرسال البريد الموحد غير المتزامن
+                await send_unified_welcome_email(
+                    email=participant_data["email"],
+                    participant_name=participant_data["full_name"],
+                    event_name=participant_data.get("event_name", "Diwan Event"),
+                    order_num=participant_data.get("order_num", ""),
+                    otp=otp_code,
+                    magic_link=magic_link,
+                    qr_code=participant_data.get("qr_code"),
+                    event_date=participant_data.get("event_date"),
+                    event_location=participant_data.get("event_location")
                 )
 
-            logger.info(
-                f"[EMAIL OK] {participant_data['email']} — "
-                f"{participant_data.get('order_num', '')}"
-            )
-            return {"status": "sent", "email": participant_data["email"], "otp": otp_code}
-        finally:
-            db.close()
+                logger.info(
+                    f"[EMAIL OK] {participant_data['email']} — "
+                    f"{participant_data.get('order_num', '')}"
+                )
+                return {"status": "sent", "email": participant_data["email"], "otp": otp_code}
+
+        return asyncio.run(_run())
 
     except Exception as exc:
         logger.error(f"[EMAIL FAIL] {participant_data.get('email')}: {exc}")

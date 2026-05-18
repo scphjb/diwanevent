@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks, Request
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, update, delete
 from typing import List, Optional
 from app.core.database import get_db
 from app.models.others import SocialPost, PostLike, Question
@@ -30,11 +31,11 @@ class CommentCreate(BaseModel):
 
 @router.post("/")
 @limiter.limit("5/minute")
-async def create_post(request: Request, post_data: PostCreate, db: Session = Depends(get_db)):
+async def create_post(request: Request, post_data: PostCreate, db: AsyncSession = Depends(get_db)):
     post = SocialPost(**post_data.dict(), is_approved=False)
     db.add(post)
-    db.commit()
-    db.refresh(post)
+    await db.commit()
+    await db.refresh(post)
     
     # Notify admins about new post needing moderation
     await manager.broadcast_to_event(post.event_id, {
@@ -49,19 +50,31 @@ async def create_post(request: Request, post_data: PostCreate, db: Session = Dep
     return {"message": "Post submitted for moderation", "post_id": post.id}
 
 @router.get("/{event_id}/approved")
-def get_approved_posts(event_id: int, db: Session = Depends(get_db)):
-    return db.query(SocialPost).filter(
-        SocialPost.event_id == event_id, 
-        SocialPost.is_approved == True,
-        SocialPost.is_hidden == False
-    ).order_by(SocialPost.created_at.desc()).all()
+async def get_approved_posts(event_id: int, db: AsyncSession = Depends(get_db)):
+    stmt = (
+        select(SocialPost)
+        .filter(
+            SocialPost.event_id == event_id, 
+            SocialPost.is_approved == True,
+            SocialPost.is_hidden == False
+        )
+        .order_by(SocialPost.created_at.desc())
+    )
+    res = await db.execute(stmt)
+    return res.scalars().all()
 
 @router.get("/{event_id}/moderation")
-def get_pending_posts(event_id: int, db: Session = Depends(get_db)):
-    return db.query(SocialPost).filter(
-        SocialPost.event_id == event_id, 
-        SocialPost.is_approved == False
-    ).order_by(SocialPost.created_at.desc()).all()
+async def get_pending_posts(event_id: int, db: AsyncSession = Depends(get_db)):
+    stmt = (
+        select(SocialPost)
+        .filter(
+            SocialPost.event_id == event_id, 
+            SocialPost.is_approved == False
+        )
+        .order_by(SocialPost.created_at.desc())
+    )
+    res = await db.execute(stmt)
+    return res.scalars().all()
 
 from app.core.rbac import require_permission
 
@@ -70,12 +83,12 @@ async def moderate_post(
     post_id: int, 
     event_id: int, # Added for RBAC
     approved: bool, 
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_permission("event:write"))
 ):
     # event_id is now validated by require_permission
-    post = db.query(SocialPost).get(post_id)
+    post = await db.get(SocialPost, post_id)
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
     
@@ -83,7 +96,7 @@ async def moderate_post(
         raise HTTPException(status_code=400, detail="Post does not belong to this event")
 
     post.is_approved = approved
-    db.commit()
+    await db.commit()
     
     if approved:
         # Broadcast to Public Wallboard
@@ -101,19 +114,21 @@ async def moderate_post(
     return {"message": "Moderation successful", "status": "approved" if approved else "rejected"}
 
 @router.post("/{post_id}/like")
-async def like_post(post_id: int, session_key: str, user_name: Optional[str] = None, db: Session = Depends(get_db)):
+async def like_post(post_id: int, session_key: str, user_name: Optional[str] = None, db: AsyncSession = Depends(get_db)):
     # Check if already liked
-    existing = db.query(PostLike).filter(PostLike.post_id == post_id, PostLike.session_key == session_key).first()
+    stmt = select(PostLike).filter(PostLike.post_id == post_id, PostLike.session_key == session_key)
+    res = await db.execute(stmt)
+    existing = res.scalars().first()
     if existing:
         return {"message": "Already liked"}
     
     like = PostLike(post_id=post_id, session_key=session_key, user_name=user_name)
     db.add(like)
     
-    post = db.query(SocialPost).get(post_id)
+    post = await db.get(SocialPost, post_id)
     post.likes_count += 1
     
-    db.commit()
+    await db.commit()
     
     # Broadcast like update
     await manager.broadcast_to_event(post.event_id, {
@@ -125,16 +140,17 @@ async def like_post(post_id: int, session_key: str, user_name: Optional[str] = N
     return {"likes": post.likes_count}
 
 @router.delete("/{post_id}/like")
-async def unlike_post(post_id: int, session_key: str, db: Session = Depends(get_db)):
-    from app.models.others import PostLike
-    like = db.query(PostLike).filter(PostLike.post_id == post_id, PostLike.session_key == session_key).first()
+async def unlike_post(post_id: int, session_key: str, db: AsyncSession = Depends(get_db)):
+    stmt = select(PostLike).filter(PostLike.post_id == post_id, PostLike.session_key == session_key)
+    res = await db.execute(stmt)
+    like = res.scalars().first()
     if not like:
         return {"message": "Not liked yet"}
     
-    db.delete(like)
-    post = db.query(SocialPost).get(post_id)
+    await db.delete(like)
+    post = await db.get(SocialPost, post_id)
     post.likes_count = max(0, post.likes_count - 1)
-    db.commit()
+    await db.commit()
     
     await manager.broadcast_to_event(post.event_id, {
         "type": "post_like_update",
@@ -144,17 +160,17 @@ async def unlike_post(post_id: int, session_key: str, db: Session = Depends(get_
     return {"likes": post.likes_count}
 
 @router.post("/{post_id}/comment")
-async def add_comment(post_id: int, body: CommentCreate, db: Session = Depends(get_db)):
+async def add_comment(post_id: int, body: CommentCreate, db: AsyncSession = Depends(get_db)):
     from app.models.others import PostComment
     
-    post = db.query(SocialPost).get(post_id)
+    post = await db.get(SocialPost, post_id)
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
         
     comment = PostComment(post_id=post_id, **body.dict())
     db.add(comment)
     post.comments_count += 1
-    db.commit()
+    await db.commit()
     
     # Notify wallboard
     await manager.broadcast_to_event(post.event_id, {
@@ -166,36 +182,38 @@ async def add_comment(post_id: int, body: CommentCreate, db: Session = Depends(g
     return {"message": "Comment added", "comments_count": post.comments_count}
 
 @router.get("/{post_id}/comments")
-def get_comments(post_id: int, db: Session = Depends(get_db)):
+async def get_comments(post_id: int, db: AsyncSession = Depends(get_db)):
     from app.models.others import PostComment
-    return db.query(PostComment).filter(PostComment.post_id == post_id).order_by(PostComment.created_at.asc()).all()
+    stmt = select(PostComment).filter(PostComment.post_id == post_id).order_by(PostComment.created_at.asc())
+    res = await db.execute(stmt)
+    return res.scalars().all()
 
 @router.patch("/comment/{comment_id}")
-async def edit_comment(comment_id: int, body: CommentCreate, db: Session = Depends(get_db)):
+async def edit_comment(comment_id: int, body: CommentCreate, db: AsyncSession = Depends(get_db)):
     from app.models.others import PostComment
     print(f"DEBUG: Editing comment {comment_id} with content: {body.content}")
-    comment = db.query(PostComment).get(comment_id)
+    comment = await db.get(PostComment, comment_id)
     if not comment:
         raise HTTPException(status_code=404, detail="Comment not found")
     
     comment.content = body.content
-    db.commit()
+    await db.commit()
     print(f"DEBUG: Comment {comment_id} updated successfully.")
     return {"message": "Comment updated"}
 
 @router.delete("/comment/{comment_id}")
-async def delete_comment(comment_id: int, db: Session = Depends(get_db)):
+async def delete_comment(comment_id: int, db: AsyncSession = Depends(get_db)):
     from app.models.others import PostComment
-    comment = db.query(PostComment).get(comment_id)
+    comment = await db.get(PostComment, comment_id)
     if not comment:
         raise HTTPException(status_code=404, detail="Comment not found")
     
-    post = db.query(SocialPost).get(comment.post_id)
-    db.delete(comment)
+    post = await db.get(SocialPost, comment.post_id)
+    await db.delete(comment)
     if post:
         post.comments_count = max(0, post.comments_count - 1)
         
-    db.commit()
+    await db.commit()
     
     if post:
         await manager.broadcast_to_event(post.event_id, {
@@ -207,9 +225,11 @@ async def delete_comment(comment_id: int, db: Session = Depends(get_db)):
     return {"message": "Comment deleted"}
 
 @router.get("/{post_id}/likes")
-def get_likers(post_id: int, db: Session = Depends(get_db)):
+async def get_likers(post_id: int, db: AsyncSession = Depends(get_db)):
     from app.models.others import PostLike
-    likes = db.query(PostLike).filter(PostLike.post_id == post_id).all()
+    stmt = select(PostLike).filter(PostLike.post_id == post_id)
+    res = await db.execute(stmt)
+    likes = res.scalars().all()
     # Return unique names or all names
     return [{"user_name": l.user_name or "مشارك مجهول"} for l in likes]
 
@@ -221,15 +241,17 @@ class QuestionCreate(BaseModel):
     session_id: Optional[int] = None
 
 @router.get("/{event_id}/questions")
-def get_questions(event_id: int, db: Session = Depends(get_db)):
-    return db.query(Question).filter(Question.event_id == event_id).order_by(Question.pinned.desc(), Question.timestamp.desc()).all()
+async def get_questions(event_id: int, db: AsyncSession = Depends(get_db)):
+    stmt = select(Question).filter(Question.event_id == event_id).order_by(Question.pinned.desc(), Question.timestamp.desc())
+    res = await db.execute(stmt)
+    return res.scalars().all()
 
 @router.post("/questions")
-async def create_question(q_data: QuestionCreate, db: Session = Depends(get_db)):
+async def create_question(q_data: QuestionCreate, db: AsyncSession = Depends(get_db)):
     q = Question(**q_data.dict())
     db.add(q)
-    db.commit()
-    db.refresh(q)
+    await db.commit()
+    await db.refresh(q)
     
     # Notify dashboard
     await manager.broadcast_to_event(q.event_id, {
@@ -243,19 +265,21 @@ async def create_question(q_data: QuestionCreate, db: Session = Depends(get_db))
     return q
 
 @router.get("/{event_id}/questions/pinned")
-def get_pinned_question(event_id: int, db: Session = Depends(get_db)):
-    return db.query(Question).filter(Question.event_id == event_id, Question.pinned == True).first()
+async def get_pinned_question(event_id: int, db: AsyncSession = Depends(get_db)):
+    stmt = select(Question).filter(Question.event_id == event_id, Question.pinned == True)
+    res = await db.execute(stmt)
+    return res.scalars().first()
 
 @router.patch("/questions/{event_id}/{q_id}")
 async def update_question(
     event_id: int, # Added for RBAC
     q_id: int, 
     data: dict, 
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_permission("event:write"))
 ):
-    q = db.query(Question).get(q_id)
+    q = await db.get(Question, q_id)
     if not q:
         raise HTTPException(status_code=404, detail="Question not found")
     
@@ -267,10 +291,11 @@ async def update_question(
     if "pinned" in data:
         # Unpin others first
         if data["pinned"]:
-            db.query(Question).filter(Question.event_id == q.event_id).update({"pinned": False})
+            stmt_unpin = update(Question).filter(Question.event_id == q.event_id).values(pinned=False)
+            await db.execute(stmt_unpin)
         q.pinned = data["pinned"]
     
-    db.commit()
+    await db.commit()
 
     if data.get("pinned"):
         await manager.broadcast_to_event(q.event_id, {
@@ -287,22 +312,22 @@ async def update_question(
 async def delete_post(
     event_id: int,
     post_id: int,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_permission("event:write"))
 ):
     """
     حذف منشور من الحائط الاجتماعي.
     """
-    post = db.query(SocialPost).get(post_id)
+    post = await db.get(SocialPost, post_id)
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
     
     if post.event_id != event_id:
         raise HTTPException(status_code=400, detail="Post does not belong to this event")
 
-    db.delete(post)
-    db.commit()
+    await db.delete(post)
+    await db.commit()
     
     # Notify wallboard to remove post
     await manager.broadcast_to_event(event_id, {
@@ -311,4 +336,3 @@ async def delete_post(
     })
     
     return {"message": "Post deleted"}
-

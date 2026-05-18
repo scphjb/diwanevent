@@ -266,11 +266,8 @@ class ReaderUser(FastHttpUser):
 @events.request.add_listener
 def on_request(request_type, name, response_time, response_length,
                response, context, exception, start_time, url, **kwargs):
-    if exception:
-        print(f"[ERR] {name}: {exception}")
-    elif response and response.status_code >= 500:
-        body = (response.text or "")[:120]
-        print(f"[5XX] {name}: {response.status_code} | {body}")
+    # إزالة الطباعة المستمرة لتفادي حظر Gevent greenlets
+    pass
 
 
 @events.test_start.add_listener
@@ -322,7 +319,7 @@ def on_spike_stop(environment, **kwargs):
     P95                : {s.get_response_time_percentile(0.95):.0f} ms
     P99                : {s.get_response_time_percentile(0.99):.0f} ms
     أقصى استجابة       : {s.max_response_time:.0f} ms
-    أقصى RPS           : {s.max_rps:.1f} req/s
+    متوسط الطلبات/ث    : {s.total_rps:.1f} req/s
 {"="*65}
 
 حدود القبول (Acceptance Thresholds):

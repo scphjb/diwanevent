@@ -2,6 +2,8 @@ import boto3
 from botocore.exceptions import NoCredentialsError
 from app.core.config import settings
 from typing import Optional
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
 class StorageService:
     """
@@ -48,11 +50,13 @@ class TaskStatusManager:
     يتتبع حالة المهام الثقيلة (توليد ملفات، إرسال مراسلات ضخمة).
     """
     @staticmethod
-    def update_task_status(db, event_uuid: str, status: str, result_url: str = None):
+    async def update_task_status(db: AsyncSession, event_uuid: str, status: str, result_url: str = None):
         from app.models.outbox import OutboxEvent
-        task = db.query(OutboxEvent).filter(OutboxEvent.event_uuid == event_uuid).first()
+        stmt = select(OutboxEvent).filter(OutboxEvent.event_uuid == event_uuid)
+        res = await db.execute(stmt)
+        task = res.scalars().first()
         if task:
             task.status = status # PENDING, PROCESSING, COMPLETED, FAILED
             if result_url:
                 task.payload["result_url"] = result_url
-            db.commit()
+            await db.commit()

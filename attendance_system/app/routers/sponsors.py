@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Query
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from typing import List, Optional
 import os
 import time
@@ -14,17 +15,19 @@ from app.core.rbac import require_permission
 router = APIRouter()
 
 @router.get("/{event_id}")
-def get_sponsors(
+async def get_sponsors(
     event_id: int, 
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_permission("event:read"))
 ):
     """جلب الرعاة لفعالية محددة مع التحقق من الصلاحيات"""
-    sponsors = db.query(Sponsor).filter(
+    stmt = select(Sponsor).filter(
         Sponsor.event_id == event_id, 
         Sponsor.is_active == True
-    ).order_by(Sponsor.display_order).all()
+    ).order_by(Sponsor.display_order)
+    res = await db.execute(stmt)
+    sponsors = res.scalars().all()
     
     return [
         {
@@ -51,7 +54,7 @@ async def create_sponsor(
     website_url: Optional[str] = Form(None),
     display_duration: int = Form(8),
     logo: UploadFile = File(...),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_permission("event:write"))
 ):
@@ -79,8 +82,8 @@ async def create_sponsor(
         display_duration=display_duration
     )
     db.add(db_sponsor)
-    db.commit()
-    db.refresh(db_sponsor)
+    await db.commit()
+    await db.refresh(db_sponsor)
     
     return {
         "id": db_sponsor.id,
@@ -95,20 +98,22 @@ async def create_sponsor(
     }
 
 @router.delete("/{event_id}/{sponsor_id}")
-def delete_sponsor(
+async def delete_sponsor(
     event_id: int,
     sponsor_id: int, 
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_permission("event:write"))
 ):
     """حذف راع من فعالية محددة"""
-    sponsor = db.query(Sponsor).filter(Sponsor.id == sponsor_id, Sponsor.event_id == event_id).first()
+    stmt = select(Sponsor).filter(Sponsor.id == sponsor_id, Sponsor.event_id == event_id)
+    res = await db.execute(stmt)
+    sponsor = res.scalars().first()
     if not sponsor:
         raise HTTPException(status_code=404, detail="الراعي غير موجود في هذه الفعالية")
     
-    db.delete(sponsor)
-    db.commit()
+    await db.delete(sponsor)
+    await db.commit()
     return {"message": "تم حذف الراعي بنجاح"}
 
 @router.put("/{event_id}/{sponsor_id}")
@@ -122,12 +127,14 @@ async def update_sponsor(
     display_duration: Optional[int] = Form(None),
     is_active: Optional[bool] = Form(None),
     logo: Optional[UploadFile] = File(None),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_permission("event:write"))
 ):
     """تحديث بيانات راع"""
-    sponsor = db.query(Sponsor).filter(Sponsor.id == sponsor_id, Sponsor.event_id == event_id).first()
+    stmt = select(Sponsor).filter(Sponsor.id == sponsor_id, Sponsor.event_id == event_id)
+    res = await db.execute(stmt)
+    sponsor = res.scalars().first()
     if not sponsor:
         raise HTTPException(status_code=404, detail="الراعي غير موجود")
     
@@ -149,9 +156,6 @@ async def update_sponsor(
             buffer.write(await logo.read())
         sponsor.logo_url = f"/static/sponsors/{event_id}/{filename}"
 
-    db.commit()
-    db.refresh(sponsor)
+    await db.commit()
+    await db.refresh(sponsor)
     return {"message": "تم التحديث بنجاح"}
-
-
-

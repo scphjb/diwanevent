@@ -5,6 +5,8 @@ from fastapi import Security, HTTPException, status
 from fastapi.security.api_key import APIKeyHeader
 from sqlalchemy import Column, Integer, String, JSON, DateTime, ForeignKey, Boolean
 from app.models.base import Base
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 API_KEY_NAME = "X-Diwan-API-Key"
 api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=False)
@@ -31,14 +33,16 @@ class APIKeyManager:
         return f"dw_{secrets.token_urlsafe(32)}"
 
     @staticmethod
-    def verify_key(key: str, required_scope: str, db_session) -> bool:
+    async def verify_key(key: str, required_scope: str, db_session: AsyncSession) -> bool:
         """
         التحقق من صحة المفتاح وامتلاكه للصلاحية المطلوبة.
         """
-        api_key = db_session.query(APIKey).filter(
+        stmt = select(APIKey).filter(
             APIKey.key == key, 
             APIKey.is_active == True
-        ).first()
+        )
+        res = await db_session.execute(stmt)
+        api_key = res.scalars().first()
         
         if not api_key:
             return False

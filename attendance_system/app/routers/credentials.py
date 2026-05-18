@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Response
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.models.template import BadgeTemplate
 from app.models.participant import Participant
@@ -7,6 +7,7 @@ from app.models.event import Event
 from app.utils.pdf_renderer import render_design_to_pdf
 from app.core.auth_deps import get_current_active_user
 from app.models.user import User
+from sqlalchemy import select
 import json
 
 DEFAULT_CERTIFICATE_DESIGN = {
@@ -84,14 +85,17 @@ def _template_to_dict(t: BadgeTemplate) -> dict:
 # ──────────────────────── Badge Print ────────────────────────────────
 
 @router.get("/badges/print/{participant_id}")
-def print_badge(participant_id: int, db: Session = Depends(get_db)):
+async def print_badge(participant_id: int, db: AsyncSession = Depends(get_db)):
     """طباعة بادج مشارك واحد — مفتوح (لا يحتاج توكن)"""
-    p = db.query(Participant).filter(Participant.id == participant_id).first()
+    p = await db.get(Participant, participant_id)
     if not p:
         raise HTTPException(status_code=404, detail="المشارك غير موجود")
 
-    event = db.query(Event).filter(Event.id == p.event_id).first()
-    template = db.query(BadgeTemplate).filter(BadgeTemplate.event_id == p.event_id, BadgeTemplate.type == 'badge').first()
+    event = await db.get(Event, p.event_id)
+    
+    stmt = select(BadgeTemplate).filter(BadgeTemplate.event_id == p.event_id, BadgeTemplate.type == 'badge')
+    res = await db.execute(stmt)
+    template = res.scalars().first()
     
     if not template:
         raise HTTPException(status_code=404, detail="قالب البادج غير موجود للفعالية")
@@ -118,16 +122,21 @@ def print_badge(participant_id: int, db: Session = Depends(get_db)):
     )
 
 @router.get("/badges/secure-download/{token}")
-def download_badge_by_token(token: str, db: Session = Depends(get_db)):
+async def download_badge_by_token(token: str, db: AsyncSession = Depends(get_db)):
     """تحميل بادج مشارك عبر الرمز الفريد (أكثر أماناً)"""
-    p = db.query(Participant).filter(
+    stmt = select(Participant).filter(
         (Participant.order_num == token) | (Participant.qr_code == token)
-    ).first()
+    )
+    res = await db.execute(stmt)
+    p = res.scalars().first()
     if not p:
         raise HTTPException(status_code=404, detail="الرمز غير صالح")
 
-    event = db.query(Event).filter(Event.id == p.event_id).first()
-    template = db.query(BadgeTemplate).filter(BadgeTemplate.event_id == p.event_id, BadgeTemplate.type == 'badge').first()
+    event = await db.get(Event, p.event_id)
+    
+    stmt_tmpl = select(BadgeTemplate).filter(BadgeTemplate.event_id == p.event_id, BadgeTemplate.type == 'badge')
+    res_tmpl = await db.execute(stmt_tmpl)
+    template = res_tmpl.scalars().first()
     
     if not template:
         raise HTTPException(status_code=404, detail="قالب البادج غير موجود للفعالية")
@@ -157,17 +166,20 @@ def download_badge_by_token(token: str, db: Session = Depends(get_db)):
 # ──────────────────────── Certificate Download ───────────────────────
 
 @router.get("/certificates/download/{participant_id}")
-def download_certificate_by_id(
+async def download_certificate_by_id(
     participant_id: int,
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ):
     """تحميل شهادة مشارك — مفتوح (Dashboard)"""
-    p = db.query(Participant).filter(Participant.id == participant_id).first()
+    p = await db.get(Participant, participant_id)
     if not p:
         raise HTTPException(status_code=404, detail="المشارك غير موجود")
 
-    event = db.query(Event).filter(Event.id == p.event_id).first()
-    template = db.query(BadgeTemplate).filter(BadgeTemplate.event_id == p.event_id, BadgeTemplate.type.like('certificate%')).first()
+    event = await db.get(Event, p.event_id)
+    
+    stmt = select(BadgeTemplate).filter(BadgeTemplate.event_id == p.event_id, BadgeTemplate.type.like('certificate%'))
+    res = await db.execute(stmt)
+    template = res.scalars().first()
     
     design = json.loads(template.design_json) if template else DEFAULT_CERTIFICATE_DESIGN
 
@@ -192,16 +204,21 @@ def download_certificate_by_id(
     )
 
 @router.get("/certificates/secure-download/{token}")
-def download_certificate_by_token(token: str, db: Session = Depends(get_db)):
+async def download_certificate_by_token(token: str, db: AsyncSession = Depends(get_db)):
     """تحميل شهادة مشارك عبر الرمز الفريد (آمن)"""
-    p = db.query(Participant).filter(
+    stmt = select(Participant).filter(
         (Participant.order_num == token) | (Participant.qr_code == token)
-    ).first()
+    )
+    res = await db.execute(stmt)
+    p = res.scalars().first()
     if not p:
         raise HTTPException(status_code=404, detail="الرمز غير صالح")
 
-    event = db.query(Event).filter(Event.id == p.event_id).first()
-    template = db.query(BadgeTemplate).filter(BadgeTemplate.event_id == p.event_id, BadgeTemplate.type.like('certificate%')).first()
+    event = await db.get(Event, p.event_id)
+    
+    stmt_tmpl = select(BadgeTemplate).filter(BadgeTemplate.event_id == p.event_id, BadgeTemplate.type.like('certificate%'))
+    res_tmpl = await db.execute(stmt_tmpl)
+    template = res_tmpl.scalars().first()
     
     design = json.loads(template.design_json) if template else DEFAULT_CERTIFICATE_DESIGN
 
@@ -227,31 +244,38 @@ def download_certificate_by_token(token: str, db: Session = Depends(get_db)):
 # ──────────────────────── Certificate via QR (Self-Service) ──────────
 
 @router.get("/{event_id}/participant/{qr_code}/certificate")
-def download_certificate_by_qr(
+async def download_certificate_by_qr(
     event_id: int,
     qr_code: str,
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ):
     """تحميل شهادة الحضور — متاح للمشارك عبر رمز QR بدون تسجيل دخول"""
     from app.models.participant import Attendance
 
-    participant = db.query(Participant).filter(
+    stmt = select(Participant).filter(
         Participant.qr_code == qr_code,
         Participant.event_id == event_id
-    ).first()
+    )
+    res = await db.execute(stmt)
+    participant = res.scalars().first()
     if not participant:
         raise HTTPException(status_code=404, detail="المشارك غير موجود")
 
     # تحقق من الحضور الفعلي
-    attendance = db.query(Attendance).filter(
+    stmt_att = select(Attendance).filter(
         Attendance.participant_id == participant.id,
         Attendance.event_type == "check_in"
-    ).first()
+    )
+    res_att = await db.execute(stmt_att)
+    attendance = res_att.scalars().first()
     if not attendance:
         raise HTTPException(status_code=403, detail="الشهادة تُمنح فقط للحاضرين المسجلين")
 
-    event = db.query(Event).filter(Event.id == event_id).first()
-    template = db.query(BadgeTemplate).filter(BadgeTemplate.event_id == event_id, BadgeTemplate.type.like('certificate%')).first()
+    event = await db.get(Event, event_id)
+    
+    stmt_tmpl = select(BadgeTemplate).filter(BadgeTemplate.event_id == event_id, BadgeTemplate.type.like('certificate%'))
+    res_tmpl = await db.execute(stmt_tmpl)
+    template = res_tmpl.scalars().first()
     
     design = json.loads(template.design_json) if template else DEFAULT_CERTIFICATE_DESIGN
 

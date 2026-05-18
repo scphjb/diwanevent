@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Query
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from typing import List, Optional
 import os
 import time
@@ -14,14 +15,16 @@ from app.core.rbac import require_permission
 router = APIRouter()
 
 @router.get("/{event_id}")
-def get_speakers(
+async def get_speakers(
     event_id: int, 
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_permission("event:read"))
 ):
     """جلب المتحدثين لفعالية محددة"""
-    speakers = db.query(Speaker).filter(Speaker.event_id == event_id).all()
+    stmt = select(Speaker).filter(Speaker.event_id == event_id)
+    res = await db.execute(stmt)
+    speakers = res.scalars().all()
     return [
         {
             "id": s.id,
@@ -43,7 +46,7 @@ async def create_speaker(
     bio: Optional[str] = Form(None),
     topic: Optional[str] = Form(None),
     image: Optional[UploadFile] = File(None),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_permission("event:write"))
 ):
@@ -69,8 +72,8 @@ async def create_speaker(
         image_url=image_url
     )
     db.add(db_speaker)
-    db.commit()
-    db.refresh(db_speaker)
+    await db.commit()
+    await db.refresh(db_speaker)
     return {
         "id": db_speaker.id,
         "event_id": db_speaker.event_id,
@@ -82,20 +85,22 @@ async def create_speaker(
     }
 
 @router.delete("/{event_id}/{speaker_id}")
-def delete_speaker(
+async def delete_speaker(
     event_id: int,
     speaker_id: int, 
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_permission("event:write"))
 ):
     """حذف متحدث"""
-    speaker = db.query(Speaker).filter(Speaker.id == speaker_id, Speaker.event_id == event_id).first()
+    stmt = select(Speaker).filter(Speaker.id == speaker_id, Speaker.event_id == event_id)
+    res = await db.execute(stmt)
+    speaker = res.scalars().first()
     if not speaker:
         raise HTTPException(status_code=404, detail="المتحدث غير موجود في هذه الفعالية")
     
-    db.delete(speaker)
-    db.commit()
+    await db.delete(speaker)
+    await db.commit()
     return {"message": "تم حذف المتحدث بنجاح"}
 
 @router.put("/{event_id}/{speaker_id}")
@@ -107,12 +112,14 @@ async def update_speaker(
     bio: Optional[str] = Form(None),
     topic: Optional[str] = Form(None),
     image: Optional[UploadFile] = File(None),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_permission("event:write"))
 ):
     """تحديث بيانات متحدث"""
-    speaker = db.query(Speaker).filter(Speaker.id == speaker_id, Speaker.event_id == event_id).first()
+    stmt = select(Speaker).filter(Speaker.id == speaker_id, Speaker.event_id == event_id)
+    res = await db.execute(stmt)
+    speaker = res.scalars().first()
     if not speaker:
         raise HTTPException(status_code=404, detail="المتحدث غير موجود")
     
@@ -132,7 +139,6 @@ async def update_speaker(
             buffer.write(await image.read())
         speaker.image_url = f"/static/speakers/{event_id}/{filename}"
 
-    db.commit()
-    db.refresh(speaker)
+    await db.commit()
+    await db.refresh(speaker)
     return {"message": "تم التحديث بنجاح"}
-

@@ -66,9 +66,27 @@ def verify_password_reset_token(token: str) -> str | None:
     return None
 
 
+import asyncio
+
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
 
 def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
+
+
+async def verify_password_async(plain_password: str, hashed_password: str) -> bool:
+    """
+    bcrypt في thread pool منفصل لا يحجب event loop
+    asyncio.to_thread يحوّل sync → non-blocking
+    """
+    return await asyncio.to_thread(
+        pwd_context.verify, plain_password, hashed_password
+    )
+
+
+async def hash_password_async(password: str) -> str:
+    """Hash كلمة المرور في thread pool"""
+    return await asyncio.to_thread(pwd_context.hash, password)
+

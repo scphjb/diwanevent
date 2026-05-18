@@ -1,7 +1,8 @@
 import re
 from typing import List, Dict, Any
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.participant import Participant
+from sqlalchemy import select, or_
 
 class DataSanitizer:
     @staticmethod
@@ -25,16 +26,18 @@ class DataSanitizer:
         return digits
 
     @staticmethod
-    def detect_duplicates(db: Session, event_id: int, email: str, full_name: str) -> bool:
+    async def detect_duplicates(db: AsyncSession, event_id: int, email: str, full_name: str) -> bool:
         """التحقق من وجود مشارك بنفس الاسم أو الإيميل في نفس الفعالية"""
-        exists = db.query(Participant).filter(
+        stmt = select(Participant).filter(
             Participant.event_id == event_id,
             (Participant.email == email) | (Participant.full_name == full_name)
-        ).first()
+        )
+        res = await db.execute(stmt)
+        exists = res.scalars().first()
         return exists is not None
 
     @classmethod
-    def process_participant_data(cls, db: Session, event_id: int, raw_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def process_participant_data(cls, db: AsyncSession, event_id: int, raw_data: Dict[str, Any]) -> Dict[str, Any]:
         """المعالج الرئيسي للبيانات قبل الحفظ"""
         processed = raw_data.copy()
         
@@ -51,7 +54,7 @@ class DataSanitizer:
             processed['phone'] = cls.normalize_phone(processed['phone'])
             
         # إضافة وسم (Flag) إذا كانت البيانات مكررة
-        processed['is_duplicate'] = cls.detect_duplicates(
+        processed['is_duplicate'] = await cls.detect_duplicates(
             db, event_id, processed.get('email'), processed.get('full_name')
         )
         

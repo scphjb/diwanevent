@@ -1,5 +1,5 @@
-from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import func, select
 from app.models.outbox import OutboxEvent
 
 class OutboxTaskDispatcher:
@@ -8,7 +8,7 @@ class OutboxTaskDispatcher:
     يحفظ المهمة في قاعدة البيانات ضمن نفس الـ Transaction الخاص بالبيانات.
     """
     @staticmethod
-    def dispatch(db: Session, task_type: str, payload: dict):
+    def dispatch(db: AsyncSession, task_type: str, payload: dict):
         """
         إضافة المهمة للـ Outbox.
         يجب أن يتم استدعاء db.commit() بعد هذه الدالة لضمان الحفظ الذري.
@@ -21,15 +21,17 @@ class OutboxTaskDispatcher:
         return event.event_uuid
 
     @staticmethod
-    def relay_tasks(db: Session):
+    async def relay_tasks(db: AsyncSession):
         """
         هذه الدالة يتم استدعاؤها بواسطة Background Worker (Relay).
         تقوم بقراءة المهام غير المعالجة وإرسالها للـ Message Broker.
         """
-        pending_events = db.query(OutboxEvent).filter(
+        stmt = select(OutboxEvent).filter(
             OutboxEvent.is_processed == False,
             OutboxEvent.retry_count < 5
-        ).limit(100).all()
+        ).limit(100)
+        res = await db.execute(stmt)
+        pending_events = res.scalars().all()
 
         for event in pending_events:
             try:
@@ -42,4 +44,4 @@ class OutboxTaskDispatcher:
                 event.retry_count += 1
                 event.error_log = str(e)
         
-        db.commit()
+        await db.commit()

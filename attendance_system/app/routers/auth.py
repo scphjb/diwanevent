@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from app.core.database import get_db
 from app.core.security import (
-    verify_password,
-    get_password_hash,
+    verify_password_async,
+    hash_password_async,
     create_access_token,
     create_refresh_token,
     decode_token,
@@ -76,19 +77,20 @@ class TwoFactorVerifyRequest(BaseModel):
 
 
 # ═══════════════════════════════════════
-# تسجيل الدخول
+# تسجيل الدخول (Async)
 # ═══════════════════════════════════════
 @router.post("/login", response_model=TokenResponse)
 async def login(
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     form_data: OAuth2PasswordRequestForm = Depends(),
 ):
     """
-    نظام تسجيل الدخول الموحد باستخدام JWT.
-    يُرجع Access Token (30 دقيقة) + Refresh Token (7 أيام).
+    نظام تسجيل الدخول الموحد باستخدام JWT بشكل Async بالكامل.
     """
-    user = db.query(User).filter(User.email == form_data.username).first()
-    if not user or not verify_password(form_data.password, user.hashed_password):
+    result = await db.execute(select(User).filter(User.email == form_data.username))
+    user = result.scalar_one_or_none()
+
+    if not user or not await verify_password_async(form_data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="البريد الإلكتروني أو كلمة المرور غير صحيحة",
@@ -118,14 +120,14 @@ async def login(
 
 
 # ═══════════════════════════════════════
-# تجديد التوكن (Refresh)
+# تجديد التوكن (Refresh Async)
 # ═══════════════════════════════════════
 @router.post("/refresh", response_model=TokenResponse)
 async def refresh_access_token(
     body: RefreshTokenRequest,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
-    """تجديد Access Token باستخدام Refresh Token صالح."""
+    """تجديد Access Token باستخدام Refresh Token صالح بشكل Async."""
     payload = decode_token(body.refresh_token)
     if not payload or payload.get("type") != "refresh":
         raise HTTPException(
@@ -134,7 +136,9 @@ async def refresh_access_token(
         )
 
     email = payload.get("sub")
-    user = db.query(User).filter(User.email == email).first()
+    result = await db.execute(select(User).filter(User.email == email))
+    user = result.scalar_one_or_none()
+
     if not user or not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -167,47 +171,45 @@ async def get_me(current_user: User = Depends(get_current_active_user)):
 
 
 # ═══════════════════════════════════════
-# تسجيل منظم جديد
+# تسجيل منظم جديد (Async)
 # ═══════════════════════════════════════
 @router.post("/register", status_code=201)
 async def register_organizer(
     body: RegisterRequest,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     """
-    تسجيل منظم جديد في المنصة.
-    يتم تعيين باقة Free تلقائياً إذا كانت موجودة.
+    تسجيل منظم جديد في المنصة بشكل Async.
     """
-    # التحقق من عدم تكرار البريد
-    existing = db.query(User).filter(User.email == body.email).first()
+    existing_result = await db.execute(select(User).filter(User.email == body.email))
+    existing = existing_result.scalar_one_or_none()
     if existing:
         raise HTTPException(
             status_code=409,
             detail="البريد الإلكتروني مسجل مسبقاً",
         )
 
-    # التحقق من قوة كلمة المرور
     if len(body.password) < 8:
         raise HTTPException(
             status_code=422,
             detail="كلمة المرور يجب أن تكون 8 أحرف على الأقل",
         )
 
-    # إنشاء المستخدم
+    hashed_password = await hash_password_async(body.password)
     new_user = User(
         email=body.email,
-        hashed_password=get_password_hash(body.password),
+        hashed_password=hashed_password,
         full_name=body.full_name,
         role="organizer",
         is_active=True,
     )
     db.add(new_user)
-    db.flush()
+    await db.flush()
 
-    # ربط بباقة Free إذا كانت موجودة
-    free_plan = db.query(SubscriptionPlan).filter(
-        SubscriptionPlan.name.ilike("%free%")
-    ).first()
+    free_plan_result = await db.execute(
+        select(SubscriptionPlan).filter(SubscriptionPlan.name.ilike("%free%"))
+    )
+    free_plan = free_plan_result.scalars().first()
     if free_plan:
         sub = Subscription(
             user_id=new_user.id,
@@ -216,10 +218,9 @@ async def register_organizer(
         )
         db.add(sub)
 
-    db.commit()
-    db.refresh(new_user)
+    await db.commit()
+    await db.refresh(new_user)
 
-    # توليد التوكنات
     access_token = create_access_token(subject=new_user.email)
     refresh_token = create_refresh_token(subject=new_user.email)
 
@@ -239,22 +240,21 @@ async def register_organizer(
 
 
 # ═══════════════════════════════════════
-# نسيت كلمة المرور
+# نسيت كلمة المرور (Async)
 # ═══════════════════════════════════════
 @router.post("/forgot-password")
 async def forgot_password(
     body: ForgotPasswordRequest,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     """
-    إرسال رابط إعادة تعيين كلمة المرور بالبريد الإلكتروني.
-    لا يكشف إذا كان البريد مسجلاً أم لا (حماية ضد التعداد).
+    إرسال رابط إعادة تعيين كلمة المرور بشكل Async.
     """
-    user = db.query(User).filter(User.email == body.email).first()
+    result = await db.execute(select(User).filter(User.email == body.email))
+    user = result.scalar_one_or_none()
 
     if user:
         reset_token = create_password_reset_token(user.email)
-        # TODO: إرسال البريد عبر SMTP — حالياً يتم تسجيل الرابط فقط
         from app.core.config import settings
         reset_link = f"{settings.APP_DOMAIN}/reset-password?token={reset_token}"
         import logging
@@ -262,7 +262,6 @@ async def forgot_password(
             f"🔑 Password reset link for {user.email}: {reset_link}"
         )
 
-    # دائماً نُرجع نفس الرسالة (حماية ضد تعداد الحسابات)
     return {
         "status": "success",
         "message": "إذا كان البريد مسجلاً، ستصلك رسالة بتعليمات إعادة تعيين كلمة المرور",
@@ -270,14 +269,14 @@ async def forgot_password(
 
 
 # ═══════════════════════════════════════
-# إعادة تعيين كلمة المرور
+# إعادة تعيين كلمة المرور (Async)
 # ═══════════════════════════════════════
 @router.post("/reset-password")
 async def reset_password(
     body: ResetPasswordRequest,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
-    """إعادة تعيين كلمة المرور باستخدام التوكن المرسل بالبريد."""
+    """إعادة تعيين كلمة المرور باستخدام التوكن بشكل Async."""
     email = verify_password_reset_token(body.token)
     if not email:
         raise HTTPException(
@@ -291,27 +290,28 @@ async def reset_password(
             detail="كلمة المرور يجب أن تكون 8 أحرف على الأقل",
         )
 
-    user = db.query(User).filter(User.email == email).first()
+    result = await db.execute(select(User).filter(User.email == email))
+    user = result.scalar_one_or_none()
     if not user:
         raise HTTPException(status_code=404, detail="المستخدم غير موجود")
 
-    user.hashed_password = get_password_hash(body.new_password)
-    db.commit()
+    user.hashed_password = await hash_password_async(body.new_password)
+    await db.commit()
 
     return {"status": "success", "message": "تم تغيير كلمة المرور بنجاح"}
 
 
 # ═══════════════════════════════════════
-# تغيير كلمة المرور (للمستخدم المتصل)
+# تغيير كلمة المرور (للمستخدم المتصل Async)
 # ═══════════════════════════════════════
 @router.post("/change-password")
 async def change_password(
     body: ChangePasswordRequest,
     current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
-    """تغيير كلمة المرور للمستخدم المتصل."""
-    if not verify_password(body.current_password, current_user.hashed_password):
+    """تغيير كلمة المرور للمستخدم المتصل بشكل Async."""
+    if not await verify_password_async(body.current_password, current_user.hashed_password):
         raise HTTPException(
             status_code=400,
             detail="كلمة المرور الحالية غير صحيحة",
@@ -323,36 +323,33 @@ async def change_password(
             detail="كلمة المرور الجديدة يجب أن تكون 8 أحرف على الأقل",
         )
 
-    current_user.hashed_password = get_password_hash(body.new_password)
-    db.commit()
+    current_user.hashed_password = await hash_password_async(body.new_password)
+    await db.commit()
 
     return {"status": "success", "message": "تم تغيير كلمة المرور بنجاح"}
 
 
 # ═══════════════════════════════════════
-# المصادقة الثنائية (2FA)
+# المصادقة الثنائية (2FA Async)
 # ═══════════════════════════════════════
 @router.post("/2fa/setup")
 async def setup_2fa(
     current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ):
-    """توليد سر 2FA ورمز QR للإعداد."""
+    """توليد سر 2FA بشكل Async."""
     if current_user.two_factor_enabled:
         raise HTTPException(status_code=400, detail="المصادقة الثنائية مفعلة بالفعل")
     
-    # توليد سر جديد إذا لم يكن موجوداً
     if not current_user.two_factor_secret:
         current_user.two_factor_secret = pyotp.random_base32()
-        db.commit()
+        await db.commit()
     
-    # إنشاء رابط TOTP
     totp_auth_url = pyotp.totp.TOTP(current_user.two_factor_secret).provisioning_uri(
         name=current_user.email,
         issuer_name="Diwan Event"
     )
     
-    # توليد صورة QR
     qr = qrcode.QRCode(version=1, box_size=10, border=5)
     qr.add_data(totp_auth_url)
     qr.make(fit=True)
@@ -372,16 +369,16 @@ async def setup_2fa(
 async def enable_2fa(
     body: TwoFactorVerifyRequest,
     current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ):
-    """التحقق من الكود وتفعيل 2FA."""
+    """التحقق وتفعيل 2FA بشكل Async."""
     if not current_user.two_factor_secret:
         raise HTTPException(status_code=400, detail="يجب إعداد 2FA أولاً")
     
     totp = pyotp.TOTP(current_user.two_factor_secret)
     if totp.verify(body.code):
         current_user.two_factor_enabled = True
-        db.commit()
+        await db.commit()
         return {"status": "success", "message": "تم تفعيل المصادقة الثنائية بنجاح"}
     else:
         raise HTTPException(status_code=400, detail="رمز التحقق غير صحيح")
@@ -390,10 +387,10 @@ async def enable_2fa(
 @router.post("/2fa/disable")
 async def disable_2fa(
     current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ):
-    """إلغاء تفعيل 2FA."""
+    """إلغاء تفعيل 2FA بشكل Async."""
     current_user.two_factor_enabled = False
     current_user.two_factor_secret = None
-    db.commit()
+    await db.commit()
     return {"status": "success", "message": "تم إلغاء تفعيل المصادقة الثنائية"}

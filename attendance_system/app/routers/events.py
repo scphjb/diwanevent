@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 import os
 import time
@@ -7,29 +7,34 @@ from app.core.database import get_db
 from app.models.event import Event
 from app.models.user import User
 from app.core.auth_deps import get_current_active_user
+from sqlalchemy import select, delete
 
 router = APIRouter()
 
 @router.get("/")
-def list_events(
-    db: Session = Depends(get_db),
+async def list_events(
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
     """
     جلب الفعاليات التابعة للمنظم الحالي فقط.
     """
     if current_user.role == "super_admin":
-        return db.query(Event).all()
+        stmt = select(Event)
+        result = await db.execute(stmt)
+        return result.scalars().all()
     
-    return db.query(Event).filter(Event.created_by == current_user.id).all()
+    stmt = select(Event).filter(Event.created_by == current_user.id)
+    result = await db.execute(stmt)
+    return result.scalars().all()
 
 @router.get("/{event_id}")
-def get_event(
+async def get_event(
     event_id: int,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
-    event = db.query(Event).filter(Event.id == event_id).first()
+    event = await db.get(Event, event_id)
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
     
@@ -40,13 +45,13 @@ def get_event(
     return event
 
 @router.patch("/{event_id}")
-def update_event(
+async def update_event(
     event_id: int,
     data: dict,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
-    event = db.query(Event).filter(Event.id == event_id).first()
+    event = await db.get(Event, event_id)
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
     
@@ -57,16 +62,16 @@ def update_event(
         if hasattr(event, key):
             setattr(event, key, value)
             
-    db.commit()
-    db.refresh(event)
+    await db.commit()
+    await db.refresh(event)
     return event
 
 @router.post("/")
-def create_event(
+async def create_event(
     name: str,
     location: str = "",
     date: str = None,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
     """
@@ -79,14 +84,14 @@ def create_event(
         created_by=current_user.id
     )
     db.add(new_event)
-    db.commit()
-    db.refresh(new_event)
+    await db.commit()
+    await db.refresh(new_event)
     return new_event
 
 @router.delete("/{event_id}")
-def delete_event(
+async def delete_event(
     event_id: int,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
     """
@@ -96,7 +101,7 @@ def delete_event(
     from app.models.participant import Participant, Attendance
     from app.models.others import Speaker, Sponsor, AgendaSession
 
-    event = db.query(Event).filter(Event.id == event_id).first()
+    event = await db.get(Event, event_id)
     if not event:
         raise HTTPException(status_code=404, detail="الفعالية غير موجودة")
 
@@ -104,39 +109,46 @@ def delete_event(
         raise HTTPException(status_code=403, detail="غير مصرح لك بحذف هذه الفعالية")
 
     # حذف البيانات المرتبطة بالترتيب الصحيح (FK constraints)
-    attendance_subq = db.query(Participant.id).filter(Participant.event_id == event_id)
-    db.query(Attendance).filter(Attendance.participant_id.in_(attendance_subq)).delete(synchronize_session=False)
-    db.query(Participant).filter(Participant.event_id == event_id).delete(synchronize_session=False)
-    db.query(Speaker).filter(Speaker.event_id == event_id).delete(synchronize_session=False)
-    db.query(AgendaSession).filter(AgendaSession.event_id == event_id).delete(synchronize_session=False)
-    db.query(Sponsor).filter(Sponsor.event_id == event_id).delete(synchronize_session=False)
+    part_stmt = select(Participant.id).filter(Participant.event_id == event_id)
+    part_result = await db.execute(part_stmt)
+    participant_ids = part_result.scalars().all()
+    
+    if participant_ids:
+        await db.execute(
+            delete(Attendance).filter(Attendance.participant_id.in_(participant_ids))
+        )
+    
+    await db.execute(delete(Participant).filter(Participant.event_id == event_id))
+    await db.execute(delete(Speaker).filter(Speaker.event_id == event_id))
+    await db.execute(delete(AgendaSession).filter(AgendaSession.event_id == event_id))
+    await db.execute(delete(Sponsor).filter(Sponsor.event_id == event_id))
 
-    db.delete(event)
-    db.commit()
+    await db.delete(event)
+    await db.commit()
 
     return {"status": "success", "message": f"تم حذف الفعالية '{event.event_name}'"}
 
 @router.post("/{event_id}/freeze")
-def toggle_event_freeze(
+async def toggle_event_freeze(
     event_id: int,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
-    event = db.query(Event).filter(Event.id == event_id).first()
+    event = await db.get(Event, event_id)
     if not event or (current_user.role != "super_admin" and event.created_by != current_user.id):
         raise HTTPException(status_code=403, detail="Not authorized")
     
     event.list_frozen = not event.list_frozen
-    db.commit()
+    await db.commit()
     return {"status": "success", "is_frozen": event.list_frozen}
 
 @router.get("/{event_id}/settings")
-def get_public_event_settings(
+async def get_public_event_settings(
     event_id: int,
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ):
     """جلب إعدادات الفعالية العامة (للكيوسك والتسجيل)"""
-    event = db.query(Event).filter(Event.id == event_id).first()
+    event = await db.get(Event, event_id)
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
     return {
@@ -147,25 +159,29 @@ def get_public_event_settings(
     }
 
 @router.post("/{event_id}/reset-attendance")
-def reset_event_attendance(
+async def reset_event_attendance(
     event_id: int,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
-    # BUG 6 FIX: حذف سجلات الحضور من جدول Attendance بدلاً من تعديل payment_status
     from app.models.participant import Participant, Attendance
 
-    event = db.query(Event).filter(Event.id == event_id).first()
+    event = await db.get(Event, event_id)
     if not event or (current_user.role != "super_admin" and event.created_by != current_user.id):
         raise HTTPException(status_code=403, detail="Not authorized")
 
-    # ✅ الصحيح: حذف سجلات الحضور من جدول attendance
-    participant_ids = db.query(Participant.id).filter(Participant.event_id == event_id)
-    deleted_count = db.query(Attendance).filter(
-        Attendance.participant_id.in_(participant_ids)
-    ).delete(synchronize_session=False)
+    # حذف سجلات الحضور من جدول attendance
+    part_stmt = select(Participant.id).filter(Participant.event_id == event_id)
+    part_result = await db.execute(part_stmt)
+    participant_ids = part_result.scalars().all()
+    
+    deleted_count = 0
+    if participant_ids:
+        del_stmt = delete(Attendance).filter(Attendance.participant_id.in_(participant_ids))
+        del_result = await db.execute(del_stmt)
+        deleted_count = del_result.rowcount
 
-    db.commit()
+    await db.commit()
     return {
         "status": "success",
         "message": f"تم مسح {deleted_count} سجل حضور",
@@ -176,12 +192,12 @@ def reset_event_attendance(
 async def change_display_scene(
     event_id: int,
     data: dict,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
     from app.core.websockets import manager
     
-    event = db.query(Event).filter(Event.id == event_id).first()
+    event = await db.get(Event, event_id)
     if not event or (current_user.role != "super_admin" and event.created_by != current_user.id):
         raise HTTPException(status_code=403, detail="Not authorized")
     
@@ -199,15 +215,17 @@ async def change_display_scene(
     return {"status": "success", "scene": scene}
 
 @router.get("/{event_id}/registration-fields")
-def get_registration_fields(
+async def get_registration_fields(
     event_id: int,
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ):
     """جلب الحقول المخصصة المطلوبة للتسجيل في فعالية معينة (مفتوح للعموم)"""
     from app.models.rbac import CustomFieldDefinition
-    fields = db.query(CustomFieldDefinition).filter(
+    stmt = select(CustomFieldDefinition).filter(
         CustomFieldDefinition.event_id == event_id
-    ).all()
+    )
+    result = await db.execute(stmt)
+    fields = result.scalars().all()
     
     return [
         {
@@ -222,15 +240,15 @@ def get_registration_fields(
     ]
 
 @router.post("/{event_id}/registration-fields")
-def create_registration_field(
+async def create_registration_field(
     event_id: int,
     data: dict,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
     """إضافة حقل جديد لنموذج التسجيل"""
     from app.models.rbac import CustomFieldDefinition
-    event = db.query(Event).filter(Event.id == event_id).first()
+    event = await db.get(Event, event_id)
     if not event or (current_user.role != "super_admin" and event.created_by != current_user.id):
         raise HTTPException(status_code=403, detail="Not authorized")
     
@@ -243,44 +261,47 @@ def create_registration_field(
         options=data.get("options")
     )
     db.add(new_field)
-    db.commit()
-    db.refresh(new_field)
+    await db.commit()
+    await db.refresh(new_field)
     return new_field
 
 @router.delete("/{event_id}/registration-fields/{field_id}")
-def delete_registration_field(
+async def delete_registration_field(
     event_id: int,
     field_id: int,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
     """حذف حقل من نموذج التسجيل"""
     from app.models.rbac import CustomFieldDefinition
-    field = db.query(CustomFieldDefinition).filter(
+    
+    stmt = select(CustomFieldDefinition).filter(
         CustomFieldDefinition.id == field_id,
         CustomFieldDefinition.event_id == event_id
-    ).first()
+    )
+    res = await db.execute(stmt)
+    field = res.scalars().first()
     
     if not field:
         raise HTTPException(status_code=404, detail="Field not found")
     
     # تحقق من الصلاحية عبر الفعالية
-    event = db.query(Event).filter(Event.id == event_id).first()
+    event = await db.get(Event, event_id)
     if not event or (current_user.role != "super_admin" and event.created_by != current_user.id):
         raise HTTPException(status_code=403, detail="Not authorized")
     
-    db.delete(field)
-    db.commit()
+    await db.delete(field)
+    await db.commit()
     return {"status": "success"}
 
 @router.post("/{event_id}/logo")
 async def upload_event_logo(
     event_id: int,
     logo: UploadFile = File(...),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
-    event = db.query(Event).filter(Event.id == event_id).first()
+    event = await db.get(Event, event_id)
     if not event or (current_user.role != "super_admin" and event.created_by != current_user.id):
         raise HTTPException(status_code=403, detail="Not authorized")
         
@@ -296,29 +317,31 @@ async def upload_event_logo(
         buffer.write(await logo.read())
         
     event.logo_url = f"/static/events/{event_id}/{filename}"
-    db.commit()
-    db.refresh(event)
+    await db.commit()
+    await db.refresh(event)
     
     return {"status": "success", "logo_url": event.logo_url}
 
 @router.get("/{event_id}/halls")
-def list_event_halls(
+async def list_event_halls(
     event_id: int, 
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
     from app.models.event import EventHall
-    return db.query(EventHall).filter(EventHall.event_id == event_id).all()
+    stmt = select(EventHall).filter(EventHall.event_id == event_id)
+    result = await db.execute(stmt)
+    return result.scalars().all()
 
 @router.post("/{event_id}/halls")
-def create_event_hall(
+async def create_event_hall(
     event_id: int, 
     data: dict, 
-    db: Session = Depends(get_db), 
+    db: AsyncSession = Depends(get_db), 
     current_user: User = Depends(get_current_active_user)
 ):
     from app.models.event import EventHall
-    event = db.query(Event).filter(Event.id == event_id).first()
+    event = await db.get(Event, event_id)
     if not event or (current_user.role != "super_admin" and event.created_by != current_user.id):
         raise HTTPException(status_code=403, detail="Not authorized")
     
@@ -329,26 +352,28 @@ def create_event_hall(
         hall_type=data.get("hall_type", "main")
     )
     db.add(new_hall)
-    db.commit()
-    db.refresh(new_hall)
+    await db.commit()
+    await db.refresh(new_hall)
     return new_hall
 
 @router.delete("/{event_id}/halls/{hall_id}")
-def delete_event_hall(
+async def delete_event_hall(
     event_id: int, 
     hall_id: int, 
-    db: Session = Depends(get_db), 
+    db: AsyncSession = Depends(get_db), 
     current_user: User = Depends(get_current_active_user)
 ):
     from app.models.event import EventHall
-    hall = db.query(EventHall).filter(EventHall.id == hall_id, EventHall.event_id == event_id).first()
+    stmt = select(EventHall).filter(EventHall.id == hall_id, EventHall.event_id == event_id)
+    res = await db.execute(stmt)
+    hall = res.scalars().first()
     if not hall:
         raise HTTPException(status_code=404, detail="Hall not found")
     
-    event = db.query(Event).filter(Event.id == event_id).first()
+    event = await db.get(Event, event_id)
     if not event or (current_user.role != "super_admin" and event.created_by != current_user.id):
         raise HTTPException(status_code=403, detail="Not authorized")
     
-    db.delete(hall)
-    db.commit()
+    await db.delete(hall)
+    await db.commit()
     return {"status": "success"}

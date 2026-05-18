@@ -87,7 +87,7 @@ class SecurityAuditService:
     """
 
     @staticmethod
-    def log_view_access(db, user_id: int, resource_id: int, resource_type: str):
+    async def log_view_access(db, user_id: int, resource_id: int, resource_type: str):
         """تسجيل عملية الوصول إلى مورد حساس."""
         from app.models.others import AuditLog
 
@@ -100,7 +100,7 @@ class SecurityAuditService:
                 details=f"User {user_id} accessed {resource_type} ID {resource_id}",
             )
             db.add(log)
-            db.commit()
+            await db.commit()
         except Exception as e:
             logger.error(f"Failed to log audit: {e}")
-            db.rollback()
+            await db.rollback()

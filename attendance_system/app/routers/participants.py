@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, UploadFile, File, Form, BackgroundTasks
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
 import pandas as pd
 import io
@@ -16,6 +16,7 @@ from app.services.data_sanitizer import DataSanitizer
 from app.services.webhook_engine import WebhookEngine
 from app.core.rbac import require_permission
 from app.routers.participant_auth import get_current_participant
+from sqlalchemy import select, update, delete, func
 import uuid
 
 def _participant_to_dict(p):
@@ -35,10 +36,10 @@ router = APIRouter()
 from pydantic import BaseModel
 
 @router.get("/search")
-def public_search(
+async def public_search(
     q: str = Query(...),
     event_id: int = Query(1),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     """
     البحث العام للمشاركين (يستخدم في الخدمة الذاتية والكيوسك).
@@ -52,14 +53,16 @@ def public_search(
 
     # التحقق من أن الفعالية تسمح بالبحث العام
     from app.models.event import Event
-    event = db.query(Event).filter(Event.id == event_id).first()
+    event = await db.get(Event, event_id)
     if not event:
         raise HTTPException(status_code=404, detail="الفعالية غير موجودة")
 
-    results = db.query(Participant).filter(
+    stmt = select(Participant).filter(
         Participant.event_id == event_id,
         Participant.full_name.ilike(f"%{q.strip()}%"),
-    ).limit(10).all()
+    ).limit(10)
+    result = await db.execute(stmt)
+    results = result.scalars().all()
 
     # إرجاع بيانات آمنة فقط (بدون بريد أو هاتف)
     return [
@@ -75,9 +78,9 @@ def public_search(
     ]
 
 @router.get("/public/access/{token}")
-def get_participant_by_token(
+async def get_participant_by_token(
     token: str,
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ):
     """الدخول الآمن للبوابة باستخدام رمز الـ QR أو رقم الطلب أو JWT Token"""
     from app.core.security import decode_token
@@ -85,16 +88,18 @@ def get_participant_by_token(
     participant = None
     if token.startswith("DWN-") or token.startswith("REG-"):
         # البحث بواسطة رقم الطلب مباشرة
-        participant = db.query(Participant).filter(
+        stmt = select(Participant).filter(
             (Participant.order_num == token) | (Participant.qr_code == token)
-        ).first()
+        )
+        result = await db.execute(stmt)
+        participant = result.scalars().first()
     else:
         # البحث بواسطة JWT Token
         payload = decode_token(token)
         if payload and payload.get("sub", "").startswith("participant:"):
             try:
                 p_id = int(payload.get("sub").split(":")[1])
-                participant = db.query(Participant).filter(Participant.id == p_id).first()
+                participant = await db.get(Participant, p_id)
             except: pass
 
     if not participant:
@@ -121,12 +126,12 @@ class PublicRegistrationRequest(BaseModel):
     custom_values: Optional[dict] = None
 
 @router.get("/public/info/{participant_id}")
-def get_public_participant_info(
+async def get_public_participant_info(
     participant_id: int,
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ):
     """جلب بيانات المشارك العامة (بدون مصادقة) — يُستخدم في بوابة المشارك."""
-    participant = db.query(Participant).filter(Participant.id == participant_id).first()
+    participant = await db.get(Participant, participant_id)
     if not participant:
         raise HTTPException(status_code=404, detail="المشارك غير موجود")
     
@@ -143,9 +148,9 @@ def get_public_participant_info(
     }
 
 @router.patch("/public/visibility/{token}")
-def toggle_public_visibility(
+async def toggle_public_visibility(
     token: str,
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ):
     """تفعيل/تعطيل ظهور المشارك في صفحة التواصل الميداني"""
     from app.core.security import decode_token
@@ -154,14 +159,16 @@ def toggle_public_visibility(
     participant = None
     if token.startswith("DWN-") or token.startswith("REG-"):
         # البحث بواسطة رقم الطلب مباشرة (رابط عام)
-        participant = db.query(Participant).filter(Participant.order_num == token).first()
+        stmt = select(Participant).filter(Participant.order_num == token)
+        result = await db.execute(stmt)
+        participant = result.scalars().first()
     else:
         # البحث بواسطة JWT Token (جلسة مسجلة)
         payload = decode_token(token)
         if payload and payload.get("sub", "").startswith("participant:"):
             try:
                 p_id = int(payload.get("sub").split(":")[1])
-                participant = db.query(Participant).filter(Participant.id == p_id).first()
+                participant = await db.get(Participant, p_id)
             except: pass
 
     if not participant:
@@ -173,16 +180,15 @@ def toggle_public_visibility(
     cv["is_visible"] = new_visibility
     
     participant.custom_values = cv
-    from sqlalchemy.orm.attributes import flag_modified
     flag_modified(participant, "custom_values")
-    db.commit()
+    await db.commit()
     
     return {"status": "success", "is_visible": new_visibility}
     
 @router.patch("/public/profile")
-def update_participant_profile(
+async def update_participant_profile(
     data: dict,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_p: Participant = Depends(get_current_participant)
 ):
     """تحديث البيانات المهنية للمشارك (Bio, Social, Specialties)"""
@@ -197,21 +203,19 @@ def update_participant_profile(
     current_p.custom_values = cv
     from sqlalchemy.orm.attributes import flag_modified
     flag_modified(current_p, "custom_values")
-    db.commit()
+    await db.commit()
     
     return {"status": "success", "updated_fields": list(data.keys())}
 
 @router.get("/public/{event_id}/directory")
-def get_public_directory(
+async def get_public_directory(
     event_id: int,
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ):
     """جلب قائمة المشاركين المرئيين فقط (للتعارف والتواصل)"""
-    # لا يدعم SQLite فلترة الـ JSON مباشرة، لذا نجلب الجميع ونفلتر هنا لتجنب مشاكل التوافق 
-    # في PostgreSQL يمكن استخدام Participant.custom_values['is_visible'].astext == 'true'
-    participants = db.query(Participant).filter(
-        Participant.event_id == event_id
-    ).all()
+    stmt = select(Participant).filter(Participant.event_id == event_id)
+    result = await db.execute(stmt)
+    participants = result.scalars().all()
     
     visible_participants = []
     for p in participants:
@@ -232,7 +236,7 @@ def get_public_directory(
 async def public_register_participant(
     body: PublicRegistrationRequest,
     background_tasks: BackgroundTasks,
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ):
     """
     تسجيل مشارك جديد من قبل الجمهور (Self-Registration).
@@ -248,30 +252,34 @@ async def public_register_participant(
 
     # تحقق من وجود الفعالية وفتح التسجيل
     from app.models.event import Event
-    event = db.query(Event).filter(Event.id == event_id).first()
+    event = await db.get(Event, event_id)
     if not event:
         raise HTTPException(status_code=404, detail="الفعالية غير موجودة")
     if not event.registration_enabled:
         raise HTTPException(status_code=403, detail="التسجيل مغلق لهذه الفعالية")
     
     # جلب المنظم للتحقق من الرصيد
-    organizer = db.query(User).filter(User.id == event.created_by).first()
+    organizer = await db.get(User, event.created_by)
     has_credits = organizer and (organizer.credits > 0 or organizer.role == 'super_admin')
     # تحقق من التكرار بالبريد (فقط إذا أدخل بريداً)
     if email:
-        existing_by_email = db.query(Participant).filter(
+        stmt = select(Participant).filter(
             Participant.event_id == event_id,
             Participant.email == email
-        ).first()
+        )
+        res = await db.execute(stmt)
+        existing_by_email = res.scalars().first()
         if existing_by_email:
             raise HTTPException(status_code=409, detail="البريد الإلكتروني مسجل مسبقاً")
 
     # محاولة المطابقة والدمج (Merge) لمشارك مستورد مسبقاً بدون بريد
-    existing_by_name = db.query(Participant).filter(
+    stmt = select(Participant).filter(
         Participant.event_id == event_id,
         Participant.full_name == full_name,
         (Participant.email.is_(None) | (Participant.email == ""))
-    ).first()
+    )
+    res = await db.execute(stmt)
+    existing_by_name = res.scalars().first()
 
     if existing_by_name:
         # وجدنا تسجيلاً مسبقاً بنفس الاسم ولا يملك إيميل -> نقوم بتحديثه بدل إنشاء نسخة جديدة
@@ -284,8 +292,8 @@ async def public_register_participant(
             existing_by_name.phone_number = custom_values.get('phone_number', existing_by_name.phone_number)
             existing_by_name.custom_values = custom_values
         
-        db.commit()
-        db.refresh(existing_by_name)
+        await db.commit()
+        await db.refresh(existing_by_name)
         
         # إرسال البريد الموحد فقط إذا كان الرصيد متوفراً
         if existing_by_name.email and has_credits:
@@ -300,7 +308,9 @@ async def public_register_participant(
             otp_code = generate_otp()
             from app.models.otp import ParticipantOTP
             from datetime import datetime, timedelta
-            db.query(ParticipantOTP).filter(ParticipantOTP.participant_id == existing_by_name.id).delete()
+            await db.execute(
+                delete(ParticipantOTP).filter(ParticipantOTP.participant_id == existing_by_name.id)
+            )
             new_otp = ParticipantOTP(
                 participant_id=existing_by_name.id,
                 email=existing_by_name.email,
@@ -308,7 +318,7 @@ async def public_register_participant(
                 expires_at=datetime.utcnow() + timedelta(minutes=60)
             )
             db.add(new_otp)
-            db.commit()
+            await db.commit()
 
             magic_token = create_magic_token(existing_by_name.id)
             frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
@@ -327,12 +337,14 @@ async def public_register_participant(
                 event_location=event.location
             )
         
-        db.commit()
+        await db.commit()
         return {"status": "success", "participant_id": existing_by_name.id, "order_num": existing_by_name.order_num, "merged": True, "active": has_credits}
 
     # تحقق من سعة التسجيل (فقط للجدد)
     if event.total_invited > 0:
-        current_count = db.query(Participant).filter(Participant.event_id == event_id).count()
+        count_stmt = select(func.count()).select_from(Participant).filter(Participant.event_id == event_id)
+        count_res = await db.execute(count_stmt)
+        current_count = count_res.scalar_one()
         if current_count >= event.total_invited:
             raise HTTPException(status_code=403, detail="عذراً، تم الوصول للحد الأقصى للمسجلين في هذه الفعالية")
 
@@ -340,9 +352,9 @@ async def public_register_participant(
     for _ in range(10):
         order_num = f"DWN-{uuid.uuid4().hex[:8].upper()}"
         qr_code = order_num # مزامنة الكود مع رقم الطلب
-        exists = db.query(Participant).filter(
-            Participant.order_num == order_num
-        ).first()
+        stmt = select(Participant).filter(Participant.order_num == order_num)
+        res = await db.execute(stmt)
+        exists = res.scalars().first()
         if not exists:
             break
     else:
@@ -363,8 +375,8 @@ async def public_register_participant(
     )
     
     db.add(participant)
-    db.commit()
-    db.refresh(participant)
+    await db.commit()
+    await db.refresh(participant)
     
     # إرسال البريد الموحد وخصم الرصيد للجدد
     if participant.email and has_credits:
@@ -384,7 +396,7 @@ async def public_register_participant(
             expires_at=datetime.utcnow() + timedelta(minutes=60)
         )
         db.add(new_otp)
-        db.commit()
+        await db.commit()
 
         magic_token = create_magic_token(participant.id)
         frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
@@ -403,16 +415,16 @@ async def public_register_participant(
             event_location=event.location
         )
     
-    db.commit()
+    await db.commit()
     return {"status": "success", "participant_id": participant.id, "order_num": participant.order_num, "active": has_credits}
 
 @router.get("/")
-def read_participants(
+async def read_participants(
     event_id: int,
     skip: int = 0,
     limit: int = 1000,
     query: Optional[str] = None,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_permission("event:read"))
 ):
@@ -421,35 +433,41 @@ def read_participants(
     # BUG 5 FIX: تحقق من ملكية الفعالية لمنع تسريب البيانات بين المنظمين
     if current_user.role != "super_admin":
         from app.models.event import Event
-        event = db.query(Event).filter(
-            Event.id == event_id,
-            Event.created_by == current_user.id
-        ).first()
-        if not event:
+        event = await db.get(Event, event_id)
+        if not event or event.created_by != current_user.id:
             raise HTTPException(
                 status_code=403,
                 detail="هذه الفعالية لا تنتمي لحسابك"
             )
 
-    db_query = db.query(Participant).filter(Participant.event_id == event_id)
+    stmt = select(Participant).filter(Participant.event_id == event_id)
     if query:
-        db_query = db_query.filter(
+        stmt = stmt.filter(
             (Participant.full_name.ilike(f"%{query}%")) | 
             (Participant.order_num.ilike(f"%{query}%"))
         )
     
-    total_count = db_query.count()
-    participants = db_query.offset(skip).limit(limit).all()
+    # Get total count
+    count_stmt = select(func.count()).select_from(stmt.subquery())
+    count_res = await db.execute(count_stmt)
+    total_count = count_res.scalar_one()
+
+    # Get paginated items
+    stmt = stmt.offset(skip).limit(limit)
+    res = await db.execute(stmt)
+    participants = res.scalars().all()
     
     # جلب سجلات الحضور لكل المشاركين دفعة واحدة
     from app.models.participant import Attendance
     participant_ids = [p.id for p in participants]
     attendance_map = {}
     if participant_ids:
-        attendance_records = db.query(Attendance).filter(
+        att_stmt = select(Attendance).filter(
             Attendance.participant_id.in_(participant_ids),
             Attendance.event_type == 'check_in'
-        ).all()
+        )
+        att_res = await db.execute(att_stmt)
+        attendance_records = att_res.scalars().all()
         for a in attendance_records:
             attendance_map[a.participant_id] = a.check_in_time
     
@@ -468,7 +486,6 @@ def read_participants(
                 "payment_status": p.payment_status,
                 "badge_printed": p.badge_printed,
                 "is_flagged": p.is_flagged,
-                # وقت الحضور الحقيقي من جدول Attendance
                 "check_in_time": attendance_map.get(p.id)
             }
             for p in participants
@@ -476,12 +493,12 @@ def read_participants(
     }
 
 @router.get("/{participant_id}", response_model=ParticipantOut)
-def read_participant(
+async def read_participant(
     participant_id: int, 
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
-    participant = db.query(Participant).filter(Participant.id == participant_id).first()
+    participant = await db.get(Participant, participant_id)
     if not participant:
         raise HTTPException(status_code=404, detail="المشارك غير موجود")
     
@@ -491,18 +508,19 @@ def read_participant(
     return participant
 
 @router.get("/qr/{qr_code}")
-def get_participant_by_qr(
+async def get_participant_by_qr(
     qr_code: str,
     event_id: Optional[int] = Query(None),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
     """البحث عن مشارك بواسطة رمز الـ QR مع التحقق من الصلاحية"""
-    query = db.query(Participant).filter(Participant.qr_code == qr_code)
+    stmt = select(Participant).filter(Participant.qr_code == qr_code)
     if event_id:
-        query = query.filter(Participant.event_id == event_id)
+        stmt = stmt.filter(Participant.event_id == event_id)
     
-    participant = query.first()
+    res = await db.execute(stmt)
+    participant = res.scalars().first()
     if not participant:
         raise HTTPException(status_code=404, detail="المشارك غير موجود")
     
@@ -515,14 +533,16 @@ def get_participant_by_qr(
 async def bulk_activate_participants(
     participant_ids: List[int],
     background_tasks: BackgroundTasks,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
     """تفعيل مجموعة من المشاركين دفعة واحدة وخصم الرصيد وإرسال الإيميلات."""
     if current_user.role not in ('super_admin', 'organizer'):
         raise HTTPException(status_code=403, detail="لا تملك صلاحية التفعيل")
 
-    participants = db.query(Participant).filter(Participant.id.in_(participant_ids)).all()
+    stmt = select(Participant).filter(Participant.id.in_(participant_ids))
+    res = await db.execute(stmt)
+    participants = res.scalars().all()
     activated_count = 0
     
     from app.models.event import Event
@@ -548,7 +568,9 @@ async def bulk_activate_participants(
         # إرسال البريد الموحد
         if p.email:
             otp_code = generate_otp()
-            db.query(ParticipantOTP).filter(ParticipantOTP.participant_id == p.id).delete()
+            await db.execute(
+                delete(ParticipantOTP).filter(ParticipantOTP.participant_id == p.id)
+            )
             new_otp = ParticipantOTP(
                 participant_id=p.id,
                 email=p.email,
@@ -561,7 +583,7 @@ async def bulk_activate_participants(
             frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
             magic_link = f"{frontend_url}/participant-login?token={magic_token}"
 
-            event = db.query(Event).filter(Event.id == p.event_id).first()
+            event = await db.get(Event, p.event_id)
             
             background_tasks.add_task(
                 send_unified_welcome_email,
@@ -576,7 +598,7 @@ async def bulk_activate_participants(
                 event_location=event.location if event else None
             )
 
-    db.commit()
+    await db.commit()
     return {
         "status": "success", 
         "activated_count": activated_count, 
@@ -584,14 +606,14 @@ async def bulk_activate_participants(
     }
 
 @router.patch("/{participant_id}", response_model=ParticipantOut)
-def update_participant(
+async def update_participant(
     participant_id: int,
     data: dict,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
     """تحديث بيانات مشارك مع التحقق من الصلاحية"""
-    participant = db.query(Participant).filter(Participant.id == participant_id).first()
+    participant = await db.get(Participant, participant_id)
     if not participant:
         raise HTTPException(status_code=404, detail="المشارك غير موجود")
     
@@ -603,8 +625,8 @@ def update_participant(
         if hasattr(participant, key):
             setattr(participant, key, value)
             
-    db.commit()
-    db.refresh(participant)
+    await db.commit()
+    await db.refresh(participant)
     return participant
 
 from app.services.notification_service import NotificationService
@@ -622,10 +644,10 @@ async def check_in_participant(
     participant_id: int, 
     background_tasks: BackgroundTasks,
     location_id: Optional[str] = Query(None),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
-    participant = db.query(Participant).filter(Participant.id == participant_id).first()
+    participant = await db.get(Participant, participant_id)
     if not participant:
         raise HTTPException(status_code=404, detail="المشارك غير موجود")
     
@@ -641,13 +663,14 @@ async def check_in_participant(
         raise HTTPException(status_code=403, detail="لا صلاحية لك")
     
     # ✅ إنشاء سجل حضور فعلي في جدول Attendance
-    # (التحليلات تقرأ من هذا الجدول — بدونه يظهر المشارك غائباً رغم كونه مؤكداً)
     from app.models.participant import Attendance
     from datetime import datetime
-    existing_attendance = db.query(Attendance).filter(
+    stmt = select(Attendance).filter(
         Attendance.participant_id == participant.id,
         Attendance.event_type == 'check_in'
-    ).first()
+    )
+    res = await db.execute(stmt)
+    existing_attendance = res.scalars().first()
     if not existing_attendance:
         attendance_record = Attendance(
             participant_id=participant.id,
@@ -658,18 +681,23 @@ async def check_in_participant(
         )
         db.add(attendance_record)
     
-    db.commit()
-    db.refresh(participant)
+    await db.commit()
+    await db.refresh(participant)
     
     # التحقق من الـ Milestones وإرسال تنبيهات للمسؤولين
     await NotificationService.check_attendance_milestones(db, participant.event_id)
     
     # حساب الإحصائيات لإرسال تنبيهات (Milestones)
-    total_invited = db.query(Participant).filter(Participant.event_id == participant.event_id).count()
-    total_checked_in = db.query(Participant).filter(
+    invited_stmt = select(func.count()).select_from(Participant).filter(Participant.event_id == participant.event_id)
+    invited_res = await db.execute(invited_stmt)
+    total_invited = invited_res.scalar_one()
+
+    checked_stmt = select(func.count()).select_from(Participant).filter(
         Participant.event_id == participant.event_id, 
         Participant.payment_status == 'paid'
-    ).count()
+    )
+    checked_res = await db.execute(checked_stmt)
+    total_checked_in = checked_res.scalar_one()
     
     attendance_rate = (total_checked_in / total_invited * 100) if total_invited > 0 else 0
     
@@ -711,11 +739,11 @@ async def check_in_participant(
 )
 async def undo_check_in_participant(
     participant_id: int, 
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
     try:
-        participant = db.query(Participant).filter(Participant.id == participant_id).first()
+        participant = await db.get(Participant, participant_id)
         if not participant:
             raise HTTPException(status_code=404, detail="المشارك غير موجود")
         
@@ -726,13 +754,15 @@ async def undo_check_in_participant(
         
         # إزالة سجل الحضور الفعلي
         from app.models.participant import Attendance
-        db.query(Attendance).filter(
-            Attendance.participant_id == participant.id,
-            Attendance.event_type == 'check_in'
-        ).delete(synchronize_session=False)
+        await db.execute(
+            delete(Attendance).filter(
+                Attendance.participant_id == participant.id,
+                Attendance.event_type == 'check_in'
+            )
+        )
         
-        db.commit()
-        db.refresh(participant)
+        await db.commit()
+        await db.refresh(participant)
         
         return participant
     except HTTPException:
@@ -744,14 +774,14 @@ async def undo_check_in_participant(
         raise HTTPException(status_code=400, detail=f"Internal Error: {str(e)}")
 
 @router.get("/{participant_id}/badge")
-def get_participant_badge(
+async def get_participant_badge(
     participant_id: int, 
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
     """تحميل شارة المشارك مع التحقق من الصلاحية"""
     from app.utils.badge import generate_badge_pdf
-    participant = db.query(Participant).filter(Participant.id == participant_id).first()
+    participant = await db.get(Participant, participant_id)
     if not participant:
         raise HTTPException(status_code=404, detail="المشارك غير موجود")
     
@@ -764,15 +794,17 @@ def get_participant_badge(
     from app.models.template import BadgeTemplate
     from app.routers.credentials import _participant_to_dict, _event_to_dict, _template_to_dict
     
-    event = db.query(Event).filter(Event.id == participant.event_id).first()
-    template = db.query(BadgeTemplate).filter(BadgeTemplate.event_id == participant.event_id).first()
+    event = await db.get(Event, participant.event_id)
+    
+    stmt = select(BadgeTemplate).filter(BadgeTemplate.event_id == participant.event_id)
+    res = await db.execute(stmt)
+    template = res.scalars().first()
     
     pdf_buffer = generate_badge_pdf(
         participant=_participant_to_dict(participant),
         event=_event_to_dict(event),
         template=_template_to_dict(template)
     )
-    # generate_badge_pdf قد يرجع bytes أو BytesIO بناءً على التعديلات الأخيرة
     pdf_bytes = pdf_buffer if isinstance(pdf_buffer, bytes) else pdf_buffer.getvalue()
     
     return Response(
@@ -780,7 +812,6 @@ def get_participant_badge(
         media_type="application/pdf",
         headers={"Content-Disposition": f"attachment; filename=badge_{participant_id}.pdf"}
     )
-
 
 @router.post("/analyze-import")
 async def analyze_import(
@@ -804,7 +835,7 @@ async def import_participants(
     file: UploadFile = File(...),
     mapping: str = Form(...), # JSON string of mapping
     background_tasks: BackgroundTasks = None,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_permission("participant:manage"))
 ):
@@ -833,12 +864,11 @@ async def import_participants(
         if not raw_entry['full_name']:
             continue
 
-        clean_result = DataSanitizer.process_row(db, event_id, raw_entry)
+        clean_result = await DataSanitizer.process_row(db, event_id, raw_entry)
         if clean_result['is_duplicate']:
             skipped += 1
             continue
 
-        import uuid
         order_num = f"DWN-{uuid.uuid4().hex[:8].upper()}"
         new_p = Participant(
             event_id=event_id,
@@ -858,8 +888,8 @@ async def import_participants(
         
         # جلب المنظم للتحقق من الرصيد لكل سطر
         from app.models.event import Event
-        event_obj = db.query(Event).filter(Event.id == event_id).first()
-        organizer = db.query(User).filter(User.id == event_obj.created_by).first()
+        event_obj = await db.get(Event, event_id)
+        organizer = await db.get(User, event_obj.created_by) if event_obj else None
         
         # لا نقوم بالتفعيل أو إرسال الإيميل إلا إذا توفر رصيد
         has_credits = organizer and (organizer.credits > 0 or organizer.role == 'super_admin')
@@ -874,6 +904,13 @@ async def import_participants(
             otp_code = generate_otp()
             from app.models.otp import ParticipantOTP
             from datetime import datetime, timedelta
+            
+            # Since new_p needs an ID, we flush to generate the ID
+            await db.flush()
+            
+            await db.execute(
+                delete(ParticipantOTP).filter(ParticipantOTP.participant_id == new_p.id)
+            )
             new_otp = ParticipantOTP(
                 participant_id=new_p.id,
                 email=new_p.email,
@@ -885,9 +922,6 @@ async def import_participants(
             magic_token = create_magic_token(new_p.id)
             frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
             magic_link = f"{frontend_url}/participant-login?token={magic_token}"
-
-            from app.models.event import Event
-            event_obj = db.query(Event).filter(Event.id == event_id).first()
 
             background_tasks.add_task(
                 send_unified_welcome_email,
@@ -902,7 +936,7 @@ async def import_participants(
                 event_location=event_obj.location if event_obj else None
             )
             
-    db.commit()
+    await db.commit()
     return {"status": "success", "added": added, "skipped": skipped}
 
 @router.post("/register", response_model=ParticipantOut)
@@ -915,21 +949,18 @@ async def register_participant(
     phone: Optional[str] = None,
     role: str = 'attendee',
     event_id: int = 1,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_permission("participant:manage"))
 ):
     """تسجيل مشارك يدوي مع التحقق من الصلاحية"""
-    import uuid
-    import time
-    
     # التحقق من الرصيد للتسجيل اليدوي
     from app.models.event import Event
-    event = db.query(Event).filter(Event.id == event_id).first()
+    event = await db.get(Event, event_id)
     if not event:
         raise HTTPException(status_code=404, detail="الفعالية غير موجودة")
     
-    organizer = db.query(User).filter(User.id == event.created_by).first()
+    organizer = await db.get(User, event.created_by)
     if current_user.role != 'super_admin' and organizer.credits <= 0:
         raise HTTPException(status_code=403, detail="رصيد الاعتمادات غير كافٍ للتسجيل اليدوي")
 
@@ -953,11 +984,10 @@ async def register_participant(
         organizer.credits -= 1
     
     db.add(new_p)
-    db.commit()
-    db.refresh(new_p)
+    await db.commit()
+    await db.refresh(new_p)
     
     # ✅ إنشاء سجل حضور فوري للمشارك الميداني
-    # (بدونه يظهر في التحليلات كـ "غائب" رغم تسجيل حضوره فعلياً)
     from app.models.participant import Attendance
     from datetime import datetime
     attendance_record = Attendance(
@@ -967,8 +997,8 @@ async def register_participant(
         entry_method='walk_in'
     )
     db.add(attendance_record)
-    db.commit()
-    db.refresh(new_p)
+    await db.commit()
+    await db.refresh(new_p)
     
     # إرسال البريد الموحد للمشارك المسجل يدوياً
     if new_p.email:
@@ -983,25 +1013,23 @@ async def register_participant(
             expires_at=datetime.utcnow() + timedelta(minutes=60)
         )
         db.add(new_otp)
+        await db.commit()
         
         magic_token = create_magic_token(new_p.id)
         frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
         magic_link = f"{frontend_url}/participant-login?token={magic_token}"
 
-        from app.models.event import Event
-        event_obj = db.query(Event).filter(Event.id == event_id).first()
-
         background_tasks.add_task(
             send_unified_welcome_email,
             email=new_p.email,
             participant_name=new_p.full_name,
-            event_name=event_obj.event_name if event_obj else "Diwan Event",
+            event_name=event.event_name if event else "Diwan Event",
             order_num=new_p.order_num,
             otp=otp_code,
             magic_link=magic_link,
             qr_code=new_p.qr_code,
-            event_date=str(event_obj.event_date) if event_obj and event_obj.event_date else None,
-            event_location=event_obj.location if event_obj else None
+            event_date=str(event.event_date) if event and event.event_date else None,
+            event_location=event.location if event else None
         )
     
     return new_p
@@ -1010,14 +1038,13 @@ async def register_participant(
 async def sync_offline_checkins(
     payload: List[dict],
     event_id: int,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_permission("checkin:operate"))
 ):
     """
     مزامنة عمليات الحضور التي تمت في وضع "أوفلاين" من أجهزة العتاد.
     """
-
     synced_count = 0
     errors = []
 
@@ -1025,15 +1052,16 @@ async def sync_offline_checkins(
         qr_code = item.get("qr_code")
         timestamp = item.get("timestamp")
         
-        participant = db.query(Participant).filter(
+        stmt = select(Participant).filter(
             Participant.event_id == event_id,
             Participant.qr_code == qr_code
-        ).first()
+        )
+        res = await db.execute(stmt)
+        participant = res.scalars().first()
 
         if participant:
             if participant.payment_status != 'paid':
                 participant.payment_status = 'paid'
-                # Log the offline check-in time
                 from app.models.participant import Attendance
                 attendance = Attendance(
                     participant_id=participant.id,
@@ -1047,14 +1075,13 @@ async def sync_offline_checkins(
         else:
             errors.append(f"QR {qr_code} not found")
 
-    db.commit()
+    await db.commit()
     return {"status": "success", "synced": synced_count, "errors": errors}
 
-
 @router.get("/badges/all")
-def get_all_badges(
+async def get_all_badges(
     event_id: int, 
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
     """
@@ -1062,25 +1089,28 @@ def get_all_badges(
     """
     # Security: Verify ownership
     from app.models.event import Event
-    event = db.query(Event).filter(Event.id == event_id).first()
+    event = await db.get(Event, event_id)
     if not event or (current_user.role != 'super_admin' and event.created_by != current_user.id):
         raise HTTPException(status_code=403, detail="Not authorized")
 
-    participants = db.query(Participant).filter(Participant.event_id == event_id).all()
+    stmt = select(Participant).filter(Participant.event_id == event_id)
+    res = await db.execute(stmt)
+    participants = res.scalars().all()
     if not participants:
         raise HTTPException(status_code=404, detail="No participants found")
     
     # Fetch active badge template
     from app.models.template import BadgeTemplate
-    template_obj = db.query(BadgeTemplate).filter(
+    stmt_tmpl = select(BadgeTemplate).filter(
         BadgeTemplate.event_id == event_id,
         BadgeTemplate.type == 'badge'
-    ).first()
+    )
+    res_tmpl = await db.execute(stmt_tmpl)
+    template_obj = res_tmpl.scalars().first()
     
     if not template_obj:
         raise HTTPException(status_code=404, detail="قالب البادج غير موجود لهذه الفعالية")
 
-    # التحويل باستخدام المحرك الحديث (pdf_renderer)
     from app.utils.pdf_renderer import render_batch_pdf
     from app.routers.credentials import _participant_to_dict, _event_to_dict
     import json
@@ -1117,24 +1147,26 @@ def get_all_badges(
         raise HTTPException(status_code=500, detail=f"فشل توليد الطباعة المجمعة: {str(e)}")
 
 @router.delete("/{event_id}/participants/{participant_id}")
-def delete_participant(
+async def delete_participant(
     event_id: int,
     participant_id: int,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_permission("participant:manage"))
 ):
     """
     حذف مشارك من الفعالية.
     """
-    participant = db.query(Participant).filter(
+    stmt = select(Participant).filter(
         Participant.id == participant_id,
         Participant.event_id == event_id
-    ).first()
+    )
+    res = await db.execute(stmt)
+    participant = res.scalars().first()
     
     if not participant:
         raise HTTPException(status_code=404, detail="Participant not found")
     
-    db.delete(participant)
-    db.commit()
+    await db.delete(participant)
+    await db.commit()
     return {"status": "success", "message": "Participant deleted"}

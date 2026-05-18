@@ -1,5 +1,5 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Dict, List
 import json
 import asyncio
@@ -49,59 +49,65 @@ async def hardware_websocket(websocket: WebSocket):
                 barcode = payload.get("barcode")
                 
                 # Link to DB logic
-                db = next(get_db())
+                from app.core.database import AsyncSessionLocal
                 from app.models.participant import Participant
-                participant = db.query(Participant).filter(Participant.qr_code == barcode).first()
-                
-                if participant:
-                    from app.models.participant import Attendance
-                    from datetime import datetime
+                from app.models.participant import Attendance
+                from datetime import datetime
+                from sqlalchemy import select
 
-                    # Security: Verify device and participant belong to same event
-                    dev_event_id = active_devices[device_id].get("event_id", 1)
+                async with AsyncSessionLocal() as db:
+                    stmt = select(Participant).filter(Participant.qr_code == barcode)
+                    res = await db.execute(stmt)
+                    participant = res.scalars().first()
                     
-                    # تحقق: هل سبق تسجيل الحضور؟
-                    existing = db.query(Attendance).filter(
-                        Attendance.participant_id == participant.id,
-                        Attendance.event_type == 'check_in'
-                    ).first()
-
-                    if existing:
-                        await websocket.send_json({
-                            "type": "SCAN_DUPLICATE",
-                            "name": participant.full_name,
-                            "check_in_time": str(existing.check_in_time)
-                        })
-                    else:
-                        # إنشاء سجل حضور
-                        attendance = Attendance(
-                            participant_id=participant.id,
-                            event_type='check_in',
-                            check_in_time=datetime.now(),
-                            direction='IN',
-                            location_id=payload.get("location_id"), # Optional but good to have
-                            device_id=device_id,
-                            device_name=active_devices.get(device_id, {}).get('type', 'unknown'),
-                            entry_method='qr_scan'
-                        )
-                        db.add(attendance)
-                        db.commit()
+                    if participant:
+                        # Security: Verify device and participant belong to same event
+                        dev_event_id = active_devices[device_id].get("event_id", 1)
                         
-                        # Notify everyone in the same event
-                        await manager.broadcast_to_event(dev_event_id, {
-                            "type": "checkin", 
-                            "participant": {
-                                "id": participant.id,
-                                "full_name": participant.full_name,
-                                "organization": participant.organization,
-                                "order_num": participant.order_num
-                            }
-                        })
-                        await websocket.send_json({"type": "SCAN_SUCCESS", "name": participant.full_name})
-                else:
-                    await websocket.send_json({"type": "SCAN_ERROR", "message": "المشارك غير موجود"})
-                
-                await websocket.send_json({"type": "SCAN_ACK"})
+                        # تحقق: هل سبق تسجيل الحضور؟
+                        stmt_att = select(Attendance).filter(
+                            Attendance.participant_id == participant.id,
+                            Attendance.event_type == 'check_in'
+                        )
+                        res_att = await db.execute(stmt_att)
+                        existing = res_att.scalars().first()
+
+                        if existing:
+                            await websocket.send_json({
+                                "type": "SCAN_DUPLICATE",
+                                "name": participant.full_name,
+                                "check_in_time": str(existing.check_in_time)
+                            })
+                        else:
+                            # إنشاء سجل حضور
+                            attendance = Attendance(
+                                participant_id=participant.id,
+                                event_type='check_in',
+                                check_in_time=datetime.now(),
+                                direction='IN',
+                                location_id=payload.get("location_id"), # Optional but good to have
+                                device_id=device_id,
+                                device_name=active_devices.get(device_id, {}).get('type', 'unknown'),
+                                entry_method='qr_scan'
+                            )
+                            db.add(attendance)
+                            await db.commit()
+                            
+                            # Notify everyone in the same event
+                            await manager.broadcast_to_event(dev_event_id, {
+                                "type": "checkin", 
+                                "participant": {
+                                    "id": participant.id,
+                                    "full_name": participant.full_name,
+                                    "organization": participant.organization,
+                                    "order_num": participant.order_num
+                                }
+                            })
+                            await websocket.send_json({"type": "SCAN_SUCCESS", "name": participant.full_name})
+                    else:
+                        await websocket.send_json({"type": "SCAN_ERROR", "message": "المشارك غير موجود"})
+                    
+                    await websocket.send_json({"type": "SCAN_ACK"})
 
     except WebSocketDisconnect:
         if device_id in active_devices:

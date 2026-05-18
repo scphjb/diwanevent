@@ -1,5 +1,6 @@
 from fastapi import Depends, HTTPException, Request
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from typing import Optional
 from app.core.database import get_db
 from app.core.auth_deps import get_current_active_user
@@ -7,20 +8,12 @@ from app.models.user import User
 
 def require_permission(permission_code: str):
     """
-    Dependency factory: تتحقق أن المستخدم لديه صلاحية معينة على فعالية محددة.
-    
-    الاستخدام:
-    @router.delete("/{event_id}/participants/{pid}")
-    def delete_participant(
-        event_id: int,
-        pid: int,
-        _: None = Depends(require_permission("participant:manage"))
-    ):
+    Dependency factory: تتحقق أن المستخدم لديه صلاحية معينة على فعالية محددة بشكل Async.
     """
-    def checker(
+    async def checker(
         request: Request,
         current_user: User = Depends(get_current_active_user),
-        db: Session = Depends(get_db),
+        db: AsyncSession = Depends(get_db),
         event_id: Optional[int] = None,   # query param أو path param (اختياري)
     ) -> None:
         # super_admin يملك كل شيء
@@ -43,10 +36,13 @@ def require_permission(permission_code: str):
                 # لا يمكن التحقق من الملكية — نسمح بالمرور لأن المنظم لديه حق الكتابة
                 return
             from app.models.event import Event
-            event = db.query(Event).filter(
-                Event.id == resolved_event_id,
-                Event.created_by == current_user.id
-            ).first()
+            event_result = await db.execute(
+                select(Event).filter(
+                    Event.id == resolved_event_id,
+                    Event.created_by == current_user.id
+                )
+            )
+            event = event_result.scalar_one_or_none()
             if event:
                 return  # ← منظم الفعالية → مسموح تلقائياً
 
@@ -56,15 +52,21 @@ def require_permission(permission_code: str):
 
         # التحقق عبر RBAC للأدوار الأخرى (scanner, viewer)
         from app.models.rbac import UserEventRole, Role
-        user_event_role = db.query(UserEventRole).filter(
-            UserEventRole.user_id == current_user.id,
-            UserEventRole.event_id == resolved_event_id
-        ).first()
+        uer_result = await db.execute(
+            select(UserEventRole).filter(
+                UserEventRole.user_id == current_user.id,
+                UserEventRole.event_id == resolved_event_id
+            )
+        )
+        user_event_role = uer_result.scalar_one_or_none()
 
         if not user_event_role:
             raise HTTPException(status_code=403, detail="لا صلاحية لك على هذه الفعالية")
 
-        role = db.query(Role).filter(Role.id == user_event_role.role_id).first()
+        role_result = await db.execute(
+            select(Role).filter(Role.id == user_event_role.role_id)
+        )
+        role = role_result.scalar_one_or_none()
         perm_codes = [p.code for p in role.permissions] if role else []
 
         if permission_code not in perm_codes:

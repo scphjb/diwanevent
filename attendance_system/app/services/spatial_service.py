@@ -1,5 +1,5 @@
-from sqlalchemy.orm import Session
-from sqlalchemy import func, text
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import func, text, select
 from app.models.participant import Attendance
 import datetime
 
@@ -9,32 +9,37 @@ class SpatialService:
     """
     
     @staticmethod
-    def get_crowd_density(db: Session, event_id: int):
+    async def get_crowd_density(db: AsyncSession, event_id: int):
         """
         حساب الكثافة الحالية في كل منطقة (Zone).
         المعادلة: (إجمالي الداخلين - إجمالي الخارجين)
         """
-        results = db.query(
+        stmt = select(
             Attendance.location_id,
             func.sum(func.case((Attendance.direction == 'IN', 1), else_=-1)).label('current_count')
-        ).filter(Attendance.event_id == event_id).group_by(Attendance.location_id).all()
+        ).filter(Attendance.event_id == event_id).group_by(Attendance.location_id)
+        
+        result = await db.execute(stmt)
+        results = result.all()
         
         return {r.location_id: max(0, r.current_count) for r in results}
 
     @staticmethod
-    def forecast_congestion(db: Session, event_id: int, location_id: str, window_minutes: int = 5):
+    async def forecast_congestion(db: AsyncSession, event_id: int, location_id: str, window_minutes: int = 5):
         """
         التنبؤ بالازدحام بناءً على معدل التدفق (Flow Rate).
         """
         since = datetime.datetime.now() - datetime.timedelta(minutes=window_minutes)
         
         # معدل الدخول في آخر 5 دقائق
-        flow_in = db.query(Attendance).filter(
+        stmt = select(func.count()).select_from(Attendance).filter(
             Attendance.event_id == event_id,
             Attendance.location_id == location_id,
             Attendance.direction == 'IN',
             Attendance.scanned_at >= since
-        ).count()
+        )
+        result = await db.execute(stmt)
+        flow_in = result.scalar_one()
         
         rate_per_minute = flow_in / window_minutes
         
@@ -53,7 +58,7 @@ class LeadRetrievalService:
     نظام جمع العملاء المحتملين (Leads) للعارضين.
     """
     @staticmethod
-    def capture_lead(db: Session, exhibitor_id: int, visitor_id: int, notes: str):
+    async def capture_lead(db: AsyncSession, exhibitor_id: int, visitor_id: int, notes: str):
         # حفظ بيانات العميل المحتمل مع ربطها بذكاء التعارف
         from app.services.matchmaking import AIMatchmakingService
         # (هنا يتم حفظ السجل في جدول Leads المخصص)

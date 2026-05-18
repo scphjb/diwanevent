@@ -14,6 +14,8 @@ from sqlalchemy.orm import sessionmaker
 from app.models.base import Base
 from app.models.user import User
 from app.models.event import Event
+from app.models.participant import Participant
+from app.models.networking import ParticipantProfile
 from app.core.security import get_password_hash
 from datetime import date
 

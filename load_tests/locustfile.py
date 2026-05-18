@@ -381,10 +381,8 @@ def on_request(request_type, name, response_time, response_length,
     """
     تسجيل الطلبات الفاشلة بتفصيل أكثر
     """
-    if exception:
-        print(f"[-] EXCEPTION on {name}: {exception}")
-    elif response and response.status_code >= 500:
-        print(f"[-] 5xx on {name}: {response.status_code} — {response.text[:150]}")
+    # إزالة الطباعة المتكررة لحماية أداء Gevent
+    pass
 
 @events.test_start.add_listener
 def on_test_start(environment, **kwargs):
@@ -405,7 +403,7 @@ def on_test_stop(environment, **kwargs):
     print(f"   Failed:          {total.num_failures:,} ({total.fail_ratio*100:.1f}%)")
     print(f"   Avg Response:    {total.avg_response_time:.0f}ms")
     print(f"   95th percentile: {total.get_response_time_percentile(0.95):.0f}ms")
-    print(f"   Max RPS:         {total.max_rps:.1f}")
+    print(f"   Avg RPS:         {total.total_rps:.1f}")
     print(f"{'='*60}")
     
     if total.fail_ratio > 0.05:

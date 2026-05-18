@@ -7,7 +7,8 @@
 - التحقق من حالة الدفع
 """
 from fastapi import APIRouter, Depends, HTTPException, Request, BackgroundTasks
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from pydantic import BaseModel
 from typing import Optional
 import logging
@@ -49,19 +50,19 @@ class PaymentStatusOut(BaseModel):
 @router.post("/create-session")
 async def create_checkout_session(
     body: CreateCheckoutRequest,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     """
     إنشاء جلسة دفع — يختار البوابة المناسبة تلقائياً حسب إعدادات الفعالية.
     """
-    event = db.query(Event).filter(Event.id == body.event_id).first()
+    event = await db.get(Event, body.event_id)
     if not event:
         raise HTTPException(status_code=404, detail="الفعالية غير موجودة")
 
     if not event.require_payment:
         raise HTTPException(status_code=400, detail="هذه الفعالية لا تتطلب دفعاً")
 
-    participant = db.query(Participant).filter(Participant.id == body.participant_id).first()
+    participant = await db.get(Participant, body.participant_id)
     if not participant:
         raise HTTPException(status_code=404, detail="المشارك غير موجود")
 
@@ -153,7 +154,7 @@ async def create_checkout_session(
 @router.post("/webhook/stripe")
 async def stripe_webhook(
     request: Request,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     """استقبال تأكيدات الدفع من Stripe."""
     payload = await request.body()
@@ -175,14 +176,10 @@ async def stripe_webhook(
         participant_id = session.get("metadata", {}).get("participant_id")
 
         if participant_id:
-            participant = (
-                db.query(Participant)
-                .filter(Participant.id == int(participant_id))
-                .first()
-            )
+            participant = await db.get(Participant, int(participant_id))
             if participant:
                 participant.payment_status = "paid"
-                db.commit()
+                await db.commit()
                 logger.info(f"✅ Stripe payment confirmed for participant {participant_id}")
 
     return {"status": "ok"}
@@ -194,7 +191,7 @@ async def stripe_webhook(
 @router.post("/webhook/chargily")
 async def chargily_webhook(
     request: Request,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     """استقبال تأكيدات الدفع من Chargily Pay."""
     payload = await request.body()
@@ -227,14 +224,10 @@ async def chargily_webhook(
                 break
 
         if participant_id:
-            participant = (
-                db.query(Participant)
-                .filter(Participant.id == int(participant_id))
-                .first()
-            )
+            participant = await db.get(Participant, int(participant_id))
             if participant:
                 participant.payment_status = "paid"
-                db.commit()
+                await db.commit()
                 logger.info(f"✅ Chargily payment confirmed for participant {participant_id}")
 
     return {"status": "ok"}
@@ -246,14 +239,14 @@ async def chargily_webhook(
 @router.get("/status/{participant_id}", response_model=PaymentStatusOut)
 async def check_payment_status(
     participant_id: int,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     """التحقق من حالة دفع مشارك معين."""
-    participant = db.query(Participant).filter(Participant.id == participant_id).first()
+    participant = await db.get(Participant, participant_id)
     if not participant:
         raise HTTPException(status_code=404, detail="المشارك غير موجود")
 
-    event = db.query(Event).filter(Event.id == participant.event_id).first()
+    event = await db.get(Event, participant.event_id)
 
     return {
         "participant_id": participant.id,

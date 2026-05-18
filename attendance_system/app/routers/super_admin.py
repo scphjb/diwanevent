@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import func, select, delete
 from typing import List, Optional
 from app.core.database import get_db
 from app.models.user import User
@@ -68,30 +68,39 @@ class UserStatusUpdate(BaseModel):
 # إحصائيات المنصة
 # ═══════════════════════════════════════
 @router.get("/stats")
-def get_platform_stats(
-    db: Session = Depends(get_db),
+async def get_platform_stats(
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_super_admin),
 ):
     """إحصائيات شاملة للمنصة — محمية بصلاحية السوبر أدمن."""
     try:
-        total_organizers = db.query(User).filter(User.role == "organizer").count()
-        total_events = db.query(Event).count()
-        total_participants = db.query(Participant).count()
+        # Get count organizers
+        stmt_org = select(func.count()).select_from(User).filter(User.role == "organizer")
+        total_organizers = (await db.execute(stmt_org)).scalar_one()
+
+        # Get count events
+        stmt_ev = select(func.count()).select_from(Event)
+        total_events = (await db.execute(stmt_ev)).scalar_one()
+
+        # Get count participants
+        stmt_part = select(func.count()).select_from(Participant)
+        total_participants = (await db.execute(stmt_part)).scalar_one()
 
         # BUG 4 FIX: جداول الاشتراكات قد لا تكون موجودة بعد — نغلّفها بـ try/except
         try:
-            active_subscriptions = (
-                db.query(Subscription).filter(Subscription.status == "active").count()
-            )
-            total_plans = db.query(SubscriptionPlan).count()
+            stmt_sub = select(func.count()).select_from(Subscription).filter(Subscription.status == "active")
+            active_subscriptions = (await db.execute(stmt_sub)).scalar_one()
+
+            stmt_plan = select(func.count()).select_from(SubscriptionPlan)
+            total_plans = (await db.execute(stmt_plan)).scalar_one()
 
             # إيرادات الاشتراكات
-            revenue = (
-                db.query(func.sum(SubscriptionPlan.price))
+            stmt_rev = (
+                select(func.sum(SubscriptionPlan.price))
                 .join(Subscription, Subscription.plan_id == SubscriptionPlan.id)
                 .filter(Subscription.status == "active")
-                .scalar()
-            ) or 0.0
+            )
+            revenue = (await db.execute(stmt_rev)).scalar() or 0.0
         except Exception:
             active_subscriptions = 0
             total_plans = 0
@@ -113,68 +122,72 @@ def get_platform_stats(
 # إدارة الباقات (CRUD كامل)
 # ═══════════════════════════════════════
 @router.get("/plans", response_model=List[PlanOut])
-def list_plans(
-    db: Session = Depends(get_db),
+async def list_plans(
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_super_admin),
 ):
     """قائمة جميع الباقات."""
-    return db.query(SubscriptionPlan).all()
+    stmt = select(SubscriptionPlan)
+    res = await db.execute(stmt)
+    return res.scalars().all()
 
 
 @router.post("/plans", response_model=PlanOut)
-def create_plan(
+async def create_plan(
     plan_data: PlanCreate,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_super_admin),
 ):
     """إنشاء باقة جديدة."""
     plan = SubscriptionPlan(**plan_data.model_dump())
     db.add(plan)
-    db.commit()
-    db.refresh(plan)
+    await db.commit()
+    await db.refresh(plan)
     return plan
 
 
 @router.patch("/plans/{plan_id}", response_model=PlanOut)
-def update_plan(
+async def update_plan(
     plan_id: int,
     plan_data: PlanUpdate,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_super_admin),
 ):
     """تحديث باقة موجودة."""
-    plan = db.query(SubscriptionPlan).filter(SubscriptionPlan.id == plan_id).first()
+    plan = await db.get(SubscriptionPlan, plan_id)
     if not plan:
         raise HTTPException(status_code=404, detail="الباقة غير موجودة")
     for key, value in plan_data.model_dump(exclude_unset=True).items():
         setattr(plan, key, value)
-    db.commit()
-    db.refresh(plan)
+    await db.commit()
+    await db.refresh(plan)
     return plan
 
 
 @router.delete("/plans/{plan_id}")
-def delete_plan(
+async def delete_plan(
     plan_id: int,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_super_admin),
 ):
     """حذف باقة (إذا لم يكن هناك اشتراكات مرتبطة)."""
-    plan = db.query(SubscriptionPlan).filter(SubscriptionPlan.id == plan_id).first()
+    plan = await db.get(SubscriptionPlan, plan_id)
     if not plan:
         raise HTTPException(status_code=404, detail="الباقة غير موجودة")
-    active_subs = (
-        db.query(Subscription)
-        .filter(Subscription.plan_id == plan_id, Subscription.status == "active")
-        .count()
+    
+    stmt = select(func.count()).select_from(Subscription).filter(
+        Subscription.plan_id == plan_id, 
+        Subscription.status == "active"
     )
+    active_subs = (await db.execute(stmt)).scalar_one()
+
     if active_subs > 0:
         raise HTTPException(
             status_code=409,
             detail=f"لا يمكن حذف الباقة — هناك {active_subs} اشتراك نشط مرتبط بها",
         )
-    db.delete(plan)
-    db.commit()
+    await db.delete(plan)
+    await db.commit()
     return {"status": "success", "message": "تم حذف الباقة"}
 
 
@@ -182,24 +195,32 @@ def delete_plan(
 # إدارة المنظمين
 # ═══════════════════════════════════════
 @router.get("/organizers")
-def list_organizers(
-    db: Session = Depends(get_db),
+async def list_organizers(
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_super_admin),
 ):
     """قائمة جميع المنظمين مع بياناتهم."""
-    organizers = db.query(User).filter(User.role == "organizer").all()
+    stmt = select(User).filter(User.role == "organizer")
+    res = await db.execute(stmt)
+    organizers = res.scalars().all()
     results = []
     for org in organizers:
         try:
-            event_count = db.query(Event).filter(Event.created_by == org.id).count()
-            participant_count = (
-                db.query(Participant)
+            stmt_ev = select(func.count()).select_from(Event).filter(Event.created_by == org.id)
+            event_count = (await db.execute(stmt_ev)).scalar_one()
+
+            stmt_part = (
+                select(func.count())
+                .select_from(Participant)
                 .join(Event, Participant.event_id == Event.id)
                 .filter(Event.created_by == org.id)
-                .count()
             )
+            participant_count = (await db.execute(stmt_part)).scalar_one()
+
             try:
-                sub = db.query(Subscription).filter(Subscription.user_id == org.id).first()
+                stmt_sub = select(Subscription).filter(Subscription.user_id == org.id)
+                sub_res = await db.execute(stmt_sub)
+                sub = sub_res.scalars().first()
                 plan_name = sub.plan.name if sub and sub.plan else "بدون باقة"
             except Exception:
                 plan_name = "بدون باقة"
@@ -233,77 +254,79 @@ def list_organizers(
 
 
 @router.patch("/organizers/{org_id}/toggle")
-def toggle_organizer(
+async def toggle_organizer(
     org_id: int,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_super_admin),
 ):
     """تفعيل/تعطيل حساب منظم."""
-    org = db.query(User).filter(User.id == org_id).first()
+    org = await db.get(User, org_id)
     if not org:
         raise HTTPException(status_code=404, detail="المنظم غير موجود")
     org.is_active = not org.is_active
-    db.commit()
+    await db.commit()
     action = "تفعيل" if org.is_active else "تعطيل"
     return {"message": f"تم {action} الحساب", "is_active": org.is_active}
 
 @router.patch("/organizers/{org_id}/status")
-def update_organizer_status(
+async def update_organizer_status(
     org_id: int,
     status_data: UserStatusUpdate,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_super_admin),
 ):
     """تحديث حالة النشاط لمنظم (تفعيل/تجميد)."""
-    org = db.query(User).filter(User.id == org_id).first()
+    org = await db.get(User, org_id)
     if not org:
         raise HTTPException(status_code=404, detail="المنظم غير موجود")
     org.is_active = status_data.is_active
-    db.commit()
+    await db.commit()
     return {"message": "تم تحديث الحالة بنجاح", "is_active": org.is_active}
 
 @router.delete("/organizers/{org_id}")
-def delete_organizer(
+async def delete_organizer(
     org_id: int,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_super_admin),
 ):
     """حذف منظم بشكل نهائي مع بياناته."""
-    org = db.query(User).filter(User.id == org_id).first()
+    org = await db.get(User, org_id)
     if not org:
         raise HTTPException(status_code=404, detail="المنظم غير موجود")
     
     try:
         # 1. حذف قوالب الشارات والشهادات التي أنشأها المنظم (كلاهما في جدول BadgeTemplate)
-        db.query(BadgeTemplate).filter(BadgeTemplate.created_by == org_id).delete()
+        await db.execute(delete(BadgeTemplate).filter(BadgeTemplate.created_by == org_id))
         
         # 2. جلب كل الفعاليات الخاصة به لحذف متعلقاتها (المشاركين، إلخ)
-        events = db.query(Event).filter(Event.created_by == org_id).all()
+        stmt_ev = select(Event).filter(Event.created_by == org_id)
+        res_ev = await db.execute(stmt_ev)
+        events = res_ev.scalars().all()
         for event in events:
             # حذف المشاركين في هذه الفعالية
-            db.query(Participant).filter(Participant.event_id == event.id).delete()
+            await db.execute(delete(Participant).filter(Participant.event_id == event.id))
             # حذف الفعالية نفسها
-            db.delete(event)
+            await db.delete(event)
             
         # 3. حذف الاشتراكات
-        db.query(Subscription).filter(Subscription.user_id == org_id).delete()
+        await db.execute(delete(Subscription).filter(Subscription.user_id == org_id))
         
         # 4. حذف المنظم نفسه في النهاية
-        db.delete(org)
-        db.commit()
+        await db.delete(org)
+        await db.commit()
         return {"message": "تم حذف المنظم وكل بياناته المرتبطة بنجاح"}
     except Exception as e:
-        db.rollback()
+        await db.rollback()
         raise HTTPException(status_code=500, detail=f"فشل الحذف الشامل: {str(e)}")
 
 @router.post("/impersonate/{org_id}")
-def impersonate_organizer(
+async def impersonate_organizer(
     org_id: int,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_super_admin),
 ):
     """الدخول كمنظم محدد — ميزة خاصة للسوبر أدمن."""
-    org = db.query(User).filter(User.id == org_id).first()
+    org = await db.get(User, org_id)
     if not org:
         raise HTTPException(status_code=404, detail="المنظم غير موجود")
     
@@ -325,21 +348,23 @@ def impersonate_organizer(
 
 
 @router.patch("/organizers/{org_id}/plan")
-def assign_plan(
+async def assign_plan(
     org_id: int,
     plan_id: int,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_super_admin),
 ):
     """تعيين باقة لمنظم."""
-    org = db.query(User).filter(User.id == org_id).first()
+    org = await db.get(User, org_id)
     if not org:
         raise HTTPException(status_code=404, detail="المنظم غير موجود")
-    plan = db.query(SubscriptionPlan).filter(SubscriptionPlan.id == plan_id).first()
+    plan = await db.get(SubscriptionPlan, plan_id)
     if not plan:
         raise HTTPException(status_code=404, detail="الباقة غير موجودة")
 
-    sub = db.query(Subscription).filter(Subscription.user_id == org_id).first()
+    stmt = select(Subscription).filter(Subscription.user_id == org_id)
+    res = await db.execute(stmt)
+    sub = res.scalars().first()
     if sub:
         sub.plan_id = plan_id
         sub.status = "active"
@@ -347,24 +372,24 @@ def assign_plan(
         sub = Subscription(user_id=org_id, plan_id=plan_id, status="active")
         db.add(sub)
 
-    db.commit()
+    await db.commit()
     return {"message": f"تم تعيين باقة '{plan.name}' للمنظم", "plan": plan.name}
 
 
 @router.patch("/organizers/{org_id}/credits")
-def update_organizer_credits(
+async def update_organizer_credits(
     org_id: int,
     data: CreditUpdate,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_super_admin),
 ):
     """تحديث رصيد المنظم (شحن أو تعديل)."""
-    org = db.query(User).filter(User.id == org_id).first()
+    org = await db.get(User, org_id)
     if not org:
         raise HTTPException(status_code=404, detail="المنظم غير موجود")
     
     org.credits = data.credits
-    db.commit()
+    await db.commit()
     return {"message": f"تم تحديث رصيد المنظم إلى {org.credits} اعتماد", "credits": org.credits}
 
 
@@ -375,8 +400,8 @@ from app.models.rbac import Role, Permission
 
 
 @router.post("/init-roles")
-def initialize_default_roles(
-    db: Session = Depends(get_db),
+async def initialize_default_roles(
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_super_admin),
 ):
     """إنشاء الأدوار والصلاحيات الأساسية (يُنفَّذ مرة واحدة)."""
@@ -403,16 +428,20 @@ def initialize_default_roles(
     # أنشئ الصلاحيات
     perms = {}
     for code, desc in permissions_data:
-        p = db.query(Permission).filter(Permission.code == code).first()
+        stmt = select(Permission).filter(Permission.code == code)
+        res = await db.execute(stmt)
+        p = res.scalars().first()
         if not p:
             p = Permission(code=code, description=desc)
             db.add(p)
-            db.flush()
+            await db.flush()
         perms[code] = p
 
     # أنشئ الأدوار
     for role_name, perm_codes in roles_data.items():
-        role = db.query(Role).filter(Role.name == role_name).first()
+        stmt = select(Role).filter(Role.name == role_name)
+        res = await db.execute(stmt)
+        role = res.scalars().first()
         if not role:
             role = Role(name=role_name, is_system_role=True)
             role.permissions = [perms[c] for c in perm_codes]
@@ -420,44 +449,15 @@ def initialize_default_roles(
         else:
             role.permissions = [perms[c] for c in perm_codes]
 
-    db.commit()
+    await db.commit()
     return {"status": "ok", "message": "الأدوار الأساسية جاهزة"}
-
-
-# ═══════════════════════════════════════
-# تقمص الشخصية (Impersonation)
-# ═══════════════════════════════════════
-@router.post("/impersonate/{user_id}")
-def impersonate_user(
-    user_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_super_admin),
-):
-    """تقمص شخصية مستخدم آخر (للدعم الفني)."""
-    target_user = db.query(User).filter(User.id == user_id).first()
-    if not target_user:
-        raise HTTPException(status_code=404, detail="المستخدم غير موجود")
-
-    # توليد توكن جديد للمستخدم المستهدف
-    access_token = create_access_token(subject=target_user.email)
-
-    return {
-        "access_token": access_token,
-        "token_type": "bearer",
-        "user": {
-            "id": target_user.id,
-            "email": target_user.email,
-            "full_name": target_user.full_name,
-            "role": target_user.role,
-        },
-    }
 
 
 # ═══════════════════════════════════════
 # إعدادات المنصة العامة
 # ═══════════════════════════════════════
 @router.get("/settings")
-def get_platform_settings(
+async def get_platform_settings(
     current_user: User = Depends(require_super_admin),
 ):
     """جلب إعدادات المنصة العامة."""

@@ -1,5 +1,5 @@
 from sqlalchemy import text
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 import logging
 
 logger = logging.getLogger("SovereignSecurity")
@@ -36,11 +36,11 @@ class RLSSecurity:
             logger.info("Sovereign RLS enabled for core tables.")
 
     @staticmethod
-    def set_event_context(db: Session, event_id: int):
+    async def set_event_context(db: AsyncSession, event_id: int):
         """
         ضبط سياق الفعالية في جلسة قاعدة البيانات الحالية.
         يجب استدعاء هذه الدالة في كل طلب API.
         """
         # ضبط متغير الجلسة الذي تعتمد عليه سياسة الـ RLS
-        db.execute(text(f"SET app.current_event_id = '{event_id}';"))
+        await db.execute(text(f"SET app.current_event_id = '{event_id}';"))
         logger.debug(f"DB Context set to Event ID: {event_id}")

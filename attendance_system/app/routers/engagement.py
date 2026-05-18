@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import func, select
 from typing import List
 from app.core.database import get_db
 from app.models.engagement import GamificationEvent
@@ -9,18 +9,25 @@ from app.models.participant import Participant
 router = APIRouter()
 
 @router.get("/leaderboard/{event_id}")
-def get_leaderboard(event_id: int, limit: int = 10, db: Session = Depends(get_db)):
+async def get_leaderboard(event_id: int, limit: int = 10, db: AsyncSession = Depends(get_db)):
     """
     جلب قائمة المتصدرين (Leaderboard) للفعالية.
     """
-    results = db.query(
-        Participant.id,
-        Participant.full_name,
-        Participant.organization,
-        func.sum(GamificationEvent.points).label("total_points")
-    ).join(GamificationEvent).filter(
-        Participant.event_id == event_id
-    ).group_by(Participant.id).order_by(func.sum(GamificationEvent.points).desc()).limit(limit).all()
+    stmt = (
+        select(
+            Participant.id,
+            Participant.full_name,
+            Participant.organization,
+            func.sum(GamificationEvent.points).label("total_points")
+        )
+        .join(GamificationEvent)
+        .filter(Participant.event_id == event_id)
+        .group_by(Participant.id)
+        .order_by(func.sum(GamificationEvent.points).desc())
+        .limit(limit)
+    )
+    res = await db.execute(stmt)
+    results = res.all()
     
     return [
         {
@@ -32,7 +39,7 @@ def get_leaderboard(event_id: int, limit: int = 10, db: Session = Depends(get_db
     ]
 
 @router.post("/award-points")
-def award_points(participant_id: int, event_type: str, points: int, db: Session = Depends(get_db)):
+async def award_points(participant_id: int, event_type: str, points: int, db: AsyncSession = Depends(get_db)):
     """
     منح نقاط للمشارك بناءً على نشاطه.
     """
@@ -42,5 +49,5 @@ def award_points(participant_id: int, event_type: str, points: int, db: Session 
         points=points
     )
     db.add(event)
-    db.commit()
+    await db.commit()
     return {"status": "success", "new_total": 0} # Should calculate total if needed

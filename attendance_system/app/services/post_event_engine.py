@@ -1,7 +1,8 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.participant import Participant, Attendance
 from app.services.communication_hub import CommunicationHub
 from app.services.matchmaking import AIMatchmakingService
+from sqlalchemy import select
 import pandas as pd
 import io
 
@@ -11,19 +12,21 @@ class PostEventEngine:
     """
     
     @staticmethod
-    async def send_value_report(db: Session, participant_id: int):
+    async def send_value_report(db: AsyncSession, participant_id: int):
         """
         إرسال تقرير القيمة المضافة للمشارك.
         يشمل: من قابل، الجلسات التي حضرها، وتوصيات مستقبلية.
         """
-        participant = db.query(Participant).filter(Participant.id == participant_id).first()
+        participant = await db.get(Participant, participant_id)
         if not participant: return
         
         # 1. جمع الجلسات التي حضرها فعلياً
-        attended_sessions = db.query(Attendance).filter(
+        stmt = select(Attendance).filter(
             Attendance.participant_id == participant_id,
             Attendance.event_type == 'session_entry'
-        ).all()
+        )
+        res = await db.execute(stmt)
+        attended_sessions = res.scalars().all()
         
         # 2. توليد توصيات ذكية لفعاليات قادمة
         recommendations = ["AI Summit 2026", "Digital Sovereignty Forum"]
@@ -40,7 +43,7 @@ class PostEventEngine:
         )
 
     @staticmethod
-    def export_golden_leads(db: Session, exhibitor_id: int) -> bytes:
+    def export_golden_leads(db: AsyncSession, exhibitor_id: int) -> bytes:
         """
         توليد قائمة العملاء الذهبية للعارض بصيغة Excel جاهزة للـ CRM.
         """

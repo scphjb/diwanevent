@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from typing import List
 from app.core.database import get_db
 from app.models.others import Poll, PollOption, PollVote
@@ -23,16 +24,15 @@ from app.models.user import User
 from app.models.event import Event
 
 @router.post("/")
-def create_poll(
+async def create_poll(
     poll_data: PollCreate,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-    # RBAC يحتاج event_id كـ query param أو path param — نوفره من poll_data
     _: None = Depends(require_permission("event:write"))
 ):
-    """إنشاء تصويت جديد"""
-    # التحقق من وجود الفعالية
-    event = db.query(Event).filter(Event.id == poll_data.event_id).first()
+    """إنشاء تصويت جديد بشكل Async"""
+    event_result = await db.execute(select(Event).filter(Event.id == poll_data.event_id))
+    event = event_result.scalar_one_or_none()
     if not event:
         raise HTTPException(status_code=404, detail="الفعالية غير موجودة")
 
@@ -41,81 +41,90 @@ def create_poll(
 
     poll = Poll(event_id=poll_data.event_id, question=poll_data.question, is_active=True)
     db.add(poll)
-    db.flush()
+    await db.flush()
 
     for opt in poll_data.options:
         option = PollOption(poll_id=poll.id, option_text=opt.option_text)
         db.add(option)
 
-    db.commit()
-    db.refresh(poll)
+    await db.commit()
+    await db.refresh(poll)
     return {"message": "Poll created successfully", "poll_id": poll.id}
 
 @router.post("/{event_id}/activate/{poll_id}")
-def activate_poll(
+async def activate_poll(
     event_id: int,
     poll_id: int,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_permission("event:write"))
 ):
-    poll = db.query(Poll).filter(Poll.id == poll_id, Poll.event_id == event_id).first()
+    result = await db.execute(select(Poll).filter(Poll.id == poll_id, Poll.event_id == event_id))
+    poll = result.scalar_one_or_none()
     if not poll:
         raise HTTPException(status_code=404, detail="Poll not found")
     
     poll.is_active = True
-    db.commit()
+    await db.commit()
     return {"message": "Poll activated"}
 
 @router.post("/{event_id}/deactivate/{poll_id}")
-def deactivate_poll(
+async def deactivate_poll(
     event_id: int,
     poll_id: int,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_permission("event:write"))
 ):
-    poll = db.query(Poll).filter(Poll.id == poll_id, Poll.event_id == event_id).first()
+    result = await db.execute(select(Poll).filter(Poll.id == poll_id, Poll.event_id == event_id))
+    poll = result.scalar_one_or_none()
     if not poll:
         raise HTTPException(status_code=404, detail="Poll not found")
     
     poll.is_active = False
-    db.commit()
+    await db.commit()
     return {"message": "Poll deactivated"}
 
 @router.delete("/{event_id}/{poll_id}")
-def delete_poll(
+async def delete_poll(
     event_id: int,
     poll_id: int,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     _: None = Depends(require_permission("event:write"))
 ):
-    poll = db.query(Poll).filter(Poll.id == poll_id, Poll.event_id == event_id).first()
+    result = await db.execute(select(Poll).filter(Poll.id == poll_id, Poll.event_id == event_id))
+    poll = result.scalar_one_or_none()
     if not poll:
         raise HTTPException(status_code=404, detail="Poll not found")
 
-    # ✅ حذف السجلات المرتبطة أولاً لتفادي خطأ Foreign Key
-    # (لا يوجد cascade في الـ models)
-    option_ids = [o.id for o in db.query(PollOption).filter(PollOption.poll_id == poll_id).all()]
-    if option_ids:
-        db.query(PollVote).filter(PollVote.option_id.in_(option_ids)).delete(synchronize_session=False)
-    db.query(PollVote).filter(PollVote.poll_id == poll_id).delete(synchronize_session=False)
-    db.query(PollOption).filter(PollOption.poll_id == poll_id).delete(synchronize_session=False)
+    options_result = await db.execute(select(PollOption).filter(PollOption.poll_id == poll_id))
+    options = options_result.scalars().all()
+    option_ids = [o.id for o in options]
 
-    db.delete(poll)
-    db.commit()
+    from sqlalchemy import delete
+    if option_ids:
+        await db.execute(delete(PollVote).filter(PollVote.option_id.in_(option_ids)))
+    await db.execute(delete(PollVote).filter(PollVote.poll_id == poll_id))
+    await db.execute(delete(PollOption).filter(PollOption.poll_id == poll_id))
+
+    await db.delete(poll)
+    await db.commit()
     return {"message": "Poll deleted"}
 
-
 @router.get("/{event_id}/all")
-def get_all_polls(event_id: int, db: Session = Depends(get_db)):
+async def get_all_polls(event_id: int, db: AsyncSession = Depends(get_db)):
     """جلب جميع تصويتات الفعالية (نشطة وغير نشطة)"""
-    polls = db.query(Poll).filter(Poll.event_id == event_id).all()
+    polls_result = await db.execute(select(Poll).filter(Poll.event_id == event_id))
+    polls = polls_result.scalars().all()
     results = []
     for poll in polls:
-        options = db.query(PollOption).filter(PollOption.poll_id == poll.id).all()
-        votes = db.query(PollVote).filter(PollVote.poll_id == poll.id).all()
+        options_result = await db.execute(select(PollOption).filter(PollOption.poll_id == poll.id))
+        options = options_result.scalars().all()
+        
+        votes_result = await db.execute(select(PollVote).filter(PollVote.poll_id == poll.id))
+        votes = votes_result.scalars().all()
+        
         total_votes = len(votes)
         results.append({
             "id": poll.id,
@@ -135,12 +144,14 @@ def get_all_polls(event_id: int, db: Session = Depends(get_db)):
     return results
 
 @router.get("/{event_id}/active")
-def get_active_polls(event_id: int, db: Session = Depends(get_db)):
+async def get_active_polls(event_id: int, db: AsyncSession = Depends(get_db)):
     """جلب التصويتات النشطة فقط"""
-    polls = db.query(Poll).filter(Poll.event_id == event_id, Poll.is_active == True).all()
+    polls_result = await db.execute(select(Poll).filter(Poll.event_id == event_id, Poll.is_active == True))
+    polls = polls_result.scalars().all()
     results = []
     for poll in polls:
-        options = db.query(PollOption).filter(PollOption.poll_id == poll.id).all()
+        options_result = await db.execute(select(PollOption).filter(PollOption.poll_id == poll.id))
+        options = options_result.scalars().all()
         results.append({
             "id": poll.id,
             "question": poll.question,
@@ -154,58 +165,52 @@ async def submit_vote(
     option_id: int,
     participant_id: int,
     background_tasks: BackgroundTasks,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
-    """
-    تسجيل صوت المشارك.
-
-    الاستراتيجية:
-    1. التحقق من عدم التكرار + INSERT فوري → إرجاع استجابة سريعة للمستخدم
-    2. حساب النتائج وبثّها عبر WebSocket في الخلفية (BackgroundTask)
-
-    هذا الفصل يخفض زمن الاستجابة P95 من ~2100ms إلى < 300ms
-    تحت ضغط 2000 تصويت متزامن، ويُلغي Lock Contention على جدول poll_votes.
-    """
-    # التحقق من التصويت المسبق
-    existing = db.query(PollVote).filter(
-        PollVote.poll_id == poll_id,
-        PollVote.participant_id == participant_id,
-    ).first()
+    """تسجيل صوت المشارك بشكل Async بالكامل لمنع القفل"""
+    existing_result = await db.execute(
+        select(PollVote).filter(
+            PollVote.poll_id == poll_id,
+            PollVote.participant_id == participant_id,
+        )
+    )
+    existing = existing_result.scalar_one_or_none()
     if existing:
         raise HTTPException(status_code=400, detail="Already voted")
 
     # تسجيل الصوت فوراً
     vote = PollVote(poll_id=poll_id, option_id=option_id, participant_id=participant_id)
     db.add(vote)
-    db.commit()
+    await db.commit()
 
     # ⚡ إرجاع استجابة فورية للمستخدم — الحساب والبث في الخلفية
     background_tasks.add_task(_broadcast_poll_results, poll_id)
 
     return {"message": "Vote recorded"}
 
-
-def _broadcast_poll_results(poll_id: int):
+async def _broadcast_poll_results(poll_id: int):
     """
-    مهمة خلفية: حساب نتائج التصويت وبثّها لكل المتصلين عبر WebSocket.
-    تُنفَّذ بعد إرجاع الاستجابة للمصوّت مباشرة — لا تُبطئ المستخدم أبداً.
+    مهمة خلفية Async: حساب نتائج التصويت وبثّها لكل المتصلين عبر WebSocket.
     """
-    import asyncio
-    from app.core.database import SessionLocal
-    from sqlalchemy import func
-
-    db = SessionLocal()
-    try:
-        from sqlalchemy import func
-        vote_counts = db.query(
-            PollVote.option_id,
-            func.count(PollVote.id).label("cnt"),
-        ).filter(PollVote.poll_id == poll_id).group_by(PollVote.option_id).all()
-
-        counts_dict = {vc.option_id: vc.cnt for vc in vote_counts}
-        options = db.query(PollOption).filter(PollOption.poll_id == poll_id).all()
-        poll   = db.query(Poll).filter(Poll.id == poll_id).first()
-
+    from app.core.database import AsyncSessionLocal
+    from sqlalchemy import func, select
+    
+    async with AsyncSessionLocal() as db:
+        vote_counts_result = await db.execute(
+            select(PollVote.option_id, func.count(PollVote.id).label("cnt"))
+            .filter(PollVote.poll_id == poll_id)
+            .group_by(PollVote.option_id)
+        )
+        vote_counts = vote_counts_result.all()
+        
+        counts_dict = {vc[0]: vc[1] for vc in vote_counts}
+        
+        options_result = await db.execute(select(PollOption).filter(PollOption.poll_id == poll_id))
+        options = options_result.scalars().all()
+        
+        poll_result = await db.execute(select(Poll).filter(Poll.id == poll_id))
+        poll = poll_result.scalar_one_or_none()
+        
         if not poll:
             return
 
@@ -219,16 +224,5 @@ def _broadcast_poll_results(poll_id: int):
                 ],
             },
         }
-
-        # تشغيل coroutine البث داخل event loop جديد إن لم يكن هناك loop نشط
-        try:
-            loop = asyncio.get_event_loop()
-            if loop.is_running():
-                asyncio.ensure_future(manager.broadcast_to_event(poll.event_id, payload))
-            else:
-                loop.run_until_complete(manager.broadcast_to_event(poll.event_id, payload))
-        except RuntimeError:
-            asyncio.run(manager.broadcast_to_event(poll.event_id, payload))
-    finally:
-        db.close()
-
+        
+        await manager.broadcast_to_event(poll.event_id, payload)

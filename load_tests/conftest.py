@@ -57,8 +57,8 @@ def setup_test_data():
     )
     
     if event_resp.status_code not in (200, 201):
-        print(f"[!] Event creation failed: {event_resp.status_code} — using existing active event ID=4")
-        event_id = 4
+        print(f"[!] Event creation failed: {event_resp.status_code} — using existing active event ID=1")
+        event_id = 1
     else:
         event_id = event_resp.json()["id"]
         print(f"[+] Event created: ID={event_id}")

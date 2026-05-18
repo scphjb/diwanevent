@@ -1,7 +1,8 @@
 import re
 from typing import Dict, Any, Tuple
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.participant import Participant
+from sqlalchemy import select, or_, func
 
 class DataSanitizer:
     @staticmethod
@@ -44,7 +45,7 @@ class DataSanitizer:
     def validate_email(email: str) -> bool:
         """التحقق من صحة هيكل الإيميل"""
         if not email: return False
-        pattern = r'^[a-zA-Z0-0_.+-]+@[a-zA-Z0-0-]+\.[a-zA-Z0-0-.]+$'
+        pattern = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
         return bool(re.match(pattern, str(email)))
 
     @staticmethod
@@ -62,10 +63,8 @@ class DataSanitizer:
         return f"+{digits}" if not str(phone).startswith('+') else phone
 
     @staticmethod
-    def is_duplicate(db: Session, event_id: int, email: str, phone: str) -> bool:
+    async def is_duplicate(db: AsyncSession, event_id: int, email: str, phone: str) -> bool:
         """اكتشاف التكرار بناءً على الإيميل أو الهاتف"""
-        query = db.query(Participant).filter(Participant.event_id == event_id)
-        
         conditions = []
         if email:
             conditions.append(Participant.email == email)
@@ -75,11 +74,16 @@ class DataSanitizer:
         if not conditions:
             return False
             
-        from sqlalchemy import or_
-        return db.query(query.filter(or_(*conditions)).exists()).scalar()
+        stmt = select(func.count(Participant.id)).filter(
+            Participant.event_id == event_id,
+            or_(*conditions)
+        )
+        res = await db.execute(stmt)
+        count = res.scalar() or 0
+        return count > 0
 
     @classmethod
-    def process_row(cls, db: Session, event_id: int, row_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def process_row(cls, db: AsyncSession, event_id: int, row_data: Dict[str, Any]) -> Dict[str, Any]:
         """المعالج الرئيسي للسطر الواحد"""
         raw_name = row_data.get('full_name')
         
@@ -93,7 +97,7 @@ class DataSanitizer:
         clean_name, name_note = cls.sanitize_name(raw_name)
         clean_phone = cls.normalize_phone(raw_phone)
         
-        is_duplicate = cls.is_duplicate(db, event_id, raw_email, clean_phone)
+        is_duplicate = await cls.is_duplicate(db, event_id, raw_email, clean_phone)
         is_valid_email = cls.validate_email(raw_email)
         
         notes = []

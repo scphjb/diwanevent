@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.auth_deps import get_current_active_user
 from app.models.user import User
 from app.models.template import BadgeTemplate
 from app.models.event import Event
+from sqlalchemy import select
 import json
 
 router = APIRouter(prefix="/api/v1/templates", tags=["Templates"])
@@ -12,7 +13,7 @@ router = APIRouter(prefix="/api/v1/templates", tags=["Templates"])
 # ── CRUD القوالب ────────────────────────────────────────────────
 
 @router.post("/")
-def create_template(data: dict, db: Session = Depends(get_db),
+async def create_template(data: dict, db: AsyncSession = Depends(get_db),
                     current_user: User = Depends(get_current_active_user)):
     """حفظ قالب بادج أو شهادة"""
     template = BadgeTemplate(
@@ -27,28 +28,33 @@ def create_template(data: dict, db: Session = Depends(get_db),
         is_default=data.get('is_default', False)
     )
     db.add(template)
-    db.commit()
-    db.refresh(template)
+    await db.commit()
+    await db.refresh(template)
     return template
 
 @router.get("/")
-def list_templates(event_id: int = None, type: str = None,
-                   db: Session = Depends(get_db),
+async def list_templates(event_id: int = None, type: str = None,
+                   db: AsyncSession = Depends(get_db),
                    current_user: User = Depends(get_current_active_user)):
     """قائمة القوالب المحفوظة"""
-    query = db.query(BadgeTemplate).filter(BadgeTemplate.created_by == current_user.id)
-    if event_id: query = query.filter(BadgeTemplate.event_id == event_id)
-    if type: query = query.filter(BadgeTemplate.type == type)
-    return query.all()
+    stmt = select(BadgeTemplate).filter(BadgeTemplate.created_by == current_user.id)
+    if event_id:
+        stmt = stmt.filter(BadgeTemplate.event_id == event_id)
+    if type:
+        stmt = stmt.filter(BadgeTemplate.type == type)
+    res = await db.execute(stmt)
+    return res.scalars().all()
 
 @router.put("/{template_id}")
-def update_template(template_id: int, data: dict,
-                    db: Session = Depends(get_db),
+async def update_template(template_id: int, data: dict,
+                    db: AsyncSession = Depends(get_db),
                     current_user: User = Depends(get_current_active_user)):
-    template = db.query(BadgeTemplate).filter(
+    stmt = select(BadgeTemplate).filter(
         BadgeTemplate.id == template_id,
         BadgeTemplate.created_by == current_user.id
-    ).first()
+    )
+    res = await db.execute(stmt)
+    template = res.scalars().first()
     if not template:
         raise HTTPException(status_code=404, detail="القالب غير موجود")
         
@@ -58,26 +64,29 @@ def update_template(template_id: int, data: dict,
     template.width_mm = data.get('width_mm', template.width_mm)
     template.height_mm = data.get('height_mm', template.height_mm)
     template.orientation = data.get('orientation', template.orientation)
-    db.commit()
-    db.refresh(template)
+    await db.commit()
+    await db.refresh(template)
     return template
 
 @router.delete("/{template_id}")
-def delete_template(template_id: int, db: Session = Depends(get_db),
+async def delete_template(template_id: int, db: AsyncSession = Depends(get_db),
                     current_user: User = Depends(get_current_active_user)):
-    template = db.query(BadgeTemplate).filter(
+    stmt = select(BadgeTemplate).filter(
         BadgeTemplate.id == template_id,
         BadgeTemplate.created_by == current_user.id
-    ).first()
-    if not template: raise HTTPException(status_code=404, detail="القالب غير موجود")
-    db.delete(template)
-    db.commit()
+    )
+    res = await db.execute(stmt)
+    template = res.scalars().first()
+    if not template:
+        raise HTTPException(status_code=404, detail="القالب غير موجود")
+    await db.delete(template)
+    await db.commit()
     return {"status": "deleted"}
 
 # ── معاينة PDF (مشارك واحد نموذجي) ─────────────────────────────
 
 @router.post("/preview-pdf")
-def preview_template_pdf(data: dict, db: Session = Depends(get_db),
+async def preview_template_pdf(data: dict, db: AsyncSession = Depends(get_db),
                                 current_user: User = Depends(get_current_active_user)):
     """
     يولّد PDF معاينة بمشارك نموذجي.
@@ -114,8 +123,8 @@ def preview_template_pdf(data: dict, db: Session = Depends(get_db),
 # ── طباعة جماعية ─────────────────────────────────────────────────
 
 @router.post("/{template_id}/print")
-def print_badges(template_id: int, event_id: int, participant_id: int = None,
-                       db: Session = Depends(get_db),
+async def print_badges(template_id: int, event_id: int, participant_id: int = None,
+                       db: AsyncSession = Depends(get_db),
                        current_user: User = Depends(get_current_active_user)):
     """
     يولّد PDF يحتوي على بادجات/شهادات. 
@@ -125,19 +134,21 @@ def print_badges(template_id: int, event_id: int, participant_id: int = None,
     from app.utils.pdf_renderer import render_batch_pdf
     from fastapi.responses import Response
     
-    template = db.query(BadgeTemplate).filter(BadgeTemplate.id == template_id).first()
-    if not template: raise HTTPException(status_code=404, detail="القالب غير موجود")
+    template = await db.get(BadgeTemplate, template_id)
+    if not template:
+        raise HTTPException(status_code=404, detail="القالب غير موجود")
     
-    query = db.query(Participant).filter(Participant.event_id == event_id)
+    stmt = select(Participant).filter(Participant.event_id == event_id)
     if participant_id:
-        query = query.filter(Participant.id == participant_id)
+        stmt = stmt.filter(Participant.id == participant_id)
     
-    participants = query.all()
+    res = await db.execute(stmt)
+    participants = res.scalars().all()
     
     if not participants:
         raise HTTPException(status_code=404, detail="لا يوجد مشاركون مسجلون في هذه الفعالية للطباعة")
     
-    event = db.query(Event).filter(Event.id == event_id).first()
+    event = await db.get(Event, event_id)
     event_info = {
         'event_logo': event.logo_url if event else None,
         'event_name': event.event_name if event else '',

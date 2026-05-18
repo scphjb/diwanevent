@@ -1,7 +1,7 @@
 from typing import Dict, Any, Optional
 from app.core.websockets import manager
-from sqlalchemy.orm import Session
-from sqlalchemy import func, distinct
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import func, distinct, select
 from app.models.participant import Participant, Attendance
 
 class NotificationService:
@@ -24,18 +24,22 @@ class NotificationService:
         await manager.broadcast_to_admins(event_id, payload)
 
     @classmethod
-    async def check_attendance_milestones(cls, db: Session, event_id: int):
+    async def check_attendance_milestones(cls, db: AsyncSession, event_id: int):
         """التحقق من نسب الحضور وإرسال تنبيهات عند الوصول للأهداف"""
         # حساب الإجمالي
-        total = db.query(Participant).filter(Participant.event_id == event_id).count()
+        stmt_total = select(func.count(Participant.id)).filter(Participant.event_id == event_id)
+        res_total = await db.execute(stmt_total)
+        total = res_total.scalar() or 0
         
         # حساب الحضور الفعلي باستخدام جدول Attendance (تجنب تكرار المسح لنفس الشخص)
-        checked_in = db.query(func.count(distinct(Attendance.participant_id)))\
+        stmt_checked = select(func.count(distinct(Attendance.participant_id)))\
             .join(Participant, Attendance.participant_id == Participant.id)\
             .filter(
                 Participant.event_id == event_id,
                 Attendance.event_type == 'check_in'
-            ).scalar() or 0
+            )
+        res_checked = await db.execute(stmt_checked)
+        checked_in = res_checked.scalar() or 0
         
         if total == 0: return
 

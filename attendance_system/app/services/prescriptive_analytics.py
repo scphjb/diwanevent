@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.services.spatial_service import SpatialService
 from typing import List, Dict
 
@@ -8,14 +8,14 @@ class PrescriptiveAnalytics:
     """
     
     @staticmethod
-    def get_prescriptions(db: Session, event_id: int) -> List[Dict]:
+    async def get_prescriptions(db: AsyncSession, event_id: int) -> List[Dict]:
         """
         تحليل البيانات الحالية وإصدار توصيات تشغيلية فورية.
         """
         prescriptions = []
         
         # 1. تحليل كثافة الحشود
-        density = SpatialService.get_crowd_density(db, event_id)
+        density = await SpatialService.get_crowd_density(db, event_id)
         for zone_id, count in density.items():
             if count > 200: # عتبة الازدحام
                 prescriptions.append({

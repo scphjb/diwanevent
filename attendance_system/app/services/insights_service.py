@@ -1,5 +1,5 @@
-from sqlalchemy.orm import Session
-from sqlalchemy import func, text
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import func, text, select
 from app.models.participant import Participant
 from app.models.event import Event
 from app.models.others import SocialPost, PollVote
@@ -12,7 +12,7 @@ class InsightsService:
     """
     
     @staticmethod
-    async def analyze_checkin_flow(db: Session, event_id: int):
+    async def analyze_checkin_flow(db: AsyncSession, event_id: int):
         """
         رصد أنماط التأخير والازدحام.
         يحلل معدل الدخول في آخر 10 دقائق مقارنة بالساعة السابقة.
@@ -20,10 +20,12 @@ class InsightsService:
         ten_mins_ago = datetime.datetime.now() - datetime.timedelta(minutes=10)
         
         # حساب معدل الدخول الحالي
-        current_rate = db.query(Participant).filter(
+        stmt = select(func.count(Participant.id)).filter(
             Participant.event_id == event_id,
             Participant.corrected_at >= ten_mins_ago
-        ).count()
+        )
+        res = await db.execute(stmt)
+        current_rate = res.scalar() or 0
         
         if current_rate == 0:
             return {"status": "normal", "insight": "الحركة هادئة حالياً عند البوابات."}
@@ -38,22 +40,26 @@ class InsightsService:
         return {"status": "normal", "current_rate": current_rate}
 
     @staticmethod
-    async def vip_arrival_prediction(db: Session, event_id: int, session_start_time: datetime.datetime):
+    async def vip_arrival_prediction(db: AsyncSession, event_id: int, session_start_time: datetime.datetime):
         """
         تتبع استباقي لكبار الشخصيات (VIPs).
         """
-        total_vips = db.query(Participant).filter(
+        stmt_total = select(func.count(Participant.id)).filter(
             Participant.event_id == event_id,
             Participant.role.ilike('%VIP%')
-        ).count()
+        )
+        res_total = await db.execute(stmt_total)
+        total_vips = res_total.scalar() or 0
         
         if total_vips == 0: return None
 
-        arrived_vips = db.query(Participant).filter(
+        stmt_arrived = select(func.count(Participant.id)).filter(
             Participant.event_id == event_id,
             Participant.role.ilike('%VIP%'),
             Participant.payment_status == 'paid'
-        ).count()
+        )
+        res_arrived = await db.execute(stmt_arrived)
+        arrived_vips = res_arrived.scalar() or 0
         
         arrival_rate = (arrived_vips / total_vips) * 100
         time_left = session_start_time - datetime.datetime.now()
@@ -70,17 +76,27 @@ class InsightsService:
         return {"status": "good", "arrival_rate": arrival_rate}
 
     @staticmethod
-    def generate_executive_summary(db: Session, event_id: int):
+    async def generate_executive_summary(db: AsyncSession, event_id: int):
         """
         توليد ملخص تنفيذي نصي (Human-readable Summary).
         """
-        total = db.query(Participant).filter(Participant.event_id == event_id).count()
-        present = db.query(Participant).filter(Participant.event_id == event_id, Participant.payment_status == 'paid').count()
+        stmt_total = select(func.count(Participant.id)).filter(Participant.event_id == event_id)
+        res_total = await db.execute(stmt_total)
+        total = res_total.scalar() or 0
         
-        top_social_active = db.query(SocialPost.author_name).filter(SocialPost.event_id == event_id).group_by(SocialPost.author_name).count()
+        stmt_present = select(func.count(Participant.id)).filter(Participant.event_id == event_id, Participant.payment_status == 'paid')
+        res_present = await db.execute(stmt_present)
+        present = res_present.scalar() or 0
+        
+        stmt_social = select(func.count(SocialPost.author_name)).filter(SocialPost.event_id == event_id).group_by(SocialPost.author_name)
+        res_social = await db.execute(stmt_social)
+        top_social_active = len(res_social.all())
         
         summary = f"تقرير الأداء لفعالية {event_id}:\n"
-        summary += f"- نسبة الحضور الإجمالية بلغت {int((present/total)*100)}%.\n"
+        if total > 0:
+            summary += f"- نسبة الحضور الإجمالية بلغت {int((present/total)*100)}%.\n"
+        else:
+            summary += f"- نسبة الحضور الإجمالية بلغت 0%.\n"
         
         if present > 0:
             summary += "- ذروة الحضور كانت خلال الساعة الأولى من الافتتاح.\n"

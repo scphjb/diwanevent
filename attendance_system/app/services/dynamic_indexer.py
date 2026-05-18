@@ -1,8 +1,9 @@
 from sqlalchemy import text
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Any
-from app.core.database import engine
+from app.core.database import async_engine
 from app.models.dynamic_indexer import IndexUsageStats
+from sqlalchemy import select
 import logging
 
 logger = logging.getLogger("DynamicIndexer")
@@ -11,26 +12,29 @@ class DynamicIndexer:
     THRESHOLD = 50  # عدد المرات المطلوبة قبل تفعيل الفهرس تلقائياً
 
     @staticmethod
-    def track_field_usage(db: Session, field_key: str):
+    async def track_field_usage(db: AsyncSession, field_key: str):
         """
         تسجيل استخدام حقل معين في استعلام.
         """
-        stat = db.query(IndexUsageStats).filter(IndexUsageStats.field_key == field_key).first()
+        stmt = select(IndexUsageStats).filter(IndexUsageStats.field_key == field_key)
+        res = await db.execute(stmt)
+        stat = res.scalars().first()
+        
         if not stat:
             stat = IndexUsageStats(field_key=field_key, query_count=1)
             db.add(stat)
         else:
             stat.query_count += 1
             
-        db.commit()
+        await db.commit()
 
         if stat.query_count >= DynamicIndexer.THRESHOLD and not stat.is_indexed:
-            DynamicIndexer.create_jsonb_index(field_key)
+            await DynamicIndexer.create_jsonb_index(field_key)
             stat.is_indexed = True
-            db.commit()
+            await db.commit()
 
     @staticmethod
-    def create_jsonb_index(field_key: str):
+    async def create_jsonb_index(field_key: str):
         """
         توليد وتنفيذ فهرس PostgreSQL متزامن للحقل المطلوب داخل JSONB.
         """
@@ -39,8 +43,9 @@ class DynamicIndexer:
         query = text(f"CREATE INDEX CONCURRENTLY IF NOT EXISTS {index_name} ON participants ((custom_values->>'{field_key}'));")
         
         try:
-            with engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
-                conn.execute(query)
+            async with async_engine.connect() as conn:
+                await conn.execution_options(isolation_level="AUTOCOMMIT")
+                await conn.execute(query)
                 logger.info(f"Dynamic Index Created: {index_name} for field {field_key}")
         except Exception as e:
             logger.error(f"Failed to create dynamic index for {field_key}: {str(e)}")

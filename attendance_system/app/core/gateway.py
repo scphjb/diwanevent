@@ -22,11 +22,10 @@ class EnterpriseGateway:
                 
             # التحقق من قاعدة البيانات (نستخدم APIKeyManager الذي أنشأناه)
             from app.core.api_key_handler import APIKeyManager
-            from app.core.database import SessionLocal
+            from app.core.database import AsyncSessionLocal
             
-            db = SessionLocal()
-            is_valid = APIKeyManager.verify_key(api_key, required_scope, db)
-            db.close()
+            async with AsyncSessionLocal() as db:
+                is_valid = await APIKeyManager.verify_key(api_key, required_scope, db)
             
             if not is_valid:
                 raise HTTPException(

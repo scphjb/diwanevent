@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, update, delete
 from typing import List
 from app.core.database import get_db
 from app.core.auth_deps import get_current_user
@@ -22,34 +23,46 @@ class NotificationSchema(BaseModel):
 
 @router.get("/", response_model=List[NotificationSchema])
 async def get_notifications(
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user = Depends(get_current_user),
     limit: int = 50
 ):
-    notifications = db.query(UserNotification).filter(
-        UserNotification.user_id == current_user.id
-    ).order_by(UserNotification.created_at.desc()).limit(limit).all()
+    stmt = (
+        select(UserNotification)
+        .filter(UserNotification.user_id == current_user.id)
+        .order_by(UserNotification.created_at.desc())
+        .limit(limit)
+    )
+    result = await db.execute(stmt)
+    notifications = result.scalars().all()
     return notifications
 
 @router.post("/read-all")
 async def mark_all_as_read(
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
-    db.query(UserNotification).filter(
-        UserNotification.user_id == current_user.id,
-        UserNotification.is_read == False
-    ).update({"is_read": True})
-    db.commit()
+    stmt = (
+        update(UserNotification)
+        .filter(
+            UserNotification.user_id == current_user.id,
+            UserNotification.is_read == False
+        )
+        .values(is_read=True)
+    )
+    await db.execute(stmt)
+    await db.commit()
     return {"message": "All notifications marked as read"}
 
 @router.delete("/clear")
 async def clear_notifications(
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
-    db.query(UserNotification).filter(
-        UserNotification.user_id == current_user.id
-    ).delete()
-    db.commit()
+    stmt = (
+        delete(UserNotification)
+        .filter(UserNotification.user_id == current_user.id)
+    )
+    await db.execute(stmt)
+    await db.commit()
     return {"message": "Notifications cleared"}

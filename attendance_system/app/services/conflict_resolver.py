@@ -1,5 +1,5 @@
 from typing import Dict, Any, Tuple
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.participant import Participant
 from app.core.websockets import manager
 import datetime
@@ -35,7 +35,7 @@ class ConflictResolver:
 
     @staticmethod
     async def resolve(
-        db: Session, 
+        db: AsyncSession, 
         server_obj: Participant, 
         incoming_data: Dict[str, Any], 
         policy: str = "semantic"
