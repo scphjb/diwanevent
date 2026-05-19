@@ -71,9 +71,9 @@ class PollOption(Base, TimestampMixin):
 class PollVote(Base, TimestampMixin):
     __tablename__ = "poll_votes"
     id = Column(Integer, primary_key=True, index=True)
-    poll_id = Column(Integer, ForeignKey("polls.id"))
-    option_id = Column(Integer, ForeignKey("poll_options.id"))
-    participant_id = Column(Integer, ForeignKey("participants.id", ondelete="CASCADE"))
+    poll_id = Column(Integer, ForeignKey("polls.id"), index=True)
+    option_id = Column(Integer, ForeignKey("poll_options.id"), index=True)
+    participant_id = Column(Integer, ForeignKey("participants.id", ondelete="CASCADE"), index=True)
 
 class SocialPost(Base, TimestampMixin):
     __tablename__ = "social_wall"

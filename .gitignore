@@ -73,3 +73,9 @@ attendance_system/legacy/
 
 # Uploads temporaires
 attendance_system/uploads/
+
+# Testing artifacts & reports
+load_tests/reports/
+*.txt
+*.html
+run_spike_locust_copied.sh

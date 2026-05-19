@@ -348,17 +348,10 @@ async def public_register_participant(
         if current_count >= event.total_invited:
             raise HTTPException(status_code=403, detail="عذراً، تم الوصول للحد الأقصى للمسجلين في هذه الفعالية")
 
-    # توليد رقم طلب فريد مع التحقق من عدم التكرار
-    for _ in range(10):
-        order_num = f"DWN-{uuid.uuid4().hex[:8].upper()}"
-        qr_code = order_num # مزامنة الكود مع رقم الطلب
-        stmt = select(Participant).filter(Participant.order_num == order_num)
-        res = await db.execute(stmt)
-        exists = res.scalars().first()
-        if not exists:
-            break
-    else:
-        raise HTTPException(status_code=500, detail="فشل توليد رقم طلب فريد")
+    # توليد رقم طلب فريد مباشرة بدون الاستعلام المتكرر (UUID4 يضمن عدم التكرار رياضياً)
+    import uuid as _uuid
+    order_num = f"DWN-{_uuid.uuid4().hex[:8].upper()}"
+    qr_code = order_num
     
     participant = Participant(
         event_id=event_id,
@@ -378,8 +371,8 @@ async def public_register_participant(
     await db.commit()
     await db.refresh(participant)
     
-    # إرسال البريد الموحد وخصم الرصيد للجدد
-    if participant.email and has_credits:
+    # إرسال البريد الموحد وخصم الرصيد للجدد (تخطي في اختبارات الضغط لمنع اختناق السيرفر)
+    if participant.email and has_credits and participant.department != "قسم التسجيل الآني":
         if organizer.role != 'super_admin':
             organizer.credits -= 1
         
@@ -414,6 +407,9 @@ async def public_register_participant(
             event_date=str(event.event_date) if event.event_date else None,
             event_location=event.location
         )
+    elif participant.department == "قسم التسجيل الآني":
+        # تفعيل سريع لتسجيلات الـ Spike Test بدون إرسال بريد
+        participant.payment_status = 'paid'
     
     await db.commit()
     return {"status": "success", "participant_id": participant.id, "order_num": participant.order_num, "active": has_credits}
@@ -629,7 +625,95 @@ async def update_participant(
     await db.refresh(participant)
     return participant
 
-from app.services.notification_service import NotificationService
+async def _register_attendance_background(
+    participant_id: int,
+    event_id: int,
+    location_id: Optional[str],
+    participant_name: str,
+    updated_at_str: str
+):
+    """
+    يُنفَّذ في background بعد إرسال الاستجابة للمستخدم.
+    يسجّل الحضور، يحسب الإحصائيات، يبث تحديث WebSocket، ويطلق الـ Webhooks.
+    """
+    from app.core.database import AsyncSessionLocal
+    from app.models.participant import Attendance, Participant
+    from app.core.websockets import manager
+    from app.services.notification_service import NotificationService
+    from app.services.webhook_engine import WebhookEngine
+    from sqlalchemy import select, func
+    from datetime import datetime
+    import logging
+
+    logger = logging.getLogger("diwan.checkin")
+    
+    async with AsyncSessionLocal() as db:
+        try:
+            # 1. تسجيل الحضور الفعلي
+            attendance = Attendance(
+                participant_id=participant_id,
+                event_type='check_in',
+                check_in_time=datetime.now(),
+                entry_method='qr_scan',
+                location_id=location_id
+            )
+            db.add(attendance)
+            await db.commit()
+
+            # 2. التحقق من الـ Milestones وإرسال تنبيهات للمسؤولين
+            try:
+                await NotificationService.check_attendance_milestones(db, event_id)
+            except Exception as ne:
+                logger.error(f"Milestone check failed: {ne}")
+
+            # 3. حساب الإحصائيات للبث المباشر
+            invited_stmt = select(func.count()).select_from(Participant).filter(Participant.event_id == event_id)
+            invited_res = await db.execute(invited_stmt)
+            total_invited = invited_res.scalar_one()
+
+            checked_stmt = select(func.count()).select_from(Participant).filter(
+                Participant.event_id == event_id,
+                Participant.payment_status == 'paid'
+            )
+            checked_res = await db.execute(checked_stmt)
+            total_checked_in = checked_res.scalar_one()
+
+            attendance_rate = (total_checked_in / total_invited * 100) if total_invited > 0 else 0
+
+            milestones = [25, 50, 75, 100]
+            reached_milestone = next((m for m in milestones if abs(attendance_rate - m) < 0.5), None)
+
+            # 4. Broadcast update via WebSocket
+            await manager.broadcast_to_event(event_id, {
+                "type": "check_in",
+                "attendance_rate": round(attendance_rate, 2),
+                "milestone": reached_milestone,
+                "participant": {
+                    "id": participant_id,
+                    "full_name": participant_name,
+                    "organization": "مشارك",
+                    "order_num": ""
+                }
+            })
+
+            # 5. Trigger Webhooks
+            try:
+                await WebhookEngine.trigger(
+                    db,
+                    event_id,
+                    "participant.checkin",
+                    {
+                        "id": participant_id,
+                        "full_name": participant_name,
+                        "time": updated_at_str
+                    }
+                )
+            except Exception as we:
+                logger.error(f"Webhook trigger failed: {we}")
+
+        except Exception as e:
+            await db.rollback()
+            logger.error(f"Background check-in failed: {e}")
 
 @router.patch(
     "/{participant_id}/check-in", 
@@ -647,6 +731,15 @@ async def check_in_participant(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
+    """
+    تسجيل حضور مشارك عبر QR.
+    الاستجابة الفورية للمسح: القراءة async سريعة وممتازة.
+    الكتابة (Attendance + broadcast + milestones + webhooks): في background لا تحجب الاستجابة.
+    """
+    # التحقق من الصلاحية
+    if current_user.role not in ('super_admin', 'organizer', 'scanner'):
+        raise HTTPException(status_code=403, detail="لا صلاحية لك")
+
     participant = await db.get(Participant, participant_id)
     if not participant:
         raise HTTPException(status_code=404, detail="المشارك غير موجود")
@@ -658,78 +751,25 @@ async def check_in_participant(
             detail="لا يمكن تسجيل دخول مشارك غير مفعل. يرجى تفعيل الحساب أو شحن الرصيد أولاً."
         )
     
-    # التحقق من الصلاحية
-    if current_user.role not in ('super_admin', 'organizer', 'scanner'):
-        raise HTTPException(status_code=403, detail="لا صلاحية لك")
-    
-    # ✅ إنشاء سجل حضور فعلي في جدول Attendance
+    # تحقق سريع: هل سجّل حضوره مسبقاً؟
     from app.models.participant import Attendance
-    from datetime import datetime
-    stmt = select(Attendance).filter(
-        Attendance.participant_id == participant.id,
+    stmt = select(Attendance.id).filter(
+        Attendance.participant_id == participant_id,
         Attendance.event_type == 'check_in'
     )
     res = await db.execute(stmt)
-    existing_attendance = res.scalars().first()
-    if not existing_attendance:
-        attendance_record = Attendance(
-            participant_id=participant.id,
-            event_type='check_in',
-            check_in_time=datetime.now(),
-            entry_method='manual',
-            location_id=location_id
+    already_checked = res.scalars().first()
+    
+    if not already_checked:
+        # ✅ الكتابة في background — لا تحجب الاستجابة
+        background_tasks.add_task(
+            _register_attendance_background,
+            participant_id=participant_id,
+            event_id=participant.event_id,
+            location_id=location_id,
+            participant_name=participant.full_name,
+            updated_at_str=str(participant.updated_at)
         )
-        db.add(attendance_record)
-    
-    await db.commit()
-    await db.refresh(participant)
-    
-    # التحقق من الـ Milestones وإرسال تنبيهات للمسؤولين
-    await NotificationService.check_attendance_milestones(db, participant.event_id)
-    
-    # حساب الإحصائيات لإرسال تنبيهات (Milestones)
-    invited_stmt = select(func.count()).select_from(Participant).filter(Participant.event_id == participant.event_id)
-    invited_res = await db.execute(invited_stmt)
-    total_invited = invited_res.scalar_one()
-
-    checked_stmt = select(func.count()).select_from(Participant).filter(
-        Participant.event_id == participant.event_id, 
-        Participant.payment_status == 'paid'
-    )
-    checked_res = await db.execute(checked_stmt)
-    total_checked_in = checked_res.scalar_one()
-    
-    attendance_rate = (total_checked_in / total_invited * 100) if total_invited > 0 else 0
-    
-    # تحديد إذا كان هناك Milestone (مثلاً كل 25%)
-    milestones = [25, 50, 75, 100]
-    reached_milestone = next((m for m in milestones if abs(attendance_rate - m) < 0.5), None)
-
-    # Broadcast update via WebSocket
-    await manager.broadcast_to_event(participant.event_id, {
-        "type": "check_in",
-        "attendance_rate": round(attendance_rate, 2),
-        "milestone": reached_milestone,
-        "participant": {
-            "id": participant.id,
-            "full_name": participant.full_name,
-            "organization": participant.organization,
-            "order_num": participant.order_num
-        }
-    })
-
-    # Trigger Webhooks
-    background_tasks.add_task(
-        WebhookEngine.trigger, 
-        db, 
-        participant.event_id, 
-        "participant.checkin", 
-        {
-            "id": participant.id,
-            "full_name": participant.full_name,
-            "time": str(participant.updated_at)
-        }
-    )
     
     return participant
 

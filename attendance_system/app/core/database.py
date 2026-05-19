@@ -30,17 +30,21 @@ else:
     async_engine = create_async_engine(
         ASYNC_DATABASE_URL,
         poolclass=AsyncAdaptedQueuePool,
-        pool_size=settings.DB_POOL_SIZE,          # من .env: DB_POOL_SIZE=20
-        max_overflow=settings.DB_MAX_OVERFLOW,     # من .env: DB_MAX_OVERFLOW=40
+        # pool_size must stay well under PostgreSQL max_connections (100).
+        # Async multiplexing: 20 connections serve 200+ concurrent requests.
+        # Large pool_size causes ConnectionDoesNotExistError under spike load.
+        pool_size=int(os.getenv("DB_POOL_SIZE", "20")),
+        max_overflow=int(os.getenv("DB_MAX_OVERFLOW", "10")),
         pool_pre_ping=True,
         pool_recycle=1800,
-        pool_timeout=30,
+        # Long timeout: let asyncio queue requests, not reject them
+        pool_timeout=30.0,
         connect_args={
             "server_settings": {
                 "application_name": "diwan_event",
-                "jit": "off",                      # يخفض latency للـ short queries
+                "jit": "off",
             },
-            "command_timeout": 60,
+            "command_timeout": 30,
         },
         echo=False,
     )
@@ -69,9 +73,13 @@ async def get_db():
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-SYNC_DATABASE_URL = settings.DATABASE_URL
+import os
+
+SYNC_DATABASE_URL = os.getenv("DATABASE_URL_SYNC", settings.DATABASE_URL)
 if SYNC_DATABASE_URL.startswith("postgres://"):
     SYNC_DATABASE_URL = SYNC_DATABASE_URL.replace("postgres://", "postgresql://", 1)
+if "+asyncpg" in SYNC_DATABASE_URL:
+    SYNC_DATABASE_URL = SYNC_DATABASE_URL.replace("+asyncpg", "")
 
 engine = create_engine(
     SYNC_DATABASE_URL,

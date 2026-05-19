@@ -1,0 +1,148 @@
+# ================================================================
+#  Diwan Event — محاكاة 1000 تصويت متزامن (Docker Mode)
+#  Concurrent Vote Spike Test — Fully Isolated Docker Environment
+# ================================================================
+#
+#  المراحل:
+#    1. PostgreSQL محسَّن لاختبار الطفرة (synchronous_commit=off)
+#    2. Backend FastAPI بـ 4 workers (Gunicorn)
+#    3. seed  — يزرع 1000 مشارك + فعالية + تصويت ثم يخرج
+#    4. locust — يشغّل الهجوم المتزامن بشكل headless ويُنتج التقرير
+#
+#  التشغيل:
+#    docker compose -f docker-compose.vote-spike.yml up --build
+#
+#  قراءة التقارير بعد الانتهاء:
+#    load_tests/reports/docker_spike_<timestamp>.html
+# ================================================================
+
+name: diwan-vote-spike
+
+networks:
+  spike_net:
+    driver: bridge
+
+volumes:
+  spike_pg_data:
+
+services:
+
+  # ── 1. PostgreSQL — محسَّن لاختبار الطفرة ─────────────────
+  spike_db:
+    image: postgres:15-alpine
+    container_name: diwan_spike_db
+    environment:
+      POSTGRES_DB:       postgres
+      POSTGRES_USER:     postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_HOST_AUTH_METHOD: "trust"
+    # تطبيق postgresql.conf المحسَّن للكتابة المتزامنة
+    command: >
+      postgres
+        -c max_connections=200
+        -c shared_buffers=512MB
+        -c effective_cache_size=1536MB
+        -c work_mem=16MB
+        -c wal_buffers=16MB
+        -c checkpoint_completion_target=0.9
+        -c synchronous_commit=off
+        -c max_wal_size=2GB
+        -c log_min_messages=warning
+    volumes:
+      - spike_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - spike_net
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+  # ── 2. FastAPI Backend — 4 Gunicorn Workers ───────────────
+  spike_api:
+    build:
+      context: ./attendance_system
+      dockerfile: Dockerfile
+    container_name: diwan_spike_api
+    environment:
+      DATABASE_URL:     "postgresql+asyncpg://postgres:postgres@spike_db:5432/postgres"
+      DATABASE_URL_SYNC: "postgresql://postgres:postgres@spike_db:5432/postgres"
+      SECRET_KEY:       "${SECRET_KEY:-d1w4n_sp1k3_t3st_k3y_2026}"
+      ENCRYPTION_KEY:   "${ENCRYPTION_KEY:-U5aQf6qQ9kC2x8n_8q5_k6hP7YcTjM2z8lO4sE1fP0g=}"
+      AES_SECRET_KEY:   "${AES_SECRET_KEY:-U5aQf6qQ9kC2x8n_8q5_k6hP7YcTjM2z8lO4sE1fP0g=}"
+      ALLOWED_ORIGINS:  "*"
+      APP_DOMAIN:       "http://spike_api:8000"
+      DB_POOL_SIZE:     "20"
+      DB_MAX_OVERFLOW:  "10"
+      GUNICORN_WORKERS: "4"
+      PYTHONUNBUFFERED: "1"
+      PYTHONUTF8:       "1"
+    ports:
+      - "8001:8000"   # نستخدم 8001 محلياً لتجنب التعارض مع الخادم الحالي
+    depends_on:
+      spike_db:
+        condition: service_healthy
+    command: gunicorn app.main:app --config gunicorn.conf.py
+    networks:
+      - spike_net
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+  # ── 3. Seeder — يزرع البيانات ثم يخرج ────────────────────
+  spike_seed:
+    build:
+      context: ./attendance_system
+      dockerfile: Dockerfile
+    container_name: diwan_spike_seeder
+    environment:
+      DATABASE_URL:      "postgresql+asyncpg://postgres:postgres@spike_db:5432/postgres"
+      DATABASE_URL_SYNC: "postgresql://postgres:postgres@spike_db:5432/postgres"
+      SECRET_KEY:        "${SECRET_KEY:-d1w4n_sp1k3_t3st_k3y_2026}"
+      ENCRYPTION_KEY:    "${ENCRYPTION_KEY:-U5aQf6qQ9kC2x8n_8q5_k6hP7YcTjM2z8lO4sE1fP0g=}"
+      AES_SECRET_KEY:    "${AES_SECRET_KEY:-U5aQf6qQ9kC2x8n_8q5_k6hP7YcTjM2z8lO4sE1fP0g=}"
+      PYTHONUTF8:        "1"
+    volumes:
+      # تمرير نتيجة spike_config.json لمجلد load_tests المشترك
+      - ./load_tests:/spike_out
+    depends_on:
+      spike_api:
+        condition: service_started
+    command: >
+      sh -c "
+        echo '' &&
+        echo '════════════════════════════════════════════' &&
+        echo '  SEEDER — زرع 1000 مشارك + فعالية + تصويت' &&
+        echo '════════════════════════════════════════════' &&
+        python fast_bulk_seed.py &&
+        echo '[SEED] ✓ spike_config.json نُقل إلى load_tests/' &&
+        echo '[SEED] ✓ اكتمل الزرع — Seeder يبقى قيد التشغيل لتجنب إنهاء البيئة' &&
+        tail -f /dev/null
+      "
+    restart: "no"
+    networks:
+      - spike_net
+
+  # ── 4. Locust — هجوم 1000 تصويت متزامن ──────────────────
+  spike_locust:
+    image: locustio/locust:2.24.0
+    container_name: diwan_spike_locust
+    entrypoint: ["/bin/sh"]
+    environment:
+      PYTHONUTF8: "1"
+      PYTHONIOENCODING: "utf-8"
+    volumes:
+      - ./load_tests:/mnt/locust
+    working_dir: /mnt/locust
+    depends_on:
+      spike_seed:
+        condition: service_started
+    command: ["-c", "sh /mnt/locust/run_spike_locust.sh"]
+    restart: "no"
+    networks:
+      - spike_net

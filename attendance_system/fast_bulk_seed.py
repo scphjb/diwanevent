@@ -19,7 +19,8 @@ from datetime import datetime
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 # Load models and DB session
-from app.core.database import SessionLocal
+from app.core.database import SessionLocal, engine
+from app.models import Base
 from app.models.event import Event
 from app.models.others import Poll, PollOption
 from app.models.participant import Participant
@@ -30,6 +31,9 @@ def run_bulk_seed():
     print("[*] Starting Blazing Fast Bulk Seeding (1000 Voters)...")
     print("=" * 60)
 
+    # Ensure tables exist in isolated environments (like Docker spike test)
+    Base.metadata.create_all(bind=engine)
+
     db = SessionLocal()
     try:
         # 1. Create a new test event
@@ -39,7 +43,9 @@ def run_bulk_seed():
             location="منصة ديوان الرقمية - اختبار الأداء المتقدم",
             primary_color="#D4AF37",
             secondary_color="#022C22",
-            status="active"
+            status="active",
+            registration_enabled=True,
+            total_invited=10000
         )
         db.add(event)
         db.flush() # Get event.id
@@ -112,7 +118,7 @@ def run_bulk_seed():
         voter_ids = [p.id for p in participants_to_insert]
         print(f"[+] Successfully seeded {len(voter_ids)} participants.")
 
-        # 5. Generate spike_config.json in the load_tests directory
+        # 5. Generate spike_config.json for Locust
         config = {
             "event_id": event_id,
             "poll_id": poll_id,
@@ -122,14 +128,29 @@ def run_bulk_seed():
             "base_url": "http://127.0.0.1:8000"
         }
 
-        # Write config to load_tests/spike_config.json
-        config_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "load_tests", "spike_config.json")
-        with open(config_path, "w", encoding="utf-8") as f:
-            json.dump(config, f, indent=2, ensure_ascii=False)
-        print(f"[+] Saved spike_config.json to: {config_path}")
+        # الكتابة المحلية: load_tests/spike_config.json
+        try:
+            config_path = os.path.join(
+                os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                "load_tests",
+                "spike_config.json"
+            )
+            os.makedirs(os.path.dirname(config_path), exist_ok=True)
+            with open(config_path, "w", encoding="utf-8") as f:
+                json.dump(config, f, indent=2, ensure_ascii=False)
+            print(f"[+] Saved spike_config.json to: {config_path}")
+        except Exception as write_err:
+            print(f"[*] Skipping local config write: {write_err}")
+
+        # الكتابة داخل Docker (volume mount /spike_out)
+        docker_out = "/spike_out/spike_config.json"
+        if os.path.isdir("/spike_out"):
+            with open(docker_out, "w", encoding="utf-8") as f:
+                json.dump(config, f, indent=2, ensure_ascii=False)
+            print(f"[+] Saved spike_config.json to Docker volume: {docker_out}")
 
         print("\n" + "="*60)
-        print("[✓] FAST BULK SEEDING COMPLETED IN < 2 SECONDS!")
+        print("[+] FAST BULK SEEDING COMPLETED IN < 2 SECONDS!")
         print("="*60 + "\n")
 
     except Exception as exc:

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 from typing import List
 from app.core.database import get_db
 from app.models.others import Poll, PollOption, PollVote
@@ -114,48 +114,84 @@ async def delete_poll(
 
 @router.get("/{event_id}/all")
 async def get_all_polls(event_id: int, db: AsyncSession = Depends(get_db)):
-    """جلب جميع تصويتات الفعالية (نشطة وغير نشطة)"""
+    """جلب جميع تصويتات الفعالية — محسَّن: 3 queries بدل N+1"""
+
+    # 1. جلب جميع التصويتات
     polls_result = await db.execute(select(Poll).filter(Poll.event_id == event_id))
     polls = polls_result.scalars().all()
+    if not polls:
+        return []
+
+    poll_ids = [p.id for p in polls]
+
+    # 2. جلب جميع الخيارات لكل التصويتات دفعة واحدة
+    opts_result = await db.execute(
+        select(PollOption).filter(PollOption.poll_id.in_(poll_ids))
+    )
+    all_options = opts_result.scalars().all()
+
+    # 3. جلب عدد الأصوات لكل خيار دفعة واحدة (GROUP BY)
+    vote_counts_result = await db.execute(
+        select(PollVote.option_id, func.count(PollVote.id).label("cnt"))
+        .filter(PollVote.poll_id.in_(poll_ids))
+        .group_by(PollVote.option_id)
+    )
+    counts_map = {row.option_id: row.cnt for row in vote_counts_result}
+
+    # بناء الاستجابة في الذاكرة
+    opts_by_poll: dict = {}
+    for opt in all_options:
+        opts_by_poll.setdefault(opt.poll_id, []).append(opt)
+
     results = []
     for poll in polls:
-        options_result = await db.execute(select(PollOption).filter(PollOption.poll_id == poll.id))
-        options = options_result.scalars().all()
-        
-        votes_result = await db.execute(select(PollVote).filter(PollVote.poll_id == poll.id))
-        votes = votes_result.scalars().all()
-        
-        total_votes = len(votes)
+        opts = opts_by_poll.get(poll.id, [])
+        total = sum(counts_map.get(o.id, 0) for o in opts)
         results.append({
             "id": poll.id,
             "question": poll.question,
             "is_active": poll.is_active,
-            "total_votes": total_votes,
+            "total_votes": total,
             "options": [
                 {
                     "id": o.id,
                     "text": o.option_text,
-                    "votes": len([v for v in votes if v.option_id == o.id]),
-                    "percent": round(len([v for v in votes if v.option_id == o.id]) / total_votes * 100, 1) if total_votes > 0 else 0
+                    "votes": counts_map.get(o.id, 0),
+                    "percent": round(counts_map.get(o.id, 0) / total * 100, 1) if total > 0 else 0,
                 }
-                for o in options
-            ]
+                for o in opts
+            ],
         })
     return results
 
 @router.get("/{event_id}/active")
 async def get_active_polls(event_id: int, db: AsyncSession = Depends(get_db)):
-    """جلب التصويتات النشطة فقط"""
+    """جلب التصويتات النشطة فقط — محسّن لتفادي N+1"""
     polls_result = await db.execute(select(Poll).filter(Poll.event_id == event_id, Poll.is_active == True))
     polls = polls_result.scalars().all()
+    
+    if not polls:
+        return []
+
+    poll_ids = [p.id for p in polls]
+    
+    # جلب الخيارات لكل التصويتات النشطة دفعة واحدة
+    opts_result = await db.execute(
+        select(PollOption).filter(PollOption.poll_id.in_(poll_ids))
+    )
+    all_options = opts_result.scalars().all()
+    
+    opts_by_poll = {}
+    for opt in all_options:
+        opts_by_poll.setdefault(opt.poll_id, []).append(opt)
+
     results = []
     for poll in polls:
-        options_result = await db.execute(select(PollOption).filter(PollOption.poll_id == poll.id))
-        options = options_result.scalars().all()
+        opts = opts_by_poll.get(poll.id, [])
         results.append({
             "id": poll.id,
             "question": poll.question,
-            "options": [{"id": o.id, "text": o.option_text} for o in options]
+            "options": [{"id": o.id, "text": o.option_text} for o in opts]
         })
     return results
 
@@ -188,41 +224,56 @@ async def submit_vote(
 
     return {"message": "Vote recorded"}
 
+import asyncio
+
+_pending_broadcasts = {}
+
 async def _broadcast_poll_results(poll_id: int):
     """
     مهمة خلفية Async: حساب نتائج التصويت وبثّها لكل المتصلين عبر WebSocket.
+    مجهزة بآلية Throttling/Debouncing لمنع إغراق قاعدة البيانات بالاتصالات أثناء طفرة التصويت (Spike).
     """
-    from app.core.database import AsyncSessionLocal
-    from sqlalchemy import func, select
-    
-    async with AsyncSessionLocal() as db:
-        vote_counts_result = await db.execute(
-            select(PollVote.option_id, func.count(PollVote.id).label("cnt"))
-            .filter(PollVote.poll_id == poll_id)
-            .group_by(PollVote.option_id)
-        )
-        vote_counts = vote_counts_result.all()
-        
-        counts_dict = {vc[0]: vc[1] for vc in vote_counts}
-        
-        options_result = await db.execute(select(PollOption).filter(PollOption.poll_id == poll_id))
-        options = options_result.scalars().all()
-        
-        poll_result = await db.execute(select(Poll).filter(Poll.id == poll_id))
-        poll = poll_result.scalar_one_or_none()
-        
-        if not poll:
-            return
+    if _pending_broadcasts.get(poll_id):
+        return
 
-        payload = {
-            "type": "poll_update",
-            "data": {
-                "poll_id": poll_id,
-                "results": [
-                    {"option_id": opt.id, "count": counts_dict.get(opt.id, 0)}
-                    for opt in options
-                ],
-            },
-        }
+    _pending_broadcasts[poll_id] = True
+    try:
+        # نافذة تجميع الطلبات (1 ثانية) لمنع الاختناق
+        await asyncio.sleep(1.0)
         
-        await manager.broadcast_to_event(poll.event_id, payload)
+        from app.core.database import AsyncSessionLocal
+        from sqlalchemy import func, select
+        
+        async with AsyncSessionLocal() as db:
+            vote_counts_result = await db.execute(
+                select(PollVote.option_id, func.count(PollVote.id).label("cnt"))
+                .filter(PollVote.poll_id == poll_id)
+                .group_by(PollVote.option_id)
+            )
+            vote_counts = vote_counts_result.all()
+            
+            counts_dict = {vc[0]: vc[1] for vc in vote_counts}
+            
+            options_result = await db.execute(select(PollOption).filter(PollOption.poll_id == poll_id))
+            options = options_result.scalars().all()
+            
+            poll_result = await db.execute(select(Poll).filter(Poll.id == poll_id))
+            poll = poll_result.scalar_one_or_none()
+            
+            if not poll:
+                return
+
+            payload = {
+                "type": "poll_update",
+                "data": {
+                    "poll_id": poll_id,
+                    "results": [
+                        {"option_id": opt.id, "count": counts_dict.get(opt.id, 0)}
+                        for opt in options
+                    ],
+                },
+            }
+            
+            await manager.broadcast_to_event(poll.event_id, payload)
+    finally:
+        _pending_broadcasts[poll_id] = False

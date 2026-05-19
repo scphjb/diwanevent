@@ -260,6 +260,61 @@ class ReaderUser(FastHttpUser):
                 resp.failure(f"{resp.status_code}")
 
 
+class CheckInScannerUser(FastHttpUser):
+    """
+    يحاكي جهاز مسح QR حقيقي.
+    pace ثابت = مسح كل ثانيتين بالضبط.
+    20 مستخدم من هذا النوع = 600 مسح/دقيقة = الذروة الحقيقية.
+    """
+    weight = 40                     # 40% من المستخدمين في الاختبار
+    wait_time = constant_pacing(2)  # مسح كل 2 ثانية بالضبط
+    
+    def on_start(self):
+        """تسجيل دخول Scanner"""
+        resp = self.client.post(
+            "/api/v1/auth/login",
+            json={
+                "username": "scanner@diwan.dz",
+                "password": "ScannerPass123!"
+            },
+            name="🔐 Scanner Login"
+        )
+        if resp.status_code == 200:
+            token = resp.json().get("access_token", "")
+            self.headers = {"Authorization": f"Bearer {token}"}
+        else:
+            self.headers = {}
+            print(f"⚠️ Scanner login failed: {resp.status_code}")
+    
+    @task
+    def scan_qr_checkin(self):
+        """
+        ⭐ السيناريو الحقيقي — مسح QR متواصل
+        يختار participant_id عشوائياً من 1-1200
+        """
+        participant_id = random.randint(1, 1200)
+        
+        with self.client.patch(
+            f"/api/v1/participants/{participant_id}/check-in",
+            headers=self.headers,
+            params={"location_id": f"gate_{random.randint(1, 3)}"},
+            name="✅ PATCH Check-in (Scanner)",
+            catch_response=True
+        ) as resp:
+            if resp.status_code == 200:
+                resp.success()
+            elif resp.status_code == 404:
+                # مشارك غير موجود — طبيعي في الاختبار
+                resp.success()
+            elif resp.status_code == 401:
+                resp.failure("Token expired")
+                self.on_start()  # تجديد التوكن
+            elif resp.status_code == 403:
+                resp.failure("Forbidden — check scanner role")
+            else:
+                resp.failure(f"Unexpected: {resp.status_code} — {resp.text[:80]}")
+
+
 # ═══════════════════════════════════════════════════════════
 # Hooks: إحصائيات مخصصة للـ Spike Test
 # ═══════════════════════════════════════════════════════════
