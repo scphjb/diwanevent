@@ -273,7 +273,7 @@ class CheckInScannerUser(FastHttpUser):
         """تسجيل دخول Scanner"""
         resp = self.client.post(
             "/api/v1/auth/login",
-            json={
+            data={
                 "username": "scanner@diwan.dz",
                 "password": "ScannerPass123!"
             },
