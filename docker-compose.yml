@@ -16,7 +16,7 @@ services:
     restart: unless-stopped
 
   pgbouncer:
-    image: bitnami/pgbouncer:1.22.1
+    image: bitnamilegacy/pgbouncer:1.22.1
     environment:
       POSTGRESQL_HOST: db
       POSTGRESQL_PORT: "5432"
