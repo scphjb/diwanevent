@@ -56,15 +56,19 @@ const AttendeeRegistrationPage = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [eventRes, fieldsRes] = await Promise.all([
-          api.get(`events/${eventId}`),
-          api.get(`events/${eventId}/registration-fields`).catch(() => ({ data: [] }))
-        ]);
-        setEvent(eventRes.data);
-        setCustomFields(fieldsRes.data);
-        const initialCustom = {};
-        fieldsRes.data.forEach(f => initialCustom[f.field_name] = '');
-        setCustomValues(initialCustom);
+        // ─── نستخدم الـ endpoint العام — لا يتطلب تسجيل دخول ───
+        const eventRes = await api.get(`events/public/${eventId}`);
+        const eventData = eventRes.data;
+        setEvent(eventData);
+
+        // نجلب حقول التسجيل فقط إذا كان التسجيل مفتوحاً
+        if (eventData.registration_enabled) {
+          const fieldsRes = await api.get(`events/${eventId}/registration-fields`).catch(() => ({ data: [] }));
+          setCustomFields(fieldsRes.data);
+          const initialCustom = {};
+          fieldsRes.data.forEach(f => initialCustom[f.field_name] = '');
+          setCustomValues(initialCustom);
+        }
       } catch (err) {
         setError('تعذر جلب بيانات الفعالية.');
       } finally {
@@ -196,7 +200,57 @@ const AttendeeRegistrationPage = () => {
     );
   }
 
-  // ─── نموذج التسجيل ─────────────────────────────────────────────────
+  // ─── التسجيل مغلق: عرض المعلومات العامة فقط ─────────────────────────
+  if (!event.registration_enabled) {
+    return (
+      <div className="min-h-screen bg-[#022C22] text-white flex items-center justify-center px-6" dir="rtl">
+        <div className="fixed inset-0 pointer-events-none opacity-20">
+          <div className="absolute top-[-10%] right-[-10%] w-[60%] h-[60%] bg-emerald-500 blur-[120px] rounded-full" />
+          <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-slate-700 blur-[100px] rounded-full" />
+        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}
+          className="relative z-10 max-w-lg w-full text-center space-y-8"
+        >
+          {event.logo_url && (
+            <img src={event.logo_url} alt="logo" className="w-20 h-20 mx-auto rounded-2xl object-contain" />
+          )}
+          <h1 className="text-3xl font-black leading-tight">{event.event_name}</h1>
+
+          <div className="grid grid-cols-2 gap-4 text-right">
+            <div className="bg-white/5 border border-white/10 p-5 rounded-3xl">
+              <Calendar className="text-amber-500 mb-3" size={20} />
+              <div className="text-xs text-white/40 mb-1 font-bold">التاريخ</div>
+              <div className="text-sm font-bold">{safeFormatDate(event.event_date)}</div>
+            </div>
+            <div className="bg-white/5 border border-white/10 p-5 rounded-3xl">
+              <MapPin className="text-amber-500 mb-3" size={20} />
+              <div className="text-xs text-white/40 mb-1 font-bold">الموقع</div>
+              <div className="text-sm font-bold">{event.location || 'سيتم التحديد لاحقاً'}</div>
+            </div>
+          </div>
+
+          <div className="p-6 bg-slate-800/60 border border-slate-600/40 rounded-[28px] space-y-3">
+            <div className="text-4xl">⏸️</div>
+            <h2 className="text-xl font-black text-white">التسجيل مغلق حالياً</h2>
+            <p className="text-white/50 text-sm leading-relaxed">
+              هذه الفعالية غير مفتوحة للتسجيل العام حالياً.
+              إذا كنت مدعواً مسبقاً تواصل مع المنظم للحصول على رابط دخولك.
+            </p>
+          </div>
+
+          <button
+            onClick={() => navigate('/')}
+            className="text-white/30 text-sm hover:text-white/60 transition-colors"
+          >
+            ← العودة للصفحة الرئيسية
+          </button>
+        </motion.div>
+      </div>
+    );
+  }
+
+  // ─── نموذج التسجيل (التسجيل مفتوح) ──────────────────────────────────
   return (
     <div className="min-h-screen bg-[#022C22] text-white selection:bg-amber-500 selection:text-emerald-950 overflow-x-hidden" dir="rtl">
       <div className="fixed inset-0 pointer-events-none opacity-20">
@@ -209,8 +263,13 @@ const AttendeeRegistrationPage = () => {
 
           {/* ─── Info Panel */}
           <motion.div initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} className="space-y-8 lg:sticky lg:top-12">
-            <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-amber-500 text-sm font-bold">
-              <Sparkles size={16} /> التسجيل مفتوح الآن
+            <div className={`inline-flex items-center gap-3 px-4 py-2 rounded-full text-sm font-bold border ${
+              event.registration_enabled
+                ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                : 'bg-slate-700/40 border-slate-600/30 text-slate-400'
+            }`}>
+              <Sparkles size={16} />
+              {event.registration_enabled ? 'التسجيل مفتوح الآن' : 'التسجيل مغلق'}
             </div>
             <h1 className={`font-black leading-tight ${event.event_name?.length > 40 ? 'text-2xl lg:text-4xl' : 'text-4xl lg:text-6xl'}`}>
               انضم إلينا في
@@ -218,12 +277,6 @@ const AttendeeRegistrationPage = () => {
                 {event.event_name}
               </span>
             </h1>
-
-            {!event.registration_enabled && (
-              <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400 font-bold text-sm">
-                ⛔ التسجيل مغلق حالياً لهذه الفعالية.
-              </div>
-            )}
 
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-white/5 border border-white/10 p-5 rounded-3xl">

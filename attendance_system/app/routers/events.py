@@ -36,12 +36,74 @@ async def list_public_active_events(
 ):
     """
     جلب الفعاليات العامة المفتوحة للتسجيل حالياً.
+    لا تُعرض إلا الفعاليات التي فُتح بابها للتسجيل.
     """
     stmt = select(Event).filter(
-        Event.status == 'active'
+        Event.status == 'active',
+        Event.registration_enabled == True
     )
     result = await db.execute(stmt)
-    return result.scalars().all()
+    events = result.scalars().all()
+    # إعادة بيانات عامة فقط بدون بيانات حساسة
+    return [
+        {
+            "id": e.id,
+            "event_name": e.event_name,
+            "event_date": str(e.event_date) if e.event_date else None,
+            "location": e.location,
+            "registration_enabled": e.registration_enabled,
+            "app_name": e.app_name,
+            "primary_color": e.primary_color,
+            "logo_url": e.logo_url,
+        }
+        for e in events
+    ]
+
+@router.get("/public/{event_id}")
+async def get_public_event(
+    event_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    جلب المعلومات العامة لفعالية معينة (بدون تسجيل دخول).
+    - إذا registration_enabled=True → تُعاد جميع بيانات التسجيل
+    - إذا registration_enabled=False → تُعاد البيانات العامة فقط (اسم + تاريخ + مكان)
+    """
+    event = await db.get(Event, event_id)
+    if not event:
+        raise HTTPException(status_code=404, detail="الفعالية غير موجودة")
+
+    # البيانات العامة دائماً
+    public_info = {
+        "id": event.id,
+        "event_name": event.event_name,
+        "event_date": str(event.event_date) if event.event_date else None,
+        "location": event.location,
+        "registration_enabled": event.registration_enabled,
+        "primary_color": event.primary_color or "#D4AF37",
+        "secondary_color": event.secondary_color or "#022C22",
+        "logo_url": event.logo_url,
+        "app_name": event.app_name or "Diwan Event",
+        "app_subtitle": event.app_subtitle,
+        "hero_title": event.hero_title,
+        "hero_description": event.hero_description,
+    }
+
+    # بيانات إضافية للتسجيل — فقط إذا كان مفتوحاً
+    if event.registration_enabled:
+        public_info.update({
+            "require_payment": event.require_payment,
+            "ticket_price": float(event.ticket_price or 0),
+            "currency": event.currency or "DZD",
+            "payment_gateway": event.payment_gateway,
+            "welcome_title": event.welcome_title,
+            "welcome_subtitle": event.welcome_subtitle,
+            "show_countdown": event.show_countdown,
+            "event_timestamp": event.event_timestamp,
+            "organizer_text": event.organizer_text,
+        })
+
+    return public_info
 
 @router.get("/{event_id}")
 async def get_event(
