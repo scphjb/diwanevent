@@ -31,29 +31,32 @@ async def list_events(
     return result.scalars().all()
 
 @router.get("/public/active")
-async def list_public_active_events(
+async def list_public_events(
     db: AsyncSession = Depends(get_db)
 ):
     """
-    جلب الفعاليات العامة المفتوحة للتسجيل حالياً.
-    لا تُعرض إلا الفعاليات التي فُتح بابها للتسجيل.
+    دليل الفعاليات العامة لصفحة الهبوط.
+    تُعرض كل الفعاليات العامة (ماضية + جارية + مقبلة).
+    لا تُعرض الفعاليات الخاصة (is_public=False).
     """
     stmt = select(Event).filter(
-        Event.status == 'active',
-        Event.registration_enabled == True
-    )
+        Event.is_public == True
+    ).order_by(Event.event_date.desc().nullslast())
     result = await db.execute(stmt)
     events = result.scalars().all()
-    # إعادة بيانات عامة فقط بدون بيانات حساسة
+
     return [
         {
             "id": e.id,
             "event_name": e.event_name,
             "event_date": str(e.event_date) if e.event_date else None,
             "location": e.location,
+            "organizer_text": e.organizer_text or "",
             "registration_enabled": e.registration_enabled,
+            "status": e.status,
             "app_name": e.app_name,
-            "primary_color": e.primary_color,
+            "app_subtitle": e.app_subtitle,
+            "primary_color": e.primary_color or "#D4AF37",
             "logo_url": e.logo_url,
         }
         for e in events

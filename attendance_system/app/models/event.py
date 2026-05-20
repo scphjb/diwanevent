@@ -12,7 +12,8 @@ class Event(Base, TimestampMixin):
     organizer_text = Column(Text, default='') # نصوص الجهات المنظمة (عدة أسطر)
     event_date = Column(Date)
     location = Column(Text)
-    status = Column(String, default='active')
+    status = Column(String, default='active')  # active | completed | cancelled
+    is_public = Column(Boolean, default=True)  # False = فعالية خاصة لا تظهر في صفحة الهبوط
     prefix = Column(String, default='')
     language = Column(String, default='ar') # ar, en
     total_invited = Column(Integer, default=0)

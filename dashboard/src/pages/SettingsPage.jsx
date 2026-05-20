@@ -242,6 +242,16 @@ const SettingsPage = () => {
                       />
                       <label htmlFor="registration_enabled" className="font-bold text-emerald-400">{t('settings.general.registration_enabled', 'فتح باب التسجيل للجمهور')}</label>
                     </div>
+                    <div className="flex items-center gap-3 bg-amber-500/10 p-4 rounded-2xl">
+                      <input 
+                        type="checkbox" 
+                        id="is_public"
+                        checked={settings.is_public !== false}
+                        onChange={(e) => handleChange('is_public', e.target.checked)}
+                        className="w-5 h-5 accent-amber-500"
+                      />
+                      <label htmlFor="is_public" className="font-bold text-amber-400">عرض الفعالية في الدليل العام (صفحة الهبوط)</label>
+                    </div>
                     <div className="space-y-2">
                       <label className="text-sm font-bold text-emerald-100/50">{t('settings.general.max_registration', 'الحد الأقصى للمسجلين (0 تعني غير محدود)')}</label>
                       <Input 
