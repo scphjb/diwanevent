@@ -14,12 +14,12 @@ const Testimonials = () => {
         ? "1,200 مشارك في أقل من 40 دقيقة. أسرع مما توقعنا بكثير بفضل تقنية ديوان." 
         : "1,200 attendees in less than 40 minutes. Way faster than we expected thanks to Diwan tech.",
       author: isRtl ? "منظم الجمعية العامة" : "General Assembly Organizer",
-      org: isRtl ? "الغرفة الشرقية 2026" : "Eastern Chamber 2026",
+      org: isRtl ? "الغرفة الجهوية للمحضرين القضائيين بالشرق 2026" : "Regional Chamber of Judicial Officers of the East 2026",
       rating: 5
     },
     {
       text: isRtl 
-        ? "أول منصة عربية تدعم البادجات العربية RTL بشكل صحيح. الباقي كان يقلب الأسماء!" 
+        ? "أول منصة عربية تدعم الشارات العربية RTL بشكل صحيح. الباقي كان يقلب الأسماء!" 
         : "The first Arabic platform to support Arabic RTL badges correctly. Others flipped the names!",
       author: isRtl ? "مدير إداري" : "Admin Director",
       org: isRtl ? "وهران" : "Oran",
@@ -43,7 +43,7 @@ const Testimonials = () => {
   }, [list.length]);
 
   return (
-    <section className="py-24 bg-brand-dark relative overflow-hidden">
+    <section className="py-24 bg-brand-dark relative overflow-hidden" dir={isRtl ? 'rtl' : 'ltr'}>
         <div className="absolute top-0 right-0 p-20 opacity-5">
             <Quote size={300} className="text-brand-primary" />
         </div>

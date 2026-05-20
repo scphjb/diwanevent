@@ -18,7 +18,7 @@ const Newsletter = () => {
   };
 
   return (
-    <section className="py-24 bg-brand-dark relative overflow-hidden">
+    <section className="py-24 bg-brand-dark relative overflow-hidden" dir={isRtl ? 'rtl' : 'ltr'}>
       {/* Background Decorative Elements */}
       <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-brand-primary/20 to-transparent" />
       
@@ -30,7 +30,7 @@ const Newsletter = () => {
 
           <div className="max-w-4xl mx-auto flex flex-col lg:flex-row items-center gap-12 relative z-10">
             
-            <div className={`lg:w-1/2 text-center ${isRtl ? 'lg:text-right' : 'lg:text-left'}`}>
+            <div className="lg:w-1/2">
               <h2 className={`text-3xl md:text-5xl font-bold text-brand-text mb-6 ${isRtl ? 'leading-relaxed' : 'leading-tight'}`}>
                 {L({ ar: "ابقَ على اطلاع بأحدث تقنيات الفعاليات", en: "Stay Ahead with Event Tech Updates", fr: "Restez à la Pointe de la Tech Événementielle", es: "Manténgase al Día con la Tecnología de Eventos" })}
               </h2>
@@ -73,7 +73,7 @@ const Newsletter = () => {
                   />
                   <button 
                     type="submit"
-                    className={`absolute ${isRtl ? 'left-2' : 'right-2'} top-2 bottom-2 bg-brand-secondary text-brand-dark font-black px-8 rounded-full hover:bg-brand-gold-light transition-all flex items-center gap-2`}
+                    className="absolute end-2 top-2 bottom-2 bg-brand-secondary text-brand-dark font-black px-8 rounded-full hover:bg-brand-gold-light transition-all flex items-center gap-2"
                   >
                     <span className="hidden sm:inline">{L({ ar: "اشترك", en: "Subscribe", fr: "S'abonner", es: "Suscribirse" })}</span>
                     <Send size={18} />

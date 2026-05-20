@@ -10,14 +10,14 @@ const EventTypes = () => {
     {
       title: L({ ar: "مؤتمرات علمية", en: "Scientific Conferences", fr: "Conférences Scientifiques", es: "Conferencias Científicas" }),
       desc: L({ 
-        ar: "إدارة جلسات متعددة، متحدثون، بادجات مخصصة وتتبع الحضور لكل جلسة.", 
+        ar: "إدارة جلسات متعددة، متحدثون، شارات مخصصة وتتبع الحضور لكل جلسة.", 
         en: "Manage multi-sessions, speakers, custom badges and track attendance per session.",
         fr: "Gestion multi-sessions, intervenants, badges personnalisés et suivi par session.",
         es: "Gestión de sesiones múltiples, ponentes, badges personalizados y seguimiento por sesión."
       }),
       icon: Landmark,
       features: L({ 
-        ar: ["بادجات مخصصة", "تتبع المتحدثين", "شهادات حضور"],
+        ar: ["شارات مخصصة", "تتبع المتحدثين", "شهادات حضور"],
         en: ["Custom badges", "Speaker tracking", "Attendance certs"],
         fr: ["Badges personnalisés", "Suivi intervenants", "Certificats"],
         es: ["Badges personalizados", "Seguimiento de ponentes", "Certificados"]
@@ -74,7 +74,7 @@ const EventTypes = () => {
   ];
 
   return (
-    <section className="py-32 bg-brand-dark relative overflow-hidden" id="solutions">
+    <section className="py-32 bg-brand-dark relative overflow-hidden" id="solutions" dir={isRtl ? 'rtl' : 'ltr'}>
       <div className="container mx-auto px-6">
         <div className="text-center mb-20">
           <h2 className="text-4xl md:text-5xl font-black text-brand-text mb-6">
@@ -104,16 +104,16 @@ const EventTypes = () => {
                 <type.icon size={32} />
               </div>
               
-              <div className={isRtl ? "text-right" : "text-left"}>
+              <div>
                 <h3 className="text-2xl font-bold text-brand-text mb-4">{type.title}</h3>
                 <p className="text-sm text-brand-muted leading-relaxed mb-8">{type.desc}</p>
               </div>
               
               <ul className="space-y-3 pt-6 border-t border-white/5">
                 {type.features.map((feat, fIdx) => (
-                  <li key={fIdx} className={`flex items-center gap-2 text-xs text-brand-text/70 font-bold ${isRtl ? 'flex-row-reverse' : ''}`}>
+                  <li key={fIdx} className="flex items-center gap-2 text-xs text-brand-text/70 font-bold">
                     <CheckCircle2 size={14} className="text-brand-primary flex-shrink-0" />
-                    <span className={isRtl ? 'text-right' : 'text-left'}>{feat}</span>
+                    <span>{feat}</span>
                   </li>
                 ))}
               </ul>

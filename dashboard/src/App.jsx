@@ -18,6 +18,7 @@ import PublicDisplay from './pages/PublicDisplay';
 import DisplayControlPage from './pages/DisplayControlPage';
 import HardwareManagement from './pages/HardwareManagement';
 import DeveloperPortal from './pages/DeveloperPortal';
+import ApiDocsPage from './pages/ApiDocsPage';
 import ParticipantPortal from './pages/ParticipantPortal';
 import CheckInPage from './pages/CheckInPage';
 import PollsPage from './pages/PollsPage';
@@ -38,6 +39,13 @@ import SuperAdminPlans from './pages/SuperAdmin/Plans';
 import SuperAdminSettings from './pages/SuperAdmin/Settings';
 import ParticipantLoginPage from './pages/ParticipantLoginPage';
 import DocumentsPage from './pages/DocumentsPage';
+import PrivacyPage   from './pages/PrivacyPage';
+import TermsPage     from './pages/TermsPage';
+import AboutPage     from './pages/AboutPage';
+import ContactPage   from './pages/ContactPage';
+import UpdatesPage   from './pages/UpdatesPage';
+import BlogPage      from './pages/BlogPage';
+import JobsPage      from './pages/JobsPage';
 
 /**
  * مكون لحماية المسارات — يدعم التحقق من التوكن والأدوار (RBAC).
@@ -174,6 +182,16 @@ function App() {
         <Route path="plans" element={<SuperAdminPlans />} />
         <Route path="settings" element={<SuperAdminSettings />} />
       </Route>
+
+      {/* ═══ صفحات عامة / قانونية ═══ */}
+      <Route path="/privacy"  element={<PrivacyPage />} />
+      <Route path="/terms"    element={<TermsPage />} />
+      <Route path="/about"    element={<AboutPage />} />
+      <Route path="/contact"  element={<ContactPage />} />
+      <Route path="/updates"  element={<UpdatesPage />} />
+      <Route path="/blog"     element={<BlogPage />} />
+      <Route path="/jobs"     element={<JobsPage />} />
+      <Route path="/api-docs" element={<ApiDocsPage />} />
 
       {/* ═══ التوجيهات التلقائية ═══ */}
       <Route path="/" element={<LandingPage />} />

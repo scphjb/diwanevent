@@ -332,7 +332,7 @@ ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173,http://localhost:800
 
 # ─── Email (SMTP) ───────────────────────
 EMAILS_FROM_NAME=Diwan Event
-EMAILS_FROM_EMAIL=noreply@diwanevent.com
+EMAILS_FROM_EMAIL=noreply@diwan.net
 SMTP_SERVER=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USERNAME=your-email@gmail.com

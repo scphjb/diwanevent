@@ -54,7 +54,7 @@ const HardwareShowcase = () => {
   ];
 
   return (
-    <section className="py-32 bg-brand-dark" id="hardware">
+    <section className="py-32 bg-brand-dark" id="hardware" dir={isRtl ? 'rtl' : 'ltr'}>
       <div className="container mx-auto px-6">
         <div className="text-center mb-20">
           <h2 className="text-3xl md:text-5xl font-black text-brand-text mb-4">

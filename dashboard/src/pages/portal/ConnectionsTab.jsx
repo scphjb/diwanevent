@@ -71,7 +71,7 @@ const ConnectionsTab = ({ onBadgeUpdate, myId }) => {
               }}>
                 <div style={{
                   width: 44, height: 44, borderRadius: '50%', flexShrink: 0,
-                  background: 'linear-gradient(135deg, #022C22, #1A8A6A)',
+                  background: 'linear-gradient(135deg, #022C22, #1DB58A)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: 18, border: '2px solid rgba(212,175,55,0.3)'
                 }}>
@@ -91,7 +91,7 @@ const ConnectionsTab = ({ onBadgeUpdate, myId }) => {
                     </div>
                   )}
                   {req.via_qr && (
-                    <div style={{ color: '#D4AF37', fontSize: 10, marginBottom: 8 }}>📷 تم عبر مسح البادج</div>
+                    <div style={{ color: '#D4AF37', fontSize: 10, marginBottom: 8 }}>📷 تم عبر مسح الشارة</div>
                   )}
                   
                   <div style={{ display: 'flex', gap: 8 }}>
@@ -152,7 +152,7 @@ const ConnectionsTab = ({ onBadgeUpdate, myId }) => {
               }}>
                 <div style={{
                   width: 44, height: 44, borderRadius: '50%', flexShrink: 0,
-                  background: 'linear-gradient(135deg, #022C22, #1A8A6A)',
+                  background: 'linear-gradient(135deg, #022C22, #1DB58A)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: 18, position: 'relative'
                 }}>

@@ -1,44 +1,70 @@
+"""
+Message Encryption — Diwan Event Platform
+يستخدم Fernet (AES-128-CBC) لتشفير الرسائل الخاصة.
+المفتاح يجب أن يكون في .env — لا fallback في الإنتاج.
+"""
 import os
-from cryptography.fernet import Fernet
-from dotenv import load_dotenv
+import logging
+from cryptography.fernet import Fernet, InvalidToken
 
-load_dotenv()
+logger = logging.getLogger("diwan.encryption")
 
-# We look for AES_SECRET_KEY in the environment.
-# If it's missing (e.g. not set yet in .env), we use a hardcoded default key for development.
-# WARNING: In production, you MUST provide a consistent AES_SECRET_KEY in your .env
-# otherwise messages encrypted with one key will be unreadable after a server restart if the default changes.
-SECRET_KEY_ENV = os.environ.get("AES_SECRET_KEY")
+def _load_cipher() -> Fernet | None:
+    """
+    يحمّل المفتاح من البيئة فقط.
+    لا hardcoded fallback — أمان > راحة.
+    """
+    key = os.environ.get("AES_SECRET_KEY")
+    if not key:
+        logger.warning(
+            "⚠️ AES_SECRET_KEY غير محدد في .env "
+            "— تشفير الرسائل معطّل. "
+            "نفّذ: python -c \"from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())\""
+        )
+        return None
+    try:
+        return Fernet(key.encode() if isinstance(key, str) else key)
+    except (ValueError, Exception) as e:
+        logger.error(f"❌ AES_SECRET_KEY غير صالح: {e}")
+        return None
 
-if SECRET_KEY_ENV:
-    SECRET_KEY = SECRET_KEY_ENV.encode()
-else:
-    # 32 url-safe base64-encoded bytes (Standard Fernet Key)
-    SECRET_KEY = b'U5aQf6qQ9kC2x8n_8q5_k6hP7YcTjM2z8lO4sE1fP0g='
-
-try:
-    cipher = Fernet(SECRET_KEY)
-except ValueError:
-    # Fallback in case the key is invalid
-    cipher = Fernet(b'U5aQf6qQ9kC2x8n_8q5_k6hP7YcTjM2z8lO4sE1fP0g=')
+_cipher = _load_cipher()
 
 def encrypt_message(text: str) -> str:
-    """Encrypts a plain text message using AES (Fernet)."""
+    """
+    يشفّر النص. إذا التشفير معطّل → يعيد النص كما هو مع prefix واضح.
+    """
     if not text:
         return text
-    return cipher.encrypt(text.encode('utf-8')).decode('utf-8')
+    if _cipher is None:
+        # التشفير معطّل — نخزّن النص عادياً مع إشارة
+        return f"[PLAIN]{text}"
+    try:
+        return _cipher.encrypt(text.encode('utf-8')).decode('utf-8')
+    except Exception as e:
+        logger.error(f"Encryption failed: {e}")
+        return f"[PLAIN]{text}"
 
 def decrypt_message(encrypted_text: str) -> str:
     """
-    Decrypts an AES (Fernet) encrypted message.
-    Returns the original text if decryption fails (e.g. it was a legacy unencrypted message).
+    يفكّ تشفير النص.
+    يتعامل مع: مشفّر حالي، نص عادي قديم، نص [PLAIN].
     """
     if not encrypted_text:
         return encrypted_text
-        
+    
+    # رسائل قديمة غير مشفرة
+    if encrypted_text.startswith("[PLAIN]"):
+        return encrypted_text[7:]
+    
+    if _cipher is None:
+        return encrypted_text  # نعيده كما هو
+    
     try:
-        return cipher.decrypt(encrypted_text.encode('utf-8')).decode('utf-8')
-    except Exception:
-        # If decryption fails, it might be an old unencrypted message from before this feature
-        # Or it might be corrupted. We return the text as-is to preserve legacy functionality.
+        return _cipher.decrypt(encrypted_text.encode('utf-8')).decode('utf-8')
+    except (InvalidToken, Exception):
+        # رسالة قديمة غير مشفرة أو مشفرة بمفتاح مختلف
         return encrypted_text
+
+def is_encryption_enabled() -> bool:
+    return _cipher is not None

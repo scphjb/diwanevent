@@ -38,7 +38,7 @@ const AccessFlexibility = () => {
   ];
 
   return (
-    <section className="py-24 bg-brand-dark relative overflow-hidden" dir={i18n.dir()}>
+    <section id="hardware" className="py-24 bg-brand-dark relative overflow-hidden" dir={i18n.dir()}>
       {/* Background elements */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[radial-gradient(circle_at_center,rgba(26,138,106,0.05)_0%,transparent_70%)]" />
 

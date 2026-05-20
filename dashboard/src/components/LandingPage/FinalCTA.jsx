@@ -9,7 +9,7 @@ const FinalCTA = () => {
   const navigate = useNavigate();
 
   return (
-    <section className="py-24 bg-brand-dark overflow-hidden relative noise-bg">
+    <section className="py-24 bg-brand-dark overflow-hidden relative noise-bg" dir={isRtl ? 'rtl' : 'ltr'}>
       <div className="container mx-auto px-6 relative z-10">
         
         <motion.div 
@@ -49,7 +49,7 @@ const FinalCTA = () => {
                 <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
                     <button 
                         onClick={() => navigate('/register')}
-                        className={`px-10 py-5 bg-brand-secondary text-brand-dark text-xl font-black rounded-full shadow-2xl hover:bg-brand-gold-light hover:scale-105 transition-all flex items-center gap-3 ${isRtl ? 'flex-row-reverse' : ''}`}
+                        className="px-10 py-5 bg-brand-secondary text-brand-dark text-xl font-black rounded-full shadow-2xl hover:bg-brand-gold-light hover:scale-105 transition-all flex items-center gap-3"
                     >
                         <span>{L({ ar: 'ابدأ مجاناً — بدون بطاقة', en: 'Start for Free Now', fr: 'Commencer gratuitement', es: 'Empezar gratis ahora' })}</span>
                         <ArrowRight size={22} className={isRtl ? 'rotate-180' : ''} />

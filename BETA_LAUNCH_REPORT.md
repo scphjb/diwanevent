@@ -142,7 +142,7 @@ SSL/Domain:                                ⏳ يتطلب قرار توطين
 
 ```bash
 # 1. اشترِ نطاقاً (Namecheap ~$10/year):
-diwanevent.com  أو  diwan-event.dz
+diwan.net  أو  diwan-event.dz
 
 # 2. SSL مجاني عبر Let's Encrypt (مدمج في docker-compose):
 # أضف Nginx + Certbot لـ docker-compose (انظر PROMPT 2)
@@ -167,7 +167,7 @@ A     api        → IP_SERVEUR  (اختياري)
 ```env
 # .env — القيم الحقيقية:
 EMAILS_FROM_NAME=Diwan Event
-EMAILS_FROM_EMAIL=noreply@diwanevent.com
+EMAILS_FROM_EMAIL=noreply@diwan.net
 SMTP_SERVER=smtp-relay.brevo.com
 SMTP_PORT=587
 SMTP_USERNAME=your-brevo-login@email.com
@@ -211,7 +211,7 @@ SMTP_PASSWORD=your-brevo-smtp-key
 ```bash
 # أبسط monitoring للبيتا — Uptime Robot (مجاني):
 # 1. سجّل على uptimerobot.com
-# 2. أضف monitor لـ: https://diwanevent.com/api/v1/health
+# 2. أضف monitor لـ: https://diwan.net/api/v1/health
 # 3. إشعار SMS/Email عند التعطّل
 
 # Health endpoint موجود في: app/routers/health.py ✅
@@ -370,7 +370,7 @@ DOMAIN=$1
 EMAIL=$2
 
 if [ -z "$DOMAIN" ] || [ -z "$EMAIL" ]; then
-    echo "Usage: ./init-ssl.sh diwanevent.com admin@email.com"
+    echo "Usage: ./init-ssl.sh diwan.net admin@email.com"
     exit 1
 fi
 
@@ -564,7 +564,7 @@ SMTP_SERVER=smtp-relay.brevo.com
 SMTP_PORT=587
 SMTP_USERNAME=your-brevo-account@email.com
 SMTP_PASSWORD=your-brevo-smtp-key-here
-EMAILS_FROM_EMAIL=noreply@diwanevent.com
+EMAILS_FROM_EMAIL=noreply@diwan.net
 EMAILS_FROM_NAME=Diwan Event
 ```
 

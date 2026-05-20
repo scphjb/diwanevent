@@ -35,8 +35,8 @@ const FeatureShowcase = () => {
     },
     {
       id: 1,
-      title: isRtl ? "البادجات الرقمية" : "Digital Badges",
-      desc: isRtl ? "توليد تلقائي للبادجات بتصاميم احترافية تدعم اللغة العربية بالكامل RLT." : "Automated generation of professional badges with full RTL Arabic support.",
+      title: isRtl ? "الشارات الرقمية" : "Digital Badges",
+      desc: isRtl ? "توليد تلقائي للشارات بتصاميم احترافية تدعم اللغة العربية بالكامل RTL." : "Automated generation of professional badges with full RTL Arabic support.",
       icon: CreditCard,
       visual: (
         <div className="w-full h-full flex items-center justify-center">
@@ -89,7 +89,7 @@ const FeatureShowcase = () => {
   ];
 
   return (
-    <section className="py-24 bg-brand-light relative overflow-hidden">
+    <section className="py-24 bg-brand-light relative overflow-hidden" dir={isRtl ? 'rtl' : 'ltr'}>
       <div className="container mx-auto px-6">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-5xl font-black text-brand-dark mb-4">
@@ -107,9 +107,9 @@ const FeatureShowcase = () => {
               <button
                 key={idx}
                 onClick={() => setActiveTab(idx)}
-                className={`w-full p-6 rounded-2xl flex items-start gap-5 transition-all duration-300 text-right ${
+                className={`w-full p-6 rounded-2xl flex items-start gap-5 transition-all duration-300 text-start ${
                   activeTab === idx 
-                  ? 'bg-white shadow-xl shadow-brand-primary/5 border-r-4 border-brand-primary' 
+                  ? 'bg-white shadow-xl shadow-brand-primary/5 border-s-4 border-brand-primary' 
                   : 'hover:bg-brand-primary/5 grayscale opacity-60'
                 }`}
               >

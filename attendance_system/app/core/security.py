@@ -9,8 +9,8 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 ALGORITHM = "HS256"
 
-# مدة Access Token قصيرة (30 دقيقة) — يتم تجديده عبر Refresh Token
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+# مدة Access Token قصيرة (8 ساعات — يكفي لفعالية يوم كامل) — يتم تجديده عبر Refresh Token
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 8
 
 # مدة Refresh Token طويلة (7 أيام)
 REFRESH_TOKEN_EXPIRE_DAYS = 7

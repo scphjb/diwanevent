@@ -24,7 +24,7 @@ def setup_test_data():
     credentials_to_try = [
         {"username": "admin@diwan.com", "password": "admin123"},
         {"username": "admin@diwan.dz", "password": "AdminPass123!"},
-        {"username": "admin@diwanevent.com", "password": "admin123"}
+        {"username": "admin@diwan.net", "password": "admin123"}
     ]
     
     token = None

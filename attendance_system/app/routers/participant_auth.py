@@ -92,7 +92,7 @@ async def send_unified_welcome_email(email: str, participant_name: str, event_na
                 
                 <!-- Header -->
                 <tr>
-                  <td style="background:linear-gradient(135deg,#022C22 0%,#1A8A6A 100%);padding:40px;text-align:center;">
+                  <td style="background:linear-gradient(135deg,#022C22 0%,#1DB58A 100%);padding:40px;text-align:center;">
                     <h1 style="margin:0;color:#D4AF37;font-size:32px;letter-spacing:2px;font-weight:900;">Diwan Event</h1>
                     <p style="margin:8px 0 0;color:rgba(255,255,255,0.8);font-size:16px;">تأكيد التسجيل والبوابة الرقمية</p>
                   </td>
@@ -133,7 +133,7 @@ async def send_unified_welcome_email(email: str, participant_name: str, event_na
 
                     <!-- Magic Link Button -->
                     <div style="text-align:center;margin:35px 0;">
-                      <a href="{magic_link}" style="background:linear-gradient(135deg,#1A8A6A 0%,#022C22 100%);color:#ffffff;padding:20px 40px;border-radius:16px;text-decoration:none;font-weight:bold;display:inline-block;box-shadow:0 6px 20px rgba(26,138,106,0.3);font-size:18px;">
+                      <a href="{magic_link}" style="background:linear-gradient(135deg,#1DB58A 0%,#022C22 100%);color:#ffffff;padding:20px 40px;border-radius:16px;text-decoration:none;font-weight:bold;display:inline-block;box-shadow:0 6px 20px rgba(29,181,138,0.3);font-size:18px;">
                          دخول مباشر للبوابة الرقمية ✨
                       </a>
                       <p style="margin:12px 0 0;color:#888;font-size:12px;">(رابط آمن وسريع - نقرة واحدة فقط)</p>

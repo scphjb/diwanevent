@@ -22,9 +22,9 @@ const ProductExperience = () => {
     },
     {
       id: 'badges',
-      title: L({ ar: 'البادجات الفورية', en: 'Instant Badges', fr: 'Badges', es: 'Badges' }),
+      title: L({ ar: 'الشارات الفورية', en: 'Instant Badges', fr: 'Badges', es: 'Badges' }),
       desc: L({ 
-        ar: 'طباعة احترافية وفورية للبادجات عند وصول المشارك.', 
+        ar: 'طباعة احترافية وفورية للشارات عند وصول المشارك.', 
         en: 'Professional and instant badge printing upon participant arrival.',
         fr: 'Impression professionnelle et instantanée des badges à l\'arrivée.',
         es: 'Impresión profesional e instantánea de badges a la llegada.'

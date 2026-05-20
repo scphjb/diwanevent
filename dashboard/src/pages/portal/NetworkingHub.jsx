@@ -253,7 +253,7 @@ const DirectoryTab = ({ eventId, myId }) => {
         </div>
         <button 
           onClick={toggleVisibility} 
-          style={{ background: isVisible ? 'linear-gradient(135deg, #1A8A6A, #10b981)' : 'rgba(255,255,255,0.1)', color: isVisible ? '#fff' : 'rgba(255,255,255,0.5)', border:'none', borderRadius:20, padding:'6px 16px', fontFamily:'Cairo', fontSize:12, fontWeight:'bold', cursor:'pointer', transition:'all 0.3s' }}
+          style={{ background: isVisible ? 'linear-gradient(135deg, #1DB58A, #10b981)' : 'rgba(255,255,255,0.1)', color: isVisible ? '#fff' : 'rgba(255,255,255,0.5)', border:'none', borderRadius:20, padding:'6px 16px', fontFamily:'Cairo', fontSize:12, fontWeight:'bold', cursor:'pointer', transition:'all 0.3s' }}
         >
           {isVisible ? '👁 مرئي' : '👁‍🗨 مخفي'}
         </button>
@@ -347,7 +347,7 @@ const ParticipantCard = ({ participant: p, onConnect }) => {
       {/* Avatar */}
       <div style={{
         width:48, height:48, borderRadius:'50%', flexShrink:0,
-        background:'linear-gradient(135deg, #022C22, #1A8A6A)',
+        background:'linear-gradient(135deg, #022C22, #1DB58A)',
         display:'flex', alignItems:'center', justifyContent:'center',
         fontSize:18, border:'2px solid rgba(212,175,55,0.3)'
       }}>
@@ -451,7 +451,7 @@ const MessagesTab = ({ myId }) => {
           <div key={msg.id} style={{ display:'flex', justifyContent: msg.is_mine ? 'flex-start' : 'flex-end' }}>
             <div style={{
               maxWidth:'75%', padding:'10px 14px', borderRadius:12,
-              background: msg.is_mine ? '#1A8A6A' : 'rgba(255,255,255,0.08)',
+              background: msg.is_mine ? '#1DB58A' : 'rgba(255,255,255,0.08)',
               color:'#F0F4F2', fontSize:13, lineHeight:1.5
             }}>
               {msg.content}
@@ -490,7 +490,7 @@ const MessagesTab = ({ myId }) => {
           <div key={conn.connection_id}
             onClick={() => openChat(conn)}
             style={{ display:'flex', alignItems:'center', gap:12, padding:14, borderRadius:12, marginBottom:8, background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.06)', cursor:'pointer' }}>
-            <div style={{ width:42, height:42, borderRadius:'50%', background:'linear-gradient(135deg, #022C22, #1A8A6A)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, position:'relative' }}>
+            <div style={{ width:42, height:42, borderRadius:'50%', background:'linear-gradient(135deg, #022C22, #1DB58A)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, position:'relative' }}>
               {conn.full_name?.charAt(0)}
               {conn.unread_messages > 0 && (
                 <span style={{ position:'absolute', top:-2, right:-2, background:'#ef4444', color:'#fff', borderRadius:'50%', width:16, height:16, fontSize:9, display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'bold' }}>
@@ -531,7 +531,7 @@ const ProfileCompletionBadge = ({ participant }) => (
 
 const RecommendationCard = ({ participant: p, onConnect }) => (
   <div style={{ minWidth:150, background:'rgba(255,255,255,0.04)', borderRadius:12, padding:12, border:'1px solid rgba(212,175,55,0.15)', textAlign:'center' }}>
-    <div style={{ width:40, height:40, borderRadius:'50%', background:'linear-gradient(135deg, #022C22, #1A8A6A)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, margin:'0 auto 8px' }}>
+    <div style={{ width:40, height:40, borderRadius:'50%', background:'linear-gradient(135deg, #022C22, #1DB58A)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, margin:'0 auto 8px' }}>
       {p.full_name?.charAt(0)}
     </div>
     <div style={{ color:'#F0F4F2', fontSize:12, fontWeight:'bold', marginBottom:2 }}>{p.full_name?.split(' ')[0]}</div>

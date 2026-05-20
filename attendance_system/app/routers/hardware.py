@@ -11,41 +11,88 @@ router = APIRouter()
 # Store active hardware devices state in memory (for live monitoring)
 active_devices: Dict[str, dict] = {}
 
+import secrets
+import os
+
+# مفتاح API للأجهزة — يُضبط في .env
+HARDWARE_API_KEY = os.environ.get("HARDWARE_API_KEY", "")
+
 @router.websocket("/ws")
 async def hardware_websocket(websocket: WebSocket):
     await websocket.accept()
     device_id = None
+    authenticated = False
+    
     try:
         while True:
             data = await websocket.receive_text()
             message = json.loads(data)
-            
             m_type = message.get("type")
-            device_id = message.get("deviceId")
-            payload = message.get("payload", {})
-
+            
+            # ── AUTH: أول رسالة يجب أن تكون AUTH مع API key ────────
             if m_type == "AUTH":
-                event_id = payload.get("eventId", 1) # Default to 1 for migration, but should be explicit
-                active_devices[device_id] = {
-                    "id": device_id,
-                    "event_id": event_id,
-                    "status": "ONLINE",
-                    "type": payload.get("type", "GENERIC"),
-                    "battery": payload.get("battery", 100),
-                    "last_seen": asyncio.get_event_loop().time()
-                }
-                await websocket.send_json({"type": "AUTH_SUCCESS"})
-                # Notify dashboard about new device
-                await manager.broadcast_to_event(event_id, {"type": "hardware_update", "devices": [d for d in active_devices.values() if d['event_id'] == event_id]})
-
-            elif m_type == "HEARTBEAT":
+                payload = message.get("payload", {})
+                provided_key = payload.get("apiKey", "")
+                device_id = message.get("deviceId", "unknown")
+                
+                # التحقق من المفتاح
+                if not HARDWARE_API_KEY:
+                    # في بيئة التطوير فقط (بدون مفتاح)
+                    if os.environ.get("ENVIRONMENT", "development") != "development":
+                        await websocket.send_json({
+                            "type": "AUTH_FAILED",
+                            "reason": "HARDWARE_API_KEY غير مُعدّ في الخادم"
+                        })
+                        await websocket.close(code=4001)
+                        return
+                    authenticated = True
+                elif secrets.compare_digest(provided_key, HARDWARE_API_KEY):
+                    authenticated = True
+                else:
+                    await websocket.send_json({
+                        "type": "AUTH_FAILED",
+                        "reason": "مفتاح غير صالح"
+                    })
+                    await websocket.close(code=4003)
+                    return
+                
+                if authenticated:
+                    event_id = payload.get("eventId", 1)
+                    active_devices[device_id] = {
+                        "id": device_id,
+                        "event_id": event_id,
+                        "status": "ONLINE",
+                        "type": payload.get("type", "GENERIC"),
+                        "battery": payload.get("battery", 100),
+                        "last_seen": asyncio.get_event_loop().time()
+                    }
+                    await websocket.send_json({"type": "AUTH_SUCCESS"})
+                    await manager.broadcast_to_event(event_id, {
+                        "type": "hardware_update",
+                        "devices": [d for d in active_devices.values() if d['event_id'] == event_id]
+                    })
+                continue
+            
+            # ── رفض أي رسالة قبل AUTH ────────────────────────────
+            if not authenticated:
+                await websocket.send_json({
+                    "type": "ERROR",
+                    "reason": "يجب المصادقة أولاً"
+                })
+                await websocket.close(code=4001)
+                return
+            
+            # ── HEARTBEAT ────────────────────────────
+            if m_type == "HEARTBEAT":
+                payload = message.get("payload", {})
                 if device_id in active_devices:
                     active_devices[device_id]["status"] = "ONLINE"
                     active_devices[device_id]["battery"] = payload.get("battery", active_devices[device_id]["battery"])
                     active_devices[device_id]["last_seen"] = asyncio.get_event_loop().time()
                 
+            # ── SCAN ────────────────────────────
             elif m_type == "SCAN":
-                # Handle actual scan logic
+                payload = message.get("payload", {})
                 barcode = payload.get("barcode")
                 
                 # Link to DB logic
@@ -85,7 +132,7 @@ async def hardware_websocket(websocket: WebSocket):
                                 event_type='check_in',
                                 check_in_time=datetime.now(),
                                 direction='IN',
-                                location_id=payload.get("location_id"), # Optional but good to have
+                                location_id=payload.get("location_id"),
                                 device_id=device_id,
                                 device_name=active_devices.get(device_id, {}).get('type', 'unknown'),
                                 entry_method='qr_scan'
@@ -108,11 +155,14 @@ async def hardware_websocket(websocket: WebSocket):
                         await websocket.send_json({"type": "SCAN_ERROR", "message": "المشارك غير موجود"})
                     
                     await websocket.send_json({"type": "SCAN_ACK"})
-
+                    
     except WebSocketDisconnect:
-        if device_id in active_devices:
-            active_devices[device_id]["status"] = "OFFLINE"
-            await manager.broadcast_to_event(1, {"type": "hardware_update", "devices": list(active_devices.values())})
+        if device_id and device_id in active_devices:
+            del active_devices[device_id]
+            await manager.broadcast_to_event(1, {
+                "type": "hardware_update", 
+                "devices": list(active_devices.values())
+            })
     except Exception as e:
         print(f"Hardware WS Error: {e}")
 

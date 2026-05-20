@@ -76,17 +76,23 @@ class TwoFactorVerifyRequest(BaseModel):
     code: str
 
 
+from app.main import limiter
+import asyncio
+
 # ═══════════════════════════════════════
 # تسجيل الدخول (Async)
 # ═══════════════════════════════════════
 @router.post("/login", response_model=TokenResponse)
+@limiter.limit("10/minute")
 async def login(
+    request: Request,
     db: AsyncSession = Depends(get_db),
     form_data: OAuth2PasswordRequestForm = Depends(),
 ):
     """
     نظام تسجيل الدخول الموحد باستخدام JWT بشكل Async بالكامل.
     """
+    await asyncio.sleep(0.1)   # 100ms لكل محاولة لمنع timing attacks
     result = await db.execute(select(User).filter(User.email == form_data.username))
     user = result.scalar_one_or_none()
 

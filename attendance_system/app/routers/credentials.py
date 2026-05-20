@@ -86,7 +86,7 @@ def _template_to_dict(t: BadgeTemplate) -> dict:
 
 @router.get("/badges/print/{participant_id}")
 async def print_badge(participant_id: int, db: AsyncSession = Depends(get_db)):
-    """طباعة بادج مشارك واحد — مفتوح (لا يحتاج توكن)"""
+    """طباعة شارة مشارك واحد — مفتوح (لا يحتاج توكن)"""
     p = await db.get(Participant, participant_id)
     if not p:
         raise HTTPException(status_code=404, detail="المشارك غير موجود")
@@ -98,7 +98,7 @@ async def print_badge(participant_id: int, db: AsyncSession = Depends(get_db)):
     template = res.scalars().first()
     
     if not template:
-        raise HTTPException(status_code=404, detail="قالب البادج غير موجود للفعالية")
+        raise HTTPException(status_code=404, detail="قالب الشارة غير موجود للفعالية")
 
     try:
         design = json.loads(template.design_json)
@@ -113,7 +113,7 @@ async def print_badge(participant_id: int, db: AsyncSession = Depends(get_db)):
     except Exception as exc:
         import traceback
         traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"فشل توليد الباج: {str(exc)}")
+        raise HTTPException(status_code=500, detail=f"فشل توليد الشارة: {str(exc)}")
 
     return Response(
         content=pdf_bytes,
@@ -123,7 +123,7 @@ async def print_badge(participant_id: int, db: AsyncSession = Depends(get_db)):
 
 @router.get("/badges/secure-download/{token}")
 async def download_badge_by_token(token: str, db: AsyncSession = Depends(get_db)):
-    """تحميل بادج مشارك عبر الرمز الفريد (أكثر أماناً)"""
+    """تحميل شارة مشارك عبر الرمز الفريد (أكثر أماناً)"""
     stmt = select(Participant).filter(
         (Participant.order_num == token) | (Participant.qr_code == token)
     )
@@ -139,7 +139,7 @@ async def download_badge_by_token(token: str, db: AsyncSession = Depends(get_db)
     template = res_tmpl.scalars().first()
     
     if not template:
-        raise HTTPException(status_code=404, detail="قالب البادج غير موجود للفعالية")
+        raise HTTPException(status_code=404, detail="قالب الشارة غير موجود للفعالية")
 
     try:
         design = json.loads(template.design_json)

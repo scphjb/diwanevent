@@ -23,6 +23,11 @@ const eventService = {
     return response.data;
   },
 
+  getPublicActiveEvents: async () => {
+    const response = await api.get('events/public/active');
+    return response.data;
+  },
+
   // BUG 2 FIX: حذف فعالية مع بياناتها المرتبطة
   deleteEvent: async (eventId) => {
     const response = await api.delete(`events/${eventId}`);

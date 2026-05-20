@@ -12,7 +12,7 @@ const EventTypesSection = () => {
       title: isRtl ? "المؤتمرات الكبرى" : "Major Conferences",
       icon: Users,
       features: isRtl 
-        ? ["إدارة آلاف المشاركين", "توزيع بادجات احترافية", "تحليلات التدفق"] 
+        ? ["إدارة آلاف المشاركين", "توزيع شارات احترافية", "تحليلات التدفق"] 
         : ["Manage thousands", "Professional badges", "Flow analytics"],
       color: "from-blue-500/20 to-brand-primary/20",
       accent: "text-blue-600"

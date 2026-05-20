@@ -28,7 +28,7 @@ function setNestedProp(obj, path, value) {
 // ── مكوّن إجراءات الرأس ───────────────────────────────────────────
 const Header = ({ templateName, setTemplateName, onSave, onExport, saving, exporting, canUndo, canRedo, onUndo, onRedo }) => (
   <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 24px', background: '#0A3D2B', borderBottom: '1px solid rgba(212,175,55,0.15)', direction: 'rtl', fontFamily: 'Cairo' }}>
-    <div style={{ fontSize: 18, fontWeight: '900', color: '#D4AF37' }}>مصمم البادج</div>
+    <div style={{ fontSize: 18, fontWeight: '900', color: '#D4AF37' }}>مصمم الشارات</div>
     <input
       value={templateName}
       onChange={e => setTemplateName(e.target.value)}
@@ -65,7 +65,7 @@ const BadgeDesigner = () => {
   const [elements, setElements] = useState([]);
   const [background, setBackground] = useState({ color: '#022C22' });
   const [selectedId, setSelectedId] = useState(null);
-  const [templateName, setTemplateName] = useState('قالب بادج جديد');
+  const [templateName, setTemplateName] = useState('قالب شارة جديد');
   const [templateId, setTemplateId] = useState(null);
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);

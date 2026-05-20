@@ -25,7 +25,7 @@ const DashboardMockup = memo(() => {
     {/* Stats row */}
     <div className="grid grid-cols-3 gap-2 mb-4">
       {[
-        {label: L({ ar: 'الحاضرون', en: 'Attendees', fr: 'Participants', es: 'Asistentes' }), value:'847', color:'#1A8A6A'},
+        {label: L({ ar: 'الحاضرون', en: 'Attendees', fr: 'Participants', es: 'Asistentes' }), value:'847', color:'#1DB58A'},
         {label: L({ ar: 'في الانتظار', en: 'Waiting', fr: 'En attente', es: 'En espera' }), value:'353', color:'#D4AF37'},
         {label: L({ ar: 'الإجمالي', en: 'Total', fr: 'Total', es: 'Total' }), value:'1,200', color:'#6B7280'},
       ].map((s,i)=>(
@@ -80,7 +80,7 @@ const Hero = () => {
   const navigate = useNavigate();
 
   return (
-    <section className="relative min-h-screen flex items-center pt-20 overflow-hidden bg-brand-dark noise-bg">
+    <section className="relative min-h-screen flex items-center pt-20 overflow-hidden bg-brand-dark noise-bg" dir={isRtl ? 'rtl' : 'ltr'}>
       {/* Real Background Image */}
       <div className="absolute inset-0 z-0">
           <img 
@@ -167,7 +167,7 @@ const Hero = () => {
             {[
               { val: '1,200+', label: L({ ar: 'مشارك', en: 'Attendees', fr: 'Participants', es: 'Asistentes' }) },
               { val: '99.9%', label: L({ ar: 'دقة QR', en: 'QR Accuracy', fr: 'Précision QR', es: 'Precisión QR' }) },
-              { val: '< 3s', label: L({ ar: 'لكل مسح', en: 'Per Scan', fr: 'Par Scan', es: 'Por Escaneo' }) },
+              { val: '< 0.5s', label: L({ ar: 'لكل مسح', en: 'Per Scan', fr: 'Par Scan', es: 'Por Escaneo' }) },
             ].map((stat, i) => (
               <div key={i} className="text-center">
                 <div className="text-2xl font-black text-brand-text">{stat.val}</div>

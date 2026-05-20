@@ -53,10 +53,17 @@ class InsightsService:
         
         if total_vips == 0: return None
 
+        from app.models.participant import Attendance
+        from sqlalchemy import distinct
+
+        checked_ids = select(distinct(Attendance.participant_id)).where(
+            Attendance.event_type == 'check_in'
+        ).scalar_subquery()
+
         stmt_arrived = select(func.count(Participant.id)).filter(
             Participant.event_id == event_id,
             Participant.role.ilike('%VIP%'),
-            Participant.payment_status == 'paid'
+            Participant.id.in_(checked_ids)
         )
         res_arrived = await db.execute(stmt_arrived)
         arrived_vips = res_arrived.scalar() or 0
@@ -84,7 +91,17 @@ class InsightsService:
         res_total = await db.execute(stmt_total)
         total = res_total.scalar() or 0
         
-        stmt_present = select(func.count(Participant.id)).filter(Participant.event_id == event_id, Participant.payment_status == 'paid')
+        from app.models.participant import Attendance
+        from sqlalchemy import distinct
+
+        checked_ids = select(distinct(Attendance.participant_id)).where(
+            Attendance.event_type == 'check_in'
+        ).scalar_subquery()
+
+        stmt_present = select(func.count(Participant.id)).filter(
+            Participant.event_id == event_id,
+            Participant.id.in_(checked_ids)
+        )
         res_present = await db.execute(stmt_present)
         present = res_present.scalar() or 0
         

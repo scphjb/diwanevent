@@ -332,7 +332,7 @@ async def send_connection_request(
 ):
     """
     إرسال طلب اتصال مع رسالة اختيارية.
-    via_qr=True عند مسح بادج الشخص.
+    via_qr=True عند مسح شارة الشخص.
     """
     target = await db.get(Participant, target_id)
     if not target or target.event_id != me.event_id:
@@ -390,7 +390,7 @@ async def quick_connect_via_qr(
     me: Participant = Depends(get_current_participant)
 ):
     """
-    تواصل فوري عبر مسح QR بادج مشارك آخر.
+    تواصل فوري عبر مسح QR شارة مشارك آخر.
     auto_connect=True → يرسل طلب اتصال فورياً
     auto_connect=False → يعرض الملف الشخصي فقط
     """

@@ -201,6 +201,9 @@ const PublicDisplay = () => {
           ...message.participant,
           time: getCurrentTime()
         };
+        const alreadyExists = prev.stats.recent.some(p => p.id === newPerson.id);
+        if (alreadyExists) return prev;
+
         return {
           ...prev,
           stats: {
@@ -239,7 +242,9 @@ const PublicDisplay = () => {
 
         const items = participants.items || (Array.isArray(participants) ? participants : []);
         const totalCount = participants.total !== undefined ? participants.total : items.length;
-        const presentParticipants = items.filter(p => p.attendance_status === 'present');
+        const presentParticipants = items
+          .filter(p => p.check_in_time)
+          .sort((a, b) => new Date(a.check_in_time) - new Date(b.check_in_time));
 
         setData(prev => ({
           ...prev,

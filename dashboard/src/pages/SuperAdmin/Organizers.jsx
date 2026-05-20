@@ -203,7 +203,7 @@ const OrganizerManagement = () => {
                 <tr key={org.id} className="hover:bg-white/[0.02] transition-colors group">
                     <td className="px-8 py-6">
                     <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#1A8A6A] to-[#0A3D2B] flex items-center justify-center text-white font-black uppercase shadow-inner">
+                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#1DB58A] to-[#0A3D2B] flex items-center justify-center text-white font-black uppercase shadow-inner">
                         {org.full_name?.[0] || 'O'}
                         </div>
                         <div>

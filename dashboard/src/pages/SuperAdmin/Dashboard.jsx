@@ -115,9 +115,9 @@ const SuperAdminDashboard = () => {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard title="إجمالي المنظمين" value={stats.total_organizers} icon={Users} trend="" color="[#D4AF37]" loading={loading} />
-        <StatCard title="إجمالي الفعاليات" value={stats.total_events} icon={Calendar} trend="" color="[#1A8A6A]" loading={loading} />
+        <StatCard title="إجمالي الفعاليات" value={stats.total_events} icon={Calendar} trend="" color="[#1DB58A]" loading={loading} />
         <StatCard title="المشاركون الكلي" value={stats.total_participants} icon={UserCheck} trend="" color="[#D4AF37]" loading={loading} />
-        <StatCard title="الاشتراكات النشطة" value={stats.active_subscriptions} icon={Activity} trend="" color="[#1A8A6A]" loading={loading} />
+        <StatCard title="الاشتراكات النشطة" value={stats.active_subscriptions} icon={Activity} trend="" color="[#1DB58A]" loading={loading} />
       </div>
 
       <div className="grid lg:grid-cols-3 gap-8">
@@ -134,7 +134,7 @@ const SuperAdminDashboard = () => {
                     recentOrganizers.map((org, i) => (
                         <div key={i} className="flex items-center justify-between p-4 rounded-2xl hover:bg-white/5 transition-all border border-transparent hover:border-white/5 group">
                             <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-xl bg-[#1A8A6A]/20 flex items-center justify-center text-[#1A8A6A] font-black text-lg">
+                                <div className="w-12 h-12 rounded-xl bg-[#1DB58A]/20 flex items-center justify-center text-[#1DB58A] font-black text-lg">
                                     {/* FIX: backend يُرجع full_name وليس name */}
                                     {(org.full_name || org.email || '?')[0].toUpperCase()}
                                 </div>
@@ -163,7 +163,7 @@ const SuperAdminDashboard = () => {
 
         {/* Platform Health Sidebar */}
         <div className="space-y-6">
-            <div className="bg-gradient-to-br from-[#1A8A6A] to-[#0A3D2B] rounded-[2.5rem] p-10 text-white relative overflow-hidden">
+            <div className="bg-gradient-to-br from-[#1DB58A] to-[#0A3D2B] rounded-[2.5rem] p-10 text-white relative overflow-hidden">
                 <div className="relative z-10">
                     <Database size={32} className="text-[#D4AF37] mb-6" />
                     <h3 className="text-xl font-black mb-2">استهلاك الموارد</h3>
@@ -209,7 +209,7 @@ const SuperAdminDashboard = () => {
                     </button>
                     <button 
                         onClick={handleGenerateReport}
-                        className="w-full py-4 bg-white/5 hover:bg-[#1A8A6A] rounded-2xl transition-all font-bold text-sm text-center"
+                        className="w-full py-4 bg-white/5 hover:bg-[#1DB58A] rounded-2xl transition-all font-bold text-sm text-center"
                     >
                         تقرير الأداء الشهري
                     </button>

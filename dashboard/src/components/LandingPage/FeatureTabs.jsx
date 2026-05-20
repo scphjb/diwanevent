@@ -28,9 +28,9 @@ const FeatureTabs = () => {
     },
     {
       id: 1,
-      label: L({ ar: "البادجات", en: "Badges", fr: "Badges", es: "Acreditaciones" }),
+      label: L({ ar: "الشارات", en: "Badges", fr: "Badges", es: "Acreditaciones" }),
       icon: CreditCard,
-      title: L({ ar: "البادجات الفورية", en: "Instant Badges", fr: "Badges Numériques", es: "Acreditaciones Digitales" }),
+      title: L({ ar: "الشارات الفورية", en: "Instant Badges", fr: "Badges Numériques", es: "Acreditaciones Digitales" }),
       content: L({ ar: "طباعة حرارية فورية تشمل كافة البيانات وQR كود الفعالية بمجرد وصول المشارك.", en: "Instant thermal printing including all data and event QR code upon arrival.", fr: "Impression thermique instantanée incluant toutes les données et le QR code.", es: "Impresión térmica instantánea que incluye todos los datos y el código QR." }),
       features: [
         L({ ar: "طباعة حرارية فورية عند الدخول (بدون حبر)", en: "Instant thermal printing (ink-free)", fr: "Impression thermique instantanée (sans encre)", es: "Impresión térmica instantánea (sin tinta)" }),
@@ -114,6 +114,7 @@ const FeatureTabs = () => {
 
         <div className="grid lg:grid-cols-2 gap-12 items-center bg-brand-surface/30 rounded-[3rem] p-8 md:p-16 border border-white/5 glass-card relative overflow-hidden">
           
+          {/* Text Content — always in reading-start column */}
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
@@ -121,7 +122,7 @@ const FeatureTabs = () => {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: isRtl ? -30 : 30 }}
               transition={{ duration: 0.4 }}
-              className={`relative z-10 ${isRtl ? 'text-right' : 'text-left'}`}
+              className="relative z-10"
             >
               <h3 className="text-4xl font-black text-brand-text mb-6">{tabs[activeTab].title}</h3>
               <p className="text-xl text-brand-muted leading-relaxed mb-8">
@@ -130,7 +131,7 @@ const FeatureTabs = () => {
 
               <ul className="space-y-4">
                 {tabs[activeTab].features.map((feature, i) => (
-                  <li key={i} className={`flex items-center gap-3 text-brand-text/80 ${isRtl ? 'flex-row-reverse' : ''}`}>
+                  <li key={i} className="flex items-center gap-3 text-brand-text/80">
                     <div className="w-6 h-6 bg-brand-primary/20 rounded-full flex items-center justify-center text-brand-primary shrink-0">
                         <CheckCircle2 size={14} />
                     </div>
@@ -141,7 +142,8 @@ const FeatureTabs = () => {
             </motion.div>
           </AnimatePresence>
 
-          <div className="h-[450px] bg-brand-dark/40 rounded-[2rem] border border-white/5 overflow-hidden relative group">
+          {/* Image — always in reading-end column */}
+          <div className={`h-[450px] bg-brand-dark/40 rounded-[2rem] border border-white/5 overflow-hidden relative group ${isRtl ? 'order-first' : ''}`}>
              <AnimatePresence mode="wait">
                 <motion.div
                     key={activeTab}

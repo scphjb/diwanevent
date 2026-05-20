@@ -81,7 +81,7 @@ const FAQ = () => {
   ];
 
   return (
-    <section className="py-32 bg-brand-dark relative overflow-hidden" id="faq">
+    <section className="py-32 bg-brand-dark relative overflow-hidden" id="faq" dir={isRtl ? 'rtl' : 'ltr'}>
       <div className="container mx-auto px-6 max-w-4xl">
         
         <div className={`flex items-center gap-4 mb-16 ${isRtl ? 'justify-center' : 'justify-center'}`}>
@@ -101,7 +101,7 @@ const FAQ = () => {
             >
               <button
                 onClick={() => setOpenIndex(openIndex === idx ? null : idx)}
-                className={`w-full flex items-center justify-between p-8 ${isRtl ? 'text-right' : 'text-left'}`}
+                className="w-full flex items-center justify-between p-8 text-start"
               >
                 <span className={`text-xl font-bold transition-colors ${openIndex === idx ? 'text-brand-secondary' : 'text-brand-text'}`}>
                   {faq.q}
@@ -119,7 +119,7 @@ const FAQ = () => {
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.3 }}
                   >
-                    <div className={`px-8 pb-8 text-brand-muted leading-relaxed text-lg border-t border-white/5 pt-4 ${isRtl ? 'text-right' : 'text-left'}`}>
+                    <div className="px-8 pb-8 text-brand-muted leading-relaxed text-lg border-t border-white/5 pt-4">
                       {faq.a}
                     </div>
                   </motion.div>

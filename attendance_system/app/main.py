@@ -47,10 +47,10 @@ app = FastAPI(
     للحصول على التوكن، استخدم مسار `/auth/login`.
     """,
     version="3.0.0",
-    terms_of_service="https://diwanevent.com/terms/",
+    terms_of_service="https://diwan.net/terms/",
     contact={
         "name": "Diwan Tech Team",
-        "email": "support@diwanevent.com",
+        "email": "support@diwan.net",
     },
 )
 

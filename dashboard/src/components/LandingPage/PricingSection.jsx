@@ -28,7 +28,7 @@ const PricingSection = () => {
       price: L({ ar: "اتصل بنا", en: "Contact Us", fr: "Contactez-nous", es: "Contáctenos" }),
       icon: Crown,
       features: L({ 
-        ar: ["حتى 1,500 مشارك", "كل ميزات Starter", "بادجات PDF + شهادات", "التحليلات المباشرة", "دعم الرعاة", "دعم أولوية"],
+        ar: ["حتى 1,500 مشارك", "كل ميزات Starter", "شارات PDF + شهادات", "التحليلات المباشرة", "دعم الرعاة", "دعم أولوية"],
         en: ["Up to 1,500 attendees", "All Starter features", "PDF Badges + Certs", "Live Analytics", "Sponsor support", "Priority support"],
         fr: ["Jusqu'à 1 500 participants", "Toutes les fonctions Starter", "Badges PDF + Certificats", "Analyses en direct", "Support Sponsors", "Support prioritaire"],
         es: ["Hasta 1.500 asistentes", "Todas las funciones Starter", "Badges PDF + Certificados", "Analíticas en vivo", "Soporte a patrocinadores", "Soporte prioritario"]
@@ -54,7 +54,7 @@ const PricingSection = () => {
   ];
 
   return (
-    <section id="pricing" className="py-24 bg-brand-dark relative overflow-hidden">
+    <section id="pricing" className="py-24 bg-brand-dark relative overflow-hidden" dir={isRtl ? 'rtl' : 'ltr'}>
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-brand-primary/10 rounded-full blur-[120px] pointer-events-none" />
 
       <div className="container mx-auto px-6 relative z-10">
@@ -105,9 +105,9 @@ const PricingSection = () => {
 
               <ul className="space-y-4 mb-10 flex-1">
                 {plan.features.map((feat, fIdx) => (
-                  <li key={fIdx} className={`flex items-center gap-3 text-sm text-brand-text/80 ${isRtl ? 'flex-row-reverse' : ''}`}>
+                  <li key={fIdx} className="flex items-center gap-2 text-sm text-brand-text/80">
                     <Check size={16} className="text-brand-primary flex-shrink-0" />
-                    <span className={isRtl ? 'text-right' : 'text-left'}>{feat}</span>
+                    <span>{feat}</span>
                   </li>
                 ))}
               </ul>

@@ -15,7 +15,7 @@ router = APIRouter(prefix="/api/v1/templates", tags=["Templates"])
 @router.post("/")
 async def create_template(data: dict, db: AsyncSession = Depends(get_db),
                     current_user: User = Depends(get_current_active_user)):
-    """حفظ قالب بادج أو شهادة"""
+    """حفظ قالب شارة أو شهادة"""
     template = BadgeTemplate(
         name=data['name'],
         type=data['type'],           # 'badge' | 'certificate_attendance' | ...
@@ -109,7 +109,7 @@ async def preview_template_pdf(data: dict, db: AsyncSession = Depends(get_db),
         'event_name': 'الجمعية العامة 2026',
         'event_date': '23 أبريل 2026',
         'event_location': 'فندق شيراتون عنابة',
-        'event_logo': 'https://diwan-event.com/logo.png' # شعار افتراضي للمعاينة
+        'event_logo': 'https://diwan.net/logo.png' # شعار افتراضي للمعاينة
     })
     
     pdf_bytes = render_design_to_pdf(design, participant, data.get('type', 'badge'))
@@ -127,7 +127,7 @@ async def print_badges(template_id: int, event_id: int, participant_id: int = No
                        db: AsyncSession = Depends(get_db),
                        current_user: User = Depends(get_current_active_user)):
     """
-    يولّد PDF يحتوي على بادجات/شهادات. 
+    يولّد PDF يحتوي على شارات/شهادات. 
     يمكن استخدامه للكل أو لمشارك واحد عبر participant_id.
     """
     from app.models.participant import Participant
@@ -137,6 +137,16 @@ async def print_badges(template_id: int, event_id: int, participant_id: int = No
     template = await db.get(BadgeTemplate, template_id)
     if not template:
         raise HTTPException(status_code=404, detail="القالب غير موجود")
+    
+    if current_user.role != "super_admin" and template.created_by != current_user.id:
+        raise HTTPException(status_code=403, detail="لا تملك صلاحية الوصول لهذا القالب")
+        
+    event = await db.get(Event, event_id)
+    if not event:
+        raise HTTPException(status_code=404, detail="الفعالية غير موجودة")
+        
+    if current_user.role != "super_admin" and event.created_by != current_user.id:
+        raise HTTPException(status_code=403, detail="لا تملك صلاحية الوصول لهذه الفعالية")
     
     stmt = select(Participant).filter(Participant.event_id == event_id)
     if participant_id:
@@ -148,7 +158,6 @@ async def print_badges(template_id: int, event_id: int, participant_id: int = No
     if not participants:
         raise HTTPException(status_code=404, detail="لا يوجد مشاركون مسجلون في هذه الفعالية للطباعة")
     
-    event = await db.get(Event, event_id)
     event_info = {
         'event_logo': event.logo_url if event else None,
         'event_name': event.event_name if event else '',

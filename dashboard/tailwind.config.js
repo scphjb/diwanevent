@@ -25,7 +25,7 @@ export default {
         arabic: ['Cairo', 'sans-serif'],
       },
       backgroundImage: {
-        'hero-gradient': 'radial-gradient(ellipse at 20% 50%, rgba(26, 138, 106, 0.15), transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(212, 175, 55, 0.1), transparent 50%)',
+        'hero-gradient': 'radial-gradient(ellipse at 20% 50%, rgba(29, 181, 138, 0.15), transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(212, 175, 55, 0.1), transparent 50%)',
       }
     },
   },

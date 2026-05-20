@@ -20,7 +20,7 @@ const MetricsSection = () => {
     },
     { 
         label: L({ ar: 'سرعة الدخول', en: 'Check-in Speed', fr: 'Vitesse d\'Entrée', es: 'Velocidad de Acceso' }), 
-        value: '< 3s', 
+        value: '< 0.5s', 
         icon: Printer 
     },
     { 
@@ -31,7 +31,7 @@ const MetricsSection = () => {
   ];
 
   return (
-    <section className="py-32 relative overflow-hidden bg-brand-dark">
+    <section className="py-32 relative overflow-hidden bg-brand-dark" dir={isRtl ? 'rtl' : 'ltr'}>
       <div className="container mx-auto px-6">
         <div className="bg-brand-surface rounded-[48px] p-12 md:p-20 relative overflow-hidden shadow-2xl border border-white/5">
           {/* Background Decoration */}
@@ -45,7 +45,7 @@ const MetricsSection = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1 }}
                 viewport={{ once: true }}
-                className={`flex flex-col items-center lg:items-start text-center lg:text-left group ${isRtl ? 'lg:items-end lg:text-right' : ''}`}
+                className="flex flex-col items-center text-center group"
               >
                 <div className={cn("mb-6 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-12", "text-brand-secondary")}>
                   <metric.icon size={32} />

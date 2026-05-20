@@ -81,6 +81,33 @@ services:
       - redis
     restart: unless-stopped
 
+  celery_worker:
+    build: ./attendance_system
+    command: celery -A app.tasks.celery_app worker --loglevel=warning --concurrency=4
+    environment:
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+      DATABASE_URL: postgresql+asyncpg://postgres:${DB_PASSWORD:-secure_pass}@pgbouncer:6432/diwan_event
+    depends_on:
+      - db
+      - redis
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  celery_beat:
+    build: ./attendance_system
+    command: celery -A app.tasks.celery_app beat --loglevel=warning
+    environment:
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+      DATABASE_URL: postgresql+asyncpg://postgres:${DB_PASSWORD:-secure_pass}@pgbouncer:6432/diwan_event
+    depends_on:
+      - redis
+    restart: unless-stopped
+
   nginx:
     image: nginx:alpine
     ports:

@@ -70,10 +70,10 @@ const AdditionalFeatures = () => {
   ];
 
   return (
-    <section className="py-24 bg-brand-dark relative overflow-hidden" id="additional-features">
+    <section className="py-24 bg-brand-dark relative overflow-hidden" id="additional-features" dir={isRtl ? 'rtl' : 'ltr'}>
       <div className="container mx-auto px-6">
         <div className="flex flex-col md:flex-row items-center justify-between mb-16 gap-8">
-          <div className={isRtl ? "text-right" : "text-left"}>
+          <div>
             <h2 className="text-3xl md:text-5xl font-black text-brand-text mb-4">
               {L({ ar: "أكثر من مجرد ماسح QR", en: "More Than Just a QR Scanner", fr: "Plus qu'un Simple Scanner QR", es: "Más que un Simple Escáner QR" })}
             </h2>
@@ -105,7 +105,7 @@ const AdditionalFeatures = () => {
               <div className="w-12 h-12 bg-brand-primary/10 rounded-xl shadow-sm flex items-center justify-center text-brand-primary flex-shrink-0">
                 <feat.icon size={24} />
               </div>
-              <div className={isRtl ? "text-right" : "text-left"}>
+              <div>
                 <h3 className="font-bold text-brand-text mb-1">{feat.title}</h3>
                 <p className="text-xs text-brand-muted leading-relaxed">{feat.desc}</p>
               </div>

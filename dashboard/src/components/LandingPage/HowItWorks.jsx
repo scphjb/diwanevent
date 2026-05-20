@@ -86,7 +86,7 @@ const HowItWorks = () => {
   ];
 
   return (
-    <section className="py-24 bg-brand-dark relative overflow-hidden">
+    <section className="py-24 bg-brand-dark relative overflow-hidden" dir={isRtl ? 'rtl' : 'ltr'}>
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-0.5 h-full bg-gradient-to-b from-transparent via-brand-primary/20 to-transparent hidden lg:block" />
 
       <div className="container mx-auto px-6 relative z-10">

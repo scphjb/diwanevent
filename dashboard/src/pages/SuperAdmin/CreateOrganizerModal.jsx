@@ -136,7 +136,7 @@ const CreateOrganizerModal = ({ isOpen, onClose, onSuccess }) => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex-grow py-4 bg-[#1A8A6A] text-white font-black rounded-2xl hover:bg-[#1A8A6A]/90 transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#1A8A6A]/20"
+                  className="flex-grow py-4 bg-[#1DB58A] text-white font-black rounded-2xl hover:bg-[#1DB58A]/90 transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#1DB58A]/20"
                 >
                   {loading ? (
                     <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />

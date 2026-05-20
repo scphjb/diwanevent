@@ -407,9 +407,7 @@ async def public_register_participant(
             event_date=str(event.event_date) if event.event_date else None,
             event_location=event.location
         )
-    elif participant.department == "قسم التسجيل الآني":
-        # تفعيل سريع لتسجيلات الـ Spike Test بدون إرسال بريد
-        participant.payment_status = 'paid'
+
     
     await db.commit()
     return {"status": "success", "participant_id": participant.id, "order_num": participant.order_num, "active": has_credits}
@@ -671,9 +669,12 @@ async def _register_attendance_background(
             invited_res = await db.execute(invited_stmt)
             total_invited = invited_res.scalar_one()
 
-            checked_stmt = select(func.count()).select_from(Participant).filter(
+            from sqlalchemy import distinct
+            checked_stmt = select(func.count(distinct(Attendance.participant_id))).join(
+                Participant, Participant.id == Attendance.participant_id
+            ).filter(
                 Participant.event_id == event_id,
-                Participant.payment_status == 'paid'
+                Attendance.event_type == 'check_in'
             )
             checked_res = await db.execute(checked_stmt)
             total_checked_in = checked_res.scalar_one()
@@ -789,8 +790,6 @@ async def undo_check_in_participant(
         
         if current_user.role not in ('super_admin', 'organizer', 'scanner'):
             raise HTTPException(status_code=403, detail="لا صلاحية لك")
-        
-        participant.payment_status = 'pending'
         
         # إزالة سجل الحضور الفعلي
         from app.models.participant import Attendance
@@ -1149,7 +1148,7 @@ async def get_all_badges(
     template_obj = res_tmpl.scalars().first()
     
     if not template_obj:
-        raise HTTPException(status_code=404, detail="قالب البادج غير موجود لهذه الفعالية")
+        raise HTTPException(status_code=404, detail="قالب الشارة غير موجود لهذه الفعالية")
 
     from app.utils.pdf_renderer import render_batch_pdf
     from app.routers.credentials import _participant_to_dict, _event_to_dict

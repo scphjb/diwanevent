@@ -5,7 +5,7 @@ import { Settings, Share2, TrendingUp } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
 const WorkflowSection = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const steps = [
     { icon: Settings, key: 'step1', color: 'text-brand-primary' },
@@ -14,7 +14,7 @@ const WorkflowSection = () => {
   ];
 
   return (
-    <section className="py-32 relative overflow-hidden bg-brand-light/30">
+    <section className="py-32 relative overflow-hidden bg-brand-light/30" dir={i18n.dir()}>
       <div className="container mx-auto px-6">
         <div className="max-w-4xl mx-auto text-center mb-20">
           <motion.div

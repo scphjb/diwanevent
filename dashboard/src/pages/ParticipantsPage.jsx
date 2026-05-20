@@ -72,7 +72,7 @@ const ParticipantsPage = () => {
 
   const handleBulkPrint = async () => {
     if (!activeTemplate) {
-      showError(t('participants.no_template', 'لم يتم العثور على قالب بادج لهذه الفعالية'), t('participants.create_template_first', 'يرجى إنشاء وحفظ قالب في المصمم أولاً.'));
+      showError(t('participants.no_template', 'لم يتم العثور على قالب شارة لهذه الفعالية'), t('participants.create_template_first', 'يرجى إنشاء وحفظ قالب في المصمم أولاً.'));
       return;
     }
     try {
@@ -86,7 +86,7 @@ const ParticipantsPage = () => {
 
   const handlePrint = async (participantId) => {
     if (!activeTemplate) {
-      showError(t('participants.no_template', 'لم يتم العثور على قالب بادج'));
+      showError(t('participants.no_template', 'لم يتم العثور على قالب شارة'));
       return;
     }
     try {

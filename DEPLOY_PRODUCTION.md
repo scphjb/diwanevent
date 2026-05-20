@@ -55,8 +55,8 @@ SECRET_KEY=your_generated_secret_key
 ENCRYPTION_KEY=your_generated_encryption_key
 SMTP_USERNAME=your-smtp-email@gmail.com
 SMTP_PASSWORD=your-smtp-app-password
-EMAILS_FROM_EMAIL=noreply@diwanevent.com
-ALLOWED_ORIGINS=https://diwanevent.com
+EMAILS_FROM_EMAIL=noreply@diwan.net
+ALLOWED_ORIGINS=https://diwan.net
 ```
 
 ### 2️⃣ بناء وتشغيل الحاويات

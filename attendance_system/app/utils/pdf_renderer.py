@@ -128,7 +128,7 @@ def render_design_to_pdf(design: dict, participant: dict, doc_type: str = 'badge
         page_w = mm_to_pt(float(tw))
         page_h = mm_to_pt(float(th))
         # الحساب الديناميكي للـ SCALE بناءً على عرض الصفحة بالبيكسل في المصمم
-        # الافتراضي للمصمم هو 533px للبادج و 1060px للشهادة
+        # الافتراضي للمصمم هو 533px للشارة و 1060px للشهادة
         screen_w = design.get('canvas', {}).get('width_px') or (533 if doc_type == 'badge' else 1060)
         SCALE = page_w / float(screen_w)
     elif doc_type == 'badge':

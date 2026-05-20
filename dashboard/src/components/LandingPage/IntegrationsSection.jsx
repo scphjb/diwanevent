@@ -14,7 +14,7 @@ const IntegrationsSection = () => {
   const { L, isRtl } = useLang();
 
   return (
-    <section className="py-32 bg-brand-dark relative overflow-hidden" id="integrations">
+    <section className="py-32 bg-brand-dark relative overflow-hidden" id="integrations" dir={isRtl ? 'rtl' : 'ltr'}>
       {/* Decorative lines */}
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
         <div className="absolute top-0 left-1/2 w-px h-full bg-brand-text -translate-x-1/2" />
@@ -32,7 +32,7 @@ const IntegrationsSection = () => {
               viewport={{ once: true }}
               className={cn("mb-12", isRtl ? "text-right" : "text-left")}
             >
-              <div className={cn("inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-primary/10 border border-brand-primary/20 mb-6", isRtl ? "flex-row-reverse" : "flex-row")}>
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-primary/10 border border-brand-primary/20 mb-6">
                 <Share2 className="text-brand-primary w-4 h-4" />
                 <span className="text-brand-primary text-[10px] font-black uppercase tracking-widest">{L({ ar: "تكامل تام", en: "FULL INTEGRATION", fr: "INTÉGRATION TOTALE", es: "INTEGRACIÓN TOTAL" })}</span>
               </div>
@@ -46,7 +46,7 @@ const IntegrationsSection = () => {
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                className={cn("p-8 rounded-[32px] glass-card border border-brand-border group hover:border-brand-secondary/40 transition-all duration-500", isRtl ? "text-right" : "text-left")}
+                className="p-8 rounded-[32px] glass-card border border-brand-border group hover:border-brand-secondary/40 transition-all duration-500"
               >
                 <div className={cn("w-12 h-12 rounded-2xl bg-brand-primary/10 flex items-center justify-center mb-6 text-brand-primary group-hover:scale-110 transition-transform", isRtl ? "mr-0" : "")}>
                   <Database size={24} />
@@ -60,7 +60,7 @@ const IntegrationsSection = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: 0.1 }}
-                className={cn("p-8 rounded-[32px] glass-card border border-brand-border group hover:border-brand-secondary/40 transition-all duration-500", isRtl ? "text-right" : "text-left")}
+                className="p-8 rounded-[32px] glass-card border border-brand-border group hover:border-brand-secondary/40 transition-all duration-500"
               >
                 <div className={cn("w-12 h-12 rounded-2xl bg-brand-primary/10 flex items-center justify-center mb-6 text-brand-primary group-hover:scale-110 transition-transform", isRtl ? "mr-0" : "")}>
                   <Cloud size={24} />
@@ -87,10 +87,7 @@ const IntegrationsSection = () => {
               <div className="absolute inset-0 bg-gradient-to-t from-brand-dark/60 to-transparent" />
 
               {/* Floating Integration Badge */}
-              <div className={cn(
-                "absolute bottom-8 glass-card p-6 rounded-3xl shadow-xl border border-brand-border flex items-center gap-4 animate-bounce-slow",
-                isRtl ? "right-8" : "left-8"
-              )}>
+              <div className="absolute bottom-8 start-8 glass-card p-6 rounded-3xl shadow-xl border border-brand-border flex items-center gap-4 animate-bounce-slow">
                 <div className="w-10 h-10 rounded-full bg-brand-primary flex items-center justify-center text-white">
                   <Share2 size={20} />
                 </div>

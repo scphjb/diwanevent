@@ -255,27 +255,57 @@ async def delete_document(
     await db.delete(doc)
     await db.commit()
     return {"status": "success"}
+# امتدادات مسموحة — whitelist صارم
+ALLOWED_EXTENSIONS = {'.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.txt', '.csv'}
+ALLOWED_MIME_TYPES = {
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'text/plain',
+    'text/csv',
+}
+MAX_FILE_SIZE_MB = 10
 
 @router.post("/upload-document")
 async def upload_document_file(
     file: UploadFile = File(...),
     user: User = Depends(get_current_active_user)
 ):
-    # Ensure directory exists
+    # 1. التحقق من الامتداد
+    ext = os.path.splitext(file.filename or "")[1].lower()
+    if ext not in ALLOWED_EXTENSIONS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"نوع الملف غير مسموح. الأنواع المقبولة: {', '.join(ALLOWED_EXTENSIONS)}"
+        )
+    
+    # 2. قراءة المحتوى مع حد الحجم
+    content = await file.read(MAX_FILE_SIZE_MB * 1024 * 1024 + 1)
+    if len(content) > MAX_FILE_SIZE_MB * 1024 * 1024:
+        raise HTTPException(status_code=413, detail=f"حجم الملف يتجاوز {MAX_FILE_SIZE_MB}MB")
+    
+    # 3. التحقق من MIME type الفعلي (ليس الامتداد)
+    try:
+        import magic as _magic
+        mime = _magic.from_buffer(content[:2048], mime=True)
+        if mime not in ALLOWED_MIME_TYPES:
+            raise HTTPException(status_code=400, detail=f"محتوى الملف غير مسموح: {mime}")
+    except ImportError:
+        pass  # python-magic اختياري — الامتداد كافٍ كحد أدنى
+    
+    # 4. حفظ الملف
     static_docs_dir = os.path.join("static", "documents")
     os.makedirs(static_docs_dir, exist_ok=True)
-    
-    # Create unique filename
-    ext = os.path.splitext(file.filename)[1]
     filename = f"{uuid.uuid4()}{ext}"
     file_path = os.path.join(static_docs_dir, filename)
     
-    # Save file
     with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+        buffer.write(content)
     
     return {
         "url": f"/static/documents/{filename}",
         "type": ext.replace(".", "").lower(),
-        "size": f"{os.path.getsize(file_path) / 1024 / 1024:.1f} MB"
+        "size": f"{len(content) / 1024 / 1024:.1f} MB"
     }

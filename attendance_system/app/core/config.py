@@ -31,6 +31,7 @@ class Settings(BaseSettings):
     # مفتاح تشفير البيانات الحساسة (منفصل عن SECRET_KEY)
     # توليد: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
     ENCRYPTION_KEY: Optional[str] = None
+    AES_SECRET_KEY: Optional[str] = None
 
     # CORS: في الإنتاج يجب تحديد النطاقات
     ALLOWED_ORIGINS: Union[list[str], str] = [

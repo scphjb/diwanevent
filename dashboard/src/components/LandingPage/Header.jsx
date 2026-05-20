@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, LayoutDashboard, Globe, ChevronDown } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useLang } from '../../utils/useLang';
 
 const Header = () => {
@@ -33,11 +33,12 @@ const Header = () => {
   };
 
   const navLinks = [
-    { name: L({ ar: 'الحلول', en: 'Solutions', fr: 'Solutions', es: 'Soluciones' }), href: '/#solutions' },
-    { name: L({ ar: 'المميزات', en: 'Features', fr: 'Fonctionnalités', es: 'Características' }), href: '/#features' },
-    { name: L({ ar: 'العتاد', en: 'Hardware', fr: 'Matériel', es: 'Hardware' }), href: '/#hardware' },
-    { name: L({ ar: 'الأسعار', en: 'Pricing', fr: 'Tarifs', es: 'Precios' }), href: '/#pricing' },
-    { name: L({ ar: 'الأسئلة', en: 'FAQ', fr: 'FAQ', es: 'FAQ' }), href: '/#faq' },
+    { name: L({ ar: 'الحلول', en: 'Solutions', fr: 'Solutions', es: 'Soluciones' }), href: '/#solutions', type: 'scroll' },
+    { name: L({ ar: 'المميزات', en: 'Features', fr: 'Fonctionnalités', es: 'Características' }), href: '/#features', type: 'scroll' },
+    { name: L({ ar: 'العتاد', en: 'Hardware', fr: 'Matériel', es: 'Hardware' }), href: '/#hardware', type: 'scroll' },
+    { name: L({ ar: 'الأسعار', en: 'Pricing', fr: 'Tarifs', es: 'Precios' }), href: '/#pricing', type: 'scroll' },
+    { name: L({ ar: 'المدونة', en: 'Blog', fr: 'Blog', es: 'Blog' }), href: '/blog', type: 'link' },
+    { name: L({ ar: 'الـ API', en: 'API', fr: 'API', es: 'API' }), href: '/api-docs', type: 'link' },
   ];
 
   const currentLang = languages.find(l => l.code === i18n.language) || languages[0];
@@ -60,13 +61,9 @@ const Header = () => {
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-8">
           {navLinks.map((link) => (
-            <a 
-              key={link.name} 
-              href={link.href} 
-              className="text-sm font-medium text-brand-muted hover:text-brand-secondary transition-colors"
-            >
-              {link.name}
-            </a>
+            link.type === 'link'
+              ? <Link key={link.name} to={link.href} className="text-sm font-medium text-brand-muted hover:text-brand-secondary transition-colors">{link.name}</Link>
+              : <a key={link.name} href={link.href} className="text-sm font-medium text-brand-muted hover:text-brand-secondary transition-colors">{link.name}</a>
           ))}
           <div className="flex items-center gap-2 px-3 py-1 bg-brand-primary/10 rounded-full border border-brand-primary/20">
             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
@@ -162,14 +159,9 @@ const Header = () => {
             className="absolute top-full left-0 w-full bg-brand-dark border-b border-brand-secondary/10 p-6 flex flex-col gap-6 md:hidden glass-card"
           >
             {navLinks.map((link) => (
-              <a 
-                key={link.name} 
-                href={link.href} 
-                className={`text-lg font-bold text-brand-text border-b border-white/5 pb-2 ${isRtl ? 'text-right' : 'text-left'}`}
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                {link.name}
-              </a>
+              link.type === 'link'
+                ? <Link key={link.name} to={link.href} className={`text-lg font-bold text-brand-text border-b border-white/5 pb-2`} onClick={() => setIsMobileMenuOpen(false)}>{link.name}</Link>
+                : <a key={link.name} href={link.href} className={`text-lg font-bold text-brand-text border-b border-white/5 pb-2`} onClick={() => setIsMobileMenuOpen(false)}>{link.name}</a>
             ))}
             
             {/* Mobile Languages */}

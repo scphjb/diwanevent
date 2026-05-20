@@ -255,7 +255,7 @@ const RequestDemo = () => {
         <div className="flex flex-col md:flex-row items-center justify-center gap-8 text-white/20 text-[10px] font-black uppercase tracking-widest">
           <div className="flex items-center gap-2">
             <MessageSquare size={14} />
-            <span>Support: support@diwanevent.com</span>
+            <span>Support: support@diwan.net</span>
           </div>
           <div className="hidden md:block w-1 h-1 rounded-full bg-white/10" />
           <div className="flex items-center gap-2">

@@ -52,7 +52,7 @@ const SuperAdminLayout = () => {
                 to={item.path}
                 className={`flex items-center gap-4 px-4 py-3 rounded-xl transition-all group ${
                   isActive 
-                  ? 'bg-[#1A8A6A] text-white shadow-lg shadow-[#1A8A6A]/20' 
+                  ? 'bg-[#1DB58A] text-white shadow-lg shadow-[#1DB58A]/20' 
                   : 'hover:bg-white/5 text-[#F0F4F2]/60 hover:text-white'
                 }`}
               >
@@ -66,7 +66,7 @@ const SuperAdminLayout = () => {
             <div className="px-4 mb-4 text-[10px] uppercase tracking-widest text-[#F0F4F2]/30 font-bold">بوابة الفعاليات</div>
             <Link
                 to="/dashboard"
-                className="flex items-center gap-4 px-4 py-3 rounded-xl text-[#1A8A6A] hover:bg-[#1A8A6A]/10 transition-all font-bold text-sm"
+                className="flex items-center gap-4 px-4 py-3 rounded-xl text-[#1DB58A] hover:bg-[#1DB58A]/10 transition-all font-bold text-sm"
             >
                 <LayoutDashboard size={20} />
                 <span>إدارة الفعاليات</span>
@@ -112,7 +112,7 @@ const SuperAdminLayout = () => {
                 <p className="text-xs font-black text-white leading-none mb-1 text-right">{userName}</p>
                 <p className="text-[10px] text-[#D4AF37] font-bold text-right uppercase">{userRole}</p>
               </div>
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#1A8A6A] to-[#D4AF37] p-[2px]">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#1DB58A] to-[#D4AF37] p-[2px]">
                 <div className="w-full h-full rounded-full bg-[#0A3D2B] flex items-center justify-center">
                   <ShieldCheck size={20} className="text-[#D4AF37]" />
                 </div>

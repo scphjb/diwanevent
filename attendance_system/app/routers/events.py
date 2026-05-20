@@ -28,6 +28,19 @@ async def list_events(
     result = await db.execute(stmt)
     return result.scalars().all()
 
+@router.get("/public/active")
+async def list_public_active_events(
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    جلب الفعاليات العامة المفتوحة للتسجيل حالياً.
+    """
+    stmt = select(Event).filter(
+        Event.status == 'active'
+    )
+    result = await db.execute(stmt)
+    return result.scalars().all()
+
 @router.get("/{event_id}")
 async def get_event(
     event_id: int,

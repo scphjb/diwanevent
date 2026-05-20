@@ -11,6 +11,7 @@ import FAQ from '../components/LandingPage/FAQ';
 import FinalCTA from '../components/LandingPage/FinalCTA';
 import Footer from '../components/LandingPage/Footer';
 import EfficiencyMatrix from '../components/LandingPage/EfficiencyMatrix';
+import ActiveEventsSection from '../components/LandingPage/ActiveEventsSection';
 
 import DashboardShowcase from '../components/LandingPage/DashboardShowcase';
 import AttendeeAppPreview from '../components/LandingPage/AttendeeAppPreview';
@@ -61,6 +62,7 @@ const LandingPage = () => {
         </div>
 
         <EfficiencyMatrix />
+        <ActiveEventsSection />
 
         <DashboardShowcase />
         <FeatureTabs />

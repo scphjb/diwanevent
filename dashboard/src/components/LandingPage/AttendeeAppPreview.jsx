@@ -7,14 +7,14 @@ const AttendeeAppPreview = () => {
   const { L, isRtl } = useLang();
 
   return (
-    <section className="py-24 bg-brand-dark overflow-hidden relative" id="app-preview">
+    <section className="py-24 bg-brand-dark overflow-hidden relative" id="app-preview" dir={isRtl ? 'rtl' : 'ltr'}>
       {/* Background Glows */}
       <div className="absolute top-1/2 left-0 -translate-y-1/2 w-[500px] h-[500px] bg-brand-primary/10 rounded-full blur-[120px]" />
       
       <div className="container mx-auto px-6 relative z-10">
         <div className="grid lg:grid-cols-2 gap-20 items-center">
           
-          <div className={`${isRtl ? 'order-2 lg:order-1 text-right' : 'order-2 lg:order-1 text-left'}`}>
+          <div className="order-2 lg:order-1">
             <h2 className="text-3xl md:text-5xl font-black text-white mb-6 leading-tight">
               {L({ ar: "تطبيق المشارك: كل ما يحتاجه في جيبه", en: "Attendee App: Everything in Their Pocket", fr: "App Participant : Tout dans la Poche", es: "App del Asistente: Todo en su Bolsillo" })}
             </h2>
@@ -33,7 +33,7 @@ const AttendeeAppPreview = () => {
                 { icon: Calendar, text: L({ ar: "جدول أعمال الفعالية المحدث", en: "Updated event agenda", fr: "Agenda de l'événement à jour", es: "Agenda del evento actualizada" }) },
                 { icon: Award, text: L({ ar: "تحميل شهادة الحضور بضغطة واحدة", en: "One-click certificate download", fr: "Téléchargement du certificat en un clic", es: "Descarga de certificado con un clic" }) }
               ].map((item, idx) => (
-                <div key={idx} className={`flex items-center gap-4 text-white/80 ${isRtl ? 'flex-row-reverse' : ''}`}>
+                <div key={idx} className="flex items-center gap-4 text-white/80">
                   <div className="p-2 bg-brand-primary/20 rounded-lg text-brand-primary">
                     <item.icon size={20} />
                   </div>

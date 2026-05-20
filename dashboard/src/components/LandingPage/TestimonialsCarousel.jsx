@@ -14,7 +14,7 @@ const TestimonialsCarousel = () => {
         ? "وفرنا 3 ساعات من العمل اليدوي في أول ملتقى جربنا فيه المنصة. الدقة والسرعة لا توصف." 
         : "We saved 3 hours of manual work in the first forum we tried the platform. The accuracy and speed are indescribable.",
       author: isRtl ? "محضر قضائي" : "Judicial Officer",
-      org: isRtl ? "الغرفة الشرقية" : "Eastern Chamber",
+      org: isRtl ? "الغرفة الجهوية للمحضرين القضائيين بالشرق" : "Regional Chamber of Judicial Officers of the East",
       rating: 5
     },
     {
@@ -27,7 +27,7 @@ const TestimonialsCarousel = () => {
     },
     {
       text: isRtl 
-        ? "أول منصة عربية أرى فيها دعماً حقيقياً للـ RTL والبادجات العربية بهذا المستوى من الاحترافية." 
+        ? "أول منصة عربية أرى فيها دعماً حقيقياً للـ RTL والشارات العربية بهذا المستوى من الاحترافية." 
         : "The first Arabic platform where I see real RTL support and Arabic badges with this level of professionalism.",
       author: isRtl ? "مسؤول إداري" : "Administrative Officer",
       org: isRtl ? "هيئة حكومية" : "Government Body",

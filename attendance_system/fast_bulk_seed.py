@@ -25,6 +25,8 @@ from app.models.event import Event
 from app.models.others import Poll, PollOption
 from app.models.participant import Participant
 from app.models.networking import ParticipantProfile
+from app.models.user import User
+from app.core.security import get_password_hash
 
 def run_bulk_seed():
     print("=" * 60)

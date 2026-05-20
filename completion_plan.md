@@ -48,7 +48,7 @@
   ```
   SMTP_SERVER=smtp.gmail.com
   SMTP_PORT=587
-  SMTP_USERNAME=events@diwanevent.com
+  SMTP_USERNAME=events@diwan.net
   SMTP_PASSWORD=xxxx-xxxx-xxxx-xxxx
   ```
 
@@ -92,7 +92,7 @@
   ```
   CHARGILY_API_KEY=xxxx
   CHARGILY_API_SECRET=xxxx
-  PAYMENT_SUCCESS_URL=https://diwanevent.com/ticket/{qr_code}
+  PAYMENT_SUCCESS_URL=https://diwan.net/ticket/{qr_code}
   ```
 
 ### المهمة 3.3 — واجهة الدفع

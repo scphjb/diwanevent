@@ -32,7 +32,7 @@ REGISTER_COUNT     = 0     # إلغاء التسجيل للتركيز التام
 
 ADMIN_CREDENTIALS = [
     {"username": "admin@diwan.com",      "password": "admin123"},
-    {"username": "admin@diwanevent.com", "password": "admin123"},
+    {"username": "admin@diwan.net",      "password": "admin123"},
     {"username": "admin@diwan.dz",       "password": "AdminPass123!"},
 ]
 
