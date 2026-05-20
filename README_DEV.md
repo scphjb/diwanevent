@@ -1,73 +1,154 @@
-# 🛠️ Diwan Event - Developer Guide (V2.2.0)
+# 🛠️ Diwan Event — دليل المطور (V3.0)
+
+> آخر تحديث: مايو 2026 | النطاق الرسمي: **diwan.net**
 
 مرحباً بك في الدليل التقني لمنصة **ديوان**. هذا الدليل مصمم لمساعدة المطورين على فهم البنية التحتية والمساهمة في تطوير المنصة.
 
-## 🏗️ Architecture Overview (بنية النظام)
+---
+
+## 🏗️ بنية النظام (Architecture)
 
 المنصة تعتمد على مبدأ **API-First Design** مع فصل كامل بين الواجهة الأمامية والخلفية:
 
-*   **Backend:** FastAPI (Python 3.10+) + SQLAlchemy 2.0 + PostgreSQL/SQLite.
-*   **Frontend:** React.js + Vite + Tailwind CSS + Framer Motion.
-*   **Real-time:** WebSockets لإدارة التنبيهات وتحديث الإحصائيات لحظياً.
-
-### المجلدات الرئيسية (Backend):
-*   `app/core/`: يحتوي على الإعدادات الأساسية، قاعدة البيانات، والمصادقة.
-*   `app/models/`: نماذج قاعدة البيانات (SQLAlchemy).
-*   `app/routers/`: مسارات الـ API (Controllers).
-*   `app/services/`: منطق الأعمال (Business Logic) مثل التطهير والتنبيهات.
+| الطبقة | التقنية |
+|--------|---------|
+| **Backend** | FastAPI (Python 3.11+) + SQLAlchemy 2.0 + PostgreSQL |
+| **Frontend** | React.js + Vite + Tailwind CSS + Framer Motion |
+| **Real-time** | WebSockets (تحديثات الحضور والإحصائيات لحظياً) |
+| **Queue** | Celery + Redis (البريد، PDF، التحليلات) |
+| **Reverse Proxy** | Nginx + SSL (Let's Encrypt على diwan.net) |
+| **Containers** | Docker + Docker Compose |
 
 ---
 
-## 🚀 Setup Guide (إعداد بيئة التطوير)
+## 📁 هيكل المجلدات
 
-### 1. المتطلبات:
-*   Python 3.10+
-*   Node.js 16+
-*   قاعدة بيانات PostgreSQL (أو SQLite للتطوير المحلي).
+```
+diwan_event/
+├── attendance_system/          # الخادم الخلفي (FastAPI)
+│   ├── app/
+│   │   ├── core/               # إعدادات، قاعدة بيانات، مصادقة، RBAC
+│   │   ├── models/             # نماذج SQLAlchemy
+│   │   ├── routers/            # مسارات API (controllers)
+│   │   ├── services/           # منطق الأعمال
+│   │   ├── tasks/              # Celery tasks (email, pdf, analytics)
+│   │   └── utils/              # أدوات مساعدة (PDF, encryption)
+│   ├── locales/                # ملفات الترجمة (ar.json)
+│   ├── Dockerfile
+│   └── requirements.txt
+├── dashboard/                  # الواجهة الأمامية (React + Vite)
+│   ├── src/
+│   │   ├── components/         # مكونات قابلة للإعادة
+│   │   ├── pages/              # صفحات المنصة والموقع
+│   │   ├── hooks/              # React hooks مخصصة
+│   │   ├── services/           # طبقة الاتصال بـ API
+│   │   └── utils/              # useLang, helpers
+│   └── public/locales/         # ترجمات (ar/en/fr/es)
+├── nginx/                      # إعدادات Nginx
+├── infra/postgres/             # postgresql.conf (مُضبّط للإنتاج)
+├── docker/                     # pgbouncer.ini
+├── docker-compose.yml          # بيئة التطوير المحلية
+└── docker-compose.prod.yml     # بيئة الإنتاج
+```
 
-### 2. تشغيل السيرفر (Backend):
+---
+
+## 🚀 إعداد بيئة التطوير المحلية
+
+### المتطلبات
+- Python 3.11+
+- Node.js 18+
+- Docker Desktop (اختياري للـ PostgreSQL)
+
+### 1. الخادم الخلفي (Backend)
 ```bash
 cd attendance_system
 python -m venv venv
-source venv/bin/activate  # venv\Scripts\activate على ويندوز
+venv\Scripts\activate          # Windows
 pip install -r requirements.txt
-python -m uvicorn app.main:app --reload
+
+# إنشاء .env من النموذج
+copy .env.example ..\.env      # ثم عدّل القيم
+
+# تشغيل السيرفر
+uvicorn app.main:app --reload --port 8000
 ```
 
-### 3. تشغيل الواجهة (Frontend):
+### 2. الواجهة الأمامية (Frontend)
 ```bash
 cd dashboard
 npm install
-npm run dev
+npm run dev                    # يعمل على http://localhost:5173
 ```
 
 ---
 
-## 📡 WebSockets & Notifications
+## 🌐 نقاط الاتصال الرئيسية
 
-النظام يستخدم WebSocket Manager مركزي لإرسال التنبيهات. 
-
-**طريقة الاستماع:**
-يجب الاتصال بالمسار: `ws://localhost:8000/ws/{event_id}?role=admin`
-*   نوع الرسالة للتنبيهات الإدارية: `admin_notification`.
-*   نوع الرسالة لتحديثات الحضور: `check_in`.
+| الخدمة | المحلي | الإنتاج |
+|--------|--------|---------|
+| Backend API | `http://localhost:8000/api/v1` | `https://diwan.net/api/v1` |
+| API Docs (Swagger) | `http://localhost:8000/docs` | محمية في الإنتاج |
+| Frontend | `http://localhost:5173` | `https://diwan.net` |
+| WebSocket | `ws://localhost:8000/ws/{event_id}` | `wss://diwan.net/ws/{event_id}` |
 
 ---
 
-## 🎨 Template Engine (محرك القوالب)
+## 📡 WebSockets
 
-يعتمد المحرك على نظام **JSON Configuration** لتحديد إحداثيات العناصر. يتم تخزين الإعدادات في حقل `elements_config` في جدول القوالب.
-
-**مثال للهيكل:**
-```json
-{
-  "full_name": {"x": 100, "y": 200, "font_size": 24, "color": "#000000"},
-  "qr_code": {"x": 50, "y": 50, "size": 100}
-}
+الاتصال بـ WebSocket:
 ```
-يتم استخدام هذه الإحداثيات في الخلفية بواسطة مكتبة توليد الـ PDF لوضع النصوص بدقة ميليمترية.
+ws://localhost:8000/ws/{event_id}?role=admin&token=JWT_TOKEN
+```
+
+| نوع الرسالة | الوصف |
+|-------------|-------|
+| `check_in` | حضور مشارك جديد |
+| `admin_notification` | تنبيه إداري |
+| `hardware_update` | تحديث حالة جهاز الماسح |
+| `poll_update` | تحديث نتائج التصويت |
 
 ---
 
-## 🧪 Testing
-التوثيق التفاعلي متوفر دائماً على: `http://localhost:8000/docs`
+## 👥 أدوار المستخدمين (RBAC)
+
+| الدور | الصلاحيات |
+|-------|-----------|
+| `super_admin` | إدارة كاملة للمنصة والمنظمين |
+| `organizer` | إدارة الفعاليات والمشاركين والتحليلات |
+| `scanner` | تسجيل الحضور فقط (checkin:operate) |
+| `viewer` | عرض الفعاليات والتحليلات فقط |
+
+**ملاحظة:** الأجهزة الفيزيائية تتصل عبر WebSocket مع `HARDWARE_API_KEY` دون حاجة لحساب مستخدم.
+
+---
+
+## 🎨 نظام الترجمة (i18n)
+
+المنصة تدعم 4 لغات: العربية، الإنجليزية، الفرنسية، الإسبانية.
+
+```jsx
+// في مكونات React
+const { L, isRtl } = useLang();
+return <p>{L({ ar: 'مرحباً', en: 'Hello', fr: 'Bonjour', es: 'Hola' })}</p>;
+```
+
+ملفات الترجمة: `dashboard/public/locales/{ar,en,fr,es}/translation.json`
+
+---
+
+## 🔒 الأمان
+
+- JWT Authentication مع انتهاء الصلاحية
+- تشفير AES-256 للبيانات الحساسة
+- Rate Limiting على مستوى Nginx
+- HTTPS إلزامي في الإنتاج (Let's Encrypt على diwan.net)
+- Two-Factor Authentication متاح للمستخدمين
+
+---
+
+## 📧 التواصل التقني
+
+- البريد: `hello@diwan.net`
+- الدعم: `support@diwan.net`
+- التوثيق التفاعلي: `http://localhost:8000/docs`

@@ -1,89 +1,185 @@
-# 🚀 دليل تشغيل البنية التحتية الإنتاجية لمنصة ديوان (Diwan Platform)
+# 🚀 دليل النشر الإنتاجي — منصة ديوان
 
-يوضح هذا الدليل كيفية تشغيل وترقية البنية التحتية لمنصة ديوان إلى البنية الإنتاجية الاحترافية والمدعمة بالكامل لمواجهة طفرات الأحمال المتزامنة (2000+ تصويت وتسجيل متزامن).
+> النطاق الرسمي: **diwan.net** | آخر تحديث: مايو 2026
 
 ---
 
-## 🏗️ الهيكل المعماري المعتمد
+## 🏗️ الهيكل المعماري الإنتاجي
 
 ```
-                       ┌───────────────────────────────┐
-                       │    Nginx (Reverse Proxy + SSL)│
-                       └───────────────┬───────────────┘
-                                       │
-                       ┌───────────────▼───────────────┐
-                       │  Gunicorn (5 Uvicorn Workers) │
-                       └───────────────┬───────────────┘
-                                       │
-                       ┌───────────────▼───────────────┐
-                       │  PgBouncer (Connection Pool)  │
-                       └───────────────┬───────────────┘
-                                       │
-               ┌───────────────────────┼───────────────────────┐
-               │                       │                       │
-       ┌───────▼───────┐       ┌───────▼───────┐       ┌───────▼───────┐
-       │  PostgreSQL   │       │     Redis     │       │ Celery Worker │
-       │ (Tuned Write) │       │(Cache/Broker) │       │(Email Queue)  │
-       └───────────────┘       └───────────────┘       └───────────────┘
+                   ┌──────────────────────────────┐
+                   │  Internet → diwan.net (443)  │
+                   └──────────────┬───────────────┘
+                                  │
+                   ┌──────────────▼───────────────┐
+                   │   Nginx (Reverse Proxy + SSL) │
+                   │   Let's Encrypt — diwan.net   │
+                   └──────────────┬───────────────┘
+                                  │
+                   ┌──────────────▼───────────────┐
+                   │  Gunicorn (5 Uvicorn Workers) │
+                   │  FastAPI — attendance_system  │
+                   └──────────────┬───────────────┘
+                                  │
+                   ┌──────────────▼───────────────┐
+                   │  PgBouncer (Connection Pool)  │
+                   └──────────────┬───────────────┘
+                                  │
+          ┌───────────────────────┼───────────────────────┐
+          │                       │                       │
+  ┌───────▼───────┐       ┌───────▼───────┐       ┌───────▼───────┐
+  │  PostgreSQL   │       │     Redis     │       │ Celery Worker │
+  │ (Tuned Write) │       │(Cache/Broker) │       │(Email, PDF)   │
+  └───────────────┘       └───────────────┘       └───────────────┘
 ```
 
 ---
 
-## 🛠️ الخدمات المجهزة للإنتاج
+## 📋 قبل النشر — Checklist
 
-تم تزويد البيئة بالملفات البرمجية والتكوينية التالية الجاهزة فورياً:
-1. **[docker-compose.prod.yml](file:///d:/diwan_event/docker-compose.prod.yml)**: إدارة وتنسيق جميع الحاويات.
-2. **[Dockerfile.prod](file:///d:/diwan_event/attendance_system/Dockerfile.prod)**: بناء الـ Backend بأمان (Non-root user) وتزويده بـ Gunicorn بـ 5 خلايا عمل.
-3. **[celery_app.py](file:///d:/diwan_event/attendance_system/app/tasks/celery_app.py)**: إعداد طابور المهام في الخلفية مع تفعيل محددات الإرسال.
-4. **[email_tasks.py](file:///d:/diwan_event/attendance_system/app/tasks/email_tasks.py)**: كود إرسال الإيميلات التدريجي المتوازي لحماية SMTP من الحظر.
-5. **[analytics_tasks.py](file:///d:/diwan_event/attendance_system/app/tasks/analytics_tasks.py)**: حساب الإحصائيات مسبقاً وتخزينها في الكاش (الـ Dashboard تفتح في أقل من 5ms).
-6. **[pdf_tasks.py](file:///d:/diwan_event/attendance_system/app/tasks/pdf_tasks.py)**: توليد بطاقات الحضور والشهادات PDF في الخلفية.
-7. **[postgresql.conf](file:///d:/diwan_event/infra/postgres/postgresql.conf)**: تعديلات محرك PostgreSQL لزيادة سرعة الكتابة 5 أضعاف (`synchronous_commit = off`).
-8. **[nginx.prod.conf](file:///d:/diwan_event/nginx/nginx.prod.conf)**: إدارة حركة المرور وحماية الـ API من هجمات الإغراق.
+- [ ] النطاق `diwan.net` مُوجَّه نحو IP السيرفر
+- [ ] Docker و Docker Compose V2 مثبتان
+- [ ] ملف `.env` مكتمل (راجع القسم أدناه)
+- [ ] منافذ 80 و 443 مفتوحة في الـ Firewall
+- [ ] مساحة قرص كافية (+20 GB)
 
 ---
 
-## 🚀 طريقة التشغيل والتهيئة (Quick Start)
+## 1️⃣ إعداد ملف البيئة (`.env`)
 
-### 1️⃣ إعداد ملف التكوين البيئي (`.env`)
-تأكد من وجود القيم المطلوبة في ملف التكوين في مجلد المشروع الرئيسي:
-```bash
+```env
+# ─── قاعدة البيانات ───────────────────────
 POSTGRES_DB=diwan_db
 POSTGRES_USER=diwan_user
-POSTGRES_PASSWORD=your_secure_db_password
-SECRET_KEY=your_generated_secret_key
-ENCRYPTION_KEY=your_generated_encryption_key
-SMTP_USERNAME=your-smtp-email@gmail.com
-SMTP_PASSWORD=your-smtp-app-password
-EMAILS_FROM_EMAIL=noreply@diwan.net
+POSTGRES_PASSWORD=YOUR_STRONG_DB_PASSWORD_HERE
+
+# ─── الأمان ───────────────────────────────
+SECRET_KEY=YOUR_64_CHAR_RANDOM_SECRET_KEY
+ENCRYPTION_KEY=YOUR_FERNET_BASE64_KEY
+
+# ─── النطاق والسماح بالأصول ───────────────
+APP_DOMAIN=https://diwan.net
 ALLOWED_ORIGINS=https://diwan.net
+
+# ─── البريد الإلكتروني (SMTP) ─────────────
+EMAILS_FROM_NAME=Diwan Event
+EMAILS_FROM_EMAIL=noreply@diwan.net
+SMTP_SERVER=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USERNAME=your-smtp@gmail.com
+SMTP_PASSWORD=your-app-specific-password
+
+# ─── الأجهزة الفيزيائية ───────────────────
+HARDWARE_API_KEY=YOUR_SECURE_HARDWARE_KEY
+
+# ─── البيئة ───────────────────────────────
+ENVIRONMENT=production
 ```
 
-### 2️⃣ بناء وتشغيل الحاويات
-لتشغيل جميع خدمات البنية التحتية الإنتاجية بلمسة واحدة:
+---
+
+## 2️⃣ إعداد SSL (أول مرة فقط)
+
 ```bash
-# بناء وإطلاق كافة الحاويات في الخلفية
+# تثبيت Certbot على السيرفر
+sudo apt install certbot
+
+# إصدار شهادة SSL لـ diwan.net
+sudo certbot certonly --standalone -d diwan.net -d www.diwan.net \
+  --email admin@diwan.net --agree-tos
+
+# الشهادات ستكون في:
+# /etc/letsencrypt/live/diwan.net/fullchain.pem
+# /etc/letsencrypt/live/diwan.net/privkey.pem
+```
+
+---
+
+## 3️⃣ البناء والتشغيل
+
+```bash
+# بناء وإطلاق جميع الخدمات الإنتاجية
 docker-compose -f docker-compose.prod.yml up --build -d
-```
 
-### 3️⃣ مراقبة سلامة التشغيل
-```bash
-# عرض حالة الحاويات والتأكد من أنها Healthy
+# التحقق من صحة الخدمات
 docker-compose -f docker-compose.prod.yml ps
 
-# لمتابعة سجلات الباك إند
+# متابعة الـ logs
 docker-compose -f docker-compose.prod.yml logs -f backend
 ```
 
 ---
 
-## 📈 كيف يحل هذا النظام مشكلة الـ 2000 مستخدم متزامن؟
+## 4️⃣ بعد التشغيل — تهيئة أولية
 
-1. **Gunicorn (5 Workers)**: يتيح معالجة الطلبات بالتوازي عبر 5 أنوية معالجة حقيقية، فتنتهي تماماً حالة اختناق Uvicorn فردي الخيط.
-2. **PgBouncer**: بدلاً من انهيار PostgreSQL عند فتح 2000 اتصال متزامن، يقوم PgBouncer بتنظيمها وتوزيعها على 25 اتصالاً حقيقياً بكفاءة تامة وبدون أي فقدان للطلبات.
-3. **Async Queuing (Celery)**: عند قيام 1000 مشارك بالتسجيل دفعة واحدة، لا ينتظر خادم الويب دالة SMTP البطيئة. يتم إرجاع الاستجابة فورياً للمستخدم بـ `200ms` فقط، وتتولى Celery إرسال الإيميلات بانتظام وسلاسة بمعدل 10 إيميل/ثانية.
-4. **PostgreSQL write-tuning**: إيقاف `synchronous_commit` يضمن سرعة استجابة مذهلة لعمليات التصويت المتزامنة بدون التسبب في إغلاق أو قفل الجداول (Lock Contention).
+```bash
+# 1. تطبيق migrations قاعدة البيانات
+docker-compose -f docker-compose.prod.yml exec backend alembic upgrade head
+
+# 2. إنشاء حساب Super Admin (أول مرة)
+docker-compose -f docker-compose.prod.yml exec backend \
+  python -c "from app.core.seed import create_super_admin; import asyncio; asyncio.run(create_super_admin())"
+
+# 3. التحقق من صحة API
+curl https://diwan.net/api/v1/health
+```
 
 ---
 
-**تهانينا! البنية التحتية لمنصة ديوان الآن بمستوى المنصات العالمية الكبرى ومجهزة بنسبة 100% لإطلاق أضخم الفعاليات بسلامة تامة.** 🎓🏆
+## 📊 مراقبة النظام
+
+```bash
+# حالة جميع الحاويات
+docker-compose -f docker-compose.prod.yml ps
+
+# إحصائيات الموارد
+docker stats
+
+# logs الـ Nginx
+docker-compose -f docker-compose.prod.yml logs nginx
+
+# logs الـ Celery
+docker-compose -f docker-compose.prod.yml logs celery
+```
+
+---
+
+## 🔄 التحديث (Upgrade)
+
+```bash
+# سحب أحدث الأكواد
+git pull origin main
+
+# إعادة البناء بدون توقف
+docker-compose -f docker-compose.prod.yml up --build -d --no-deps backend
+
+# تطبيق migrations إذا كانت هناك تغييرات
+docker-compose -f docker-compose.prod.yml exec backend alembic upgrade head
+```
+
+---
+
+## 📈 الأداء والطاقة الاستيعابية
+
+| المكوّن | الدور | الطاقة |
+|---------|-------|---------|
+| **Gunicorn 5 Workers** | معالجة الطلبات بالتوازي | ~2000 طلب/ثانية |
+| **PgBouncer** | تنظيم اتصالات PostgreSQL | 2000 اتصال → 25 حقيقي |
+| **Celery** | إرسال البريد والـ PDF | 10 إيميل/ثانية |
+| **Redis** | Cache + Queue | < 1ms استجابة |
+| **PostgreSQL Tuned** | `synchronous_commit=off` | كتابة أسرع ×5 |
+
+---
+
+## 🆘 استكشاف الأخطاء
+
+| المشكلة | الحل |
+|---------|------|
+| الموقع لا يفتح | `docker-compose logs nginx` — تحقق من SSL |
+| خطأ قاعدة البيانات | `docker-compose logs db` — تحقق من POSTGRES_PASSWORD |
+| البريد لا يُرسَل | تحقق من SMTP_USERNAME و SMTP_PASSWORD في `.env` |
+| خطأ 502 | `docker-compose restart backend` |
+
+---
+
+**للتطوير المحلي راجع: [DEPLOY.md](./DEPLOY.md) | للدليل التقني: [README_DEV.md](./README_DEV.md)**
