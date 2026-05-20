@@ -37,10 +37,12 @@ async def list_public_events(
     """
     دليل الفعاليات العامة لصفحة الهبوط.
     تُعرض كل الفعاليات العامة (ماضية + جارية + مقبلة).
-    لا تُعرض الفعاليات الخاصة (is_public=False).
+    لا تُعرض الفعاليات الخاصة (is_public=False صراحةً).
+    السجلات القديمة (is_public=NULL) تُعامَل كعامة.
     """
+    from sqlalchemy import or_
     stmt = select(Event).filter(
-        Event.is_public == True
+        or_(Event.is_public == True, Event.is_public == None)
     ).order_by(Event.event_date.desc().nullslast())
     result = await db.execute(stmt)
     events = result.scalars().all()
