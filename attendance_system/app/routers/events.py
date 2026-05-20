@@ -3,11 +3,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 import os
 import time
+from datetime import date, datetime
 from app.core.database import get_db
 from app.models.event import Event
 from app.models.user import User
 from app.core.auth_deps import get_current_active_user
-from sqlalchemy import select, delete
+from sqlalchemy import select, delete, Date, Boolean, DateTime
+from sqlalchemy.orm import class_mapper
 
 router = APIRouter()
 
@@ -67,14 +69,32 @@ async def update_event(
     event = await db.get(Event, event_id)
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
-    
+
     if current_user.role != "super_admin" and event.created_by != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized")
-        
+
+    # ─── تحديد أنواع الأعمدة من الـ mapper لتحويل القيم بشكل صحيح ───
+    mapper = class_mapper(Event)
+    column_types = {col.key: type(col.columns[0].type) for col in mapper.column_attrs}
+
     for key, value in data.items():
-        if hasattr(event, key):
-            setattr(event, key, value)
-            
+        if not hasattr(event, key):
+            continue
+        col_type = column_types.get(key)
+        # تحويل string → date لحقول التاريخ
+        if col_type is Date and isinstance(value, str) and value:
+            try:
+                value = datetime.strptime(value[:10], "%Y-%m-%d").date()
+            except ValueError:
+                raise HTTPException(status_code=422, detail=f"تنسيق التاريخ غير صحيح لـ '{key}': {value} (المطلوب: YYYY-MM-DD)")
+        # تحويل string → datetime لحقول التوقيت
+        elif col_type is DateTime and isinstance(value, str) and value:
+            try:
+                value = datetime.fromisoformat(value)
+            except ValueError:
+                raise HTTPException(status_code=422, detail=f"تنسيق التوقيت غير صحيح لـ '{key}': {value}")
+        setattr(event, key, value)
+
     await db.commit()
     await db.refresh(event)
     return event
@@ -90,10 +110,17 @@ async def create_event(
     """
     إنشاء فعالية جديدة وربطها بالمنظم الحالي.
     """
+    parsed_date = None
+    if date:
+        try:
+            parsed_date = datetime.strptime(date[:10], "%Y-%m-%d").date()
+        except ValueError:
+            raise HTTPException(status_code=422, detail=f"تنسيق التاريخ غير صحيح: {date} (المطلوب: YYYY-MM-DD)")
+
     new_event = Event(
         event_name=name,
         location=location,
-        event_date=date,
+        event_date=parsed_date,
         created_by=current_user.id
     )
     db.add(new_event)
