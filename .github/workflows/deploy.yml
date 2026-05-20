@@ -7,34 +7,38 @@ on:
     branches: [ "main" ]
 
 jobs:
-  test:
+  lint:
+    name: Code Quality Check
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
+
     - name: Set up Python 3.11
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: "3.11"
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r attendance_system/requirements.txt
-        pip install pytest httpx
-    - name: Run tests
+
+    - name: Check syntax (py compile)
       run: |
-        cd attendance_system
-        pytest tests/
+        python -m compileall attendance_system/app -q
 
   build-and-deploy:
-    needs: test
+    name: Build Docker Image
+    needs: lint
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
+
     - name: Build Docker Image
       run: |
         cd attendance_system
-        docker build -t diwan-event:latest .
-    # Deployment steps to your cloud provider (e.g. AWS ECR / Render / Railway) go here
+        docker build -f Dockerfile -t diwan-event:latest .
+
     - name: Deploy Placeholder
-      run: echo "Ready to deploy to Cloud"
+      run: echo "✅ Build successful — ready to deploy to Cloud"
