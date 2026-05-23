@@ -52,7 +52,7 @@ services:
       LISTEN_PORT: "6432"
       DB_NAME: ${POSTGRES_DB:-diwan_db}
       DB_USER: ${POSTGRES_USER:-diwan_user}
-      DB_PASS: ${POSTGRES_PASSWORD}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
       IGNORE_STARTUP_PARAMETERS: extra_float_digits,jit
       POOL_MODE: transaction # الأفضل لـ FastAPI الـ async
       MAX_CLIENT_CONN: 1000 # أقصى عدد عملاء متزامنين
