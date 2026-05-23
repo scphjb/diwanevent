@@ -52,6 +52,7 @@ services:
       DATABASES_DBNAME: ${POSTGRES_DB:-diwan_db}
       DATABASES_USER: ${POSTGRES_USER:-diwan_user}
       DATABASES_PASSWORD: ${POSTGRES_PASSWORD}
+      IGNORE_STARTUP_PARAMETERS: extra_float_digits,jit
       POOL_MODE: transaction # الأفضل لـ FastAPI الـ async
       MAX_CLIENT_CONN: 1000 # أقصى عدد عملاء متزامنين
       DEFAULT_POOL_SIZE: 25 # اتصال حقيقي بـ PostgreSQL
