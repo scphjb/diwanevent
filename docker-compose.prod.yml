@@ -195,7 +195,7 @@ services:
     volumes:
       - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
       - ./dashboard/dist:/usr/share/nginx/html:ro
-      - ./certbot/conf:/etc/letsencrypt:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
       - ./certbot/www:/var/www/certbot:ro
       - nginx_logs:/var/log/nginx
     depends_on:
@@ -210,7 +210,7 @@ services:
     image: certbot/certbot
     container_name: diwan_certbot
     volumes:
-      - ./certbot/conf:/etc/letsencrypt
+      - /etc/letsencrypt:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
     entrypoint: >
       /bin/sh -c "trap exit TERM; while :; do
