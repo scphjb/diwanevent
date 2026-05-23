@@ -2,10 +2,8 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Union
 import jwt
 import secrets
-from passlib.context import CryptContext
+import bcrypt as _bcrypt
 from app.core.config import settings
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 ALGORITHM = "HS256"
 
@@ -69,11 +67,18 @@ def verify_password_reset_token(token: str) -> str | None:
 import asyncio
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+    try:
+        return _bcrypt.checkpw(
+            plain_password.encode("utf-8"),
+            hashed_password.encode("utf-8")
+        )
+    except Exception:
+        return False
 
 
 def get_password_hash(password: str) -> str:
-    return pwd_context.hash(password)
+    salt = _bcrypt.gensalt(12)
+    return _bcrypt.hashpw(password.encode("utf-8"), salt).decode("utf-8")
 
 
 async def verify_password_async(plain_password: str, hashed_password: str) -> bool:
@@ -81,12 +86,10 @@ async def verify_password_async(plain_password: str, hashed_password: str) -> bo
     bcrypt في thread pool منفصل لا يحجب event loop
     asyncio.to_thread يحوّل sync → non-blocking
     """
-    return await asyncio.to_thread(
-        pwd_context.verify, plain_password, hashed_password
-    )
+    return await asyncio.to_thread(verify_password, plain_password, hashed_password)
 
 
 async def hash_password_async(password: str) -> str:
     """Hash كلمة المرور في thread pool"""
-    return await asyncio.to_thread(pwd_context.hash, password)
+    return await asyncio.to_thread(get_password_hash, password)
 
