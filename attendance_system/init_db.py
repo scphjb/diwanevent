@@ -28,7 +28,9 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
     raise ValueError("CRITICAL ERROR: DATABASE_URL not found in .env. Please configure PostgreSQL.")
 
-# Handle postgres naming
+# Handle postgres naming and asyncpg driver
+if "asyncpg" in DATABASE_URL:
+    DATABASE_URL = DATABASE_URL.replace("+asyncpg", "", 1)
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
