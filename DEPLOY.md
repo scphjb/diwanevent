@@ -1,13 +1,13 @@
 # 🚀 دليل النشر السريع — منصة ديوان
 
-> النطاق الرسمي: **diwan.net** | آخر تحديث: مايو 2026
+> النطاق الرسمي: **e-diwan.net** | آخر تحديث: مايو 2026
 
 ---
 
 ## 🐳 متطلبات التشغيل
 - **Docker** مثبت على السيرفر
 - **Docker Compose** (V2+)
-- نطاق `diwan.net` مُوجَّه نحو IP السيرفر
+- نطاق `e-diwan.net` مُوجَّه نحو IP السيرفر
 
 ---
 
@@ -48,15 +48,15 @@ ENCRYPTION_KEY=YOUR_FERNET_KEY
 
 # البريد الإلكتروني
 EMAILS_FROM_NAME=Diwan Event
-EMAILS_FROM_EMAIL=noreply@diwan.net
+EMAILS_FROM_EMAIL=noreply@e-diwan.net
 SMTP_SERVER=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USERNAME=your-gmail@gmail.com
 SMTP_PASSWORD=your-app-specific-password
 
 # النطاق
-APP_DOMAIN=https://diwan.net
-ALLOWED_ORIGINS=https://diwan.net
+APP_DOMAIN=https://e-diwan.net
+ALLOWED_ORIGINS=https://e-diwan.net
 
 # الأجهزة الفيزيائية
 HARDWARE_API_KEY=YOUR_HARDWARE_KEY

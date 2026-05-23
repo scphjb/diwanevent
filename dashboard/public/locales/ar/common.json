@@ -279,7 +279,7 @@
       "title": "الدفع والاشتراكات",
       "desc": "إعدادات بوابة الدفع وتذاكر الفعالية.",
       "require_payment": "تفعيل الدفع الإلزامي للتسجيل",
-      "ticket_price": "سعر التذكرة",
+      "ticket_price": "مبلغ الاشتراك",
       "currency": "العملة",
       "chargily_api_key": "مفتاح API الخاص بـ Chargily Pay"
     },

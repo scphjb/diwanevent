@@ -34,7 +34,7 @@ const ContactPage = () => {
     e.preventDefault();
     const subject = encodeURIComponent(form.subject || `[${form.type}] Diwan Inquiry`);
     const body = encodeURIComponent(`Name: ${form.name}\nEmail: ${form.email}\nType: ${form.type}\n\n${form.message}`);
-    window.location.href = `mailto:hello@diwan.net?subject=${subject}&body=${body}`;
+    window.location.href = `mailto:hello@e-diwan.net?subject=${subject}&body=${body}`;
     setSubmitted(true);
   };
 
@@ -140,9 +140,9 @@ const ContactPage = () => {
                 {
                   icon: Mail,
                   title: L({ ar: 'البريد الإلكتروني', en: 'Email', fr: 'Email', es: 'Email' }),
-                  val: 'hello@diwan.net',
+                  val: 'hello@e-diwan.net',
                   note: L({ ar: 'للاستفسارات العامة', en: 'For general inquiries', fr: 'Pour les demandes générales', es: 'Para consultas generales' }),
-                  href: 'mailto:hello@diwan.net',
+                  href: 'mailto:hello@e-diwan.net',
                 },
                 {
                   icon: Clock,

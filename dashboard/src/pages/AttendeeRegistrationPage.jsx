@@ -293,7 +293,7 @@ const AttendeeRegistrationPage = () => {
 
             <div className="bg-amber-500/10 border border-amber-500/20 p-6 rounded-[28px] flex items-center justify-between">
               <div>
-                <div className="text-amber-500 text-xs font-black uppercase tracking-widest mb-1">قيمة التذكرة</div>
+                <div className="text-amber-500 text-xs font-black uppercase tracking-widest mb-1">مبلغ الاشتراك</div>
                 <div className="text-3xl font-black text-white">
                   {event.require_payment ? `${Number(event.ticket_price || 0).toLocaleString()} ${event.currency || 'DZD'}` : 'مجاناً 🎁'}
                 </div>

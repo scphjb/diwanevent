@@ -206,7 +206,7 @@ async def delete_event(
     مسموح فقط للمنظم المالك أو super_admin.
     """
     from app.models.participant import Participant, Attendance
-    from app.models.others import Speaker, Sponsor, AgendaSession
+    from app.models.others import Speaker, Sponsor, AgendaSession, Poll, PollOption, PollVote, Question, SocialPost, PostComment, PostLike, UserNotification, AuditLog, Document
 
     event = await db.get(Event, event_id)
     if not event:
@@ -224,11 +224,38 @@ async def delete_event(
         await db.execute(
             delete(Attendance).filter(Attendance.participant_id.in_(participant_ids))
         )
+        await db.execute(
+            delete(PollVote).filter(PollVote.participant_id.in_(participant_ids))
+        )
     
     await db.execute(delete(Participant).filter(Participant.event_id == event_id))
     await db.execute(delete(Speaker).filter(Speaker.event_id == event_id))
     await db.execute(delete(AgendaSession).filter(AgendaSession.event_id == event_id))
     await db.execute(delete(Sponsor).filter(Sponsor.event_id == event_id))
+
+    # حذف الاستطلاعات وخياراتها وتصويتاتها
+    poll_stmt = select(Poll.id).filter(Poll.event_id == event_id)
+    poll_result = await db.execute(poll_stmt)
+    poll_ids = poll_result.scalars().all()
+    if poll_ids:
+        await db.execute(delete(PollVote).filter(PollVote.poll_id.in_(poll_ids)))
+        await db.execute(delete(PollOption).filter(PollOption.poll_id.in_(poll_ids)))
+        await db.execute(delete(Poll).filter(Poll.event_id == event_id))
+
+    # حذف المنشورات الاجتماعية وتعليقاتها وإعجاباتها
+    post_stmt = select(SocialPost.id).filter(SocialPost.event_id == event_id)
+    post_result = await db.execute(post_stmt)
+    post_ids = post_result.scalars().all()
+    if post_ids:
+        await db.execute(delete(PostComment).filter(PostComment.post_id.in_(post_ids)))
+        await db.execute(delete(PostLike).filter(PostLike.post_id.in_(post_ids)))
+        await db.execute(delete(SocialPost).filter(SocialPost.event_id == event_id))
+
+    # حذف البقية
+    await db.execute(delete(Question).filter(Question.event_id == event_id))
+    await db.execute(delete(UserNotification).filter(UserNotification.event_id == event_id))
+    await db.execute(delete(AuditLog).filter(AuditLog.event_id == event_id))
+    await db.execute(delete(Document).filter(Document.event_id == event_id))
 
     await db.delete(event)
     await db.commit()

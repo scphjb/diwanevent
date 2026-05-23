@@ -109,7 +109,7 @@ async def preview_template_pdf(data: dict, db: AsyncSession = Depends(get_db),
         'event_name': 'الجمعية العامة 2026',
         'event_date': '23 أبريل 2026',
         'event_location': 'فندق شيراتون عنابة',
-        'event_logo': 'https://diwan.net/logo.png' # شعار افتراضي للمعاينة
+        'event_logo': 'https://e-diwan.net/logo.png' # شعار افتراضي للمعاينة
     })
     
     pdf_bytes = render_design_to_pdf(design, participant, data.get('type', 'badge'))

@@ -40,7 +40,7 @@ const ApiDocsPage = () => {
         { name: 'status', type: 'string', desc: L({ ar: 'حالة الفعالية (active | completed)', en: 'Event status (active | completed)', fr: 'Statut de l\'événement (active | completed)', es: 'Estado del evento (active | completed)' }) }
       ],
       curl: `curl -X GET \\
-  'https://api.diwan.net/api/v2/events?limit=10&status=active' \\
+  'https://api.e-diwan.net/api/v2/events?limit=10&status=active' \\
   -H 'Authorization: Bearer DW_KEY_YOUR_SECRET_TOKEN'`,
       response: `{
   "status": "success",
@@ -69,7 +69,7 @@ const ApiDocsPage = () => {
   "location_id": "loc_main_hall"
 }`,
       curl: `curl -X POST \\
-  'https://api.diwan.net/api/v2/participants/checkin' \\
+  'https://api.e-diwan.net/api/v2/participants/checkin' \\
   -H 'Authorization: Bearer DW_KEY_YOUR_SECRET_TOKEN' \\
   -H 'Content-Type: application/json' \\
   -d '{
@@ -99,7 +99,7 @@ const ApiDocsPage = () => {
         { name: 'event_id', type: 'string', desc: L({ ar: 'رقم الفعالية الفريد (مطلوب)', en: 'Unique event ID (required)', fr: 'ID unique de l\'événement (requis)', es: 'ID único del evento (requerido)' }) }
       ],
       curl: `curl -X GET \\
-  'https://api.diwan.net/api/v2/analytics/heatmap?event_id=evt_7k9m2p1' \\
+  'https://api.e-diwan.net/api/v2/analytics/heatmap?event_id=evt_7k9m2p1' \\
   -H 'Authorization: Bearer DW_KEY_YOUR_SECRET_TOKEN'`,
       response: `{
   "status": "success",

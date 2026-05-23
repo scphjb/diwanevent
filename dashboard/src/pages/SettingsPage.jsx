@@ -519,7 +519,7 @@ const SettingsPage = () => {
                       <label htmlFor="require_payment" className="font-bold">{t('settings.payments.require_payment', 'تفعيل الدفع الإلزامي للتسجيل')}</label>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-emerald-100/50">{t('settings.payments.ticket_price', 'سعر التذكرة')}</label>
+                      <label className="text-sm font-bold text-emerald-100/50">{t('settings.payments.ticket_price', 'مبلغ الاشتراك')}</label>
                       <Input type="number" value={settings.ticket_price} onChange={(e) => handleChange('ticket_price', e.target.value)} />
                     </div>
                     <div className="space-y-2">

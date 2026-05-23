@@ -1,6 +1,6 @@
 # 🚀 دليل النشر الإنتاجي — منصة ديوان
 
-> النطاق الرسمي: **diwan.net** | آخر تحديث: مايو 2026
+> النطاق الرسمي: **e-diwan.net** | آخر تحديث: مايو 2026
 
 ---
 
@@ -8,12 +8,12 @@
 
 ```
                    ┌──────────────────────────────┐
-                   │  Internet → diwan.net (443)  │
+                   │  Internet → e-diwan.net (443)  │
                    └──────────────┬───────────────┘
                                   │
                    ┌──────────────▼───────────────┐
                    │   Nginx (Reverse Proxy + SSL) │
-                   │   Let's Encrypt — diwan.net   │
+                   │   Let's Encrypt — e-diwan.net   │
                    └──────────────┬───────────────┘
                                   │
                    ┌──────────────▼───────────────┐
@@ -37,7 +37,7 @@
 
 ## 📋 قبل النشر — Checklist
 
-- [ ] النطاق `diwan.net` مُوجَّه نحو IP السيرفر
+- [ ] النطاق `e-diwan.net` مُوجَّه نحو IP السيرفر
 - [ ] Docker و Docker Compose V2 مثبتان
 - [ ] ملف `.env` مكتمل (راجع القسم أدناه)
 - [ ] منافذ 80 و 443 مفتوحة في الـ Firewall
@@ -58,12 +58,12 @@ SECRET_KEY=YOUR_64_CHAR_RANDOM_SECRET_KEY
 ENCRYPTION_KEY=YOUR_FERNET_BASE64_KEY
 
 # ─── النطاق والسماح بالأصول ───────────────
-APP_DOMAIN=https://diwan.net
-ALLOWED_ORIGINS=https://diwan.net
+APP_DOMAIN=https://e-diwan.net
+ALLOWED_ORIGINS=https://e-diwan.net
 
 # ─── البريد الإلكتروني (SMTP) ─────────────
 EMAILS_FROM_NAME=Diwan Event
-EMAILS_FROM_EMAIL=noreply@diwan.net
+EMAILS_FROM_EMAIL=noreply@e-diwan.net
 SMTP_SERVER=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USERNAME=your-smtp@gmail.com
@@ -84,13 +84,13 @@ ENVIRONMENT=production
 # تثبيت Certbot على السيرفر
 sudo apt install certbot
 
-# إصدار شهادة SSL لـ diwan.net
-sudo certbot certonly --standalone -d diwan.net -d www.diwan.net \
-  --email admin@diwan.net --agree-tos
+# إصدار شهادة SSL لـ e-diwan.net
+sudo certbot certonly --standalone -d e-diwan.net -d www.e-diwan.net \
+  --email admin@e-diwan.net --agree-tos
 
 # الشهادات ستكون في:
-# /etc/letsencrypt/live/diwan.net/fullchain.pem
-# /etc/letsencrypt/live/diwan.net/privkey.pem
+# /etc/letsencrypt/live/e-diwan.net/fullchain.pem
+# /etc/letsencrypt/live/e-diwan.net/privkey.pem
 ```
 
 ---
@@ -121,7 +121,7 @@ docker-compose -f docker-compose.prod.yml exec backend \
   python -c "from app.core.seed import create_super_admin; import asyncio; asyncio.run(create_super_admin())"
 
 # 3. التحقق من صحة API
-curl https://diwan.net/api/v1/health
+curl https://e-diwan.net/api/v1/health
 ```
 
 ---

@@ -111,7 +111,7 @@ const PrivacyPage = () => {
             <div className="mt-4 p-4 bg-brand-surface/50 rounded-xl border border-white/5">
               <p className="flex items-center gap-2"><Mail size={14} className="text-brand-primary" />
                 <span>{L({ ar: 'للاستفسار:', en: 'For inquiries:', fr: 'Pour toute demande :', es: 'Para consultas:' })}</span>
-                <a href="mailto:privacy@diwan.net" className="text-brand-secondary hover:underline">privacy@diwan.net</a>
+                <a href="mailto:privacy@e-diwan.net" className="text-brand-secondary hover:underline">privacy@e-diwan.net</a>
               </p>
             </div>
           </Section>

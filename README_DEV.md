@@ -1,6 +1,6 @@
 # 🛠️ Diwan Event — دليل المطور (V3.0)
 
-> آخر تحديث: مايو 2026 | النطاق الرسمي: **diwan.net**
+> آخر تحديث: مايو 2026 | النطاق الرسمي: **e-diwan.net**
 
 مرحباً بك في الدليل التقني لمنصة **ديوان**. هذا الدليل مصمم لمساعدة المطورين على فهم البنية التحتية والمساهمة في تطوير المنصة.
 
@@ -16,7 +16,7 @@
 | **Frontend** | React.js + Vite + Tailwind CSS + Framer Motion |
 | **Real-time** | WebSockets (تحديثات الحضور والإحصائيات لحظياً) |
 | **Queue** | Celery + Redis (البريد، PDF، التحليلات) |
-| **Reverse Proxy** | Nginx + SSL (Let's Encrypt على diwan.net) |
+| **Reverse Proxy** | Nginx + SSL (Let's Encrypt على e-diwan.net) |
 | **Containers** | Docker + Docker Compose |
 
 ---
@@ -87,10 +87,10 @@ npm run dev                    # يعمل على http://localhost:5173
 
 | الخدمة | المحلي | الإنتاج |
 |--------|--------|---------|
-| Backend API | `http://localhost:8000/api/v1` | `https://diwan.net/api/v1` |
+| Backend API | `http://localhost:8000/api/v1` | `https://e-diwan.net/api/v1` |
 | API Docs (Swagger) | `http://localhost:8000/docs` | محمية في الإنتاج |
-| Frontend | `http://localhost:5173` | `https://diwan.net` |
-| WebSocket | `ws://localhost:8000/ws/{event_id}` | `wss://diwan.net/ws/{event_id}` |
+| Frontend | `http://localhost:5173` | `https://e-diwan.net` |
+| WebSocket | `ws://localhost:8000/ws/{event_id}` | `wss://e-diwan.net/ws/{event_id}` |
 
 ---
 
@@ -142,13 +142,13 @@ return <p>{L({ ar: 'مرحباً', en: 'Hello', fr: 'Bonjour', es: 'Hola' })}</p
 - JWT Authentication مع انتهاء الصلاحية
 - تشفير AES-256 للبيانات الحساسة
 - Rate Limiting على مستوى Nginx
-- HTTPS إلزامي في الإنتاج (Let's Encrypt على diwan.net)
+- HTTPS إلزامي في الإنتاج (Let's Encrypt على e-diwan.net)
 - Two-Factor Authentication متاح للمستخدمين
 
 ---
 
 ## 📧 التواصل التقني
 
-- البريد: `hello@diwan.net`
-- الدعم: `support@diwan.net`
+- البريد: `hello@e-diwan.net`
+- الدعم: `support@e-diwan.net`
 - التوثيق التفاعلي: `http://localhost:8000/docs`

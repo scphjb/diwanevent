@@ -44,7 +44,7 @@ const JobsPage = () => {
     e.preventDefault();
     const subject = encodeURIComponent(L({ ar: 'طلب توظيف مفتوح — Diwan Event', en: 'Open Application — Diwan Event', fr: 'Candidature Spontanée — Diwan Event', es: 'Solicitud Abierta — Diwan Event' }));
     const body = encodeURIComponent(`${L({ ar: 'السلام عليكم،\nأودّ التقدم للعمل في Diwan Event.\n\nالاسم: \nالمجال: \nالرابط (GitHub / LinkedIn): \n\nلماذا ديوان:', en: 'Hello,\nI would like to apply to work at Diwan Event.\n\nName:\nField:\nLink (GitHub / LinkedIn):\n\nWhy Diwan:', fr: 'Bonjour,\nJe souhaite postuler chez Diwan Event.\n\nNom :\nDomaine :\nLien (GitHub / LinkedIn) :\n\nPourquoi Diwan :', es: 'Hola,\nMe gustaría postularme en Diwan Event.\n\nNombre:\nCampo:\nEnlace (GitHub / LinkedIn):\n\n¿Por qué Diwan?' })}`);
-    window.location.href = `mailto:jobs@diwan.net?subject=${subject}&body=${body}`;
+    window.location.href = `mailto:jobs@e-diwan.net?subject=${subject}&body=${body}`;
     setSent(true);
   };
 
@@ -175,7 +175,7 @@ const JobsPage = () => {
                   className="flex items-center justify-center gap-3 px-10 py-5 bg-brand-secondary text-brand-dark font-black rounded-full hover:bg-brand-secondary/90 hover:scale-105 transition-all shadow-2xl shadow-brand-secondary/20 text-lg"
                 >
                   <Mail size={20} />
-                  {L({ ar: 'أرسل طلبك لـ jobs@diwan.net', en: 'Apply to jobs@diwan.net', fr: 'Postuler à jobs@diwan.net', es: 'Postular a jobs@diwan.net' })}
+                  {L({ ar: 'أرسل طلبك لـ jobs@e-diwan.net', en: 'Apply to jobs@e-diwan.net', fr: 'Postuler à jobs@e-diwan.net', es: 'Postular a jobs@e-diwan.net' })}
                 </button>
               </motion.div>
             )}

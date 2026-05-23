@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 
 const ParticipantTable = ({ eventId }) => {
     const [participants, setParticipants] = useState([]);
@@ -10,7 +10,7 @@ const ParticipantTable = ({ eventId }) => {
         const fetchParticipants = async () => {
             try {
                 setLoading(true);
-                const response = await axios.get(`http://localhost:8000/api/v1/participants/`, {
+                const response = await api.get('participants/', {
                     params: { event_id: eventId }
                 });
                 setParticipants(response.data);

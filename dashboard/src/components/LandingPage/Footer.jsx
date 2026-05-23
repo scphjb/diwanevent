@@ -56,7 +56,7 @@ const Footer = () => {
                         </p>
                         <div className="flex gap-4 mt-8">
                             {[Globe, Send, MessageSquare].map((Icon, i) => (
-                                <a key={i} href="mailto:hello@diwan.net" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-brand-muted hover:bg-brand-primary hover:text-white transition-all">
+                                <a key={i} href="mailto:hello@e-diwan.net" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-brand-muted hover:bg-brand-primary hover:text-white transition-all">
                                     <Icon size={18} />
                                 </a>
                             ))}
@@ -97,7 +97,7 @@ const Footer = () => {
                         <ul className="space-y-4 text-sm text-brand-muted">
                             <li className="flex items-center gap-3">
                                 <Mail size={16} className="text-brand-primary shrink-0" />
-                                <a href="mailto:hello@diwan.net" className="hover:text-brand-secondary transition-colors">hello@diwan.net</a>
+                                <a href="mailto:hello@e-diwan.net" className="hover:text-brand-secondary transition-colors">hello@e-diwan.net</a>
                             </li>
                             <li className="flex items-center gap-3">
                                 <MapPin size={16} className="text-brand-primary shrink-0" />
