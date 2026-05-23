@@ -18,7 +18,7 @@ version: '3.8'
 services:
 
   # ── 1. PostgreSQL ──────────────────────────────────────────────
-  postgres:
+  db:
     image: postgres:15-alpine
     container_name: diwan_postgres
     environment:
@@ -44,14 +44,14 @@ services:
   # عند 200+ مستخدم متزامن، يُوزّع PgBouncer الاتصالات بكفاءة
   # بدلاً من فتح 200 اتصال مباشر على PostgreSQL
   pgbouncer:
-    image: pgbouncer/pgbouncer:latest
+    image: edoburu/pgbouncer:latest
     container_name: diwan_pgbouncer
     environment:
-      DATABASES_HOST: postgres
-      DATABASES_PORT: "5432"
-      DATABASES_DBNAME: ${POSTGRES_DB:-diwan_db}
-      DATABASES_USER: ${POSTGRES_USER:-diwan_user}
-      DATABASES_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_NAME: ${POSTGRES_DB:-diwan_db}
+      DB_USER: ${POSTGRES_USER:-diwan_user}
+      DB_PASS: ${POSTGRES_PASSWORD}
       IGNORE_STARTUP_PARAMETERS: extra_float_digits,jit
       POOL_MODE: transaction # الأفضل لـ FastAPI الـ async
       MAX_CLIENT_CONN: 1000 # أقصى عدد عملاء متزامنين
@@ -62,10 +62,10 @@ services:
       LOG_CONNECTIONS: "0"
       LOG_DISCONNECTIONS: "0"
     depends_on:
-      postgres:
+      db:
         condition: service_healthy
     links:
-      - postgres
+      - db
     restart: unless-stopped
     networks:
       - backend_net
