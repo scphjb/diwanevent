@@ -49,6 +49,7 @@ services:
     environment:
       DB_HOST: db
       DB_PORT: "5432"
+      LISTEN_PORT: "6432"
       DB_NAME: ${POSTGRES_DB:-diwan_db}
       DB_USER: ${POSTGRES_USER:-diwan_user}
       DB_PASS: ${POSTGRES_PASSWORD}
