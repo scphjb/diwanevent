@@ -48,6 +48,8 @@ target_metadata = Base.metadata
 
 # Override sqlalchemy.url with environment variable
 db_url = os.environ.get("DATABASE_URL", "")
+if "asyncpg" in db_url:
+    db_url = db_url.replace("+asyncpg", "", 1)
 if db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql://", 1)
 config.set_main_option("sqlalchemy.url", db_url)
