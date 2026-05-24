@@ -14,7 +14,8 @@ def _load_cipher() -> Fernet | None:
     يحمّل المفتاح من البيئة فقط.
     لا hardcoded fallback — أمان > راحة.
     """
-    key = os.environ.get("AES_SECRET_KEY")
+    from app.core.config import settings
+    key = settings.AES_SECRET_KEY or settings.ENCRYPTION_KEY
     if not key:
         logger.warning(
             "⚠️ AES_SECRET_KEY غير محدد في .env "
