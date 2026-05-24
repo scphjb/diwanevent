@@ -9,7 +9,7 @@ echo.
 
 :: 1. Start Unified Backend (API + Webhooks + Hardware Gateway)
 echo [1/2] Launching Unified Backend (FastAPI)...
-start "Diwan Backend" cmd /k "cd attendance_system && venv\Scripts\activate && uvicorn app.main:app --reload --port 8000"
+start "Diwan Backend" cmd /k "cd attendance_system && venv\Scripts\activate && uvicorn app.main:app --reload --reload-dir app --port 8000"
 
 :: 2. Start Frontend Dashboard
 echo [2/2] Launching Dashboard (Vite)...
