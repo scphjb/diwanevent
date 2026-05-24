@@ -27,60 +27,108 @@ def _register_arabic_fonts():
     if _FONTS_REGISTERED:
         return
     
-    # مسار مجلد الخطوط المحلي (الأولوية)
-    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    local_regular = os.path.join(BASE_DIR, "fonts", "arial.ttf")
-    local_bold    = os.path.join(BASE_DIR, "fonts", "arialbd.ttf")
+    # 1. Determine local font folder (go up 3 levels from pdf_renderer.py)
+    # File: /app/app/utils/pdf_renderer.py -> PROJECT_ROOT: /app
+    UTILS_DIR = os.path.dirname(os.path.abspath(__file__))
+    APP_DIR = os.path.dirname(UTILS_DIR)
+    PROJECT_ROOT = os.path.dirname(APP_DIR)
     
-    # مسارات الأنظمة المختلفة (Fallback)
+    local_fonts_dir = os.path.join(PROJECT_ROOT, "fonts")
+    
+    # Sakkal Majalla paths
+    majalla_regular_names = ["majalla.ttf", "Sakkal Majalla.ttf", "sakal_majalla.ttf"]
+    majalla_bold_names = ["majallab.ttf", "Sakkal Majalla Bold.ttf", "sakal_majalla_bold.ttf"]
+    
+    regular_path = None
+    bold_path = None
+    
+    # First search for Sakkal Majalla regular
+    for name in majalla_regular_names:
+        p = os.path.join(local_fonts_dir, name)
+        if os.path.exists(p):
+            regular_path = p
+            break
+            
+    # Then bold
+    for name in majalla_bold_names:
+        p = os.path.join(local_fonts_dir, name)
+        if os.path.exists(p):
+            bold_path = p
+            break
+            
+    # Fallback to Arial if Sakkal Majalla is not found
+    if not regular_path:
+        p_arial = os.path.join(local_fonts_dir, "arial.ttf")
+        if os.path.exists(p_arial):
+            regular_path = p_arial
+            
+    if not bold_path:
+        p_arialbd = os.path.join(local_fonts_dir, "arialbd.ttf")
+        if os.path.exists(p_arialbd):
+            bold_path = p_arialbd
+            
+    # System fallbacks if local fonts not found (only for local dev)
     system = platform.system()
     system_paths = {
         "Windows": {
-            "regular": "C:\\Windows\\Fonts\\arial.ttf",
-            "bold":    "C:\\Windows\\Fonts\\arialbd.ttf"
+            "regular": "C:\\Windows\\Fonts\\majalla.ttf",
+            "bold":    "C:\\Windows\\Fonts\\majallab.ttf"
         },
         "Linux": {
             "regular": "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
             "bold":    "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf"
         },
-        "Darwin": {  # macOS
+        "Darwin": {
             "regular": "/Library/Fonts/Arial.ttf",
             "bold":    "/Library/Fonts/Arial Bold.ttf"
         }
     }
     
-    def find_font(local_path: str, system_key: str):
-        if os.path.exists(local_path):
-            return local_path
-        sys_path = system_paths.get(system, {}).get(system_key)
-        if sys_path and os.path.exists(sys_path):
-            return sys_path
-        return None
-    
-    regular_path = find_font(local_regular, "regular")
-    bold_path    = find_font(local_bold,    "bold")
-    
+    if not regular_path:
+        if system == "Windows":
+            p = system_paths["Windows"]["regular"]
+            if os.path.exists(p):
+                regular_path = p
+                
+        # fallback to windows/linux/darwin defaults
+        if not regular_path:
+            p = system_paths.get(system, {}).get("regular")
+            if p and os.path.exists(p):
+                regular_path = p
+                
+    if not bold_path:
+        if system == "Windows":
+            p = system_paths["Windows"]["bold"]
+            if os.path.exists(p):
+                bold_path = p
+                
+        if not bold_path:
+            p = system_paths.get(system, {}).get("bold")
+            if p and os.path.exists(p):
+                bold_path = p
+                
+    # Register the fonts
     try:
         if regular_path:
             pdfmetrics.registerFont(TTFont('Arabic-Regular', regular_path))
         else:
-            print("⚠️  Arabic font not found — PDF text may not display Arabic correctly")
+            print("⚠️ Arabic font not found — PDF text may not display Arabic correctly")
     except Exception as e:
-        print(f"⚠️  Font registration warning: {e}")
-    
+        print(f"⚠️ Font registration warning: {e}")
+        
     try:
         if bold_path:
             pdfmetrics.registerFont(TTFont('Arabic-Bold', bold_path))
         elif regular_path:
-            # استخدام الـ Regular كـ Bold إذا لم يوجد Bold
             pdfmetrics.registerFont(TTFont('Arabic-Bold', regular_path))
     except Exception as e:
-        print(f"⚠️  Bold font registration warning: {e}")
-    
+        print(f"⚠️ Bold font registration warning: {e}")
+        
     _FONTS_REGISTERED = True
 
 # استدعِ عند import
 _register_arabic_fonts()
+
 
 
 

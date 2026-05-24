@@ -36,6 +36,31 @@ const ProfilePage = () => {
   const [activeTab, setActiveTab] = useState(initialTab);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   
+  // Profile States
+  const [profileName, setProfileName] = useState(user?.full_name || '');
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+
+  const handleSaveProfile = async () => {
+    if (!profileName.trim()) {
+      toast.error(t('profile.personal.name_required', 'الاسم الكامل مطلوب'));
+      return;
+    }
+    setIsSavingProfile(true);
+    try {
+      const res = await api.put('/auth/profile', { full_name: profileName });
+      toast.success(t('profile.personal.save_success', 'تم تحديث الملف الشخصي بنجاح'));
+      
+      const updatedUser = { ...user, full_name: profileName };
+      localStorage.setItem('diwan_user', JSON.stringify(updatedUser));
+      // Dispatch a storage event to alert other components to re-read localStorage
+      window.dispatchEvent(new Event('storage'));
+    } catch (err) {
+      toast.error(err.response?.data?.detail || t('profile.personal.save_error', 'فشل حفظ التغييرات'));
+    } finally {
+      setIsSavingProfile(false);
+    }
+  };
+  
   // Password States
   const [passwords, setPasswords] = useState({
     current: '',
@@ -228,7 +253,7 @@ const ProfilePage = () => {
                   <div className="grid grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <label className="text-xs font-bold text-white/40 uppercase">{t('profile.personal.fullName', 'الاسم الكامل')}</label>
-                      <Input defaultValue={user?.full_name} icon={User} />
+                      <Input value={profileName} onChange={(e) => setProfileName(e.target.value)} icon={User} />
                     </div>
                     <div className="space-y-2">
                       <label className="text-xs font-bold text-white/40 uppercase">{t('profile.personal.email', 'البريد الإلكتروني')}</label>
@@ -236,16 +261,23 @@ const ProfilePage = () => {
                     </div>
                     <div className="space-y-2">
                       <label className="text-xs font-bold text-white/40 uppercase">{t('profile.personal.phone', 'رقم الهاتف')}</label>
-                      <Input defaultValue="+213 555 00 00 00" icon={Smartphone} />
+                      <Input defaultValue="+213 555 00 00 00" icon={Smartphone} disabled />
                     </div>
                     <div className="space-y-2">
                       <label className="text-xs font-bold text-white/40 uppercase">{t('profile.personal.jobTitle', 'الموقع الوظيفي')}</label>
-                      <Input defaultValue={t('profile.personal.job_title_placeholder', 'مدير تنظيم فعاليات')} />
+                      <Input defaultValue={t('profile.personal.job_title_placeholder', 'مدير تنظيم فعاليات')} disabled />
                     </div>
                   </div>
  
                   <div className="pt-6">
-                    <Button variant="gold" className="px-10 h-14 rounded-2xl">{t('profile.personal.save', 'حفظ التغييرات')}</Button>
+                    <Button 
+                      variant="gold" 
+                      className="px-10 h-14 rounded-2xl" 
+                      onClick={handleSaveProfile}
+                      loading={isSavingProfile}
+                    >
+                      {t('profile.personal.save', 'حفظ التغييرات')}
+                    </Button>
                   </div>
                 </div>
               )}

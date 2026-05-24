@@ -111,6 +111,18 @@ const PollsPage = () => {
     setNewPoll(prev => ({ ...prev, options: prev.options.filter((_, i) => i !== idx) }));
   };
 
+  if (!eventId) {
+    return (
+      <DashboardLayout activePath="/dashboard/polls">
+        <div className="text-center py-20 bg-white/5 border border-white/10 rounded-[32px] p-10 max-w-3xl mx-auto backdrop-blur-md">
+          <BarChart2 className="w-16 h-16 text-emerald-400/20 mx-auto mb-4" />
+          <h3 className="text-2xl font-bold text-white mb-2">{t('polls.no_event_selected', 'لم يتم اختيار فعالية')}</h3>
+          <p className="text-emerald-400/30 text-sm max-w-md mx-auto">{t('polls.no_event_selected_desc', 'يرجى اختيار فعالية نشطة أو إنشاء فعالية جديدة لإدارة استطلاعات الرأي.')}</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout activePath="/dashboard/polls">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">

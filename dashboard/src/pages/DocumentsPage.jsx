@@ -20,6 +20,7 @@ import interactionService from '../services/interactionService';
 import api from '../services/api';
 import { cn } from '../utils/cn';
 import { useEvent } from '../context/EventContext';
+import { showSuccess, showError } from '../utils/swal';
 
 const getFullUrl = (url) => {
   if (!url) return '#';
@@ -69,8 +70,10 @@ const DocumentsPage = () => {
       setShowAddModal(false);
       setNewDoc({ title: '', description: '', file_url: '', file_type: 'pdf', file_size: '' });
       fetchDocuments();
+      showSuccess(t('documents.create_success', 'تم إضافة المستند بنجاح'));
     } catch (err) {
-      alert(t('documents.create_error', 'فشل إضافة المستند'));
+      const detail = err.response?.data?.detail;
+      showError(t('documents.create_error', 'فشل إضافة المستند'), typeof detail === 'string' ? detail : JSON.stringify(detail) || err.message);
     }
   };
 
@@ -104,6 +107,18 @@ const DocumentsPage = () => {
       alert(t('documents.delete_error', 'فشل الحذف'));
     }
   };
+
+  if (!eventId) {
+    return (
+      <DashboardLayout activePath="/dashboard/documents">
+        <div className="text-center py-20 bg-white/5 border border-white/10 rounded-[32px] p-10 max-w-3xl mx-auto backdrop-blur-md">
+          <FileText className="w-16 h-16 text-emerald-400/20 mx-auto mb-4" />
+          <h3 className="text-2xl font-bold text-white mb-2">{t('documents.no_event_selected', 'لم يتم اختيار فعالية')}</h3>
+          <p className="text-emerald-400/30 text-sm max-w-md mx-auto">{t('documents.no_event_selected_desc', 'يرجى اختيار فعالية نشطة أو إنشاء فعالية جديدة لإدارة المستندات.')}</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout activePath="/dashboard/documents">

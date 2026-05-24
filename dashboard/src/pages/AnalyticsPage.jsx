@@ -28,10 +28,15 @@ const AnalyticsPage = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchStats();
+    if (eventId) {
+      fetchStats();
+    } else {
+      setLoading(false);
+    }
   }, [eventId]);
 
   const fetchStats = async () => {
+    if (!eventId) return;
     try {
       const summary = await api.get(`analytics/${eventId}/summary`);
       const peaks = await api.get(`analytics/${eventId}/peak-hours`);
@@ -42,6 +47,18 @@ const AnalyticsPage = () => {
       setLoading(false);
     }
   };
+
+  if (!eventId) {
+    return (
+      <DashboardLayout activePath="/dashboard/stats">
+        <div className="text-center py-20 bg-white/5 border border-white/10 rounded-[32px] p-10 max-w-3xl mx-auto backdrop-blur-md">
+          <BarChart2 className="w-16 h-16 text-emerald-400/20 mx-auto mb-4" />
+          <h3 className="text-2xl font-bold text-white mb-2">{t('analytics.no_event_selected', 'لم يتم اختيار فعالية')}</h3>
+          <p className="text-emerald-400/30 text-sm max-w-md mx-auto">{t('analytics.no_event_selected_desc', 'يرجى اختيار فعالية نشطة أو إنشاء فعالية جديدة لعرض إحصائيات الحضور والتقارير.')}</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   if (loading) return <DashboardLayout><div className="p-20 text-center text-emerald-400">{t('analytics.loading', 'جاري تحليل البيانات...')}</div></DashboardLayout>;
   if (!data) return <DashboardLayout><div className="p-20 text-center text-red-400">{t('analytics.load_error', 'فشل في تحميل التحليلات.')}</div></DashboardLayout>;

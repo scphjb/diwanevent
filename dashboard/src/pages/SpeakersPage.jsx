@@ -113,7 +113,25 @@ const SpeakersPage = () => {
     }
   };
 
-  if (loading || !eventId) return <DashboardLayout activePath="/dashboard/speakers"><div className="p-20 text-center text-emerald-400">{t('speakers.loading', 'جاري تحميل البيانات...')}</div></DashboardLayout>;
+  if (!eventId) {
+    return (
+      <DashboardLayout activePath="/dashboard/speakers">
+        <div className="text-center py-20 bg-white/5 border border-white/10 rounded-[32px] p-10 max-w-3xl mx-auto backdrop-blur-md">
+          <Mic className="w-16 h-16 text-emerald-400/20 mx-auto mb-4" />
+          <h3 className="text-2xl font-bold text-white mb-2">{t('speakers.no_event_selected', 'لم يتم اختيار فعالية')}</h3>
+          <p className="text-emerald-400/30 text-sm max-w-md mx-auto">{t('speakers.no_event_selected_desc', 'يرجى اختيار فعالية نشطة أو إنشاء فعالية جديدة لإدارة المتحدثين.')}</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (loading) {
+    return (
+      <DashboardLayout activePath="/dashboard/speakers">
+        <div className="p-20 text-center text-emerald-400 font-bold">{t('speakers.loading', 'جاري تحميل البيانات...')}</div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout activePath="/dashboard/speakers">

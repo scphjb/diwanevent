@@ -170,6 +170,30 @@ async def refresh_access_token(
 # ═══════════════════════════════════════
 # الملف الشخصي
 # ═══════════════════════════════════════
+class ProfileUpdateRequest(BaseModel):
+    full_name: Optional[str] = None
+
+@router.put("/profile")
+async def update_profile(
+    body: ProfileUpdateRequest,
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db)
+):
+    if body.full_name is not None:
+        current_user.full_name = body.full_name
+    await db.commit()
+    await db.refresh(current_user)
+    return {
+        "status": "success",
+        "message": "تم تحديث الملف الشخصي بنجاح",
+        "user": {
+            "id": current_user.id,
+            "email": current_user.email,
+            "full_name": current_user.full_name,
+            "role": current_user.role,
+        }
+    }
+
 @router.get("/me", response_model=UserProfile)
 async def get_me(current_user: User = Depends(get_current_active_user)):
     """جلب بيانات المستخدم الحالي."""

@@ -4,8 +4,10 @@ import { ChevronDown, Calendar, CheckCircle2, Globe } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../utils/cn';
 import api from '../../services/api';
+import { useNavigate } from 'react-router-dom';
 
 const EventSelector = ({ selectedEventId, onSelect }) => {
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -88,7 +90,10 @@ const EventSelector = ({ selectedEventId, onSelect }) => {
                 ))}
               </div>
               <div className="p-4 bg-emerald-950/50 border-t border-white/5">
-                <button className="w-full py-2.5 rounded-xl border border-dashed border-emerald-500/30 text-emerald-400 text-sm hover:bg-emerald-500/5 transition-all">
+                <button 
+                  onClick={() => { navigate('/dashboard/events'); setIsOpen(false); }}
+                  className="w-full py-2.5 rounded-xl border border-dashed border-emerald-500/30 text-emerald-400 text-sm hover:bg-emerald-500/5 transition-all"
+                >
                   {t('common.event_selector.create_new', '+ إنشاء فعالية جديدة')}
                 </button>
               </div>

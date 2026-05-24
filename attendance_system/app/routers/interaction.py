@@ -292,8 +292,12 @@ async def upload_document_file(
         mime = _magic.from_buffer(content[:2048], mime=True)
         if mime not in ALLOWED_MIME_TYPES:
             raise HTTPException(status_code=400, detail=f"محتوى الملف غير مسموح: {mime}")
-    except ImportError:
-        pass  # python-magic اختياري — الامتداد كافٍ كحد أدنى
+    except HTTPException:
+        raise
+    except Exception as e:
+        # python-magic اختياري أو قد يفشل بسبب نقص ملفات النظام (libmagic)
+        # الامتداد كافٍ كحد أدنى لحفظ الملف بأمان
+        pass
     
     # 4. حفظ الملف
     static_docs_dir = os.path.join("static", "documents")
