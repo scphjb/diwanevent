@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useParams } from 'react-router-dom';
 import { 
@@ -103,7 +103,7 @@ const ParticipantPortal = () => {
         
         try {
           const [settings, ag, lead, dirRes, wallPosts, activePolls, eventDocs] = await Promise.all([
-          eventService.getEventSettings(eventId),
+          api.get(`events/public/${eventId}`).then(res => res.data),
           agendaService.getSessions(eventId),
           interactionService.getLeaderboard(eventId),
           api.get(`networking/directory?event_id=${eventId}`),

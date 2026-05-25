@@ -92,6 +92,12 @@ async def get_public_event(
         "app_subtitle": event.app_subtitle,
         "hero_title": event.hero_title,
         "hero_description": event.hero_description,
+        "show_polls": event.show_polls,
+        "show_social_wall": event.show_social_wall,
+        "show_networking": event.show_networking,
+        "show_leaderboard": event.show_leaderboard,
+        "show_docs": event.show_docs,
+        "show_qa": event.show_qa,
     }
 
     # بيانات إضافية للتسجيل — فقط إذا كان مفتوحاً

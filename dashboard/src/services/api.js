@@ -46,10 +46,11 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       const refreshToken = localStorage.getItem('diwan_refresh_token');
 
-      // إذا لم يكن هناك refresh token — تسجيل خروج (إلا إذا كان الطلب عاماً للمشاركين)
+      // إذا لم يكن هناك refresh token — تسجيل خروج (إلا إذا كان الطلب عاماً للمشاركين أو كان زائراً للبوابة)
       if (!refreshToken) {
         const isPublicRequest = originalRequest.url.includes('public') || originalRequest.url.includes('networking');
-        if (!isPublicRequest) {
+        const isParticipant = localStorage.getItem('participant_token') || window.location.pathname.includes('/p/');
+        if (!isPublicRequest && !isParticipant) {
           localStorage.removeItem('diwan_token');
           localStorage.removeItem('diwan_refresh_token');
           localStorage.removeItem('diwan_user');
