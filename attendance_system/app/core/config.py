@@ -55,6 +55,7 @@ class Settings(BaseSettings):
 
     # App Domain (لروابط البريد الإلكتروني)
     APP_DOMAIN: str = "http://localhost:8000"
+    FRONTEND_URL: str = "http://localhost:3000"
 
     # Email (SMTP)
     EMAILS_FROM_NAME: Optional[str] = "Diwan Event"

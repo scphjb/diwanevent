@@ -106,6 +106,7 @@ services:
       SECRET_KEY: ${SECRET_KEY}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY}
       APP_DOMAIN: ${APP_DOMAIN:-https://e-diwan.net}
+      FRONTEND_URL: ${FRONTEND_URL:-https://e-diwan.net}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
       SMTP_SERVER: ${SMTP_SERVER}
       SMTP_PORT: ${SMTP_PORT:-587}
@@ -155,6 +156,7 @@ services:
       CELERY_BROKER_URL: redis://redis:6379/1
       CELERY_RESULT_BACKEND: redis://redis:6379/2
       SECRET_KEY: ${SECRET_KEY}
+      FRONTEND_URL: ${FRONTEND_URL:-https://e-diwan.net}
       SMTP_SERVER: ${SMTP_SERVER}
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USERNAME: ${SMTP_USERNAME}

@@ -66,8 +66,9 @@ def send_welcome_email_task(self, participant_data: Dict[str, Any]) -> Dict:
                 await db.commit()
 
                 # 2. توليد Magic Link للبوابة الرقمية بنقرة واحدة
+                from app.core.config import settings
                 magic_token = create_magic_token(participant_data["id"])
-                frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
+                frontend_url = settings.FRONTEND_URL
                 magic_link = f"{frontend_url}/participant-login?token={magic_token}"
 
                 # 3. إرسال البريد الموحد غير المتزامن

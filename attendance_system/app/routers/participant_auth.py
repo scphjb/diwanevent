@@ -266,8 +266,8 @@ async def request_otp(body: OTPRequest, db: AsyncSession = Depends(get_db)):
     # 7. توليد Magic Link
     magic_token = create_magic_token(participant.id)
     
-    # تحديد رابط البوابة (يفضل أن يكون في الإعدادات)
-    frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
+    # تحديد رابط البوابة
+    frontend_url = settings.FRONTEND_URL
     magic_link = f"{frontend_url}/participant-login?token={magic_token}"
 
     # 8. إرسال البريد الموحد
