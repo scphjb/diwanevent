@@ -1,4 +1,4 @@
-﻿/**
+/**
  * ParticipantLoginPage — صفحة تسجيل دخول المشاركين عبر OTP
  * المسار: /portal/login أو /participant-login
  */
@@ -218,10 +218,13 @@ export default function ParticipantLoginPage() {
 
   return (
     <div style={{
-      minHeight: '100vh', background: '#050B18', display: 'flex',
-      alignItems: 'center', justifyContent: 'center',
+      minHeight: '100vh',
+      background: '#050B18',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
       fontFamily: 'Cairo, sans-serif', direction: 'rtl', padding: 20,
-      backgroundImage: 'radial-gradient(ellipse at 70% 20%, rgba(26,138,106,0.12) 0%, transparent 60%)',
+      backgroundImage:
+        'radial-gradient(ellipse at 30% 20%, rgba(42,100,236,0.1) 0%, transparent 60%), ' +
+        'radial-gradient(ellipse at 70% 80%, rgba(212,175,55,0.06) 0%, transparent 60%)',
     }}>
       <motion.div
         key={step}
@@ -230,9 +233,12 @@ export default function ParticipantLoginPage() {
         exit={{ opacity: 0, y: -16 }}
         transition={{ duration: 0.35, ease: 'easeOut' }}
         style={{
-          background: 'rgba(10,61,43,0.9)', border: '1px solid rgba(212,175,55,0.2)',
-          borderRadius: 24, padding: '40px 36px', width: '100%', maxWidth: 420,
-          backdropFilter: 'blur(20px)', boxShadow: '0 24px 60px rgba(0,0,0,0.4)',
+          background: 'rgba(13,21,39,0.95)',
+          border: '1px solid rgba(212,175,55,0.15)',
+          borderRadius: 28, padding: '44px 36px',
+          width: '100%', maxWidth: 420,
+          backdropFilter: 'blur(24px)',
+          boxShadow: '0 32px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04)',
         }}
       >
         {/* Header */}

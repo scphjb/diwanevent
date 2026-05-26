@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useParams } from 'react-router-dom';
 import { 
@@ -36,6 +36,7 @@ import api from '../services/api';
 import AIConcierge from '../components/ai/AIConcierge';
 import { cn } from '../utils/cn';
 import NetworkingHub from './portal/NetworkingHub';
+import toast, { Toaster } from 'react-hot-toast';
 
 const getFullUrl = (url) => {
   if (!url) return '#';
@@ -73,6 +74,19 @@ const ParticipantPortal = () => {
     website: ''
   });
   const [tagInput, setTagInput] = useState('');
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  // مراقبة حالة الشبكة
+  useEffect(() => {
+    const handleOnline  = () => { setIsOnline(true);  toast.success('تم استعادة الاتصال ✅'); };
+    const handleOffline = () => { setIsOnline(false); toast.error('انقطع الاتصال بالإنترنت'); };
+    window.addEventListener('online',  handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online',  handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   useEffect(() => {
     if (eventId && participantToken) {
@@ -147,7 +161,7 @@ const ParticipantPortal = () => {
       
       setPosts([newOptimisticPost, ...posts]);
       setNewPost('');
-    } catch (err) { alert("فشل النشر"); }
+    } catch (err) { toast.error('فشل النشر'); }
   };
 
   const handleAskQuestion = async () => {
@@ -160,8 +174,8 @@ const ParticipantPortal = () => {
         session_id: selectedSessionId ? parseInt(selectedSessionId) : null
       });
       setNewQuestion('');
-      alert("تم إرسال سؤالك بنجاح ✅");
-    } catch (err) { alert("فشل إرسال السؤال"); }
+      toast.success('تم إرسال سؤالك بنجاح ✅');
+    } catch (err) { toast.error('فشل إرسال السؤال'); }
   };
 
   const handleOptInToggle = async () => {
@@ -173,18 +187,17 @@ const ParticipantPortal = () => {
       // تحديث الدليل فوراً ليظهر المشترك نفسه أو يختفي
       const dirRes = await api.get(`networking/directory?event_id=${eventId}`);
       setDirectory(dirRes.data || []);
-
-      alert(newStatus ? "أنت الآن مرئي للمشاركين" : "تم إخفاء ملفك الشخصي");
-    } catch (err) { alert("حدث خطأ أثناء تحديث الإعدادات"); }
+      toast.success(newStatus ? 'أنت الآن مرئي للمشاركين' : 'تم إخفاء ملفك الشخصي');
+    } catch (err) { toast.error('حدث خطأ أثناء تحديث الإعدادات'); }
   };
 
   const handleVote = async (pollId, optionId) => {
     try {
       await interactionService.submitVote(pollId, optionId, participant.id);
       setVotedPolls([...votedPolls, pollId]);
-      alert("تم تسجيل صوتك بنجاح ✅");
+      toast.success('تم تسجيل صوتك بنجاح ✅');
     } catch (err) {
-      alert(err.response?.data?.detail || "فشل التصويت");
+      toast.error(err.response?.data?.detail || 'فشل التصويت');
     }
   };
 
@@ -196,13 +209,12 @@ const ParticipantPortal = () => {
     if (!selectedContact || !participant) return;
     try {
       await api.post(`networking/connect?requested_qr=${selectedContact.qr_code}`);
-      alert("تم إرسال طلب التواصل الاحترافي بنجاح ✅");
+      toast.success('تم إرسال طلب التواصل الاحترافي بنجاح ✅');
       setSelectedContact(null);
-      // تحديث الدليل لتغيير حالة الزر
       const dirRes = await api.get(`networking/directory?event_id=${eventId}`);
       setDirectory(dirRes.data || []);
     } catch (err) {
-      alert("فشل إرسال الطلب. ربما أرسلته مسبقاً.");
+      toast.error('فشل إرسال الطلب. ربما أرسلته مسبقاً.');
     }
   };
 
@@ -216,9 +228,9 @@ const ParticipantPortal = () => {
       await api.patch('participants/public/profile', data);
       setParticipant({ ...participant, custom_values: { ...participant.custom_values, ...data } });
       setIsEditingProfile(false);
-      alert("تم تحديث ملفك الشخصي بنجاح ✅");
+      toast.success('تم تحديث ملفك الشخصي بنجاح ✅');
     } catch (err) {
-      alert("فشل تحديث الملف الشخصي");
+      toast.error('فشل تحديث الملف الشخصي');
     }
   };
 
@@ -228,7 +240,7 @@ const ParticipantPortal = () => {
   };
 
   const handleWalletClick = (walletType) => {
-    alert(`ميزة الإضافة إلى ${walletType} قيد المراجعة حالياً من قبل المزود وسيتم تفعيلها قريباً! 💳`);
+    toast('ميزة الإضافة إلى ' + walletType + ' ستُفعَّل قريباً 💳', { icon: '⏳' });
   };
 
   const tabs = [
@@ -279,11 +291,24 @@ const ParticipantPortal = () => {
           </div>
         </div>
         <div className="flex items-center gap-2">
-           <div className="px-3 py-1 rounded-full bg-brand-primary/10 border border-brand-primary/20 text-brand-secondary text-[10px] font-black">ONLINE</div>
+           <div className={cn(
+             "px-3 py-1 rounded-full text-[10px] font-black border transition-all",
+             isOnline
+               ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
+               : "bg-red-500/10 border-red-500/20 text-red-400 animate-pulse"
+           )}>
+             {isOnline ? '🟢 متصل' : '🔴 غير متصل'}
+           </div>
         </div>
       </header>
 
-      <main className="flex-1 p-6 pb-40 relative z-10">
+      {!isOnline && (
+        <div className="bg-red-500 text-center py-2 text-[10px] font-black uppercase tracking-widest sticky top-[88px] z-40">
+           أنت تعمل الآن في وضع عدم الاتصال
+        </div>
+      )}
+
+      <main className="flex-1 p-6 pb-40 relative z-10 overflow-y-auto">
         <AnimatePresence mode="wait">
           {activeTab === 'home' && (
             <motion.div key="home" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-6">
@@ -295,7 +320,7 @@ const ParticipantPortal = () => {
                       <img 
                         src={participant.avatar_url} 
                         alt="Profile" 
-                        className="w-full h-full object-cover rounded-[32px] border-2 border-brand-primary/30 shadow-[0_0_30px_rgba(16,185,129,0.15)]"
+                        className="w-full h-full object-cover rounded-[32px] border-2 border-brand-primary/30 shadow-[0_0_30px_rgba(42,100,236,0.2)]"
                       />
                     ) : (
                       <div className="w-full h-full rounded-[32px] bg-gradient-to-br from-brand-primary/20 to-brand-dark/40 flex items-center justify-center border-2 border-brand-primary/20 text-brand-secondary shadow-[0_0_30px_rgba(16,185,129,0.1)]">
@@ -819,23 +844,62 @@ const ParticipantPortal = () => {
         </AnimatePresence>
       </main>
 
-      <nav className="fixed bottom-0 left-0 right-0 bg-[#050B18]/90 backdrop-blur-3xl border-t border-white/10 px-6 pt-4 pb-12 flex justify-around items-center z-50">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={cn(
-              "flex flex-col items-center gap-2 p-2 relative transition-all",
-              activeTab === tab.id ? "text-amber-500 scale-110" : "text-brand-secondary/30 hover:text-brand-secondary"
-            )}
-          >
-            {activeTab === tab.id && (
-               <motion.div layoutId="nav-pill" className="absolute -inset-2 bg-amber-500/10 blur-xl rounded-full" />
-            )}
-            <tab.icon className="w-7 h-7" />
-            <span className="text-[10px] font-black uppercase tracking-widest">{tab.label}</span>
-          </button>
-        ))}
+      {/* Toaster للإشعارات */}
+      <Toaster
+        position="top-center"
+        toastOptions={{
+          style: {
+            background: 'rgba(13,21,39,0.95)',
+            color: '#F0F4F2',
+            border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: '16px',
+            fontFamily: 'Cairo, sans-serif',
+            fontSize: '14px',
+            fontWeight: '700',
+            backdropFilter: 'blur(20px)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+          },
+          success: { iconTheme: { primary: '#38BDF8', secondary: '#050B18' } },
+          error:   { iconTheme: { primary: '#F87171', secondary: '#050B18' } },
+        }}
+      />
+
+      <nav
+        className="fixed bottom-0 left-0 right-0 bg-[#050B18]/90 backdrop-blur-3xl border-t border-white/10 z-50"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom, 12px)' }}
+      >
+        <div
+          className="flex items-center gap-1 px-3 pt-3 pb-3 overflow-x-auto"
+          style={{
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+            WebkitOverflowScrolling: 'touch',
+            scrollSnapType: 'x mandatory',
+          }}
+        >
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              style={{ scrollSnapAlign: 'start', flexShrink: 0 }}
+              className={cn(
+                "flex flex-col items-center gap-1 px-4 py-2 rounded-2xl relative transition-all min-w-[60px]",
+                activeTab === tab.id
+                  ? "bg-amber-500/10 text-amber-500"
+                  : "text-white/30 hover:text-white/60"
+              )}
+            >
+              <tab.icon className="w-6 h-6" />
+              <span className="text-[9px] font-black uppercase tracking-wide whitespace-nowrap">{tab.label}</span>
+              {activeTab === tab.id && (
+                <motion.div
+                  layoutId="nav-active"
+                  className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-amber-500 rounded-full"
+                />
+              )}
+            </button>
+          ))}
+        </div>
       </nav>
     </div>
   );
