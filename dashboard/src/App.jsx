@@ -46,6 +46,7 @@ import ContactPage   from './pages/ContactPage';
 import UpdatesPage   from './pages/UpdatesPage';
 import BlogPage      from './pages/BlogPage';
 import JobsPage      from './pages/JobsPage';
+import InstallPrompt from './components/pwa/InstallPrompt';
 
 /**
  * مكون لحماية المسارات — يدعم التحقق من التوكن والأدوار (RBAC).
@@ -74,6 +75,7 @@ import { EventProvider } from './context/EventContext';
 function App() {
   return (
     <EventProvider>
+      <InstallPrompt />
       <Routes>
       {/* ═══ المسارات العامة ═══ */}
       <Route path="/login" element={<LoginPage />} />

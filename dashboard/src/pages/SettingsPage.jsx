@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../layouts/DashboardLayout';
 import { 
   Settings as SettingsIcon, 
@@ -30,6 +30,8 @@ import { cn } from '../utils/cn';
 import { useEvent } from '../context/EventContext';
 import { useTranslation } from 'react-i18next';
 import { showSuccess, showError, showConfirm, showToast } from '../utils/swal';
+import PushNotificationManager from '../components/pwa/PushNotificationManager';
+import { Bell } from 'lucide-react';
 
 const SettingsSection = ({ title, description, children, icon: Icon }) => (
   <div className="bg-white/5 border border-white/10 rounded-[32px] p-8 mb-8 backdrop-blur-md">
@@ -198,6 +200,7 @@ const SettingsPage = () => {
             { id: 'halls', label: t('settings.tabs.halls', 'إدارة القاعات'), icon: Tv },
             { id: 'welcome', label: t('settings.tabs.welcome', 'شاشة الترحيب'), icon: Tv },
             { id: 'labels', label: t('settings.tabs.labels', 'تخصيص المسميات'), icon: Type },
+            { id: 'pwa', label: 'التطبيق والإشعارات', icon: Bell },
             { id: 'advanced', label: t('settings.tabs.advanced', 'إجراءات متقدمة'), icon: ShieldCheck },
           ].map(tab => (
             <button
@@ -563,6 +566,27 @@ const SettingsPage = () => {
                         <Input value={settings[field.id]} onChange={(e) => handleChange(field.id, e.target.value)} />
                       </div>
                     ))}
+                  </div>
+                </SettingsSection>
+              )}
+
+              {activeTab === 'pwa' && (
+                <SettingsSection title="التطبيق والإشعارات" description="إعدادات PWA وإشعارات الدفع الفورية" icon={Bell}>
+                  <div className="space-y-6">
+                    <div>
+                      <h4 className="text-white font-bold mb-1">إشعارات الدفع (Push Notifications)</h4>
+                      <p className="text-white/30 text-sm mb-4">احصل على تنبيهات فورية حتى عند إغلاق التطبيق</p>
+                      <PushNotificationManager />
+                    </div>
+                    <div
+                      className="p-4 rounded-2xl text-sm"
+                      style={{ background: 'rgba(42,100,236,0.08)', border: '1px solid rgba(42,100,236,0.2)' }}
+                    >
+                      <p className="text-white/60 font-bold mb-1">ديوان إيفنت كـ PWA</p>
+                      <p className="text-white/30 text-xs leading-relaxed">
+                        يمكنك تثبيت المنصة كتطبيق على هاتفك. ابحث عن زر "تثبيت" أسفل الشاشة أو من قائمة المتصفح &rarr; "إضافة إلى الشاشة الرئيسية".
+                      </p>
+                    </div>
                   </div>
                 </SettingsSection>
               )}

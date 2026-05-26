@@ -11,11 +11,9 @@ export default defineConfig({
       includeAssets: ['icons/*.png', 'offline.html', '*.png'],
       manifest: false, // نستخدم manifest.json الخارجي في /public
       workbox: {
-        // صفحة Offline المخصصة
         offlineGoogleAnalytics: false,
         navigateFallback: '/offline.html',
         navigateFallbackDenylist: [/^\/api/, /^\/ws/],
-        // Cache الملفات الثابتة (JS, CSS, Images)
         runtimeCaching: [
           {
             // API calls — Network First
@@ -28,7 +26,7 @@ export default defineConfig({
             },
           },
           {
-            // صور المشاركين والرعاة — Cache First
+            // صور المشاركين — Cache First
             urlPattern: /^https?.*\.(png|jpg|jpeg|svg|gif|webp)$/i,
             handler: 'CacheFirst',
             options: {
@@ -46,7 +44,7 @@ export default defineConfig({
             },
           },
           {
-            // Locales / Translations — Stale While Revalidate
+            // Locales — Stale While Revalidate
             urlPattern: /\/locales\/.*/i,
             handler: 'StaleWhileRevalidate',
             options: {
@@ -55,12 +53,13 @@ export default defineConfig({
             },
           },
         ],
-        // Pre-cache الصفحات الأساسية
         globPatterns: ['**/*.{js,css,html,png,svg,ico}'],
         cleanupOutdatedCaches: true,
+        // Push notifications handler مُدمج في Service Worker
+        additionalManifestEntries: [],
       },
       devOptions: {
-        enabled: false, // لا نفعّله في وضع التطوير لتجنب التعقيد
+        enabled: false,
       },
     }),
   ],
@@ -86,7 +85,6 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        // تقسيم الـ bundle لتحسين الأداء
         manualChunks: {
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
           'vendor-ui': ['framer-motion', 'lucide-react'],

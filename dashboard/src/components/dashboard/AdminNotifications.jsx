@@ -1,19 +1,36 @@
-﻿import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast, { Toaster } from 'react-hot-toast';
 import useAttendanceSocket from '../../hooks/useAttendanceSocket';
 import { Bell, ShieldAlert, Award, Info } from 'lucide-react';
+import { useBadge } from '../../hooks/useBadge';
 
 const AdminNotifications = ({ eventId }) => {
   const { t } = useTranslation();
-  // استخدام الـ Hook الذي أنشأناه سابقاً
+  const { setBadge } = useBadge();
+  const unreadCount = useRef(0);
+
+  // مسح الـ Badge عند فتح التطبيق
+  useEffect(() => {
+    setBadge(0);
+    const handleFocus = () => { unreadCount.current = 0; setBadge(0); };
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [setBadge]);
+
   useAttendanceSocket(eventId, (message) => {
     if (message.type === 'admin_notification') {
       const { title, message: text, level } = message.data;
-      
+
+      // تحديث Badge API — يزيد العداد على الأيقونة
+      if (document.hidden) {
+        unreadCount.current += 1;
+        setBadge(unreadCount.current);
+      }
+
       // تشغيل صوت تنبيه خفيف (اختياري)
       const audio = new Audio('/assets/sounds/notification.mp3');
-      audio.play().catch(() => {}); // نتجاهل الأخطاء إذا لم يتوفر الملف
+      audio.play().catch(() => {});
 
       // عرض التنبيه بناءً على المستوى
       toast.custom((t) => (

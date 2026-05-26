@@ -99,5 +99,23 @@
       "form_factor": "narrow",
       "label": "بوابة المشاركين"
     }
-  ]
+  ],
+  "share_target": {
+    "action": "/dashboard/import",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "file",
+          "accept": ["image/*", ".xlsx", ".xls", ".csv", ".pdf"]
+        }
+      ]
+    }
+  },
+  "related_applications": [],
+  "prefer_related_applications": false
 }

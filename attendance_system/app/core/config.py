@@ -73,6 +73,11 @@ class Settings(BaseSettings):
     STRIPE_SECRET_KEY: Optional[str] = None
     STRIPE_WEBHOOK_SECRET: Optional[str] = None
 
+    # Web Push Notifications (VAPID)
+    # توليد المفاتيح: python attendance_system/scripts/generate_vapid_keys.py
+    VAPID_PUBLIC_KEY: Optional[str] = None
+    VAPID_PRIVATE_KEY: Optional[str] = None
+
     # Connection Pool
     DB_POOL_SIZE: int = 10
     DB_MAX_OVERFLOW: int = 20
