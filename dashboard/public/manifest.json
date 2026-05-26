@@ -1,25 +1,103 @@
 {
-  "short_name": "Diwan Event",
-  "name": "Diwan Event Platform",
+  "name": "ديوان إيفنت — منصة تسيير الفعاليات",
+  "short_name": "ديوان",
+  "description": "منصة احترافية لتسيير الفعاليات والمؤتمرات بتقنية متقدمة",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#050B18",
+  "background_color": "#050B18",
+  "categories": ["business", "productivity"],
   "icons": [
     {
-      "src": "favicon.ico",
-      "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
+      "src": "/icons/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "logo192.png",
+      "src": "/icons/icon-96x96.png",
+      "sizes": "96x96",
       "type": "image/png",
-      "sizes": "192x192"
+      "purpose": "any"
     },
     {
-      "src": "logo512.png",
+      "src": "/icons/icon-128x128.png",
+      "sizes": "128x128",
       "type": "image/png",
-      "sizes": "512x512"
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ],
-  "start_url": ".",
-  "display": "standalone",
-  "theme_color": "#022C22",
-  "background_color": "#022C22"
+  "shortcuts": [
+    {
+      "name": "تسجيل الحضور",
+      "short_name": "حضور",
+      "description": "تسجيل حضور المشاركين بالمسح الضوئي",
+      "url": "/dashboard/check-in",
+      "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "المشاركون",
+      "short_name": "مشاركون",
+      "description": "إدارة قائمة المشاركين",
+      "url": "/dashboard/participants",
+      "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "الإحصائيات",
+      "short_name": "إحصاء",
+      "description": "تحليلات الفعالية اللحظية",
+      "url": "/dashboard/stats",
+      "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96" }]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/dashboard_mockup.png",
+      "sizes": "1280x800",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "لوحة تحكم ديوان إيفنت"
+    },
+    {
+      "src": "/attendee_app.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "بوابة المشاركين"
+    }
+  ]
 }
