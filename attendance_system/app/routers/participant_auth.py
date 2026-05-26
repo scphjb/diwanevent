@@ -14,6 +14,7 @@ from app.models.participant import Participant
 from app.models.otp import ParticipantOTP
 from app.core.security import create_access_token, decode_token
 from sqlalchemy import select, update
+from app.core.config import settings
 import secrets
 import logging
 import os
@@ -58,7 +59,7 @@ def create_magic_token(participant_id: int) -> str:
 # ─── Helper: إرسال OTP بالبريد ────────────────────────────────────────────────
 
 async def send_unified_welcome_email(email: str, participant_name: str, event_name: str, order_num: str, otp: str, magic_link: str, qr_code: str = None, event_date: str = None, event_location: str = None) -> bool:
-    """إرسال إيميل موحد (ترحيب + OTP + شارة دخول + تفاصيل الفعالية)"""
+    """إرسال إيميل موحد (ترحيب + OTP + شارة دخول + تفاصيل الفعالية) بقالب فاخر"""
     try:
         from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
         from app.core.config import settings
@@ -81,87 +82,113 @@ async def send_unified_welcome_email(email: str, participant_name: str, event_na
 
         qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={qr_code}" if qr_code else ""
 
-        html = f"""
-        <!DOCTYPE html>
-        <html dir="rtl" lang="ar">
-        <head><meta charset="UTF-8"></head>
-        <body style="margin:0;padding:0;background:#f4f6f8;font-family:'Segoe UI',Arial,sans-serif;">
-          <table width="100%" cellpadding="0" cellspacing="0">
-            <tr><td align="center" style="padding:40px 20px;">
-              <table width="600" style="background:#ffffff;border-radius:24px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,0.1);">
-                
-                <!-- Header -->
-                <tr>
-                  <td style="background:linear-gradient(135deg,#022C22 0%,#1DB58A 100%);padding:40px;text-align:center;">
-                    <h1 style="margin:0;color:#D4AF37;font-size:32px;letter-spacing:2px;font-weight:900;">Diwan Event</h1>
-                    <p style="margin:8px 0 0;color:rgba(255,255,255,0.8);font-size:16px;">تأكيد التسجيل والبوابة الرقمية</p>
-                  </td>
-                </tr>
-                
-                <!-- Body -->
-                <tr>
-                  <td style="padding:40px;text-align:right;">
-                    <h2 style="color:#022C22;margin:0 0 16px;">مرحباً {participant_name} 👋</h2>
-                    <p style="color:#555;font-size:15px;line-height:1.6;margin:0 0 24px;">
-                      يسعدنا تأكيد تسجيلك في <strong>{event_name}</strong>. لقد قمنا بتجهيز بوابتك الرقمية وشارة الدخول الخاصة بك أدناه.
-                    </p>
+        org_row = ""
+        date_row = (
+            f'<tr><td style="padding:10px 0;border-bottom:1px solid #F1F5F9;color:#64748B;font-size:12px;width:35%;">تاريخ الفعالية</td>'
+            f'<td style="padding:10px 0;border-bottom:1px solid #F1F5F9;color:#050B18;font-size:13px;font-weight:700;">{event_date}</td></tr>'
+        ) if event_date else ''
 
-                    <!-- Event Logistics -->
-                    <div style="display:flex; gap:10px; margin-bottom:24px;">
-                      {f'<div style="flex:1; padding:12px; background:#f0fdf4; border:1px solid #dcfce7; border-radius:12px; text-align:center;"><span style="display:block; color:#166534; font-size:11px; font-weight:bold; text-transform:uppercase; margin-bottom:4px;">📅 التاريخ</span><span style="color:#14532d; font-size:14px; font-weight:bold;">{event_date}</span></div>' if event_date else ''}
-                      {f'<div style="flex:1; padding:12px; background:#fffbeb; border:1px solid #fef3c7; border-radius:12px; text-align:center;"><span style="display:block; color:#92400e; font-size:11px; font-weight:bold; text-transform:uppercase; margin-bottom:4px;">📍 الموقع</span><span style="color:#78350f; font-size:14px; font-weight:bold;">{event_location[:30]}...</span></div>' if event_location else ''}
-                    </div>
+        loc_row = (
+            f'<tr><td style="padding:10px 0;color:#64748B;font-size:12px;width:35%;">الموقع</td>'
+            f'<td style="padding:10px 0;color:#050B18;font-size:13px;font-weight:700;">{event_location}</td></tr>'
+        ) if event_location else ''
 
-                    <!-- QR & Info Box -->
-                    <table width="100%" style="background:#f8f9fa;border-radius:20px;padding:24px;margin-bottom:30px;">
+        html = f"""<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+</head>
+<body style="margin:0;padding:0;background:#F0F4F8;font-family:Arial,sans-serif;direction:rtl;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F0F4F8;padding:30px 10px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color:#ffffff;border-radius:28px;overflow:hidden;box-shadow:0 15px 40px rgba(5,11,24,0.06);border:1px solid rgba(5,11,24,0.03);">
+          
+          <!-- Header (Luxury Brand Glow) -->
+          <tr>
+            <td style="background:linear-gradient(135deg,#050B18 0%,#0F1E36 100%);padding:45px 40px;text-align:center;">
+              <div style="width:64px;height:64px;background:linear-gradient(135deg,#F0C040 0%,#D4AF37 100%);border-radius:18px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:15px;box-shadow:0 8px 20px rgba(212,175,55,0.2);">
+                <span style="color:#050B18;font-size:28px;font-weight:900;font-family:sans-serif;line-height:64px;text-align:center;display:block;width:100%;">D</span>
+              </div>
+              <h1 style="margin:0;color:#ffffff;font-size:24px;font-weight:900;letter-spacing:-0.5px;">ديوان <span style="color:#D4AF37;">فعاليات</span></h1>
+              <p style="margin:5px 0 0;color:rgba(255,255,255,0.55);font-size:12px;font-weight:bold;letter-spacing:1px;text-transform:uppercase;">تأكيد التسجيل والبوابة الرقمية للمشترك</p>
+            </td>
+          </tr>
+          
+          <!-- Welcome Message -->
+          <tr>
+            <td style="padding:40px;text-align:right;">
+              <h2 style="color:#050B18;font-size:20px;font-weight:900;margin:0 0 12px;letter-spacing:-0.3px;">مرحباً {participant_name} 👋</h2>
+              <p style="color:#475569;font-size:14px;line-height:1.7;margin:0 0 25px;">
+                يسعدنا تأكيد تسجيلك بنجاح في <strong>{event_name}</strong>. لقد قمنا بتوليد شارة الدخول ورمز التحقق الخاص بك. يمكنك الوصول المباشر لبوابتك التفاعلية لمتابعة تفاصيل الجلسات والتواصل الفعّال.
+              </p>
+
+              <!-- Main Info Card -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:20px;padding:24px;margin-bottom:30px;">
+                <tr>
+                  <!-- Data Section -->
+                  <td width="55%" style="vertical-align:middle;text-align:right;">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
                       <tr>
-                        <td width="60%" style="vertical-align:top;text-align:right;">
-                           <p style="margin:0;color:#888;font-size:12px;font-weight:bold;text-transform:uppercase;">رقم التسجيل</p>
-                           <p style="margin:4px 0 20px;color:#022C22;font-size:24px;font-weight:900;font-family:monospace;">{order_num}</p>
-                           
-                           <p style="margin:0;color:#888;font-size:12px;font-weight:bold;text-transform:uppercase;">رمز التحقق (OTP)</p>
-                           <p style="margin:4px 0 0;color:#D4AF37;font-size:28px;font-weight:900;letter-spacing:4px;">{otp}</p>
-                        </td>
-                        <td width="40%" align="center">
-                           <div style="background:#fff;padding:10px;border-radius:15px;display:inline-block;border:1px solid #eee;">
-                              <img src="{qr_url}" width="140" height="140" alt="QR Code">
-                           </div>
-                           <p style="margin:8px 0 0;color:#022C22;font-size:11px;font-weight:bold;">امسح الشارة عند الدخول 🏁</p>
-                        </td>
+                        <td style="padding:10px 0;border-bottom:1px solid #F1F5F9;color:#64748B;font-size:12px;width:35%;">الاسم الكامل</td>
+                        <td style="padding:10px 0;border-bottom:1px solid #F1F5F9;color:#050B18;font-size:13px;font-weight:700;">{participant_name}</td>
                       </tr>
+                      <tr>
+                        <td style="padding:10px 0;border-bottom:1px solid #F1F5F9;color:#64748B;font-size:12px;">رقم التسجيل</td>
+                        <td style="padding:10px 0;border-bottom:1px solid #F1F5F9;color:#D4AF37;font-size:14px;font-weight:900;font-family:monospace;">{order_num}</td>
+                      </tr>
+                      {date_row}
+                      {loc_row}
                     </table>
-
-                    <!-- Magic Link Button -->
-                    <div style="text-align:center;margin:35px 0;">
-                      <a href="{magic_link}" style="background:linear-gradient(135deg,#1DB58A 0%,#022C22 100%);color:#ffffff;padding:20px 40px;border-radius:16px;text-decoration:none;font-weight:bold;display:inline-block;box-shadow:0 6px 20px rgba(29,181,138,0.3);font-size:18px;">
-                         دخول مباشر للبوابة الرقمية ✨
-                      </a>
-                      <p style="margin:12px 0 0;color:#888;font-size:12px;">(رابط آمن وسريع - نقرة واحدة فقط)</p>
-                    </div>
-
-                    <div style="border-top:1px solid #eee;padding-top:24px;">
-                      <p style="color:#666;font-size:13px;margin:0;">
-                        📍 <strong>نصيحة:</strong> احتفظ بهذا البريد الإلكتروني، فهو تذكرتك ومفتاح دخولك الدائم للفعالية.
-                      </p>
+                  </td>
+                  
+                  <!-- Divider -->
+                  <td width="5%">&nbsp;</td>
+                  
+                  <!-- QR & OTP Block -->
+                  <td width="40%" align="center" style="vertical-align:middle;border-right:1px solid #E2E8F0;padding-right:15px;">
+                    {f'<div style="background:#ffffff;padding:8px;border-radius:14px;border:1px solid #E2E8F0;display:inline-block;box-shadow:0 4px 12px rgba(0,0,0,0.03);margin-bottom:10px;"><img src="{qr_url}" width="120" height="120" style="display:block;border:none;" alt="QR Code"/></div>' if qr_code else ''}
+                    <div style="background:#FFFDF5;border:1px dashed #F0C040;border-radius:12px;padding:8px 12px;text-align:center;">
+                      <span style="display:block;color:#8B6A08;font-size:10px;font-weight:900;margin-bottom:2px;letter-spacing:1px;text-transform:uppercase;">رمز الدخول (OTP)</span>
+                      <span style="color:#D4AF37;font-size:20px;font-weight:900;letter-spacing:2px;font-family:monospace;">{otp}</span>
                     </div>
                   </td>
                 </tr>
-                
-                <!-- Footer -->
-                <tr>
-                  <td style="background:#f8f9fa;padding:24px;text-align:center;border-top:1px solid #eee;">
-                    <p style="margin:0;color:#aaa;font-size:11px;">
-                      © 2026 Diwan Event Platform. كل الحقوق محفوظة.
-                    </p>
-                  </td>
-                </tr>
-
               </table>
-            </td></tr>
-          </table>
-        </body>
-        </html>
-        """
+
+              <!-- Call To Action (One-click Magic Login) -->
+              <div style="text-align:center;margin:35px 0;">
+                <a href="{magic_link}" style="background:linear-gradient(135deg,#F0C040 0%,#D4AF37 100%);color:#050B18;padding:16px 36px;border-radius:16px;text-decoration:none;font-weight:900;font-size:15px;display:inline-block;box-shadow:0 10px 25px rgba(212,175,55,0.25);transition:all 0.2s;">
+                  دخول مباشر للبوابة الرقمية ✨
+                </a>
+                <p style="margin:10px 0 0;color:#64748B;font-size:11px;font-weight:bold;">(رابط آمن وسريع — تسجيل دخول بنقرة واحدة)</p>
+              </div>
+
+              <!-- Important Advisory -->
+              <div style="border-top:1px solid #E2E8F0;padding-top:20px;margin-top:10px;">
+                <p style="color:#64748B;font-size:12px;line-height:1.6;margin:0;">
+                  📌 <strong>نصيحة هامة:</strong> يرجى الاحتفاظ بهذا البريد الإلكتروني أو تصوير رمز الـ QR بهاتفك لإبرازه للمنظمين عند مداخل القاعة لتسجيل حضورك الميداني وطباعة بطاقتك فورياً.
+                </p>
+              </div>
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="background:#F8FAFC;padding:25px;text-align:center;border-top:1px solid #E2E8F0;color:#94A3B8;font-size:11px;font-weight:bold;">
+              <p style="margin:0 0 5px;">© 2026 Diwan Event Platform. كل الحقوق محفوظة.</p>
+              <p style="margin:0;font-size:10px;color:#CBD5E1;">منصة احترافية متكاملة لإدارة وربط الفعاليات والمؤتمرات الذكية</p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+"""
 
         message = MessageSchema(
             subject=f"✅ تأكيد تسجيلك في {event_name} — شارة الدخول والبوابة",
@@ -268,6 +295,8 @@ async def request_otp(body: OTPRequest, db: AsyncSession = Depends(get_db)):
     
     # تحديد رابط البوابة
     frontend_url = settings.FRONTEND_URL
+    if "localhost" in frontend_url and "localhost" not in settings.APP_DOMAIN:
+        frontend_url = settings.APP_DOMAIN
     magic_link = f"{frontend_url}/participant-login?token={magic_token}"
 
     # 8. إرسال البريد الموحد

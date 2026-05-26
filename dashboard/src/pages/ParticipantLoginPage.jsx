@@ -12,9 +12,9 @@ const API = axios.create({ baseURL: '/api/v1/participant-auth' });
 const InputField = ({ icon: Icon, ...props }) => (
   <div style={{ position: 'relative' }}>
     <Icon
-      size={16}
+      size={18}
       style={{
-        position: 'absolute', top: '50%', right: 14,
+        position: 'absolute', top: '50%', right: 16,
         transform: 'translateY(-50%)', color: 'rgba(212,175,55,0.6)',
         pointerEvents: 'none',
       }}
@@ -22,15 +22,23 @@ const InputField = ({ icon: Icon, ...props }) => (
     <input
       {...props}
       style={{
-        width: '100%', padding: '12px 42px 12px 14px', borderRadius: 10,
-        background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)',
+        width: '100%', padding: '14px 46px 14px 16px', borderRadius: 14,
+        background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)',
         color: '#F0F4F2', fontSize: 14, fontFamily: 'Cairo, sans-serif',
         outline: 'none', direction: 'rtl', boxSizing: 'border-box',
-        transition: 'border-color 0.2s',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         ...props.style,
       }}
-      onFocus={e => e.target.style.borderColor = '#D4AF37'}
-      onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.12)'}
+      onFocus={e => {
+        e.target.style.borderColor = '#D4AF37';
+        e.target.style.background = 'rgba(212,175,55,0.03)';
+        e.target.style.boxShadow = '0 0 20px rgba(212,175,55,0.05)';
+      }}
+      onBlur={e => {
+        e.target.style.borderColor = 'rgba(255,255,255,0.08)';
+        e.target.style.background = 'rgba(255,255,255,0.03)';
+        e.target.style.boxShadow = 'none';
+      }}
     />
   </div>
 );
@@ -74,7 +82,7 @@ const OTPInput = ({ value, onChange }) => {
 
   return (
     <div 
-      style={{ display: 'flex', gap: 8, justifyContent: 'center', direction: 'ltr' }}
+      style={{ display: 'flex', gap: 10, justifyContent: 'center', direction: 'ltr' }}
       onPaste={handlePaste}
     >
       {[0, 1, 2, 3, 4, 5].map(i => (
@@ -89,14 +97,25 @@ const OTPInput = ({ value, onChange }) => {
           onInput={e => handleInput(i, e)}
           onChange={() => {}} // يتم التعامل عبر onInput
           style={{
-            width: 48, height: 56, textAlign: 'center', fontSize: 24,
-            fontWeight: '900', fontFamily: 'monospace', borderRadius: 10,
-            background: digits[i] ? 'rgba(212,175,55,0.15)' : 'rgba(255,255,255,0.05)',
-            border: `2px solid ${digits[i] ? '#D4AF37' : 'rgba(255,255,255,0.12)'}`,
+            width: 50, height: 60, textAlign: 'center', fontSize: 24,
+            fontWeight: '900', fontFamily: 'monospace', borderRadius: 12,
+            background: digits[i] ? 'rgba(212,175,55,0.08)' : 'rgba(255,255,255,0.03)',
+            border: `2px solid ${digits[i] ? '#D4AF37' : 'rgba(255,255,255,0.08)'}`,
             color: '#D4AF37', outline: 'none', cursor: 'text',
-            transition: 'all 0.15s',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            boxShadow: digits[i] ? '0 0 15px rgba(212,175,55,0.15)' : 'none',
           }}
-          onFocus={e => e.select()} // تحديد النص عند التركيز لتسهيل المسح
+          onFocus={e => {
+            e.select();
+            e.target.style.borderColor = '#D4AF37';
+            e.target.style.boxShadow = '0 0 20px rgba(212,175,55,0.2)';
+            e.target.style.background = 'rgba(212,175,55,0.08)';
+          }}
+          onBlur={e => {
+            e.target.style.borderColor = digits[i] ? '#D4AF37' : 'rgba(255,255,255,0.08)';
+            e.target.style.boxShadow = digits[i] ? '0 0 15px rgba(212,175,55,0.15)' : 'none';
+            e.target.style.background = digits[i] ? 'rgba(212,175,55,0.08)' : 'rgba(255,255,255,0.03)';
+          }}
         />
       ))}
     </div>
@@ -221,42 +240,43 @@ export default function ParticipantLoginPage() {
       minHeight: '100vh',
       background: '#050B18',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontFamily: 'Cairo, sans-serif', direction: 'rtl', padding: 20,
+      fontFamily: 'Cairo, sans-serif', direction: 'rtl', padding: 24,
       backgroundImage:
-        'radial-gradient(ellipse at 30% 20%, rgba(42,100,236,0.1) 0%, transparent 60%), ' +
-        'radial-gradient(ellipse at 70% 80%, rgba(212,175,55,0.06) 0%, transparent 60%)',
+        'radial-gradient(circle at 10% 20%, rgba(42,100,236,0.12) 0%, transparent 50%), ' +
+        'radial-gradient(circle at 90% 80%, rgba(212,175,55,0.08) 0%, transparent 50%)',
     }}>
       <motion.div
         key={step}
-        initial={{ opacity: 0, y: 24, scale: 0.97 }}
+        initial={{ opacity: 0, y: 30, scale: 0.96 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: -16 }}
-        transition={{ duration: 0.35, ease: 'easeOut' }}
+        exit={{ opacity: 0, y: -20 }}
+        transition={{ duration: 0.4, cubicBezier: [0.16, 1, 0.3, 1] }}
         style={{
-          background: 'rgba(13,21,39,0.95)',
+          background: 'rgba(13,21,39,0.75)',
           border: '1px solid rgba(212,175,55,0.15)',
-          borderRadius: 28, padding: '44px 36px',
-          width: '100%', maxWidth: 420,
+          borderRadius: 32, padding: '48px 40px',
+          width: '100%', maxWidth: 440,
           backdropFilter: 'blur(24px)',
-          boxShadow: '0 32px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04)',
+          boxShadow: '0 32px 80px rgba(0,0,0,0.6), 0 0 50px rgba(212,175,55,0.03)',
         }}
       >
         {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
+        <div style={{ textAlign: 'center', marginBottom: 36 }}>
           <div style={{
-            width: 64, height: 64, borderRadius: '50%',
-            background: 'linear-gradient(135deg, #D4AF37, #B8960C)',
+            width: 72, height: 72, borderRadius: 22,
+            background: 'linear-gradient(135deg, #F0C040, #D4AF37)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            margin: '0 auto 16px', boxShadow: '0 8px 24px rgba(212,175,55,0.3)',
+            margin: '0 auto 20px', 
+            boxShadow: '0 16px 40px rgba(212,175,55,0.25)',
           }}>
-            {step === 1 ? <LogIn size={28} color="#050B18" /> :
-             step === 2 ? <KeyRound size={28} color="#050B18" /> :
-             <ShieldCheck size={28} color="#050B18" />}
+            {step === 1 ? <LogIn size={32} color="#050B18" /> :
+             step === 2 ? <KeyRound size={32} color="#050B18" /> :
+             <ShieldCheck size={32} color="#050B18" />}
           </div>
-          <h1 style={{ margin: 0, fontSize: 22, fontWeight: '900', color: '#F0F4F2' }}>
+          <h1 style={{ margin: 0, fontSize: 24, fontWeight: '900', color: '#ffffff', trackingTight: '-0.5px' }}>
             {step === 1 ? 'دخول المشاركين' : step === 2 ? 'التحقق من الهوية' : 'مرحباً بك! 🎉'}
           </h1>
-          <p style={{ margin: '8px 0 0', fontSize: 13, color: 'rgba(240,244,242,0.55)' }}>
+          <p style={{ margin: '8px 0 0', fontSize: 13, color: 'rgba(255,255,255,0.5)', fontWeight: 'bold' }}>
             {step === 1 ? 'أدخل رقمك وبريدك للمتابعة' :
              step === 2 ? `تم إرسال رمز تحقق إلى ${email}` :
              'تم التحقق من هويتك بنجاح'}
@@ -265,9 +285,9 @@ export default function ParticipantLoginPage() {
 
         {/* Step 1: Request OTP */}
         {step === 1 && (
-          <form onSubmit={handleRequestOTP} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <form onSubmit={handleRequestOTP} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div>
-              <label style={{ fontSize: 12, color: '#D4AF37', display: 'block', marginBottom: 6 }}>رقم المشارك</label>
+              <label style={{ fontSize: 12, color: '#D4AF37', fontWeight: '800', display: 'block', marginBottom: 8 }}>رقم المشارك</label>
               <InputField
                 icon={ShieldCheck}
                 type="text"
@@ -278,7 +298,7 @@ export default function ParticipantLoginPage() {
               />
             </div>
             <div>
-              <label style={{ fontSize: 12, color: '#D4AF37', display: 'block', marginBottom: 6 }}>البريد الإلكتروني المسجل</label>
+              <label style={{ fontSize: 12, color: '#D4AF37', fontWeight: '800', display: 'block', marginBottom: 8 }}>البريد الإلكتروني المسجل</label>
               <InputField
                 icon={Mail}
                 type="email"
@@ -289,19 +309,21 @@ export default function ParticipantLoginPage() {
               />
             </div>
             {error && (
-              <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 8, padding: '10px 14px', color: '#fca5a5', fontSize: 13 }}>
-                {error}
+              <div style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 12, padding: '12px 16px', color: '#fca5a5', fontSize: 13, fontWeight: 'bold', textAlign: 'right' }}>
+                ⚠️ {error}
               </div>
             )}
             <motion.button
               type="submit" disabled={loading}
               whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
               style={{
-                marginTop: 4, padding: '13px', borderRadius: 10, border: 'none',
-                background: 'linear-gradient(135deg, #D4AF37, #B8960C)',
+                marginTop: 6, padding: '14px', borderRadius: 14, border: 'none',
+                background: 'linear-gradient(135deg, #F0C040 0%, #D4AF37 100%)',
                 color: '#050B18', fontWeight: '900', fontSize: 15,
                 fontFamily: 'Cairo, sans-serif', cursor: loading ? 'wait' : 'pointer',
                 opacity: loading ? 0.7 : 1,
+                boxShadow: '0 10px 25px rgba(212,175,55,0.2)',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               }}
             >
               {loading ? 'جاري الإرسال...' : 'إرسال رمز التحقق ✉️'}
@@ -311,27 +333,29 @@ export default function ParticipantLoginPage() {
 
         {/* Step 2: Enter OTP */}
         {step === 2 && (
-          <form onSubmit={handleVerifyOTP} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <form onSubmit={handleVerifyOTP} style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
             {successMsg && (
-              <div style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 8, padding: '10px 14px', color: '#6ee7b7', fontSize: 13, textAlign: 'center' }}>
-                {successMsg}
+              <div style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 12, padding: '12px 16px', color: '#6ee7b7', fontSize: 13, fontWeight: 'bold', textAlign: 'center' }}>
+                ✨ {successMsg}
               </div>
             )}
             <OTPInput value={otp} onChange={setOtp} />
             {error && (
-              <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 8, padding: '10px 14px', color: '#fca5a5', fontSize: 13, textAlign: 'center' }}>
-                {error}
+              <div style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 12, padding: '12px 16px', color: '#fca5a5', fontSize: 13, fontWeight: 'bold', textAlign: 'center' }}>
+                ⚠️ {error}
               </div>
             )}
             <motion.button
               type="submit" disabled={loading || otp.length < 6}
               whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
               style={{
-                padding: '13px', borderRadius: 10, border: 'none',
-                background: otp.length === 6 ? 'linear-gradient(135deg, #D4AF37, #B8960C)' : 'rgba(212,175,55,0.2)',
-                color: otp.length === 6 ? '#050B18' : 'rgba(212,175,55,0.5)',
+                padding: '14px', borderRadius: 14, border: 'none',
+                background: otp.length === 6 ? 'linear-gradient(135deg, #F0C040 0%, #D4AF37 100%)' : 'rgba(255,255,255,0.05)',
+                color: otp.length === 6 ? '#050B18' : 'rgba(255,255,255,0.3)',
                 fontWeight: '900', fontSize: 15, fontFamily: 'Cairo, sans-serif',
-                cursor: otp.length === 6 ? 'pointer' : 'not-allowed', transition: 'all 0.2s',
+                cursor: otp.length === 6 ? 'pointer' : 'not-allowed', 
+                boxShadow: otp.length === 6 ? '0 10px 25px rgba(212,175,55,0.2)' : 'none',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               }}
             >
               {loading ? 'جاري التحقق...' : 'تحقق من الرمز 🔓'}
@@ -339,19 +363,19 @@ export default function ParticipantLoginPage() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <button
                 type="button" onClick={() => { setStep(1); setOtp(''); setError(''); }}
-                style={{ background: 'none', border: 'none', color: 'rgba(240,244,242,0.4)', cursor: 'pointer', fontSize: 13, fontFamily: 'Cairo', display: 'flex', alignItems: 'center', gap: 4 }}
+                style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: 13, fontWeight: 'bold', fontFamily: 'Cairo', display: 'flex', alignItems: 'center', gap: 6 }}
               >
-                <ArrowLeft size={13} /> تغيير البيانات
+                <ArrowLeft size={14} /> تغيير البيانات
               </button>
               <button
                 type="button" onClick={handleResend} disabled={countdown > 0}
                 style={{
                   background: 'none', border: 'none', cursor: countdown > 0 ? 'default' : 'pointer',
-                  color: countdown > 0 ? 'rgba(212,175,55,0.3)' : '#D4AF37',
-                  fontSize: 13, fontFamily: 'Cairo', display: 'flex', alignItems: 'center', gap: 4,
+                  color: countdown > 0 ? 'rgba(255,255,255,0.2)' : '#D4AF37',
+                  fontSize: 13, fontWeight: 'bold', fontFamily: 'Cairo', display: 'flex', alignItems: 'center', gap: 6,
                 }}
               >
-                <RefreshCw size={13} />
+                <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
                 {countdown > 0 ? `إعادة الإرسال بعد ${countdown}ث` : 'إعادة الإرسال'}
               </button>
             </div>
@@ -363,16 +387,16 @@ export default function ParticipantLoginPage() {
           <div style={{ textAlign: 'center' }}>
             <motion.div
               initial={{ scale: 0 }} animate={{ scale: 1 }}
-              transition={{ type: 'spring', stiffness: 200 }}
-              style={{ fontSize: 64, marginBottom: 16 }}
+              transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+              style={{ fontSize: 64, marginBottom: 20 }}
             >
-              🎊
+              🎉
             </motion.div>
-            <div style={{ background: 'rgba(212,175,55,0.1)', border: '1px solid rgba(212,175,55,0.2)', borderRadius: 12, padding: 16, marginBottom: 20, textAlign: 'right' }}>
-              <p style={{ margin: '0 0 6px', color: '#D4AF37', fontSize: 13, fontWeight: 'bold' }}>بياناتك</p>
-              <p style={{ margin: '4px 0', color: '#F0F4F2', fontSize: 15, fontWeight: 'bold' }}>{participant.full_name}</p>
-              <p style={{ margin: '4px 0', color: 'rgba(240,244,242,0.55)', fontSize: 13 }}>{participant.role} — {participant.council}</p>
-              <p style={{ margin: '4px 0', color: 'rgba(240,244,242,0.4)', fontSize: 12 }}>#{participant.order_num}</p>
+            <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(212,175,55,0.2)', borderRadius: 20, padding: 24, marginBottom: 24, textAlign: 'right', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
+              <p style={{ margin: '0 0 8px', color: '#D4AF37', fontSize: 13, fontWeight: '800', letterSpacing: '0.5px' }}>تفاصيل التسجيل</p>
+              <p style={{ margin: '4px 0', color: '#ffffff', fontSize: 16, fontWeight: '900' }}>{participant.full_name}</p>
+              <p style={{ margin: '4px 0', color: 'rgba(255,255,255,0.6)', fontSize: 13, fontWeight: '700' }}>{participant.role} — {participant.organization || 'مشارك مستقل'}</p>
+              <p style={{ margin: '4px 0', color: 'rgba(255,255,255,0.4)', fontSize: 12, fontWeight: 'bold', fontFamily: 'monospace' }}>#{participant.order_num}</p>
             </div>
             <motion.button
               whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
@@ -381,10 +405,11 @@ export default function ParticipantLoginPage() {
                 window.location.href = `/p/${participant.event_id}/${token}`;
               }}
               style={{
-                width: '100%', padding: '13px', borderRadius: 10, border: 'none',
-                background: 'linear-gradient(135deg, #D4AF37, #B8960C)',
+                width: '100%', padding: '14px', borderRadius: 14, border: 'none',
+                background: 'linear-gradient(135deg, #F0C040 0%, #D4AF37 100%)',
                 color: '#050B18', fontWeight: '900', fontSize: 15,
                 fontFamily: 'Cairo, sans-serif', cursor: 'pointer',
+                boxShadow: '0 10px 25px rgba(212,175,55,0.2)',
               }}
             >
               الدخول إلى البوابة ←

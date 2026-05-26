@@ -126,8 +126,8 @@
         if (res.ok || res.status === 401) {
           // 401 = الخادم يعمل لكن يطلب مصادقة — يعني الاتصال موجود
           el.className = 'status-bar status-online';
-          el.textContent = '✅ الاتصال موجود — جاري إعادة التوجيه...';
-          setTimeout(() => window.location.href = '/', 1200);
+          el.textContent = '✅ الاتصال موجود — جاري إعادة تحميل الصفحة...';
+          setTimeout(() => window.location.reload(), 1000);
           return true;
         }
       } catch (_) { /* offline */ }
@@ -150,7 +150,7 @@
         const keys = await caches.keys();
         await Promise.all(keys.map(k => caches.delete(k)));
       } catch (_) {}
-      window.location.href = '/';
+      window.location.reload();
     }
 
     // مراقبة حالة الشبكة

@@ -284,10 +284,22 @@ const ParticipantPortal = () => {
 
       <header className="p-6 bg-white/[0.03] backdrop-blur-3xl border-b border-white/10 sticky top-0 z-50 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center font-black text-brand-dark shadow-xl">D</div>
-          <div>
-            <h1 className="font-black text-base tracking-tight leading-none uppercase">DIWAN <span className="text-amber-500">PORTAL</span></h1>
-            <p className="text-[10px] text-brand-secondary/50 font-bold uppercase tracking-widest mt-1">Digital Identity</p>
+          {eventSettings?.logo_url ? (
+            <img 
+              src={getFullUrl(eventSettings.logo_url)} 
+              alt="Logo" 
+              className="w-12 h-12 rounded-2xl object-cover shadow-xl border border-white/10"
+            />
+          ) : (
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center font-black text-brand-dark shadow-xl">
+              D
+            </div>
+          )}
+          <div className="text-right">
+            <h1 className="font-black text-base tracking-tight leading-none uppercase text-white">
+              {eventSettings?.name ? eventSettings.name : 'DIWAN PORTAL'}
+            </h1>
+            <p className="text-[10px] text-amber-500/80 font-bold uppercase tracking-widest mt-1">البوابة الرقمية للمشارك</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -313,29 +325,29 @@ const ParticipantPortal = () => {
           {activeTab === 'home' && (
             <motion.div key="home" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-6">
                
-               {/* 1. Profile Card */}
-               <div className="bg-white/5 border border-white/10 rounded-[40px] p-8 backdrop-blur-3xl text-center relative shadow-2xl">
+               {/* 1. Profile Card (Luxury Golden Styling) */}
+               <div className="bg-gradient-to-b from-white/[0.06] to-white/[0.01] border border-white/10 rounded-[40px] p-8 backdrop-blur-3xl text-center relative shadow-[0_24px_80px_rgba(0,0,0,0.4)]">
                   <div className="relative w-32 h-32 mx-auto mb-6">
                     {participant?.avatar_url ? (
                       <img 
                         src={participant.avatar_url} 
                         alt="Profile" 
-                        className="w-full h-full object-cover rounded-[32px] border-2 border-brand-primary/30 shadow-[0_0_30px_rgba(42,100,236,0.2)]"
+                        className="w-full h-full object-cover rounded-[32px] border-2 border-amber-500/30 shadow-[0_0_30px_rgba(212,175,55,0.2)]"
                       />
                     ) : (
-                      <div className="w-full h-full rounded-[32px] bg-gradient-to-br from-brand-primary/20 to-brand-dark/40 flex items-center justify-center border-2 border-brand-primary/20 text-brand-secondary shadow-[0_0_30px_rgba(16,185,129,0.1)]">
+                      <div className="w-full h-full rounded-[32px] bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 flex items-center justify-center border-2 border-amber-500/30 text-brand-dark shadow-[0_12px_40px_rgba(212,175,55,0.25)]">
                         <span className="text-5xl font-black">{participant?.full_name?.charAt(0) || 'U'}</span>
                       </div>
                     )}
                   </div>
                   
                   <h2 className="text-3xl font-black mb-1 tracking-tight text-[#F0F4F2]">{participant.full_name}</h2>
-                  <p className="text-brand-secondary/60 font-bold text-sm mb-6 uppercase tracking-wider">{participant.organization}</p>
+                  <p className="text-amber-500 font-bold text-sm mb-6 uppercase tracking-wider">{participant.organization}</p>
                   
                   {participant.custom_values?.specialties?.length > 0 && (
                     <div className="flex flex-wrap justify-center gap-2 mb-6">
                        {participant.custom_values.specialties.map((s, i) => (
-                          <span key={i} className="px-3 py-1 bg-brand-primary/10 border border-brand-primary/20 rounded-full text-[11px] font-black text-brand-secondary">
+                          <span key={i} className="px-3 py-1 bg-amber-500/10 border border-amber-500/20 rounded-full text-[11px] font-black text-amber-500">
                              {s}
                           </span>
                        ))}
@@ -363,7 +375,7 @@ const ParticipantPortal = () => {
                           <textarea 
                             value={profileData.bio}
                             onChange={e => setProfileData({...profileData, bio: e.target.value})}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white text-sm focus:border-brand-primary outline-none min-h-[80px] resize-none"
+                            className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white text-sm focus:border-amber-500 outline-none min-h-[80px] resize-none"
                             placeholder="نبذة قصيرة..."
                           />
                        </div>
@@ -373,14 +385,14 @@ const ParticipantPortal = () => {
                             type="text"
                             value={profileData.linkedin}
                             onChange={e => setProfileData({...profileData, linkedin: e.target.value})}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white text-sm focus:border-brand-primary outline-none"
+                            className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white text-sm focus:border-amber-500 outline-none"
                           />
                        </div>
                        <div>
                           <label className="text-[11px] text-white/50 font-bold mb-2 block">التخصصات المهنية</label>
-                          <div className="w-full bg-white/5 border border-white/10 rounded-2xl p-2 flex flex-wrap gap-2 focus-within:border-brand-primary transition-all min-h-[50px] cursor-text" onClick={() => document.getElementById('tag-input-field')?.focus()}>
+                          <div className="w-full bg-white/5 border border-white/10 rounded-2xl p-2 flex flex-wrap gap-2 focus-within:border-amber-500 transition-all min-h-[50px] cursor-text" onClick={() => document.getElementById('tag-input-field')?.focus()}>
                             {(profileData.specialties || []).map((tag, i) => (
-                              <span key={i} className="bg-brand-primary/20 text-brand-secondary px-3 py-1 rounded-full text-[10px] font-black flex items-center gap-2 border border-brand-primary/20">
+                              <span key={i} className="bg-amber-500/20 text-amber-500 px-3 py-1 rounded-full text-[10px] font-black flex items-center gap-2 border border-amber-500/20">
                                 {tag}
                                 <button onClick={(e) => { e.stopPropagation(); setProfileData({...profileData, specialties: profileData.specialties.filter((_, idx) => idx !== i)}); }} className="hover:text-white">
                                   <X size={12} />
@@ -409,31 +421,31 @@ const ParticipantPortal = () => {
                           <p className="text-[9px] text-white/20 mt-2">اضغط Enter أو فاصلة للإضافة</p>
                        </div>
                         <div className="flex gap-2 pt-2">
-                          <Button className="flex-1 rounded-xl font-bold bg-brand-primary text-brand-dark py-2" onClick={handleUpdateProfile}>حفظ</Button>
+                          <Button className="flex-1 rounded-xl font-bold bg-amber-500 text-brand-dark py-2" onClick={handleUpdateProfile}>حفظ</Button>
                           <Button variant="outline" className="flex-1 rounded-xl font-bold border-white/10 py-2" onClick={() => setIsEditingProfile(false)}>إلغاء</Button>
-                       </div>
+                        </div>
                     </div>
                   )}
                </div>
 
-               {/* 2. Digital Badge Card */}
-               <div className="bg-gradient-to-br from-[#0D1527] to-[#050B18] border border-brand-primary/20 rounded-[40px] p-8 text-center shadow-[0_10px_40px_rgba(0,0,0,0.3)]">
-                  <h3 className="text-brand-secondary font-black mb-6 tracking-widest text-sm uppercase">البطاقة الرقمية</h3>
+               {/* 2. Digital Badge Card (Apple / Google Wallet Theme) */}
+               <div className="bg-gradient-to-br from-[#0D1527] to-[#050B18] border border-amber-500/20 rounded-[40px] p-8 text-center shadow-[0_24px_60px_rgba(212,175,55,0.08)]">
+                  <h3 className="text-amber-500 font-black mb-6 tracking-widest text-sm uppercase">البطاقة الرقمية</h3>
                   
                   <div className="relative inline-block group mb-8">
-                    <div className="absolute -inset-6 bg-amber-500/20 blur-[40px] rounded-full opacity-50 transition-opacity" />
+                    <div className="absolute -inset-6 bg-gradient-to-br from-amber-500 to-amber-600/30 blur-[30px] rounded-full opacity-60 transition-opacity" />
                     <div className="relative bg-white p-4 rounded-[30px] shadow-2xl">
                       <img src={qrUrl} alt="QR Code" className="w-40 h-40" />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4 mb-8">
-                     <div className="bg-black/20 p-4 rounded-2xl border border-white/5">
-                        <div className="text-[10px] text-brand-secondary/50 font-bold uppercase tracking-widest mb-1">المقعد</div>
+                     <div className="bg-white/[0.03] p-4 rounded-2xl border border-white/5">
+                        <div className="text-[10px] text-amber-500/50 font-bold uppercase tracking-widest mb-1">المقعد</div>
                         <div className="font-black text-xl text-amber-500">{participant.seat_info || '--'}</div>
                      </div>
-                     <div className="bg-black/20 p-4 rounded-2xl border border-white/5">
-                        <div className="text-[10px] text-brand-secondary/50 font-bold uppercase tracking-widest mb-1">رقم التسجيل</div>
+                     <div className="bg-white/[0.03] p-4 rounded-2xl border border-white/5">
+                        <div className="text-[10px] text-amber-500/50 font-bold uppercase tracking-widest mb-1">رقم التسجيل</div>
                         <div className="font-black text-xl text-white">#{participant.order_num?.split('-')[1] || participant.order_num}</div>
                      </div>
                   </div>

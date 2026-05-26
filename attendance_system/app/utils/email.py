@@ -33,7 +33,9 @@ async def send_ticket_email(participant: dict, event: dict) -> bool:
         )
 
         # رابط البوابة الرقمية للمشارك
-        frontend_url   = getattr(settings, 'FRONTEND_URL', 'https://e-diwan.net')
+        frontend_url   = getattr(settings, 'FRONTEND_URL', 'https://event.e-diwan.net')
+        if "localhost" in frontend_url and "localhost" not in settings.APP_DOMAIN:
+            frontend_url = settings.APP_DOMAIN
         event_id       = event.get('id', '')
         token          = participant.get('qr_code') or participant.get('order_num', '')
         portal_url     = f"{frontend_url}/p/{event_id}/{token}"

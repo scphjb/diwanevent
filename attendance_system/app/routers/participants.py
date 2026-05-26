@@ -31,6 +31,13 @@ def _participant_to_dict(p):
         "payment_status": p.payment_status
     }
 
+def _get_frontend_url():
+    from app.core.config import settings
+    frontend_url = settings.FRONTEND_URL
+    if "localhost" in frontend_url and "localhost" not in settings.APP_DOMAIN:
+        return settings.APP_DOMAIN
+    return frontend_url
+
 router = APIRouter()
 
 from pydantic import BaseModel
@@ -321,7 +328,7 @@ async def public_register_participant(
             await db.commit()
 
             magic_token = create_magic_token(existing_by_name.id)
-            frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
+            frontend_url = _get_frontend_url()
             magic_link = f"{frontend_url}/participant-login?token={magic_token}"
 
             background_tasks.add_task(
@@ -392,7 +399,7 @@ async def public_register_participant(
         await db.commit()
 
         magic_token = create_magic_token(participant.id)
-        frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
+        frontend_url = _get_frontend_url()
         magic_link = f"{frontend_url}/participant-login?token={magic_token}"
 
         background_tasks.add_task(
@@ -574,7 +581,7 @@ async def bulk_activate_participants(
             db.add(new_otp)
             
             magic_token = create_magic_token(p.id)
-            frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
+            frontend_url = _get_frontend_url()
             magic_link = f"{frontend_url}/participant-login?token={magic_token}"
 
             event = await db.get(Event, p.event_id)
@@ -959,7 +966,7 @@ async def import_participants(
             db.add(new_otp)
             
             magic_token = create_magic_token(new_p.id)
-            frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
+            frontend_url = _get_frontend_url()
             magic_link = f"{frontend_url}/participant-login?token={magic_token}"
 
             background_tasks.add_task(
@@ -1053,9 +1060,10 @@ async def register_participant(
         )
         db.add(new_otp)
         await db.commit()
+        await db.refresh(new_p)
         
         magic_token = create_magic_token(new_p.id)
-        frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
+        frontend_url = _get_frontend_url()
         magic_link = f"{frontend_url}/participant-login?token={magic_token}"
 
         background_tasks.add_task(
