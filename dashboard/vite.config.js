@@ -12,8 +12,11 @@ export default defineConfig({
       manifest: false, // نستخدم manifest.json الخارجي في /public
       workbox: {
         offlineGoogleAnalytics: false,
-        navigateFallback: '/offline.html',
-        navigateFallbackDenylist: [/^\/api/, /^\/ws/],
+        // للـ SPA: أعد توجيه جميع مسارات React Router إلى index.html
+        // هذا يمنع ظهور offline.html لمسارات مثل /p/:eid/:token وهي متصفح بالتطبيق
+        navigateFallback: '/index.html',
+        // استثناء مسارات API والـ WebSocket وصفحة offline من الـ fallback
+        navigateFallbackDenylist: [/^\/api/, /^\/ws/, /\/offline\.html/],
         runtimeCaching: [
           {
             // API calls — Network First
