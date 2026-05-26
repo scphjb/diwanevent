@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import DashboardLayout from '../layouts/DashboardLayout';
 import { 
@@ -109,7 +109,7 @@ const QuestionsPage = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
         <div>
           <h1 className="text-4xl font-bold text-white mb-2">{t('questions.title', 'الأسئلة والنقاشات')}</h1>
-          <p className="text-emerald-400/50 flex items-center gap-2">
+          <p className="text-brand-secondary/50 flex items-center gap-2">
             <HelpCircle className="w-4 h-4" />
             {t('questions.subtitle', 'إدارة أسئلة الجمهور الموجهة للمتحدثين')}
           </p>
@@ -118,19 +118,19 @@ const QuestionsPage = () => {
         <div className="flex items-center bg-white/5 p-1 rounded-2xl border border-white/10">
           <button 
             onClick={() => setFilter('all')}
-            className={cn("px-6 py-2 rounded-xl text-sm font-bold transition-all", filter === 'all' ? "bg-emerald-500 text-emerald-950" : "text-emerald-400/50 hover:text-emerald-400")}
+            className={cn("px-6 py-2 rounded-xl text-sm font-bold transition-all", filter === 'all' ? "bg-brand-primary text-brand-dark" : "text-brand-secondary/50 hover:text-brand-secondary")}
           >{t('common.all', 'الكل')}</button>
           <button 
             onClick={() => setFilter('pending')}
-            className={cn("px-6 py-2 rounded-xl text-sm font-bold transition-all", filter === 'pending' ? "bg-amber-500 text-amber-950" : "text-emerald-400/50 hover:text-emerald-400")}
+            className={cn("px-6 py-2 rounded-xl text-sm font-bold transition-all", filter === 'pending' ? "bg-amber-500 text-amber-950" : "text-brand-secondary/50 hover:text-brand-secondary")}
           >{t('questions.tabs.pending', 'في الانتظار')}</button>
           <button 
             onClick={() => setFilter('pinned')}
-            className={cn("px-6 py-2 rounded-xl text-sm font-bold transition-all", filter === 'pinned' ? "bg-blue-500 text-white" : "text-emerald-400/50 hover:text-emerald-400")}
+            className={cn("px-6 py-2 rounded-xl text-sm font-bold transition-all", filter === 'pinned' ? "bg-blue-500 text-white" : "text-brand-secondary/50 hover:text-brand-secondary")}
           >{t('questions.tabs.pinned', 'معروض حالياً')}</button>
           <button 
             onClick={() => setFilter('answered')}
-            className={cn("px-6 py-2 rounded-xl text-sm font-bold transition-all", filter === 'answered' ? "bg-emerald-500 text-emerald-950" : "text-emerald-400/50 hover:text-emerald-400")}
+            className={cn("px-6 py-2 rounded-xl text-sm font-bold transition-all", filter === 'answered' ? "bg-brand-primary text-brand-dark" : "text-brand-secondary/50 hover:text-brand-secondary")}
           >{t('questions.tabs.answered', 'تمت الإجابة')}</button>
         </div>
       </div>
@@ -146,22 +146,22 @@ const QuestionsPage = () => {
               className={cn(
                 "bg-white/5 border rounded-[32px] p-8 backdrop-blur-md transition-all",
                 q.pinned ? "border-amber-500/30 bg-amber-500/5 shadow-[0_0_50px_rgba(245,158,11,0.05)]" : 
-                q.answered ? "border-emerald-500/20 opacity-60" : "border-white/10"
+                q.answered ? "border-brand-primary/20 opacity-60" : "border-white/10"
               )}
             >
               <div className="flex flex-col md:flex-row gap-8 items-start">
                 <div className="flex-1">
                   <div className="flex items-center gap-4 mb-4">
-                    <div className="w-12 h-12 rounded-full bg-emerald-600/20 flex items-center justify-center text-emerald-400 font-bold border border-emerald-500/20">
+                    <div className="w-12 h-12 rounded-full bg-brand-primary/20 flex items-center justify-center text-brand-secondary font-bold border border-brand-primary/20">
                       {q.name?.[0] || '؟'}
                     </div>
                     <div>
                       <h3 className="text-lg font-bold text-white flex items-center gap-2">
                         {q.name || t('questions.anonymous', 'مشارك مجهول')}
                         {q.pinned && <Pin className="w-4 h-4 text-amber-500 fill-amber-500" />}
-                        {q.answered && <CheckCircle className="w-4 h-4 text-emerald-500" />}
+                        {q.answered && <CheckCircle className="w-4 h-4 text-brand-primary" />}
                       </h3>
-                      <div className="text-emerald-400/30 text-xs flex items-center gap-1">
+                      <div className="text-brand-secondary/30 text-xs flex items-center gap-1">
                         <Clock className="w-3 h-3" />
                         {q.timestamp ? new Date(q.timestamp).toLocaleTimeString() : t('common.now', 'الآن')}
                       </div>
@@ -170,7 +170,7 @@ const QuestionsPage = () => {
                   
                   <p className={cn(
                     "text-xl font-medium leading-relaxed mb-6",
-                    q.answered ? "text-emerald-100/40 italic line-through" : "text-emerald-100"
+                    q.answered ? "text-brand-secondary/40 italic line-through" : "text-brand-secondary"
                   )}>
                     "{q.text}"
                   </p>
@@ -179,12 +179,12 @@ const QuestionsPage = () => {
                     <span className={cn(
                       "px-3 py-1.5 rounded-full font-bold",
                       q.pinned ? "bg-amber-500 text-amber-950" : 
-                      q.answered ? "bg-emerald-500/10 text-emerald-400" : "bg-white/5 text-emerald-400/50"
+                      q.answered ? "bg-brand-primary/10 text-brand-secondary" : "bg-white/5 text-brand-secondary/50"
                     )}>
                       {q.pinned ? t('questions.status.pinned', 'معروض الآن') : 
                        q.answered ? t('questions.status.answered', 'تمت الإجابة') : t('questions.status.pending', 'بانتظار العرض')}
                     </span>
-                    <span className="px-3 py-1.5 rounded-full bg-white/5 text-emerald-400/50 font-bold border border-white/5">
+                    <span className="px-3 py-1.5 rounded-full bg-white/5 text-brand-secondary/50 font-bold border border-white/5">
                       الجلسة: {getSessionTitle(q.session_id)}
                     </span>
                   </div>
@@ -196,7 +196,7 @@ const QuestionsPage = () => {
                       onClick={() => handleTogglePin(q.id, !q.pinned)}
                       className={cn(
                         "p-4 rounded-2xl transition-all",
-                        q.pinned ? "bg-amber-500 text-amber-950" : "bg-white/5 text-emerald-400/50 hover:bg-white/10"
+                        q.pinned ? "bg-amber-500 text-amber-950" : "bg-white/5 text-brand-secondary/50 hover:bg-white/10"
                       )}
                       title={q.pinned ? t('questions.unpin', 'إلغاء التثبيت') : t('questions.pin', 'تثبيت السؤال')}
                     >
@@ -208,7 +208,7 @@ const QuestionsPage = () => {
                     onClick={() => handleToggleAnswered(q.id, !q.answered)}
                     className={cn(
                       "p-4 rounded-2xl transition-all",
-                      q.answered ? "bg-emerald-500 text-emerald-950" : "bg-white/5 text-emerald-400/50 hover:bg-white/10"
+                      q.answered ? "bg-brand-primary text-brand-dark" : "bg-white/5 text-brand-secondary/50 hover:bg-white/10"
                     )}
                     title={q.answered ? t('questions.mark_unanswered', 'إعادة للانتظار') : t('questions.mark_answered', 'تحديد كمجاب')}
                   >
@@ -230,9 +230,9 @@ const QuestionsPage = () => {
 
       {filteredQuestions.length === 0 && (
         <div className="text-center py-20 bg-white/5 rounded-[40px] border border-dashed border-white/10">
-          <MessageSquare className="w-16 h-16 text-emerald-400/10 mx-auto mb-4" />
+          <MessageSquare className="w-16 h-16 text-brand-secondary/10 mx-auto mb-4" />
           <h3 className="text-xl font-bold text-white">{t('questions.no_questions', 'لا توجد أسئلة حتى الآن')}</h3>
-          <p className="text-emerald-400/30 mt-2">{t('questions.activate_desc', 'تأكد من تفعيل ميزة الأسئلة في بوابة المشارك.')}</p>
+          <p className="text-brand-secondary/30 mt-2">{t('questions.activate_desc', 'تأكد من تفعيل ميزة الأسئلة في بوابة المشارك.')}</p>
         </div>
       )}
     </DashboardLayout>

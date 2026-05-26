@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../layouts/DashboardLayout';
 import { 
   Calendar, 
@@ -104,7 +104,7 @@ const EventsPage = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
         <div>
           <h1 className="text-4xl font-bold text-white mb-2">{t('events.title', 'فعالياتك')}</h1>
-          <p className="text-emerald-400/50 flex items-center gap-2">
+          <p className="text-brand-secondary/50 flex items-center gap-2">
             <Calendar className="w-4 h-4" />
             {t('events.subtitle', 'إدارة كافة المؤتمرات والفعاليات الخاصة بك')}
           </p>
@@ -128,7 +128,7 @@ const EventsPage = () => {
             >
               <div>
                 <div className="flex items-center justify-between mb-6">
-                  <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 border border-emerald-500/20">
+                  <div className="w-12 h-12 rounded-2xl bg-brand-primary/10 flex items-center justify-center text-brand-secondary border border-brand-primary/20">
                     <Calendar className="w-6 h-6" />
                   </div>
                   <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest bg-amber-500/10 px-3 py-1 rounded-full">
@@ -136,16 +136,16 @@ const EventsPage = () => {
                   </span>
                 </div>
                 
-                <h3 className="text-2xl font-bold text-white mb-2 group-hover:text-emerald-400 transition-colors">
+                <h3 className="text-2xl font-bold text-white mb-2 group-hover:text-brand-secondary transition-colors">
                   {event.event_name}
                 </h3>
                 
                 <div className="space-y-3 mb-8">
-                  <div className="flex items-center gap-3 text-emerald-400/30 text-sm">
+                  <div className="flex items-center gap-3 text-brand-secondary/30 text-sm">
                     <MapPin className="w-4 h-4" />
                     {event.location || t('events.location_not_set', 'لم يتم تحديد الموقع')}
                   </div>
-                  <div className="flex items-center gap-3 text-emerald-400/30 text-sm">
+                  <div className="flex items-center gap-3 text-brand-secondary/30 text-sm">
                     <Clock className="w-4 h-4" />
                     {event.event_date || t('events.coming_soon', 'قريباً')}
                   </div>
@@ -185,16 +185,16 @@ const EventsPage = () => {
 
       {/* Add Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 backdrop-blur-xl bg-emerald-950/40">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 backdrop-blur-xl bg-brand-dark/40">
           <motion.div 
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-[#022C22] border border-white/10 rounded-[40px] p-10 w-full max-w-xl shadow-2xl"
+            className="bg-[#050B18] border border-white/10 rounded-[40px] p-10 w-full max-w-xl shadow-2xl"
           >
             <h2 className="text-2xl font-bold text-white mb-8">{t('events.add_modal.title', 'إطلاق فعالية جديدة')}</h2>
             <div className="space-y-6">
               <div className="space-y-2">
-                <label className="text-sm font-bold text-emerald-100/50">{t('events.add_modal.name_label', 'عنوان الفعالية')}</label>
+                <label className="text-sm font-bold text-brand-secondary/50">{t('events.add_modal.name_label', 'عنوان الفعالية')}</label>
                 <Input 
                   value={newEvent.name} 
                   onChange={(e) => setNewEvent(prev => ({ ...prev, name: e.target.value }))}
@@ -202,7 +202,7 @@ const EventsPage = () => {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-bold text-emerald-100/50">{t('events.add_modal.location_label', 'الموقع')}</label>
+                <label className="text-sm font-bold text-brand-secondary/50">{t('events.add_modal.location_label', 'الموقع')}</label>
                 <Input 
                   value={newEvent.location} 
                   onChange={(e) => setNewEvent(prev => ({ ...prev, location: e.target.value }))}
@@ -210,7 +210,7 @@ const EventsPage = () => {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-bold text-emerald-100/50">{t('events.add_modal.date_label', 'التاريخ')}</label>
+                <label className="text-sm font-bold text-brand-secondary/50">{t('events.add_modal.date_label', 'التاريخ')}</label>
                 <Input 
                   type="date"
                   value={newEvent.date} 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -70,7 +70,7 @@ const WallCarousel = ({ posts, eventSettings }) => {
         <h2 className="text-4xl lg:text-6xl 2xl:text-7xl font-black flex items-center justify-center gap-6">
           <MessageSquare className="w-12 h-12 lg:w-16 lg:h-16 2xl:w-20 2xl:h-20 text-amber-500" /> {t('public_display.live_wall', 'حائط التفاعل المباشر')}
         </h2>
-        <p className="text-emerald-400/40 text-lg lg:text-xl 2xl:text-2xl font-bold uppercase tracking-[0.5em] mt-4">{t('public_display.live_subtitle', 'مباشر من تطبيق المشاركين')}</p>
+        <p className="text-brand-secondary/40 text-lg lg:text-xl 2xl:text-2xl font-bold uppercase tracking-[0.5em] mt-4">{t('public_display.live_subtitle', 'مباشر من تطبيق المشاركين')}</p>
       </div>
 
       <div className="flex-1 w-full flex items-center justify-center pb-12">
@@ -83,15 +83,15 @@ const WallCarousel = ({ posts, eventSettings }) => {
             transition={{ duration: 0.8, ease: "easeOut" }}
             className="w-full max-w-[90vw] xl:max-w-[85vw] 2xl:max-w-[75vw] max-h-[70vh] flex flex-col bg-white/5 backdrop-blur-3xl border border-white/10 p-8 md:p-12 2xl:p-20 rounded-[40px] 2xl:rounded-[60px] shadow-[0_30px_60px_rgba(0,0,0,0.3)] relative"
           >
-            <div className="absolute -top-6 -right-6 2xl:-top-10 2xl:-right-10 w-16 h-16 2xl:w-28 2xl:h-28 bg-gradient-to-br from-amber-400 to-amber-600 rounded-full flex items-center justify-center text-emerald-950 font-black text-4xl 2xl:text-6xl shadow-[0_0_50px_rgba(245,158,11,0.4)]">“</div>
+            <div className="absolute -top-6 -right-6 2xl:-top-10 2xl:-right-10 w-16 h-16 2xl:w-28 2xl:h-28 bg-gradient-to-br from-amber-400 to-amber-600 rounded-full flex items-center justify-center text-brand-dark font-black text-4xl 2xl:text-6xl shadow-[0_0_50px_rgba(245,158,11,0.4)]">“</div>
 
             <div className="flex items-center gap-6 2xl:gap-8 mb-6 2xl:mb-10 border-b border-white/10 pb-6 shrink-0">
-              <div className="w-16 h-16 2xl:w-24 2xl:h-24 rounded-full bg-emerald-500/20 border-2 border-emerald-500/30 flex items-center justify-center text-3xl 2xl:text-5xl font-black text-emerald-400">
+              <div className="w-16 h-16 2xl:w-24 2xl:h-24 rounded-full bg-brand-primary/20 border-2 border-brand-primary/30 flex items-center justify-center text-3xl 2xl:text-5xl font-black text-brand-secondary">
                 {post.author_name[0]}
               </div>
               <div>
                 <div className="text-2xl 2xl:text-4xl font-black text-white">{post.author_name}</div>
-                <div className="text-emerald-400/50 font-bold text-sm 2xl:text-xl mt-1 2xl:mt-2 tracking-widest uppercase">{t('public_display.participant', 'مشارك في الفعالية')}</div>
+                <div className="text-brand-secondary/50 font-bold text-sm 2xl:text-xl mt-1 2xl:mt-2 tracking-widest uppercase">{t('public_display.participant', 'مشارك في الفعالية')}</div>
               </div>
             </div>
 
@@ -278,10 +278,10 @@ const PublicDisplay = () => {
   const percentage = data.stats.total > 0 ? Math.round((data.stats.present / data.stats.total) * 100) : 0;
 
   return (
-    <div className="min-h-screen h-screen bg-[#022C22] text-white flex flex-col pt-4 px-4 pb-0 md:pt-8 md:px-8 md:pb-0 lg:pt-12 lg:px-12 lg:pb-0 overflow-hidden relative font-arabic">
+    <div className="min-h-screen h-screen bg-[#050B18] text-white flex flex-col pt-4 px-4 pb-0 md:pt-8 md:px-8 md:pb-0 lg:pt-12 lg:px-12 lg:pb-0 overflow-hidden relative font-arabic">
       {/* Premium Cinematic Background */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-[-20%] left-[-10%] w-[70%] h-[70%] bg-emerald-500/10 rounded-full blur-[180px] animate-pulse" />
+        <div className="absolute top-[-20%] left-[-10%] w-[70%] h-[70%] bg-brand-primary/10 rounded-full blur-[180px] animate-pulse" />
         <div className="absolute bottom-[-20%] right-[-10%] w-[70%] h-[70%] bg-amber-500/5 rounded-full blur-[180px] animate-pulse" />
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-5 mix-blend-overlay" />
       </div>
@@ -304,12 +304,12 @@ const PublicDisplay = () => {
             {data.eventSettings.logo_url ? (
               <img src={getImageUrl(data.eventSettings.logo_url)} alt="Logo" className="w-full h-full object-contain" />
             ) : (
-              <Award className="w-6 h-6 md:w-12 md:h-12 text-emerald-950" style={{ color: data.eventSettings.secondary_color || '#022C22' }} />
+              <Award className="w-6 h-6 md:w-12 md:h-12 text-brand-dark" style={{ color: data.eventSettings.secondary_color || '#050B18' }} />
             )}
           </motion.div>
           <div>
             {(data.eventSettings.organizer_text || '').split('\n').filter(line => line.trim()).map((line, i) => (
-               <div key={i} className="text-emerald-400/60 font-bold text-xs md:text-lg lg:text-xl uppercase tracking-[0.2em] mb-1">
+               <div key={i} className="text-brand-secondary/60 font-bold text-xs md:text-lg lg:text-xl uppercase tracking-[0.2em] mb-1">
                  {line}
                </div>
             ))}
@@ -327,7 +327,7 @@ const PublicDisplay = () => {
           <div className="text-xl md:text-3xl lg:text-5xl font-black text-amber-500 leading-none">
             {currentTime}
           </div>
-          <div className="text-emerald-400/20 font-black tracking-[0.2em] md:tracking-[0.5em] text-[8px] md:text-xs uppercase mt-1">
+          <div className="text-brand-secondary/20 font-black tracking-[0.2em] md:tracking-[0.5em] text-[8px] md:text-xs uppercase mt-1">
             {data.eventSettings.location || 'الموقع غير محدد'}
           </div>
         </div>
@@ -348,7 +348,7 @@ const PublicDisplay = () => {
             >
               {/* Right Column (Big Stats) */}
               <div className="flex flex-col items-center lg:items-start text-center lg:text-right shrink-0">
-                <h2 className="text-xl lg:text-3xl font-black text-emerald-400/20 uppercase tracking-[0.5em] mb-4 lg:mb-8">{t('public_display.now_live', 'الحضور المباشر الآن')}</h2>
+                <h2 className="text-xl lg:text-3xl font-black text-brand-secondary/20 uppercase tracking-[0.5em] mb-4 lg:mb-8">{t('public_display.now_live', 'الحضور المباشر الآن')}</h2>
                 <div className="flex items-baseline gap-4 lg:gap-8 mb-4 lg:mb-8">
                   <span className="text-[8rem] md:text-[12rem] lg:text-[16rem] font-black leading-none bg-clip-text text-transparent bg-gradient-to-b from-white to-white/20 drop-shadow-[0_35px_35px_rgba(255,255,255,0.1)]">
                     {data.stats.present}
@@ -362,7 +362,7 @@ const PublicDisplay = () => {
                     animate={{ width: `${percentage}%` }}
                     className="h-full rounded-full shadow-[0_0_30px_rgba(16,185,129,0.3)]"
                     style={{
-                      background: `linear-gradient(to right, ${data.eventSettings.primary_color || '#10B981'}, #fbbf24)`
+                      background: `linear-gradient(to right, ${data.eventSettings.primary_color || '#2A64EC'}, #fbbf24)`
                     }}
                   />
                 </div>
@@ -370,22 +370,22 @@ const PublicDisplay = () => {
                 <div className="flex gap-20 justify-center lg:justify-start">
                   <div>
                     <div className="text-5xl font-black text-white">{percentage}%</div>
-                    <div className="text-emerald-400/30 font-bold uppercase tracking-widest mt-2">{t('public_display.completion_rate', 'نسبة الاكتمال')}</div>
+                    <div className="text-brand-secondary/30 font-bold uppercase tracking-widest mt-2">{t('public_display.completion_rate', 'نسبة الاكتمال')}</div>
                   </div>
                   <div className="w-px h-16 bg-white/10" />
                   <div>
                     <div className="text-5xl font-black text-white">{data.stats.total > 0 ? (data.stats.total - data.stats.present) : 0}</div>
-                    <div className="text-emerald-400/30 font-bold uppercase tracking-widest mt-2">{t('public_display.awaiting_arrival', 'بانتظار الوصول')}</div>
+                    <div className="text-brand-secondary/30 font-bold uppercase tracking-widest mt-2">{t('public_display.awaiting_arrival', 'بانتظار الوصول')}</div>
                   </div>
                 </div>
               </div>
 
               <div className="bg-white/5 border border-white/10 rounded-[40px] p-8 lg:p-10 backdrop-blur-3xl w-full max-h-[60vh] lg:max-h-[70vh] flex flex-col shadow-2xl relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-1" style={{ background: `linear-gradient(to right, ${data.eventSettings.primary_color || '#F59E0B'}, ${data.eventSettings.accent_color || '#10B981'})` }} />
+                <div className="absolute top-0 left-0 w-full h-1" style={{ background: `linear-gradient(to right, ${data.eventSettings.primary_color || '#F59E0B'}, ${data.eventSettings.accent_color || '#2A64EC'})` }} />
                 <h3 className="text-2xl lg:text-3xl font-black text-white mb-6 flex items-center gap-4 shrink-0">
                   <span className="relative flex h-4 w-4">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: data.eventSettings.accent_color || '#10B981' }}></span>
-                    <span className="relative inline-flex rounded-full h-4 w-4" style={{ backgroundColor: data.eventSettings.accent_color || '#10B981' }}></span>
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: data.eventSettings.accent_color || '#2A64EC' }}></span>
+                    <span className="relative inline-flex rounded-full h-4 w-4" style={{ backgroundColor: data.eventSettings.accent_color || '#2A64EC' }}></span>
                   </span>
                   {t('public_display.recent_checkins', 'أحدث الملتحقين بالفعالية')}
                 </h3>
@@ -409,12 +409,12 @@ const PublicDisplay = () => {
                           transition={{ type: "spring", stiffness: 300, damping: 25 }}
                           className={`border p-5 rounded-2xl flex items-center gap-5 transition-colors duration-500 ${idx === 0 ? 'shadow-[0_0_20px_rgba(245,158,11,0.2)]' : ''}`}
                         >
-                          <div className="w-14 h-14 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-2xl">
+                          <div className="w-14 h-14 rounded-full bg-brand-primary/20 text-brand-secondary flex items-center justify-center font-bold text-2xl">
                             {person.full_name ? person.full_name[0] : 'U'}
                           </div>
                           <div className="flex-1">
                             <h4 className="text-xl font-bold text-white">{person.full_name}</h4>
-                            <div className="text-emerald-400/50 text-sm font-medium">{person.council || 'مشارك'}</div>
+                            <div className="text-brand-secondary/50 text-sm font-medium">{person.council || 'مشارك'}</div>
                           </div>
                           <div className="text-right">
                             <div className="text-amber-500 font-bold text-lg">
@@ -455,11 +455,11 @@ const PublicDisplay = () => {
                 <HelpCircle className="w-10 h-10 md:w-14 md:h-14 text-amber-500" />
               </div>
               <h2 className="text-3xl md:text-5xl lg:text-6xl font-black mb-3 tracking-tighter shrink-0">{t('public_display.session_question', 'سؤال الجلسة الحالي')}</h2>
-              <p className="text-emerald-400/30 text-base md:text-xl font-bold uppercase tracking-[0.4em] mb-8 md:mb-12 shrink-0">{t('public_display.live_from_platform', 'بث مباشر من منصة المشاركين')}</p>
+              <p className="text-brand-secondary/30 text-base md:text-xl font-bold uppercase tracking-[0.4em] mb-8 md:mb-12 shrink-0">{t('public_display.live_from_platform', 'بث مباشر من منصة المشاركين')}</p>
               
               {data.question ? (
                 <div className="bg-white/5 backdrop-blur-2xl border-2 border-amber-500/30 p-10 md:p-16 rounded-[40px] md:rounded-[60px] shadow-[0_0_100px_rgba(245,158,11,0.1)] relative w-full max-h-[70vh] overflow-hidden flex flex-col justify-center">
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 px-6 py-2 bg-amber-500 text-emerald-950 font-black rounded-b-2xl text-xs md:text-sm uppercase tracking-widest shadow-xl z-10">
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 px-6 py-2 bg-amber-500 text-brand-dark font-black rounded-b-2xl text-xs md:text-sm uppercase tracking-widest shadow-xl z-10">
                     {t('public_display.live_question', 'سؤال مباشر')}
                   </div>
                   
@@ -478,7 +478,7 @@ const PublicDisplay = () => {
                     </p>
                   </div>
                   
-                  <div className="text-emerald-400 text-xl md:text-3xl font-bold mt-auto shrink-0">— {data.question.author_name}</div>
+                  <div className="text-brand-secondary text-xl md:text-3xl font-bold mt-auto shrink-0">— {data.question.author_name}</div>
                 </div>
               ) : (
                 <div className="text-white/10 text-3xl md:text-5xl font-black italic animate-pulse">{t('public_display.waiting_questions', 'بانتظار أسئلة الجمهور...')}</div>
@@ -497,7 +497,7 @@ const PublicDisplay = () => {
               <div className="text-center mb-8 md:mb-16">
                 <TrendingUp className="w-12 h-12 md:w-20 md:h-20 text-amber-500 mx-auto mb-4 md:mb-6" />
                 <h2 className="text-3xl md:text-6xl font-black mb-4">{t('public_display.live_poll', 'استطلاع رأي فوري')}</h2>
-                <p className="text-emerald-400/40 text-lg md:text-2xl font-bold">{data.poll?.question || "لا يوجد استطلاع نشط حالياً"}</p>
+                <p className="text-brand-secondary/40 text-lg md:text-2xl font-bold">{data.poll?.question || "لا يوجد استطلاع نشط حالياً"}</p>
               </div>
 
               <div className="space-y-6 md:space-y-8">
@@ -569,7 +569,7 @@ const PublicDisplay = () => {
                 {data.eventSettings.welcome_title || t('public_display.welcome_default', 'أهلاً وسهلاً بكم')}
               </h2>
               <div className="h-1 md:h-1.5 w-16 md:w-32 bg-amber-500 mx-auto mb-6 md:mb-12 rounded-full shadow-[0_0_20px_rgba(245,158,11,0.4)]" />
-              <p className="text-lg md:text-2xl lg:text-4xl font-bold leading-relaxed max-w-4xl text-emerald-400/60 px-4">
+              <p className="text-lg md:text-2xl lg:text-4xl font-bold leading-relaxed max-w-4xl text-brand-secondary/60 px-4">
                 {data.eventSettings.welcome_subtitle || t('public_display.enjoy_time', 'نتمنى لكم وقتاً ممتعاً ومفيداً')}
               </p>
             </motion.div>
@@ -592,7 +592,7 @@ const PublicDisplay = () => {
                 />
               </div>
               <h2 className="text-4xl md:text-7xl font-black mb-6 tracking-tighter">{t('public_display.registration_gateway', 'بوابة تسجيل الحضور')}</h2>
-              <p className="text-xl md:text-3xl font-bold text-emerald-400/60 leading-relaxed max-w-3xl">
+              <p className="text-xl md:text-3xl font-bold text-brand-secondary/60 leading-relaxed max-w-3xl">
                 {t('public_display.scan_to_confirm', 'امسح الكود لتأكيد حضورك، الحصول على الشهادة، والمشاركة في التفاعل المباشر')}
               </p>
             </motion.div>
@@ -641,8 +641,8 @@ const PublicDisplay = () => {
           <div className="flex items-center gap-20 animate-infinite-scroll whitespace-nowrap px-20">
             {data.stats.recent.concat(data.stats.recent).map((p, i) => (
               <div key={`${p.id}-${i}`} className="flex items-center gap-6">
-                <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-500/20">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                <div className="w-10 h-10 rounded-full bg-brand-primary/20 flex items-center justify-center border border-brand-primary/20">
+                  <CheckCircle2 className="w-5 h-5 text-brand-secondary" />
                 </div>
                 <span className="text-2xl font-black text-white/90">{t('public_display.welcome_visitor', { name: p.full_name })}</span>
                 <span className="text-white/10 text-xl font-black tracking-[1em] ml-12">///</span>
@@ -656,7 +656,7 @@ const PublicDisplay = () => {
       <div className="flex justify-center items-center w-full shrink-0 py-1">
         <div className="flex items-center gap-3 opacity-40">
           <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-          <p className="text-emerald-400 font-bold uppercase tracking-[0.3em] text-[10px]">{t('public_display.powered_by', 'Powered by Diwan Event')}</p>
+          <p className="text-brand-secondary font-bold uppercase tracking-[0.3em] text-[10px]">{t('public_display.powered_by', 'Powered by Diwan Event')}</p>
         </div>
       </div>
 

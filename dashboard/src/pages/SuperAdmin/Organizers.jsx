@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   UserPlus, 
@@ -83,9 +83,9 @@ const OrganizerManagement = () => {
       input: 'number',
       inputLabel: 'أدخل عدد الاعتمادات الجديد',
       inputValue: currentCredits,
-      background: '#022c22',
+      background: '#050B18',
       color: '#fff',
-      confirmButtonColor: '#10b981',
+      confirmButtonColor: '#2A64EC',
       confirmButtonText: 'تحديث',
       cancelButtonText: 'إلغاء',
       showCancelButton: true,
@@ -152,7 +152,7 @@ const OrganizerManagement = () => {
         </div>
         <button 
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-3 bg-[#D4AF37] text-[#022C22] px-8 py-4 rounded-2xl font-black shadow-xl shadow-[#D4AF37]/20 hover:bg-[#F0C040] hover:scale-105 transition-all"
+          className="flex items-center gap-3 bg-[#D4AF37] text-[#050B18] px-8 py-4 rounded-2xl font-black shadow-xl shadow-[#D4AF37]/20 hover:bg-[#F0C040] hover:scale-105 transition-all"
         >
           <UserPlus size={20} />
           <span>إضافة منظم جديد</span>
@@ -160,7 +160,7 @@ const OrganizerManagement = () => {
       </div>
 
       {/* Filters & Search */}
-      <div className="bg-[#0A3D2B] p-6 rounded-[2rem] border border-white/5 flex flex-col md:flex-row gap-4 items-center">
+      <div className="bg-[#0D1527] p-6 rounded-[2rem] border border-white/5 flex flex-col md:flex-row gap-4 items-center">
         <div className="flex-1 relative w-full">
           <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-[#F0F4F2]/30" size={18} />
           <input 
@@ -180,7 +180,7 @@ const OrganizerManagement = () => {
       </div>
 
       {/* Organizers Table */}
-      <div className="bg-[#0A3D2B] rounded-[2.5rem] border border-white/5">
+      <div className="bg-[#0D1527] rounded-[2.5rem] border border-white/5">
         {loading ? (
             <div className="p-20 text-center flex flex-col items-center gap-4">
                 <Loader2 className="w-10 h-10 text-[#D4AF37] animate-spin" />
@@ -203,7 +203,7 @@ const OrganizerManagement = () => {
                 <tr key={org.id} className="hover:bg-white/[0.02] transition-colors group">
                     <td className="px-8 py-6">
                     <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#1DB58A] to-[#0A3D2B] flex items-center justify-center text-white font-black uppercase shadow-inner">
+                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#2A64EC] to-[#0D1527] flex items-center justify-center text-white font-black uppercase shadow-inner">
                         {org.full_name?.[0] || 'O'}
                         </div>
                         <div>
@@ -233,7 +233,7 @@ const OrganizerManagement = () => {
                     </td>
                     <td className="px-8 py-6">
                     {org.status ? (
-                        <div className="flex items-center gap-2 text-green-400 text-xs font-bold">
+                        <div className="flex items-center gap-2 text-brand-secondary text-xs font-bold">
                         <CheckCircle2 size={16} />
                         <span>نشط</span>
                         </div>
@@ -249,7 +249,7 @@ const OrganizerManagement = () => {
                         <button 
                             onClick={() => handleImpersonate(org.id)}
                             disabled={impersonatingId === org.id}
-                            className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-emerald-500 hover:text-[#022C22] rounded-xl text-xs font-bold transition-all border border-white/10"
+                            className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-brand-primary hover:text-[#050B18] rounded-xl text-xs font-bold transition-all border border-white/10"
                         >
                         {impersonatingId === org.id ? (
                             <Loader2 size={14} className="animate-spin" />
@@ -260,7 +260,7 @@ const OrganizerManagement = () => {
                         </button>
                         <button 
                             onClick={() => handleUpdateCredits(org.id, org.credits)}
-                            className="p-2 bg-[#D4AF37]/10 hover:bg-[#D4AF37] text-[#D4AF37] hover:text-[#022C22] rounded-xl transition-all border border-[#D4AF37]/20"
+                            className="p-2 bg-[#D4AF37]/10 hover:bg-[#D4AF37] text-[#D4AF37] hover:text-[#050B18] rounded-xl transition-all border border-[#D4AF37]/20"
                             title="شحن رصيد"
                         >
                         <Coins size={16} />
@@ -282,7 +282,7 @@ const OrganizerManagement = () => {
                                         initial={{ opacity: 0, scale: 0.95, y: -10 }}
                                         animate={{ opacity: 1, scale: 1, y: 0 }}
                                         exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                                        className="absolute left-0 mt-2 w-48 bg-[#022C22] border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden"
+                                        className="absolute left-0 mt-2 w-48 bg-[#050B18] border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden"
                                     >
                                         <div className="p-2 space-y-1">
                                             <button className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 text-white text-xs font-bold rounded-xl transition-colors">

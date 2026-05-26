@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import DashboardLayout from '../layouts/DashboardLayout';
 import { 
@@ -112,9 +112,9 @@ const DocumentsPage = () => {
     return (
       <DashboardLayout activePath="/dashboard/documents">
         <div className="text-center py-20 bg-white/5 border border-white/10 rounded-[32px] p-10 max-w-3xl mx-auto backdrop-blur-md">
-          <FileText className="w-16 h-16 text-emerald-400/20 mx-auto mb-4" />
+          <FileText className="w-16 h-16 text-brand-secondary/20 mx-auto mb-4" />
           <h3 className="text-2xl font-bold text-white mb-2">{t('documents.no_event_selected', 'لم يتم اختيار فعالية')}</h3>
-          <p className="text-emerald-400/30 text-sm max-w-md mx-auto">{t('documents.no_event_selected_desc', 'يرجى اختيار فعالية نشطة أو إنشاء فعالية جديدة لإدارة المستندات.')}</p>
+          <p className="text-brand-secondary/30 text-sm max-w-md mx-auto">{t('documents.no_event_selected_desc', 'يرجى اختيار فعالية نشطة أو إنشاء فعالية جديدة لإدارة المستندات.')}</p>
         </div>
       </DashboardLayout>
     );
@@ -125,7 +125,7 @@ const DocumentsPage = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
         <div>
           <h1 className="text-4xl font-bold text-white mb-2">{t('documents.title', 'مركز المستندات')}</h1>
-          <p className="text-emerald-400/50 flex items-center gap-2">
+          <p className="text-brand-secondary/50 flex items-center gap-2">
             <FileText className="w-4 h-4" />
             {t('documents.subtitle', 'إدارة الملفات والموارد المتاحة للمشاركين')}
           </p>
@@ -148,7 +148,7 @@ const DocumentsPage = () => {
               className="bg-white/5 border border-white/10 rounded-[32px] p-6 hover:bg-white/10 transition-all flex flex-col h-full group"
             >
               <div className="flex justify-between items-start mb-6">
-                <div className="p-4 rounded-2xl bg-emerald-500/10 text-emerald-400 group-hover:bg-emerald-500 group-hover:text-emerald-950 transition-all">
+                <div className="p-4 rounded-2xl bg-brand-primary/10 text-brand-secondary group-hover:bg-brand-primary group-hover:text-brand-dark transition-all">
                   <FileText className="w-6 h-6" />
                 </div>
                 <button
@@ -160,7 +160,7 @@ const DocumentsPage = () => {
               </div>
 
               <h3 className="text-xl font-bold text-white mb-2 line-clamp-2" title={doc.title}>{doc.title}</h3>
-              <p className="text-emerald-400/40 text-sm mb-6 flex-1 line-clamp-3">{doc.description || t('documents.no_description', 'لا يوجد وصف')}</p>
+              <p className="text-brand-secondary/40 text-sm mb-6 flex-1 line-clamp-3">{doc.description || t('documents.no_description', 'لا يوجد وصف')}</p>
 
               <div className="pt-6 border-t border-white/5 flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -176,7 +176,7 @@ const DocumentsPage = () => {
                   href={getFullUrl(doc.file_url)} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-emerald-400 hover:text-emerald-300 text-sm font-bold"
+                  className="flex items-center gap-2 text-brand-secondary hover:text-brand-secondary text-sm font-bold"
                 >
                   <span>{t('documents.view', 'عرض')}</span>
                   <ExternalLink className="w-4 h-4" />
@@ -189,11 +189,11 @@ const DocumentsPage = () => {
 
       {documents.length === 0 && !loading && (
         <div className="text-center py-24 bg-white/5 rounded-[40px] border border-white/10 border-dashed">
-          <div className="w-20 h-20 bg-emerald-500/5 rounded-full flex items-center justify-center mx-auto mb-6">
-            <FileText className="w-10 h-10 text-emerald-500/20" />
+          <div className="w-20 h-20 bg-brand-primary/5 rounded-full flex items-center justify-center mx-auto mb-6">
+            <FileText className="w-10 h-10 text-brand-primary/20" />
           </div>
           <h3 className="text-2xl font-bold text-white mb-2">{t('documents.no_docs', 'لا توجد مستندات')}</h3>
-          <p className="text-emerald-400/30 max-w-sm mx-auto mb-10">{t('documents.start_desc', 'ابدأ بإضافة ملفات PDF أو روابط لمصادر مفيدة للمشاركين.')}</p>
+          <p className="text-brand-secondary/30 max-w-sm mx-auto mb-10">{t('documents.start_desc', 'ابدأ بإضافة ملفات PDF أو روابط لمصادر مفيدة للمشاركين.')}</p>
           <Button variant="outline" className="border-white/10" onClick={() => setShowAddModal(true)}>
              <Plus className="w-5 h-5 ml-2" /> {t('documents.add_btn')}
           </Button>
@@ -202,11 +202,11 @@ const DocumentsPage = () => {
 
       {/* Add Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 backdrop-blur-xl bg-emerald-950/40">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 backdrop-blur-xl bg-brand-dark/40">
           <motion.div 
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-[#022C22] border border-white/10 rounded-[40px] p-10 w-full max-w-xl shadow-2xl"
+            className="bg-[#050B18] border border-white/10 rounded-[40px] p-10 w-full max-w-xl shadow-2xl"
           >
             <div className="flex items-center gap-4 mb-8">
               <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center">
@@ -221,26 +221,26 @@ const DocumentsPage = () => {
                 <label className={cn(
                   "flex flex-col items-center justify-center w-full h-40 border-2 border-dashed rounded-[30px] transition-all cursor-pointer group",
                   newDoc.file_url 
-                    ? "border-emerald-500/50 bg-emerald-500/5" 
-                    : "border-white/10 bg-white/5 hover:border-emerald-500/30 hover:bg-white/10"
+                    ? "border-brand-primary/50 bg-brand-primary/5" 
+                    : "border-white/10 bg-white/5 hover:border-brand-primary/30 hover:bg-white/10"
                 )}>
                   <input type="file" className="hidden" onChange={handleFileUpload} disabled={isUploading} />
                   
                   {isUploading ? (
                     <div className="flex flex-col items-center gap-3">
-                      <Loader2 className="w-8 h-8 text-emerald-400 animate-spin" />
-                      <span className="text-sm font-bold text-emerald-400">جاري الرفع...</span>
+                      <Loader2 className="w-8 h-8 text-brand-secondary animate-spin" />
+                      <span className="text-sm font-bold text-brand-secondary">جاري الرفع...</span>
                     </div>
                   ) : newDoc.file_url ? (
                     <div className="flex flex-col items-center gap-2">
-                      <CheckCircle className="w-8 h-8 text-emerald-500" />
+                      <CheckCircle className="w-8 h-8 text-brand-primary" />
                       <span className="text-sm font-black text-white">تم اختيار الملف بنجاح</span>
-                      <span className="text-[10px] text-emerald-400/50 uppercase">{newDoc.file_type} • {newDoc.file_size}</span>
+                      <span className="text-[10px] text-brand-secondary/50 uppercase">{newDoc.file_type} • {newDoc.file_size}</span>
                     </div>
                   ) : (
                     <div className="flex flex-col items-center gap-3">
-                      <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <Upload className="w-6 h-6 text-emerald-400" />
+                      <div className="w-12 h-12 rounded-2xl bg-brand-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <Upload className="w-6 h-6 text-brand-secondary" />
                       </div>
                       <div className="text-center">
                         <span className="text-sm font-bold text-white block">اختر ملفاً للرفع</span>
@@ -252,7 +252,7 @@ const DocumentsPage = () => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-bold text-emerald-100/50">{t('documents.modal.name', 'عنوان المستند')}</label>
+                <label className="text-sm font-bold text-brand-secondary/50">{t('documents.modal.name', 'عنوان المستند')}</label>
                 <Input 
                   placeholder={t('documents.modal.name_placeholder', 'مثلاً: حقيبة المتدرب...')} 
                   value={newDoc.title} 
@@ -261,9 +261,9 @@ const DocumentsPage = () => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-bold text-emerald-100/50">{t('documents.modal.desc', 'وصف مختصر')}</label>
+                <label className="text-sm font-bold text-brand-secondary/50">{t('documents.modal.desc', 'وصف مختصر')}</label>
                 <textarea 
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 outline-none text-emerald-400 font-bold min-h-[100px] focus:border-emerald-500 transition-all"
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 outline-none text-brand-secondary font-bold min-h-[100px] focus:border-brand-primary transition-all"
                   placeholder={t('documents.modal.desc_placeholder', 'اكتب تفاصيل عن الملف...')}
                   value={newDoc.description}
                   onChange={(e) => setNewDoc(prev => ({ ...prev, description: e.target.value }))}
@@ -272,7 +272,7 @@ const DocumentsPage = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-emerald-100/50">{t('documents.modal.url', 'رابط الملف')}</label>
+                  <label className="text-sm font-bold text-brand-secondary/50">{t('documents.modal.url', 'رابط الملف')}</label>
                   <Input 
                     placeholder="https://..." 
                     value={newDoc.file_url} 
@@ -280,9 +280,9 @@ const DocumentsPage = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-emerald-100/50">{t('documents.modal.type', 'نوع الملف')}</label>
+                  <label className="text-sm font-bold text-brand-secondary/50">{t('documents.modal.type', 'نوع الملف')}</label>
                   <select 
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl h-12 px-4 outline-none text-emerald-400 font-bold"
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl h-12 px-4 outline-none text-brand-secondary font-bold"
                     value={newDoc.file_type}
                     onChange={(e) => setNewDoc(prev => ({ ...prev, file_type: e.target.value }))}
                   >

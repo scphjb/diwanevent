@@ -4,9 +4,9 @@
   --diwan-dark: var(--brand-dark);
   --diwan-primary: var(--brand-primary);
   --diwan-gold: var(--brand-secondary);
-  --diwan-gold-2: #F0C040;
+  --diwan-gold-2: #7DD3FC;
   --diwan-surface: var(--brand-surface);
-  --diwan-border: rgba(212, 175, 55, 0.15);
+  --diwan-border: rgba(56, 189, 248, 0.15);
   --diwan-text: var(--brand-text);
   --diwan-muted: var(--brand-muted);
 }
@@ -26,20 +26,20 @@
 }
 
 .glass-card {
-  background: linear-gradient(135deg, rgba(10, 61, 43, 0.7), rgba(2, 44, 34, 0.8));
+  background: linear-gradient(135deg, rgba(13, 21, 39, 0.7), rgba(5, 11, 24, 0.8));
   backdrop-filter: blur(12px);
   border: 1px solid var(--diwan-border);
   transition: all 0.3s ease;
 }
 
 .glass-card:hover {
-  border-color: rgba(212, 175, 55, 0.4);
+  border-color: rgba(56, 189, 248, 0.4);
   transform: translateY(-4px);
   box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
 }
 
 .gold-text-gradient {
-  background: linear-gradient(135deg, #D4AF37, #F0C040, #D4AF37);
+  background: linear-gradient(135deg, #38BDF8, #7DD3FC, #2A64EC);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }

@@ -74,10 +74,10 @@ const SelfServicePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#022C22] text-white flex flex-col items-center justify-center p-8 font-arabic selection:bg-amber-500 selection:text-emerald-950">
+    <div className="min-h-screen bg-[#050B18] text-white flex flex-col items-center justify-center p-8 font-arabic selection:bg-amber-500 selection:text-brand-dark">
       {/* Background Decorative Effects */}
       <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-emerald-500/10 blur-[100px] rounded-full" />
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-brand-primary/10 blur-[100px] rounded-full" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-amber-500/5 blur-[100px] rounded-full" />
       </div>
 
@@ -86,7 +86,7 @@ const SelfServicePage = () => {
            <Monitor className="w-10 h-10 text-amber-500" />
         </div>
         <h1 className="text-4xl font-black mb-2 tracking-tighter">{settings.welcome_title}</h1>
-        <p className="text-emerald-400/50 font-bold uppercase tracking-widest text-sm">{settings.welcome_subtitle}</p>
+        <p className="text-brand-secondary/50 font-bold uppercase tracking-widest text-sm">{settings.welcome_subtitle}</p>
       </header>
 
       <main className="w-full max-w-2xl relative z-10">
@@ -129,12 +129,12 @@ const SelfServicePage = () => {
                       className="w-full bg-white/5 border border-white/10 hover:bg-white/10 p-8 rounded-[35px] flex items-center justify-between group transition-all"
                     >
                       <div className="flex items-center gap-6">
-                        <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 group-hover:bg-amber-500 group-hover:text-emerald-950 transition-colors border border-emerald-500/10">
+                        <div className="w-14 h-14 rounded-2xl bg-brand-primary/10 flex items-center justify-center text-brand-secondary group-hover:bg-amber-500 group-hover:text-brand-dark transition-colors border border-brand-primary/10">
                            <Users className="w-7 h-7" />
                         </div>
                         <div className="text-right">
                           <div className="text-xl font-bold">{p.full_name}</div>
-                          <div className="text-emerald-400/40 text-sm">{p.organization} • {p.department}</div>
+                          <div className="text-brand-secondary/40 text-sm">{p.organization} • {p.department}</div>
                         </div>
                       </div>
                       <ChevronRight className="w-8 h-8 text-white/20 group-hover:text-amber-500 transition-colors rtl:rotate-180" />
@@ -161,7 +161,7 @@ const SelfServicePage = () => {
                 <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-transparent via-amber-500 to-transparent" />
                 
                 <h3 className="text-3xl font-black mb-2">{selected.full_name}</h3>
-                <p className="text-emerald-400/40 font-bold mb-10 tracking-widest">{selected.organization}</p>
+                <p className="text-brand-secondary/40 font-bold mb-10 tracking-widest">{selected.organization}</p>
 
                 <div className="bg-white p-8 rounded-[40px] inline-block shadow-2xl mb-10">
                    <img 
@@ -173,13 +173,13 @@ const SelfServicePage = () => {
 
                 <div className="flex justify-center gap-12 mb-10">
                    <div>
-                      <div className="text-[10px] text-emerald-400/30 font-black uppercase tracking-[0.2em] mb-1">رقم المقعد</div>
+                      <div className="text-[10px] text-brand-secondary/30 font-black uppercase tracking-[0.2em] mb-1">رقم المقعد</div>
                       <div className="text-2xl font-black text-amber-500">{selected.seat_info || '--'}</div>
                    </div>
                    <div className="w-px h-12 bg-white/5" />
                    <div>
-                      <div className="text-[10px] text-emerald-400/30 font-black uppercase tracking-[0.2em] mb-1">حالة الحساب</div>
-                      <div className="text-2xl font-black text-emerald-400">مؤكد</div>
+                      <div className="text-[10px] text-brand-secondary/30 font-black uppercase tracking-[0.2em] mb-1">حالة الحساب</div>
+                      <div className="text-2xl font-black text-brand-secondary">مؤكد</div>
                    </div>
                 </div>
 
@@ -217,7 +217,7 @@ const SelfServicePage = () => {
         </AnimatePresence>
       </main>
 
-      <footer className="mt-20 text-emerald-400/20 font-black uppercase tracking-[0.5em] text-xs">
+      <footer className="mt-20 text-brand-secondary/20 font-black uppercase tracking-[0.5em] text-xs">
         Diwan Event Platform • Self Service Console
       </footer>
     </div>

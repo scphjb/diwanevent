@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChevronDown, Calendar, CheckCircle2, Globe } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -39,11 +39,11 @@ const EventSelector = ({ selectedEventId, onSelect }) => {
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-4 px-5 py-3 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-all text-white"
       >
-        <div className="w-10 h-10 rounded-xl bg-emerald-600/20 flex items-center justify-center border border-emerald-500/30">
-          <Globe className="w-5 h-5 text-emerald-400" />
+        <div className="w-10 h-10 rounded-xl bg-brand-primary/20 flex items-center justify-center border border-brand-primary/30">
+          <Globe className="w-5 h-5 text-brand-secondary" />
         </div>
         <div className="text-right">
-          <div className="text-xs text-emerald-400/50 mb-0.5">{t('common.event_selector.active_event', 'الفعالية النشطة')}</div>
+          <div className="text-xs text-brand-secondary/50 mb-0.5">{t('common.event_selector.active_event', 'الفعالية النشطة')}</div>
           <div className="font-semibold text-sm max-w-[200px] truncate">{selectedEvent.event_name}</div>
         </div>
         <ChevronDown className={cn("w-5 h-5 text-amber-500 transition-transform", isOpen && "rotate-180")} />
@@ -57,7 +57,7 @@ const EventSelector = ({ selectedEventId, onSelect }) => {
               initial={{ opacity: 0, y: 10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.95 }}
-              className="absolute top-full right-0 mt-3 w-80 bg-[#022C22] border border-white/10 rounded-3xl shadow-2xl z-20 overflow-hidden"
+              className="absolute top-full right-0 mt-3 w-80 bg-[#050B18] border border-white/10 rounded-3xl shadow-2xl z-20 overflow-hidden"
             >
               <div className="p-4 border-b border-white/5 bg-white/5">
                 <span className="text-xs font-bold text-amber-500 uppercase tracking-wider">{t('common.event_selector.choose_event', 'اختر الفعالية')}</span>
@@ -72,27 +72,27 @@ const EventSelector = ({ selectedEventId, onSelect }) => {
                     }}
                     className={cn(
                       "w-full p-4 flex items-center gap-4 hover:bg-white/5 transition-colors text-right",
-                      selectedEventId === event.id && "bg-emerald-600/10 border-r-4 border-amber-500"
+                      selectedEventId === event.id && "bg-brand-primary/10 border-r-4 border-amber-500"
                     )}
                   >
                     <div className={cn(
                       "w-10 h-10 rounded-xl flex items-center justify-center",
-                      selectedEventId === event.id ? "bg-amber-500 text-emerald-950" : "bg-white/5 text-emerald-400"
+                      selectedEventId === event.id ? "bg-amber-500 text-brand-dark" : "bg-white/5 text-brand-secondary"
                     )}>
                       <Calendar className="w-5 h-5" />
                     </div>
                     <div className="flex-1">
                       <div className="text-sm font-semibold text-white">{event.event_name}</div>
-                      <div className="text-xs text-emerald-400/40">{event.event_date}</div>
+                      <div className="text-xs text-brand-secondary/40">{event.event_date}</div>
                     </div>
                     {selectedEventId === event.id && <CheckCircle2 className="w-4 h-4 text-amber-500" />}
                   </button>
                 ))}
               </div>
-              <div className="p-4 bg-emerald-950/50 border-t border-white/5">
+              <div className="p-4 bg-brand-dark/50 border-t border-white/5">
                 <button 
                   onClick={() => { navigate('/dashboard/events'); setIsOpen(false); }}
-                  className="w-full py-2.5 rounded-xl border border-dashed border-emerald-500/30 text-emerald-400 text-sm hover:bg-emerald-500/5 transition-all"
+                  className="w-full py-2.5 rounded-xl border border-dashed border-brand-primary/30 text-brand-secondary text-sm hover:bg-brand-primary/5 transition-all"
                 >
                   {t('common.event_selector.create_new', '+ إنشاء فعالية جديدة')}
                 </button>

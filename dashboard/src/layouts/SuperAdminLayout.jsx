@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, 
@@ -32,10 +32,10 @@ const SuperAdminLayout = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#022C22] text-[#F0F4F2] flex flex-row font-sans" dir="rtl">
+    <div className="min-h-screen bg-[#050B18] text-[#F0F4F2] flex flex-row font-sans" dir="rtl">
       
       {/* Sidebar */}
-      <aside className="w-72 bg-[#0A3D2B] border-l border-white/5 flex flex-col z-20">
+      <aside className="w-72 bg-[#0D1527] border-l border-white/5 flex flex-col z-20">
         <div className="p-8 border-b border-white/5">
           <div className="flex flex-col">
             <span className="text-2xl font-black text-[#F0F4F2] leading-none tracking-tight">ديوان</span>
@@ -52,7 +52,7 @@ const SuperAdminLayout = () => {
                 to={item.path}
                 className={`flex items-center gap-4 px-4 py-3 rounded-xl transition-all group ${
                   isActive 
-                  ? 'bg-[#1DB58A] text-white shadow-lg shadow-[#1DB58A]/20' 
+                  ? 'bg-[#2A64EC] text-white shadow-lg shadow-[#2A64EC]/20' 
                   : 'hover:bg-white/5 text-[#F0F4F2]/60 hover:text-white'
                 }`}
               >
@@ -66,7 +66,7 @@ const SuperAdminLayout = () => {
             <div className="px-4 mb-4 text-[10px] uppercase tracking-widest text-[#F0F4F2]/30 font-bold">بوابة الفعاليات</div>
             <Link
                 to="/dashboard"
-                className="flex items-center gap-4 px-4 py-3 rounded-xl text-[#1DB58A] hover:bg-[#1DB58A]/10 transition-all font-bold text-sm"
+                className="flex items-center gap-4 px-4 py-3 rounded-xl text-[#2A64EC] hover:bg-[#2A64EC]/10 transition-all font-bold text-sm"
             >
                 <LayoutDashboard size={20} />
                 <span>إدارة الفعاليات</span>
@@ -89,7 +89,7 @@ const SuperAdminLayout = () => {
       <main className="flex-1 flex flex-col h-screen overflow-hidden">
         
         {/* Top Header */}
-        <header className="h-20 bg-[#0A3D2B]/50 backdrop-blur-md border-b border-white/5 flex items-center justify-between px-10 z-10">
+        <header className="h-20 bg-[#0D1527]/50 backdrop-blur-md border-b border-white/5 flex items-center justify-between px-10 z-10">
           <div className="flex items-center gap-4 bg-black/20 px-4 py-2 rounded-full border border-white/5 w-96">
             <Search size={18} className="text-[#F0F4F2]/30" />
             <input 
@@ -112,8 +112,8 @@ const SuperAdminLayout = () => {
                 <p className="text-xs font-black text-white leading-none mb-1 text-right">{userName}</p>
                 <p className="text-[10px] text-[#D4AF37] font-bold text-right uppercase">{userRole}</p>
               </div>
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#1DB58A] to-[#D4AF37] p-[2px]">
-                <div className="w-full h-full rounded-full bg-[#0A3D2B] flex items-center justify-center">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#2A64EC] to-[#D4AF37] p-[2px]">
+                <div className="w-full h-full rounded-full bg-[#0D1527] flex items-center justify-center">
                   <ShieldCheck size={20} className="text-[#D4AF37]" />
                 </div>
               </div>
@@ -122,7 +122,7 @@ const SuperAdminLayout = () => {
         </header>
 
         {/* Content Body */}
-        <section className="flex-1 overflow-y-auto p-10 bg-[#022C22] noise-bg">
+        <section className="flex-1 overflow-y-auto p-10 bg-[#050B18] noise-bg">
           <Outlet />
         </section>
       </main>

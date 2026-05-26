@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useParams } from 'react-router-dom';
 import { 
@@ -244,18 +244,18 @@ const ParticipantPortal = () => {
   ].filter(t => t.show !== false);
 
   if (loading) return (
-    <div className="min-h-screen bg-[#022C22] flex items-center justify-center">
+    <div className="min-h-screen bg-[#050B18] flex items-center justify-center">
        <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full shadow-[0_0_20px_rgba(245,158,11,0.2)]" />
     </div>
   );
   
   if (!participant) return (
-    <div className="min-h-screen bg-[#022C22] flex flex-col items-center justify-center p-6 text-center">
+    <div className="min-h-screen bg-[#050B18] flex flex-col items-center justify-center p-6 text-center">
       <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mb-6">
         <X className="w-10 h-10 text-red-500" />
       </div>
       <h2 className="text-2xl font-black mb-2">عذراً، الرابط غير صالح</h2>
-      <p className="text-emerald-400/50 font-bold mb-8">لم نتمكن من العثور على بيانات المشارك لهذا الرابط. يرجى التأكد من الرمز أو التواصل مع المنظمين.</p>
+      <p className="text-brand-secondary/50 font-bold mb-8">لم نتمكن من العثور على بيانات المشارك لهذا الرابط. يرجى التأكد من الرمز أو التواصل مع المنظمين.</p>
       <Button variant="outline" onClick={() => window.location.href = '/'}>العودة للرئيسية</Button>
     </div>
   );
@@ -263,23 +263,23 @@ const ParticipantPortal = () => {
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(participant?.qr_code || '')}`;
 
   return (
-    <div className="min-h-screen bg-[#022C22] text-white selection:bg-amber-500 selection:text-emerald-950 flex flex-col font-arabic overflow-x-hidden">
+    <div className="min-h-screen bg-[#050B18] text-white selection:bg-amber-500 selection:text-brand-dark flex flex-col font-arabic overflow-x-hidden">
       {/* Dynamic Background Glows */}
       <div className="fixed inset-0 pointer-events-none z-0">
-        <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-emerald-500/10 blur-[120px] rounded-full animate-pulse" />
+        <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-brand-primary/10 blur-[120px] rounded-full animate-pulse" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-amber-500/5 blur-[120px] rounded-full" />
       </div>
 
       <header className="p-6 bg-white/[0.03] backdrop-blur-3xl border-b border-white/10 sticky top-0 z-50 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center font-black text-emerald-950 shadow-xl">D</div>
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center font-black text-brand-dark shadow-xl">D</div>
           <div>
             <h1 className="font-black text-base tracking-tight leading-none uppercase">DIWAN <span className="text-amber-500">PORTAL</span></h1>
-            <p className="text-[10px] text-emerald-400/50 font-bold uppercase tracking-widest mt-1">Digital Identity</p>
+            <p className="text-[10px] text-brand-secondary/50 font-bold uppercase tracking-widest mt-1">Digital Identity</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-           <div className="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-black">ONLINE</div>
+           <div className="px-3 py-1 rounded-full bg-brand-primary/10 border border-brand-primary/20 text-brand-secondary text-[10px] font-black">ONLINE</div>
         </div>
       </header>
 
@@ -295,22 +295,22 @@ const ParticipantPortal = () => {
                       <img 
                         src={participant.avatar_url} 
                         alt="Profile" 
-                        className="w-full h-full object-cover rounded-[32px] border-2 border-emerald-500/30 shadow-[0_0_30px_rgba(16,185,129,0.15)]"
+                        className="w-full h-full object-cover rounded-[32px] border-2 border-brand-primary/30 shadow-[0_0_30px_rgba(16,185,129,0.15)]"
                       />
                     ) : (
-                      <div className="w-full h-full rounded-[32px] bg-gradient-to-br from-emerald-600/20 to-emerald-900/40 flex items-center justify-center border-2 border-emerald-500/20 text-emerald-400 shadow-[0_0_30px_rgba(16,185,129,0.1)]">
+                      <div className="w-full h-full rounded-[32px] bg-gradient-to-br from-brand-primary/20 to-brand-dark/40 flex items-center justify-center border-2 border-brand-primary/20 text-brand-secondary shadow-[0_0_30px_rgba(16,185,129,0.1)]">
                         <span className="text-5xl font-black">{participant?.full_name?.charAt(0) || 'U'}</span>
                       </div>
                     )}
                   </div>
                   
                   <h2 className="text-3xl font-black mb-1 tracking-tight text-[#F0F4F2]">{participant.full_name}</h2>
-                  <p className="text-emerald-400/60 font-bold text-sm mb-6 uppercase tracking-wider">{participant.organization}</p>
+                  <p className="text-brand-secondary/60 font-bold text-sm mb-6 uppercase tracking-wider">{participant.organization}</p>
                   
                   {participant.custom_values?.specialties?.length > 0 && (
                     <div className="flex flex-wrap justify-center gap-2 mb-6">
                        {participant.custom_values.specialties.map((s, i) => (
-                          <span key={i} className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-[11px] font-black text-emerald-300">
+                          <span key={i} className="px-3 py-1 bg-brand-primary/10 border border-brand-primary/20 rounded-full text-[11px] font-black text-brand-secondary">
                              {s}
                           </span>
                        ))}
@@ -338,7 +338,7 @@ const ParticipantPortal = () => {
                           <textarea 
                             value={profileData.bio}
                             onChange={e => setProfileData({...profileData, bio: e.target.value})}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white text-sm focus:border-emerald-500 outline-none min-h-[80px] resize-none"
+                            className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white text-sm focus:border-brand-primary outline-none min-h-[80px] resize-none"
                             placeholder="نبذة قصيرة..."
                           />
                        </div>
@@ -348,14 +348,14 @@ const ParticipantPortal = () => {
                             type="text"
                             value={profileData.linkedin}
                             onChange={e => setProfileData({...profileData, linkedin: e.target.value})}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white text-sm focus:border-emerald-500 outline-none"
+                            className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white text-sm focus:border-brand-primary outline-none"
                           />
                        </div>
                        <div>
                           <label className="text-[11px] text-white/50 font-bold mb-2 block">التخصصات المهنية</label>
-                          <div className="w-full bg-white/5 border border-white/10 rounded-2xl p-2 flex flex-wrap gap-2 focus-within:border-emerald-500 transition-all min-h-[50px] cursor-text" onClick={() => document.getElementById('tag-input-field')?.focus()}>
+                          <div className="w-full bg-white/5 border border-white/10 rounded-2xl p-2 flex flex-wrap gap-2 focus-within:border-brand-primary transition-all min-h-[50px] cursor-text" onClick={() => document.getElementById('tag-input-field')?.focus()}>
                             {(profileData.specialties || []).map((tag, i) => (
-                              <span key={i} className="bg-emerald-500/20 text-emerald-300 px-3 py-1 rounded-full text-[10px] font-black flex items-center gap-2 border border-emerald-500/20">
+                              <span key={i} className="bg-brand-primary/20 text-brand-secondary px-3 py-1 rounded-full text-[10px] font-black flex items-center gap-2 border border-brand-primary/20">
                                 {tag}
                                 <button onClick={(e) => { e.stopPropagation(); setProfileData({...profileData, specialties: profileData.specialties.filter((_, idx) => idx !== i)}); }} className="hover:text-white">
                                   <X size={12} />
@@ -384,7 +384,7 @@ const ParticipantPortal = () => {
                           <p className="text-[9px] text-white/20 mt-2">اضغط Enter أو فاصلة للإضافة</p>
                        </div>
                         <div className="flex gap-2 pt-2">
-                          <Button className="flex-1 rounded-xl font-bold bg-emerald-500 text-emerald-950 py-2" onClick={handleUpdateProfile}>حفظ</Button>
+                          <Button className="flex-1 rounded-xl font-bold bg-brand-primary text-brand-dark py-2" onClick={handleUpdateProfile}>حفظ</Button>
                           <Button variant="outline" className="flex-1 rounded-xl font-bold border-white/10 py-2" onClick={() => setIsEditingProfile(false)}>إلغاء</Button>
                        </div>
                     </div>
@@ -392,8 +392,8 @@ const ParticipantPortal = () => {
                </div>
 
                {/* 2. Digital Badge Card */}
-               <div className="bg-gradient-to-br from-[#0A3D2B] to-[#022C22] border border-emerald-500/20 rounded-[40px] p-8 text-center shadow-[0_10px_40px_rgba(0,0,0,0.3)]">
-                  <h3 className="text-emerald-400 font-black mb-6 tracking-widest text-sm uppercase">البطاقة الرقمية</h3>
+               <div className="bg-gradient-to-br from-[#0D1527] to-[#050B18] border border-brand-primary/20 rounded-[40px] p-8 text-center shadow-[0_10px_40px_rgba(0,0,0,0.3)]">
+                  <h3 className="text-brand-secondary font-black mb-6 tracking-widest text-sm uppercase">البطاقة الرقمية</h3>
                   
                   <div className="relative inline-block group mb-8">
                     <div className="absolute -inset-6 bg-amber-500/20 blur-[40px] rounded-full opacity-50 transition-opacity" />
@@ -404,11 +404,11 @@ const ParticipantPortal = () => {
 
                   <div className="grid grid-cols-2 gap-4 mb-8">
                      <div className="bg-black/20 p-4 rounded-2xl border border-white/5">
-                        <div className="text-[10px] text-emerald-400/50 font-bold uppercase tracking-widest mb-1">المقعد</div>
+                        <div className="text-[10px] text-brand-secondary/50 font-bold uppercase tracking-widest mb-1">المقعد</div>
                         <div className="font-black text-xl text-amber-500">{participant.seat_info || '--'}</div>
                      </div>
                      <div className="bg-black/20 p-4 rounded-2xl border border-white/5">
-                        <div className="text-[10px] text-emerald-400/50 font-bold uppercase tracking-widest mb-1">رقم التسجيل</div>
+                        <div className="text-[10px] text-brand-secondary/50 font-bold uppercase tracking-widest mb-1">رقم التسجيل</div>
                         <div className="font-black text-xl text-white">#{participant.order_num?.split('-')[1] || participant.order_num}</div>
                      </div>
                   </div>
@@ -439,7 +439,7 @@ const ParticipantPortal = () => {
                        </div>
                        <div className="flex-1">
                           <h4 className="font-black text-lg mb-1 group-hover:text-amber-500 transition-colors">{item.title}</h4>
-                          <p className="text-emerald-400/50 text-xs font-bold">{item.speaker_name} • {item.hall}</p>
+                          <p className="text-brand-secondary/50 text-xs font-bold">{item.speaker_name} • {item.hall}</p>
                        </div>
                     </div>
                   ))}
@@ -459,13 +459,13 @@ const ParticipantPortal = () => {
                        <div className="flex items-center gap-4">
                           <div className={cn(
                             "w-10 h-10 rounded-xl flex items-center justify-center font-black",
-                            idx === 0 ? "bg-amber-500 text-emerald-950" : "bg-white/5 text-emerald-400"
+                            idx === 0 ? "bg-amber-500 text-brand-dark" : "bg-white/5 text-brand-secondary"
                           )}>
                              {idx + 1}
                           </div>
                           <div>
                              <div className="font-black text-white">{p.name} {p.id === participant.id && "(أنت)"}</div>
-                             <div className="text-[10px] text-emerald-400/30 font-bold uppercase tracking-widest">{p.points} نقطة</div>
+                             <div className="text-[10px] text-brand-secondary/30 font-bold uppercase tracking-widest">{p.points} نقطة</div>
                           </div>
                        </div>
                        {idx === 0 && <Award className="w-5 h-5 text-amber-500" />}
@@ -490,13 +490,13 @@ const ParticipantPortal = () => {
                 initial={{ opacity: 0 }} 
                 animate={{ opacity: 1 }} 
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-[#022C22]/80 backdrop-blur-md"
+                className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-[#050B18]/80 backdrop-blur-md"
               >
                 <motion.div 
                   initial={{ scale: 0.9, y: 20 }}
                   animate={{ scale: 1, y: 0 }}
                   exit={{ scale: 0.9, y: 20 }}
-                  className="bg-[#022C22] border border-white/20 rounded-[50px] p-8 w-full max-sm:max-w-full max-w-sm backdrop-blur-3xl relative overflow-hidden"
+                  className="bg-[#050B18] border border-white/20 rounded-[50px] p-8 w-full max-sm:max-w-full max-w-sm backdrop-blur-3xl relative overflow-hidden"
                 >
                   <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-br from-amber-500 to-amber-600 -z-10" />
                   <button 
@@ -508,7 +508,7 @@ const ParticipantPortal = () => {
 
                   <div className="pt-12 text-center">
                     <div className="w-24 h-24 rounded-[30px] bg-white mx-auto mb-6 flex items-center justify-center shadow-2xl border-4 border-white/10">
-                      <User className="w-12 h-12 text-emerald-900" />
+                      <User className="w-12 h-12 text-brand-dark" />
                     </div>
                     <h4 className="text-2xl font-black text-white mb-1">{selectedContact.full_name}</h4>
                     <p className="text-amber-500 font-bold text-sm mb-6">{selectedContact.organization}</p>
@@ -519,7 +519,7 @@ const ParticipantPortal = () => {
 
                     <div className="flex flex-wrap justify-center gap-2 mb-6">
                        {(selectedContact.specialties || []).map((s, i) => (
-                          <span key={i} className="px-2 py-1 bg-white/5 border border-white/10 rounded-full text-[9px] font-black text-emerald-400">
+                          <span key={i} className="px-2 py-1 bg-white/5 border border-white/10 rounded-full text-[9px] font-black text-brand-secondary">
                              #{s}
                           </span>
                        ))}
@@ -528,23 +528,23 @@ const ParticipantPortal = () => {
                     <div className="grid grid-cols-1 gap-3 mb-8">
                       {selectedContact.connection_status === 'accepted' ? (
                         <>
-                          <div className="bg-emerald-500/10 p-4 rounded-2xl border border-emerald-500/20 flex items-center gap-4">
-                            <Smartphone className="w-5 h-5 text-emerald-400" />
+                          <div className="bg-brand-primary/10 p-4 rounded-2xl border border-brand-primary/20 flex items-center gap-4">
+                            <Smartphone className="w-5 h-5 text-brand-secondary" />
                             <div className="text-right flex-1">
-                              <div className="text-[10px] text-emerald-400/50 font-bold uppercase">الهاتف</div>
+                              <div className="text-[10px] text-brand-secondary/50 font-bold uppercase">الهاتف</div>
                               <div className="text-sm font-black text-white">{selectedContact.phone || 'غير متوفر'}</div>
                             </div>
                             <button 
                               onClick={() => window.open(`https://wa.me/${selectedContact.phone?.replace(/[^0-9]/g, '')}`, '_blank')}
-                              className="w-10 h-10 rounded-xl bg-emerald-500 text-emerald-950 flex items-center justify-center hover:scale-110 transition-all"
+                              className="w-10 h-10 rounded-xl bg-brand-primary text-brand-dark flex items-center justify-center hover:scale-110 transition-all"
                             >
                                <MessageSquare className="w-4 h-4" />
                             </button>
                           </div>
-                          <div className="bg-emerald-500/10 p-4 rounded-2xl border border-emerald-500/20 flex items-center gap-4">
-                            <FileText className="w-5 h-5 text-emerald-400" />
+                          <div className="bg-brand-primary/10 p-4 rounded-2xl border border-brand-primary/20 flex items-center gap-4">
+                            <FileText className="w-5 h-5 text-brand-secondary" />
                             <div className="text-right flex-1">
-                              <div className="text-[10px] text-emerald-400/50 font-bold uppercase">البريد الإلكتروني</div>
+                              <div className="text-[10px] text-brand-secondary/50 font-bold uppercase">البريد الإلكتروني</div>
                               <div className="text-sm font-black text-white">{selectedContact.email || 'غير متوفر'}</div>
                             </div>
                           </div>
@@ -562,14 +562,14 @@ const ParticipantPortal = () => {
                       ) : (
                         <>
                           <div className="bg-white/5 p-4 rounded-2xl border border-white/10 flex items-center gap-4">
-                            <Shield className="w-5 h-5 text-emerald-400" />
+                            <Shield className="w-5 h-5 text-brand-secondary" />
                             <div className="text-right flex-1">
                               <div className="text-[10px] text-white/30 font-bold uppercase">الدور</div>
                               <div className="text-sm font-black text-white">{selectedContact.role || 'مشارك'}</div>
                             </div>
                           </div>
                           <div className="bg-white/5 p-4 rounded-2xl border border-white/10 flex items-center gap-4">
-                            <Calendar className="w-5 h-5 text-emerald-400" />
+                            <Calendar className="w-5 h-5 text-brand-secondary" />
                             <div className="text-right flex-1">
                               <div className="text-[10px] text-white/30 font-bold uppercase">الجهة</div>
                               <div className="text-sm font-black text-white">{selectedContact.court || '---'}</div>
@@ -627,7 +627,7 @@ const ParticipantPortal = () => {
                     className="w-full bg-transparent border-none outline-none text-xl font-bold placeholder:text-white/10 min-h-[120px] resize-none"
                   />
                   <div className="flex items-center justify-between pt-6 border-t border-white/5">
-                     <button className="w-14 h-14 rounded-2xl bg-white/5 text-emerald-400 flex items-center justify-center border border-white/10">
+                     <button className="w-14 h-14 rounded-2xl bg-white/5 text-brand-secondary flex items-center justify-center border border-white/10">
                         <Camera className="w-6 h-6" />
                      </button>
                      <Button variant="gold" className="px-12 h-14 rounded-[20px] text-lg font-black shadow-lg" onClick={handlePostToWall}>نشر</Button>
@@ -643,12 +643,12 @@ const ParticipantPortal = () => {
                        </span>
                      )}
                      <div className="flex items-center gap-3 mb-4">
-                       <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 font-bold border border-emerald-500/20">
+                       <div className="w-10 h-10 rounded-full bg-brand-primary/20 flex items-center justify-center text-brand-secondary font-bold border border-brand-primary/20">
                          {post.author_name[0]}
                        </div>
                        <div>
                          <div className="font-black text-white text-sm">{post.author_name}</div>
-                         <div className="text-[10px] text-emerald-400/40 font-bold">الآن</div>
+                         <div className="text-[10px] text-brand-secondary/40 font-bold">الآن</div>
                        </div>
                      </div>
                      <p className="text-white/80 font-bold text-lg leading-relaxed">{post.content}</p>
@@ -668,7 +668,7 @@ const ParticipantPortal = () => {
                   <Award className="relative w-24 h-24 text-amber-500 mx-auto" />
                </div>
                <h3 className="text-4xl font-black mb-4 tracking-tight">شهادة الحضور</h3>
-               <p className="text-emerald-400/50 font-bold mb-12 max-w-xs mx-auto leading-relaxed">تهانينا! يمكنك الآن تحميل شهادة حضورك المعتمدة والموثقة رقمياً.</p>
+               <p className="text-brand-secondary/50 font-bold mb-12 max-w-xs mx-auto leading-relaxed">تهانينا! يمكنك الآن تحميل شهادة حضورك المعتمدة والموثقة رقمياً.</p>
                <Button 
                  variant="gold" 
                  className="w-full h-20 text-xl font-black gap-3 rounded-[35px] shadow-[0_20px_50px_rgba(245,158,11,0.2)]"
@@ -712,7 +712,7 @@ const ParticipantPortal = () => {
                       <div className="flex-1 min-w-0">
                          <h4 className="font-black text-lg mb-1 line-clamp-2 text-white" title={doc.title}>{doc.title}</h4>
                          <div className="flex items-center gap-3">
-                            <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-widest px-2 py-0.5 bg-emerald-500/10 rounded-md">
+                            <span className="text-[10px] text-brand-secondary font-bold uppercase tracking-widest px-2 py-0.5 bg-brand-primary/10 rounded-md">
                                {doc.file_type || 'PDF'}
                             </span>
                             <span className="text-[10px] text-white/30 font-bold uppercase tracking-widest">
@@ -723,7 +723,7 @@ const ParticipantPortal = () => {
                       </div>
                       <button 
                         onClick={() => window.open(getFullUrl(doc.file_url), '_blank')}
-                        className="w-12 h-12 rounded-xl bg-amber-500 text-emerald-950 flex items-center justify-center hover:scale-110 transition-all shadow-lg shrink-0"
+                        className="w-12 h-12 rounded-xl bg-amber-500 text-brand-dark flex items-center justify-center hover:scale-110 transition-all shadow-lg shrink-0"
                       >
                          <Download className="w-5 h-5" />
                       </button>
@@ -746,7 +746,7 @@ const ParticipantPortal = () => {
 
                 {polls.map((poll) => (
                   <div key={poll.id} className="bg-white/5 border border-white/10 rounded-[40px] p-8 backdrop-blur-3xl">
-                     <h4 className="text-xl font-bold mb-8 text-emerald-400">{poll.question}</h4>
+                     <h4 className="text-xl font-bold mb-8 text-brand-secondary">{poll.question}</h4>
                      
                      <div className="space-y-4">
                         {poll.options.map((opt) => {
@@ -759,7 +759,7 @@ const ParticipantPortal = () => {
                               className={cn(
                                 "w-full p-6 rounded-[24px] text-right font-bold transition-all border flex justify-between items-center",
                                 isVoted 
-                                  ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400 opacity-50"
+                                  ? "bg-brand-primary/10 border-brand-primary/20 text-brand-secondary opacity-50"
                                   : "bg-white/5 border-white/10 hover:border-amber-500/50 hover:bg-white/10 text-white"
                               )}
                             >
@@ -770,7 +770,7 @@ const ParticipantPortal = () => {
                         })}
                      </div>
                      {votedPolls.includes(poll.id) && (
-                       <p className="text-center mt-6 text-emerald-400/50 text-sm font-bold">شكراً لمشاركتك!</p>
+                       <p className="text-center mt-6 text-brand-secondary/50 text-sm font-bold">شكراً لمشاركتك!</p>
                      )}
                   </div>
                 ))}
@@ -782,19 +782,19 @@ const ParticipantPortal = () => {
                <div className="text-center mb-10">
                   <HelpCircle className="w-16 h-16 text-amber-500 mx-auto mb-6" />
                   <h3 className="text-3xl font-black">الأسئلة التفاعلية 💬</h3>
-                  <p className="text-emerald-400/50 font-bold mt-2">اطرح سؤالك على المنظمين أو المتحدثين للمناقشة المباشرة.</p>
+                  <p className="text-brand-secondary/50 font-bold mt-2">اطرح سؤالك على المنظمين أو المتحدثين للمناقشة المباشرة.</p>
                </div>
                {/* <AIConcierge eventId={eventId} participant={participant} /> */}
                
                <div className="mt-12 pt-10 border-t border-white/5">
-                  <h4 className="text-sm font-black mb-6 uppercase tracking-widest text-emerald-400/30">طرح سؤال على المنصة</h4>
+                  <h4 className="text-sm font-black mb-6 uppercase tracking-widest text-brand-secondary/30">طرح سؤال على المنصة</h4>
                   
                   <div className="mb-4">
-                     <label className="text-xs font-bold text-emerald-400/50 mb-2 block">اختر الجلسة الموجه لها السؤال</label>
+                     <label className="text-xs font-bold text-brand-secondary/50 mb-2 block">اختر الجلسة الموجه لها السؤال</label>
                      <select 
                        value={selectedSessionId}
                        onChange={(e) => setSelectedSessionId(e.target.value)}
-                       className="w-full bg-white/5 border border-white/10 rounded-2xl h-14 px-4 outline-none text-emerald-400 font-bold"
+                       className="w-full bg-white/5 border border-white/10 rounded-2xl h-14 px-4 outline-none text-brand-secondary font-bold"
                      >
                        <option value="">عام (كل الجلسات)</option>
                        {agenda.map(session => (
@@ -819,14 +819,14 @@ const ParticipantPortal = () => {
         </AnimatePresence>
       </main>
 
-      <nav className="fixed bottom-0 left-0 right-0 bg-[#022C22]/90 backdrop-blur-3xl border-t border-white/10 px-6 pt-4 pb-12 flex justify-around items-center z-50">
+      <nav className="fixed bottom-0 left-0 right-0 bg-[#050B18]/90 backdrop-blur-3xl border-t border-white/10 px-6 pt-4 pb-12 flex justify-around items-center z-50">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={cn(
               "flex flex-col items-center gap-2 p-2 relative transition-all",
-              activeTab === tab.id ? "text-amber-500 scale-110" : "text-emerald-400/30 hover:text-emerald-400"
+              activeTab === tab.id ? "text-amber-500 scale-110" : "text-brand-secondary/30 hover:text-brand-secondary"
             )}
           >
             {activeTab === tab.id && (

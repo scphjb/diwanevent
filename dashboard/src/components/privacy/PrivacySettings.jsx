@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Shield, Eye, MapPin, Trash2, Download, CheckCircle2, Lock } from 'lucide-react';
 
 const PrivacySettings = () => {
@@ -18,8 +18,8 @@ const PrivacySettings = () => {
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="mb-10 text-center">
-          <div className="inline-flex p-4 bg-emerald-500/10 rounded-full mb-4 border border-emerald-500/20">
-            <Shield className="w-10 h-10 text-emerald-500" />
+          <div className="inline-flex p-4 bg-brand-primary/10 rounded-full mb-4 border border-brand-primary/20">
+            <Shield className="w-10 h-10 text-brand-primary" />
           </div>
           <h1 className="text-3xl font-black text-white">Privacy Management</h1>
           <p className="text-slate-400 mt-2">You are in full control of your digital presence at Diwan Event.</p>
@@ -28,7 +28,7 @@ const PrivacySettings = () => {
         {/* Settings Groups */}
         <div className="space-y-4">
           {/* Spatial Privacy */}
-          <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 hover:border-emerald-500/30 transition-all">
+          <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 hover:border-brand-primary/30 transition-all">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="p-3 bg-indigo-500/10 rounded-2xl text-indigo-400">
@@ -41,7 +41,7 @@ const PrivacySettings = () => {
               </div>
               <button 
                 onClick={() => toggleSetting('locationTracking')}
-                className={`w-14 h-8 rounded-full transition-all relative ${settings.locationTracking ? 'bg-emerald-500' : 'bg-slate-700'}`}
+                className={`w-14 h-8 rounded-full transition-all relative ${settings.locationTracking ? 'bg-brand-primary' : 'bg-slate-700'}`}
               >
                 <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all ${settings.locationTracking ? 'left-7' : 'left-1'}`} />
               </button>
@@ -49,7 +49,7 @@ const PrivacySettings = () => {
           </div>
 
           {/* Social Privacy */}
-          <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 hover:border-emerald-500/30 transition-all">
+          <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 hover:border-brand-primary/30 transition-all">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="p-3 bg-amber-500/10 rounded-2xl text-amber-500">
@@ -62,7 +62,7 @@ const PrivacySettings = () => {
               </div>
               <button 
                 onClick={() => toggleSetting('publicProfile')}
-                className={`w-14 h-8 rounded-full transition-all relative ${settings.publicProfile ? 'bg-emerald-500' : 'bg-slate-700'}`}
+                className={`w-14 h-8 rounded-full transition-all relative ${settings.publicProfile ? 'bg-brand-primary' : 'bg-slate-700'}`}
               >
                 <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all ${settings.publicProfile ? 'left-7' : 'left-1'}`} />
               </button>
@@ -70,10 +70,10 @@ const PrivacySettings = () => {
           </div>
 
           {/* AI Ethics */}
-          <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 hover:border-emerald-500/30 transition-all">
+          <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 hover:border-brand-primary/30 transition-all">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <div className="p-3 bg-emerald-500/10 rounded-2xl text-emerald-500">
+                <div className="p-3 bg-brand-primary/10 rounded-2xl text-brand-primary">
                   <Lock className="w-6 h-6" />
                 </div>
                 <div>
@@ -83,7 +83,7 @@ const PrivacySettings = () => {
               </div>
               <button 
                 onClick={() => toggleSetting('aiMatchmaking')}
-                className={`w-14 h-8 rounded-full transition-all relative ${settings.aiMatchmaking ? 'bg-emerald-500' : 'bg-slate-700'}`}
+                className={`w-14 h-8 rounded-full transition-all relative ${settings.aiMatchmaking ? 'bg-brand-primary' : 'bg-slate-700'}`}
               >
                 <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all ${settings.aiMatchmaking ? 'left-7' : 'left-1'}`} />
               </button>

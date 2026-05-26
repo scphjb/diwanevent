@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 
 const FONTS = [
   { value: 'Cairo, sans-serif', label: 'Cairo (عربي حديث)' },
@@ -80,13 +80,13 @@ const PropertiesPanel = ({ element, onChange, onDelete }) => {
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <input 
                   type="color" 
-                  value={element.roleColors?.[key] || '#10B981'} 
+                  value={element.roleColors?.[key] || '#2A64EC'} 
                   onChange={(e) => set(`roleColors.${key}`, e.target.value)} 
                   style={{ width: 40, height: 36, border: 'none', borderRadius: 8, cursor: 'pointer', background: 'none' }} 
                 />
                 <input 
                   type="text" 
-                  value={element.roleColors?.[key] || '#10B981'} 
+                  value={element.roleColors?.[key] || '#2A64EC'} 
                   onChange={(e) => set(`roleColors.${key}`, e.target.value)} 
                   style={{ ...InputBase, flex: 1 }} 
                 />
@@ -142,7 +142,7 @@ const PropertiesPanel = ({ element, onChange, onDelete }) => {
           <Row label="وزن الخط">
             <div style={{ display: 'flex', gap: 6 }}>
               {[['normal','عادي'],['bold','عريض'],['900','أسود']].map(([v, l]) => (
-                <button key={v} onClick={() => set('style.fontWeight', v)} style={{ flex:1, padding:'6px 4px', background: style.fontWeight === v ? '#D4AF37' : 'rgba(255,255,255,0.05)', color: style.fontWeight === v ? '#022C22' : '#F0F4F2', border:'1px solid rgba(212,175,55,0.3)', borderRadius:8, cursor:'pointer', fontFamily:'Cairo', fontSize:11 }}>{l}</button>
+                <button key={v} onClick={() => set('style.fontWeight', v)} style={{ flex:1, padding:'6px 4px', background: style.fontWeight === v ? '#D4AF37' : 'rgba(255,255,255,0.05)', color: style.fontWeight === v ? '#050B18' : '#F0F4F2', border:'1px solid rgba(212,175,55,0.3)', borderRadius:8, cursor:'pointer', fontFamily:'Cairo', fontSize:11 }}>{l}</button>
               ))}
             </div>
           </Row>
@@ -150,7 +150,7 @@ const PropertiesPanel = ({ element, onChange, onDelete }) => {
           <Row label="المحاذاة">
             <div style={{ display: 'flex', gap: 6 }}>
               {[['right','←يمين'],['center','وسط'],['left','يسار→']].map(([v, l]) => (
-                <button key={v} onClick={() => set('style.textAlign', v)} style={{ flex:1, padding:'6px 4px', background: style.textAlign === v ? '#D4AF37' : 'rgba(255,255,255,0.05)', color: style.textAlign === v ? '#022C22' : '#F0F4F2', border:'1px solid rgba(212,175,55,0.3)', borderRadius:8, cursor:'pointer', fontFamily:'Cairo', fontSize:11 }}>{l}</button>
+                <button key={v} onClick={() => set('style.textAlign', v)} style={{ flex:1, padding:'6px 4px', background: style.textAlign === v ? '#D4AF37' : 'rgba(255,255,255,0.05)', color: style.textAlign === v ? '#050B18' : '#F0F4F2', border:'1px solid rgba(212,175,55,0.3)', borderRadius:8, cursor:'pointer', fontFamily:'Cairo', fontSize:11 }}>{l}</button>
               ))}
             </div>
           </Row>

@@ -288,9 +288,16 @@ async def forgot_password(
         from app.core.config import settings
         reset_link = f"{settings.APP_DOMAIN}/reset-password?token={reset_token}"
         import logging
-        logging.getLogger("diwan.auth").info(
+        logger = logging.getLogger("diwan.auth")
+        logger.info(
             f"🔑 Password reset link for {user.email}: {reset_link}"
         )
+        
+        # إرسال البريد الإلكتروني الفعلي
+        from app.utils.email import send_reset_password_email
+        email_sent = await send_reset_password_email(user.email, reset_link)
+        if not email_sent:
+            logger.warning(f"⚠️ Could not send password reset email to {user.email} (SMTP may not be configured)")
 
     return {
         "status": "success",

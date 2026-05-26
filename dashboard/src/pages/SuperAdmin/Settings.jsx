@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Settings as SettingsIcon, Globe, Mail, CreditCard, Database, Shield, CheckCircle, AlertCircle } from 'lucide-react';
 
 const StatusBadge = ({ active, label }) => (
   <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
-    active ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'
+    active ? 'bg-brand-primary/10 text-brand-secondary border border-brand-primary/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'
   }`}>
     {active ? <CheckCircle size={10} /> : <AlertCircle size={10} />}
     {label}
@@ -55,7 +55,7 @@ const Settings = () => {
     {
       title: 'البريد الإلكتروني (SMTP)',
       icon: Mail,
-      color: 'text-emerald-400',
+      color: 'text-brand-secondary',
       items: [
         { label: 'الحالة', value: settings?.smtp_configured ? 'مُعدّ ✅' : 'غير مُعدّ ❌', highlight: settings?.smtp_configured },
       ],

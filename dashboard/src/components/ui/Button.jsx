@@ -1,11 +1,11 @@
-import * as React from "react"
+﻿import * as React from "react"
 import { cn } from "../../utils/cn"
 
 const Button = React.forwardRef(({ className, variant = "primary", size = "md", ...props }, ref) => {
   const variants = {
-    primary: "bg-emerald-600 text-white hover:bg-emerald-700 shadow-lg shadow-emerald-900/20",
-    outline: "border-2 border-emerald-600/50 text-emerald-400 hover:bg-emerald-600/10",
-    gold: "bg-gradient-to-r from-amber-400 to-amber-600 text-emerald-950 font-bold hover:from-amber-500 hover:to-amber-700 shadow-lg shadow-amber-900/20",
+    primary: "bg-brand-primary text-white hover:bg-brand-primary shadow-lg shadow-brand-dark/20",
+    outline: "border-2 border-brand-primary/50 text-brand-secondary hover:bg-brand-primary/10",
+    gold: "bg-gradient-to-r from-amber-400 to-amber-600 text-brand-dark font-bold hover:from-amber-500 hover:to-amber-700 shadow-lg shadow-amber-900/20",
   }
   
   const sizes = {

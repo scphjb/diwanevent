@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ParticipantLoginPage — صفحة تسجيل دخول المشاركين عبر OTP
  * المسار: /portal/login أو /participant-login
  */
@@ -218,7 +218,7 @@ export default function ParticipantLoginPage() {
 
   return (
     <div style={{
-      minHeight: '100vh', background: '#022C22', display: 'flex',
+      minHeight: '100vh', background: '#050B18', display: 'flex',
       alignItems: 'center', justifyContent: 'center',
       fontFamily: 'Cairo, sans-serif', direction: 'rtl', padding: 20,
       backgroundImage: 'radial-gradient(ellipse at 70% 20%, rgba(26,138,106,0.12) 0%, transparent 60%)',
@@ -243,9 +243,9 @@ export default function ParticipantLoginPage() {
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             margin: '0 auto 16px', boxShadow: '0 8px 24px rgba(212,175,55,0.3)',
           }}>
-            {step === 1 ? <LogIn size={28} color="#022C22" /> :
-             step === 2 ? <KeyRound size={28} color="#022C22" /> :
-             <ShieldCheck size={28} color="#022C22" />}
+            {step === 1 ? <LogIn size={28} color="#050B18" /> :
+             step === 2 ? <KeyRound size={28} color="#050B18" /> :
+             <ShieldCheck size={28} color="#050B18" />}
           </div>
           <h1 style={{ margin: 0, fontSize: 22, fontWeight: '900', color: '#F0F4F2' }}>
             {step === 1 ? 'دخول المشاركين' : step === 2 ? 'التحقق من الهوية' : 'مرحباً بك! 🎉'}
@@ -293,7 +293,7 @@ export default function ParticipantLoginPage() {
               style={{
                 marginTop: 4, padding: '13px', borderRadius: 10, border: 'none',
                 background: 'linear-gradient(135deg, #D4AF37, #B8960C)',
-                color: '#022C22', fontWeight: '900', fontSize: 15,
+                color: '#050B18', fontWeight: '900', fontSize: 15,
                 fontFamily: 'Cairo, sans-serif', cursor: loading ? 'wait' : 'pointer',
                 opacity: loading ? 0.7 : 1,
               }}
@@ -323,7 +323,7 @@ export default function ParticipantLoginPage() {
               style={{
                 padding: '13px', borderRadius: 10, border: 'none',
                 background: otp.length === 6 ? 'linear-gradient(135deg, #D4AF37, #B8960C)' : 'rgba(212,175,55,0.2)',
-                color: otp.length === 6 ? '#022C22' : 'rgba(212,175,55,0.5)',
+                color: otp.length === 6 ? '#050B18' : 'rgba(212,175,55,0.5)',
                 fontWeight: '900', fontSize: 15, fontFamily: 'Cairo, sans-serif',
                 cursor: otp.length === 6 ? 'pointer' : 'not-allowed', transition: 'all 0.2s',
               }}
@@ -377,7 +377,7 @@ export default function ParticipantLoginPage() {
               style={{
                 width: '100%', padding: '13px', borderRadius: 10, border: 'none',
                 background: 'linear-gradient(135deg, #D4AF37, #B8960C)',
-                color: '#022C22', fontWeight: '900', fontSize: 15,
+                color: '#050B18', fontWeight: '900', fontSize: 15,
                 fontFamily: 'Cairo, sans-serif', cursor: 'pointer',
               }}
             >

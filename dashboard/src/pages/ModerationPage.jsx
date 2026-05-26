@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import DashboardLayout from '../layouts/DashboardLayout';
 import { 
@@ -60,7 +60,7 @@ const ModerationPage = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
         <div>
           <h1 className="text-4xl font-bold text-white mb-2">{t('social_moderation.title', 'إدارة الحائط الاجتماعي')}</h1>
-          <p className="text-emerald-400/50 flex items-center gap-2">
+          <p className="text-brand-secondary/50 flex items-center gap-2">
             <ShieldAlert className="w-4 h-4" />
             {t('social_moderation.subtitle', { count: posts.length })}
           </p>
@@ -85,12 +85,12 @@ const ModerationPage = () => {
               <div>
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-emerald-600/20 flex items-center justify-center text-emerald-400 font-bold">
+                    <div className="w-10 h-10 rounded-full bg-brand-primary/20 flex items-center justify-center text-brand-secondary font-bold">
                       {post.author_name ? post.author_name[0] : 'U'}
                     </div>
                     <div>
                       <h4 className="font-bold text-white">{post.author_name}</h4>
-                      <span className="text-emerald-400/30 text-xs flex items-center gap-1">
+                      <span className="text-brand-secondary/30 text-xs flex items-center gap-1">
                         <Clock className="w-3 h-3" />
                         {t('social_moderation.pending_review', 'بانتظار المراجعة')}
                       </span>
@@ -99,7 +99,7 @@ const ModerationPage = () => {
                   <div className="text-3xl opacity-30">{post.emoji}</div>
                 </div>
                 
-                <p className="text-emerald-100/70 text-lg mb-6 italic">
+                <p className="text-brand-secondary/70 text-lg mb-6 italic">
                   "{post.content}"
                 </p>
 
@@ -113,7 +113,7 @@ const ModerationPage = () => {
               <div className="flex gap-4">
                 <Button 
                   onClick={() => handleModerate(post.id, true)}
-                  className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white h-14 rounded-2xl gap-2"
+                  className="flex-1 bg-brand-primary hover:bg-brand-primary text-white h-14 rounded-2xl gap-2"
                 >
                   <Check className="w-5 h-5" />
                   {t('social_moderation.approve', 'قبول المنشور')}
@@ -132,8 +132,8 @@ const ModerationPage = () => {
 
       {!loading && posts.length === 0 && (
         <div className="h-64 flex flex-col items-center justify-center bg-white/5 rounded-[40px] border border-dashed border-white/10">
-          <Check className="w-12 h-12 text-emerald-500/20 mb-4" />
-          <p className="text-emerald-400/20 font-bold">{t('social_moderation.no_posts', 'كل المنشورات مراجعة حالياً')}</p>
+          <Check className="w-12 h-12 text-brand-primary/20 mb-4" />
+          <p className="text-brand-secondary/20 font-bold">{t('social_moderation.no_posts', 'كل المنشورات مراجعة حالياً')}</p>
         </div>
       )}
     </DashboardLayout>

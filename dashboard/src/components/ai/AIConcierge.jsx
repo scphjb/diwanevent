@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+﻿import React, { useState, useRef, useEffect } from 'react';
 import { MessageCircle, Send, X, Bot, Sparkles, User } from 'lucide-react';
 
 const AIConcierge = () => {
@@ -51,8 +51,8 @@ const AIConcierge = () => {
               <div>
                 <h3 className="text-white font-bold">Diwan Concierge</h3>
                 <div className="flex items-center gap-1">
-                  <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
-                  <span className="text-[10px] text-emerald-400 font-bold uppercase">Online & Thinking</span>
+                  <div className="w-1.5 h-1.5 bg-brand-secondary rounded-full animate-pulse" />
+                  <span className="text-[10px] text-brand-secondary font-bold uppercase">Online & Thinking</span>
                 </div>
               </div>
             </div>

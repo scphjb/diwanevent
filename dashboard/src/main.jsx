@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react'
+﻿import React, { Suspense } from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import App from './App'
@@ -17,9 +17,9 @@ window.alert = (message) => {
     title: 'تنبيه',
     text: message,
     icon: 'info',
-    background: '#022c22',
+    background: '#050B18',
     color: '#fff',
-    confirmButtonColor: '#10b981',
+    confirmButtonColor: '#2A64EC',
     confirmButtonText: 'حسناً',
     customClass: {
       popup: 'rounded-[32px] border border-white/10 backdrop-blur-xl',
@@ -38,9 +38,9 @@ window.confirm = (message) => {
     text: message,
     icon: 'question',
     showCancelButton: true,
-    background: '#022c22',
+    background: '#050B18',
     color: '#fff',
-    confirmButtonColor: '#10b981',
+    confirmButtonColor: '#2A64EC',
     cancelButtonColor: '#374151',
     confirmButtonText: 'تأكيد',
     cancelButtonText: 'إلغاء',
@@ -56,7 +56,7 @@ window.confirm = (message) => {
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
-      <Suspense fallback={<div className="min-h-screen bg-[#022C22]" />}>
+      <Suspense fallback={<div className="min-h-screen bg-[#050B18]" />}>
         <App />
       </Suspense>
     </BrowserRouter>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ChevronRight, Terminal, Copy, CheckCircle2, Shield, Layers, Key, Server } from 'lucide-react';
@@ -182,7 +182,7 @@ const ApiDocsPage = () => {
                 <div className="bg-black/60 p-4 rounded-xl font-mono text-xs text-brand-secondary border border-white/5 flex items-center justify-between group">
                   <span className="truncate">Authorization: Bearer DW_KEY_YOUR_SECRET_TOKEN</span>
                   <button onClick={() => handleCopy('Authorization: Bearer DW_KEY_YOUR_SECRET_TOKEN', 'auth')} className="text-slate-500 hover:text-white transition-colors shrink-0">
-                    {copiedText === 'auth' ? <CheckCircle2 size={14} className="text-emerald-500" /> : <Copy size={14} />}
+                    {copiedText === 'auth' ? <CheckCircle2 size={14} className="text-brand-primary" /> : <Copy size={14} />}
                   </button>
                 </div>
                 <p className="text-xs text-amber-500 mt-4 leading-relaxed font-bold">
@@ -227,7 +227,7 @@ const ApiDocsPage = () => {
                     className={`w-full text-right p-5 rounded-2xl border transition-all duration-300 relative overflow-hidden ${selectedEndpoint === idx ? 'bg-brand-surface/80 border-brand-secondary/40 shadow-xl' : 'bg-brand-surface/30 border-white/5 hover:border-white/15'}`}
                   >
                     <div className="flex items-center gap-3 mb-2">
-                      <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider ${ep.method === 'GET' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-indigo-500/20 text-indigo-400'}`}>
+                      <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider ${ep.method === 'GET' ? 'bg-brand-primary/20 text-brand-secondary' : 'bg-indigo-500/20 text-indigo-400'}`}>
                         {ep.method}
                       </span>
                       <span className="text-sm font-mono text-white/90">{ep.path}</span>
@@ -253,10 +253,10 @@ const ApiDocsPage = () => {
                     <span>{L({ ar: 'رمز الطلب (cURL)', en: 'Request Code (cURL)', fr: 'Exemple de Requête (cURL)', es: 'Ejemplo de Petición (cURL)' })}</span>
                   </div>
                   <button onClick={() => handleCopy(endpoints[selectedEndpoint].curl, 'curl')} className="text-slate-500 hover:text-white transition-colors">
-                    {copiedText === 'curl' ? <CheckCircle2 size={14} className="text-emerald-500" /> : <Copy size={14} />}
+                    {copiedText === 'curl' ? <CheckCircle2 size={14} className="text-brand-primary" /> : <Copy size={14} />}
                   </button>
                 </div>
-                <div className="p-6 bg-black/60 font-mono text-[11px] text-emerald-400 overflow-auto max-h-[250px] leading-relaxed scrollbar-thin scrollbar-thumb-white/10">
+                <div className="p-6 bg-black/60 font-mono text-[11px] text-brand-secondary overflow-auto max-h-[250px] leading-relaxed scrollbar-thin scrollbar-thumb-white/10">
                   <pre>{endpoints[selectedEndpoint].curl}</pre>
                 </div>
               </div>
@@ -297,7 +297,7 @@ const ApiDocsPage = () => {
                     <span>{L({ ar: 'الاستجابة المتوقعة (JSON)', en: 'Expected Response (JSON)', fr: 'Réponse Attendue (JSON)', es: 'Respuesta Esperada (JSON)' })}</span>
                   </div>
                   <button onClick={() => handleCopy(endpoints[selectedEndpoint].response, 'res')} className="text-slate-500 hover:text-white transition-colors">
-                    {copiedText === 'res' ? <CheckCircle2 size={14} className="text-emerald-500" /> : <Copy size={14} />}
+                    {copiedText === 'res' ? <CheckCircle2 size={14} className="text-brand-primary" /> : <Copy size={14} />}
                   </button>
                 </div>
                 <div className="p-6 bg-black/60 font-mono text-[11px] text-indigo-300 overflow-auto max-h-[300px] leading-relaxed scrollbar-thin scrollbar-thumb-white/10">

@@ -1,4 +1,4 @@
-import Swal from 'sweetalert2';
+﻿import Swal from 'sweetalert2';
 
 const toast = Swal.mixin({
   toast: true,
@@ -6,7 +6,7 @@ const toast = Swal.mixin({
   showConfirmButton: false,
   timer: 3000,
   timerProgressBar: true,
-  background: '#022c22',
+  background: '#050B18',
   color: '#fff',
   didOpen: (toast) => {
     toast.addEventListener('mouseenter', Swal.stopTimer);
@@ -19,9 +19,9 @@ export const showSuccess = (title, text = '') => {
     title,
     text,
     icon: 'success',
-    background: '#022c22',
+    background: '#050B18',
     color: '#fff',
-    confirmButtonColor: '#10b981',
+    confirmButtonColor: '#2A64EC',
     confirmButtonText: 'حسناً',
     customClass: {
       popup: 'rounded-[32px] border border-white/10 backdrop-blur-xl',
@@ -36,7 +36,7 @@ export const showError = (title, text = '') => {
     title,
     text,
     icon: 'error',
-    background: '#022c22',
+    background: '#050B18',
     color: '#fff',
     confirmButtonColor: '#ef4444',
     confirmButtonText: 'إغلاق',
@@ -54,9 +54,9 @@ export const showConfirm = (title, text = '', confirmText = 'تأكيد') => {
     text,
     icon: 'question',
     showCancelButton: true,
-    background: '#022c22',
+    background: '#050B18',
     color: '#fff',
-    confirmButtonColor: '#10b981',
+    confirmButtonColor: '#2A64EC',
     cancelButtonColor: '#374151',
     confirmButtonText: confirmText,
     cancelButtonText: 'إلغاء',

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import DashboardLayout from '../layouts/DashboardLayout';
 import { 
@@ -189,7 +189,7 @@ const ProfilePage = () => {
       <div className="max-w-5xl mx-auto">
         <div className="mb-12">
           <h1 className="text-4xl font-bold text-white mb-2">{t('profile.title', 'الملف الشخصي')}</h1>
-          <p className="text-emerald-400/50">{t('profile.subtitle', 'إدارة معلوماتك الشخصية وإعدادات الأمان')}</p>
+          <p className="text-brand-secondary/50">{t('profile.subtitle', 'إدارة معلوماتك الشخصية وإعدادات الأمان')}</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -197,28 +197,28 @@ const ProfilePage = () => {
           <div className="lg:col-span-1 space-y-2">
             <button 
               onClick={() => setActiveTab('personal')}
-              className={`w-full flex items-center gap-3 px-6 py-4 rounded-2xl transition-all ${activeTab === 'personal' ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-600/30' : 'text-white/40 hover:bg-white/5'}`}
+              className={`w-full flex items-center gap-3 px-6 py-4 rounded-2xl transition-all ${activeTab === 'personal' ? 'bg-brand-primary/20 text-brand-secondary border border-brand-primary/30' : 'text-white/40 hover:bg-white/5'}`}
             >
               <User className="w-5 h-5" />
               <span className="font-bold">{t('profile.tabs.personal', 'المعلومات الشخصية')}</span>
             </button>
             <button 
               onClick={() => setActiveTab('security')}
-              className={`w-full flex items-center gap-3 px-6 py-4 rounded-2xl transition-all ${activeTab === 'security' ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-600/30' : 'text-white/40 hover:bg-white/5'}`}
+              className={`w-full flex items-center gap-3 px-6 py-4 rounded-2xl transition-all ${activeTab === 'security' ? 'bg-brand-primary/20 text-brand-secondary border border-brand-primary/30' : 'text-white/40 hover:bg-white/5'}`}
             >
               <Shield className="w-5 h-5" />
               <span className="font-bold">{t('profile.tabs.security', 'الأمان والخصوصية')}</span>
             </button>
             <button 
               onClick={() => setActiveTab('alerts')}
-              className={`w-full flex items-center gap-3 px-6 py-4 rounded-2xl transition-all ${activeTab === 'alerts' ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-600/30' : 'text-white/40 hover:bg-white/5'}`}
+              className={`w-full flex items-center gap-3 px-6 py-4 rounded-2xl transition-all ${activeTab === 'alerts' ? 'bg-brand-primary/20 text-brand-secondary border border-brand-primary/30' : 'text-white/40 hover:bg-white/5'}`}
             >
               <Bell className="w-5 h-5" />
               <span className="font-bold">{t('profile.tabs.alerts', 'سجل التنبيهات')}</span>
             </button>
             <button 
               onClick={() => setActiveTab('notifications')}
-              className={`w-full flex items-center gap-3 px-6 py-4 rounded-2xl transition-all ${activeTab === 'notifications' ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-600/30' : 'text-white/40 hover:bg-white/5'}`}
+              className={`w-full flex items-center gap-3 px-6 py-4 rounded-2xl transition-all ${activeTab === 'notifications' ? 'bg-brand-primary/20 text-brand-secondary border border-brand-primary/30' : 'text-white/40 hover:bg-white/5'}`}
             >
               <Key className="w-5 h-5" />
               <span className="font-bold">{t('profile.tabs.settings', 'إعدادات التنبيهات')}</span>
@@ -237,16 +237,16 @@ const ProfilePage = () => {
                 <div className="space-y-8">
                   <div className="flex items-center gap-8 pb-8 border-b border-white/5">
                     <div className="relative group">
-                      <div className="w-24 h-24 rounded-full bg-emerald-600/20 flex items-center justify-center text-4xl font-bold border-2 border-dashed border-emerald-500/40">
+                      <div className="w-24 h-24 rounded-full bg-brand-primary/20 flex items-center justify-center text-4xl font-bold border-2 border-dashed border-brand-primary/40">
                         {user?.full_name?.[0] || 'A'}
                       </div>
-                      <button className="absolute bottom-0 right-0 w-8 h-8 bg-amber-500 rounded-full flex items-center justify-center text-emerald-950 shadow-lg group-hover:scale-110 transition-transform">
+                      <button className="absolute bottom-0 right-0 w-8 h-8 bg-amber-500 rounded-full flex items-center justify-center text-brand-dark shadow-lg group-hover:scale-110 transition-transform">
                         <Camera className="w-4 h-4" />
                       </button>
                     </div>
                     <div>
                       <h3 className="text-xl font-bold text-white mb-1">{user?.full_name || t('profile.personal.name_fallback', 'أحمد الإدريسي')}</h3>
-                      <p className="text-emerald-400/50 text-sm">{t('profile.personal.role_fallback', 'مدير نظام • ديوان إيفنت')}</p>
+                      <p className="text-brand-secondary/50 text-sm">{t('profile.personal.role_fallback', 'مدير نظام • ديوان إيفنت')}</p>
                     </div>
                   </div>
 
@@ -291,7 +291,7 @@ const ProfilePage = () => {
                       </div>
                       <div>
                         <h4 className="font-bold text-white">{t('profile.security.password_title', 'تغيير كلمة المرور')}</h4>
-                        <p className="text-emerald-400/30 text-xs">{t('profile.security.password_last_change', 'آخر تغيير كان قبل 3 أشهر')}</p>
+                        <p className="text-brand-secondary/30 text-xs">{t('profile.security.password_last_change', 'آخر تغيير كان قبل 3 أشهر')}</p>
                       </div>
                     </div>
                     <Button variant="outline" onClick={() => setIsPasswordModalOpen(true)}>{t('profile.security.update_btn', 'تحديث')}</Button>
@@ -304,21 +304,21 @@ const ProfilePage = () => {
                       </div>
                       <div>
                         <h4 className="font-bold text-white">{t('profile.security.2fa_title', 'المصادقة الثنائية (2FA)')}</h4>
-                        <p className="text-emerald-400/30 text-xs">{t('profile.security.2fa_subtitle', 'حماية إضافية لحسابك')}</p>
+                        <p className="text-brand-secondary/30 text-xs">{t('profile.security.2fa_subtitle', 'حماية إضافية لحسابك')}</p>
                       </div>
                     </div>
                     <button 
                       onClick={handle2faToggle}
                       className={cn(
                         "w-12 h-6 rounded-full relative p-1 transition-all duration-300",
-                        twoFactorEnabled ? "bg-emerald-500/40" : "bg-white/10"
+                        twoFactorEnabled ? "bg-brand-primary/40" : "bg-white/10"
                       )}
                     >
                       <motion.div 
                         animate={{ x: twoFactorEnabled ? 24 : 0 }}
                         className={cn(
                           "w-4 h-4 rounded-full transition-colors",
-                          twoFactorEnabled ? "bg-emerald-400" : "bg-white/20"
+                          twoFactorEnabled ? "bg-brand-secondary" : "bg-white/20"
                         )}
                       />
                     </button>
@@ -330,14 +330,14 @@ const ProfilePage = () => {
                 <div className="space-y-6">
                   <div className="mb-6">
                     <h3 className="text-xl font-bold text-white mb-1">{t('profile.notifications.title', 'إعدادات التنبيهات')}</h3>
-                    <p className="text-emerald-400/30 text-sm">{t('profile.notifications.subtitle', 'اختر كيف ومتى ترغب في استلام التنبيهات من المنصة.')}</p>
+                    <p className="text-brand-secondary/30 text-sm">{t('profile.notifications.subtitle', 'اختر كيف ومتى ترغب في استلام التنبيهات من المنصة.')}</p>
                   </div>
 
                   <div className="space-y-4">
                     {[
                       { id: 'email_new_reg', title: t('profile.notifications.email_reg_title', 'تنبيهات التسجيل الجديد'), desc: t('profile.notifications.email_reg_desc', 'استلام بريد إلكتروني عند تسجيل مشارك جديد في فعاليتك.'), icon: Mail, color: 'text-blue-400', bg: 'bg-blue-400/10' },
                       { id: 'sys_alerts', title: t('profile.notifications.sys_alerts_title', 'تنبيهات النظام'), desc: t('profile.notifications.sys_alerts_desc', 'الحصول على إشعارات حول حالة الخادم والمزامنة.'), icon: Bell, color: 'text-amber-500', bg: 'bg-amber-500/10' },
-                      { id: 'security_alerts', title: t('profile.notifications.security_alerts_title', 'الأمان والخصوصية'), desc: t('profile.notifications.security_alerts_desc', 'تنبيهك عند محاولات تسجيل الدخول المشبوهة أو تغيير كلمة المرور.'), icon: Shield, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+                      { id: 'security_alerts', title: t('profile.notifications.security_alerts_title', 'الأمان والخصوصية'), desc: t('profile.notifications.security_alerts_desc', 'تنبيهك عند محاولات تسجيل الدخول المشبوهة أو تغيير كلمة المرور.'), icon: Shield, color: 'text-brand-primary', bg: 'bg-brand-primary/10' },
                       { id: 'browser_push', title: t('profile.notifications.browser_push_title', 'إشعارات المتصفح'), desc: t('profile.notifications.browser_push_desc', 'تفعيل الإشعارات المباشرة على سطح المكتب.'), icon: Smartphone, color: 'text-purple-400', bg: 'bg-purple-400/10' },
                     ].map((item) => (
                       <div key={item.id} className="flex items-center justify-between p-6 bg-white/5 rounded-3xl border border-white/5 hover:bg-white/[0.07] transition-all">
@@ -347,21 +347,21 @@ const ProfilePage = () => {
                           </div>
                           <div>
                             <h4 className="font-bold text-white text-sm">{item.title}</h4>
-                            <p className="text-emerald-400/30 text-[11px] leading-relaxed max-w-sm">{item.desc}</p>
+                            <p className="text-brand-secondary/30 text-[11px] leading-relaxed max-w-sm">{item.desc}</p>
                           </div>
                         </div>
                         <button 
                           onClick={() => toggleNotification(item.id)}
                           className={cn(
                             "w-10 h-5 rounded-full relative p-1 transition-all duration-300",
-                            notificationSettings[item.id] ? "bg-emerald-500/40" : "bg-white/10"
+                            notificationSettings[item.id] ? "bg-brand-primary/40" : "bg-white/10"
                           )}
                         >
                           <motion.div 
                             animate={{ x: notificationSettings[item.id] ? 20 : 0 }}
                             className={cn(
                               "w-3 h-3 rounded-full transition-colors",
-                              notificationSettings[item.id] ? "bg-emerald-400" : "bg-white/20"
+                              notificationSettings[item.id] ? "bg-brand-secondary" : "bg-white/20"
                             )}
                           />
                         </button>
@@ -387,17 +387,17 @@ const ProfilePage = () => {
                   <div className="flex items-center justify-between mb-8">
                     <div>
                       <h3 className="text-xl font-bold text-white">{t('profile.alerts_history.title', 'سجل التنبيهات')}</h3>
-                      <p className="text-emerald-400/40 text-xs">{t('profile.alerts_history.subtitle', 'استعرض كافة الإشعارات والعمليات الأخيرة')}</p>
+                      <p className="text-brand-secondary/40 text-xs">{t('profile.alerts_history.subtitle', 'استعرض كافة الإشعارات والعمليات الأخيرة')}</p>
                     </div>
                   </div>
 
                   <div className="space-y-4">
                     {notificationsHistory.map((alert) => (
-                      <div key={alert.id} className="p-5 bg-white/5 border border-white/5 rounded-[24px] hover:border-emerald-500/20 transition-all group">
+                      <div key={alert.id} className="p-5 bg-white/5 border border-white/5 rounded-[24px] hover:border-brand-primary/20 transition-all group">
                         <div className="flex gap-4">
                           <div className={cn(
                             "w-12 h-12 rounded-2xl flex items-center justify-center shrink-0",
-                            alert.level === 'success' ? "bg-emerald-500/10 text-emerald-500" :
+                            alert.level === 'success' ? "bg-brand-primary/10 text-brand-primary" :
                             alert.level === 'warning' ? "bg-amber-500/10 text-amber-500" :
                             "bg-blue-500/10 text-blue-500"
                           )}>
@@ -405,7 +405,7 @@ const ProfilePage = () => {
                           </div>
                           <div className="flex-1">
                             <div className="flex items-center justify-between mb-1">
-                              <span className="font-bold text-white group-hover:text-emerald-400 transition-colors">{alert.title}</span>
+                              <span className="font-bold text-white group-hover:text-brand-secondary transition-colors">{alert.title}</span>
                               <span className="text-[10px] text-white/20">{alert.time}</span>
                             </div>
                             <p className="text-xs text-white/40 leading-relaxed">{alert.message}</p>
@@ -430,7 +430,7 @@ const ProfilePage = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsPasswordModalOpen(false)}
-              className="absolute inset-0 bg-emerald-950/80 backdrop-blur-md"
+              className="absolute inset-0 bg-brand-dark/80 backdrop-blur-md"
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -445,7 +445,7 @@ const ProfilePage = () => {
                   </div>
                   <div>
                     <h3 className="text-xl font-bold text-white">{t('profile.security.modal.title', 'تغيير كلمة المرور')}</h3>
-                    <p className="text-emerald-400/40 text-xs">{t('profile.security.modal.subtitle', 'يرجى إدخال كلمة المرور الحالية والجديدة')}</p>
+                    <p className="text-brand-secondary/40 text-xs">{t('profile.security.modal.subtitle', 'يرجى إدخال كلمة المرور الحالية والجديدة')}</p>
                   </div>
                 </div>
                 <button onClick={() => setIsPasswordModalOpen(false)} className="p-2 hover:bg-white/5 rounded-xl transition-colors">
@@ -547,7 +547,7 @@ const ProfilePage = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIs2faModalOpen(false)}
-              className="absolute inset-0 bg-emerald-950/80 backdrop-blur-md"
+              className="absolute inset-0 bg-brand-dark/80 backdrop-blur-md"
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -560,7 +560,7 @@ const ProfilePage = () => {
                   <Shield className="w-8 h-8" />
                 </div>
                 <h3 className="text-2xl font-bold text-white mb-2">{t('profile.security.2fa_setup.title', 'إعداد المصادقة الثنائية')}</h3>
-                <p className="text-emerald-400/40 text-sm">{t('profile.security.2fa_setup.desc', 'امسح رمز QR التالي باستخدام تطبيق المصادقة الخاص بك (Google Authenticator أو Authy)')}</p>
+                <p className="text-brand-secondary/40 text-sm">{t('profile.security.2fa_setup.desc', 'امسح رمز QR التالي باستخدام تطبيق المصادقة الخاص بك (Google Authenticator أو Authy)')}</p>
               </div>
 
               <div className="bg-white p-4 rounded-3xl inline-block mb-6 shadow-xl">
@@ -569,7 +569,7 @@ const ProfilePage = () => {
 
               <div className="mb-8">
                 <p className="text-xs text-white/40 mb-2 uppercase tracking-widest">{t('profile.security.2fa_setup.manual_entry', 'أو أدخل الرمز يدوياً')}</p>
-                <code className="bg-white/5 px-4 py-2 rounded-xl text-emerald-400 font-mono text-sm block border border-white/5">
+                <code className="bg-white/5 px-4 py-2 rounded-xl text-brand-secondary font-mono text-sm block border border-white/5">
                   {twoFactorData.secret}
                 </code>
               </div>

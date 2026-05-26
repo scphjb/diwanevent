@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Camera, BarChart3, Users, Flame, Thermometer, IceCream, Mic, Save, ArrowRight, TrendingUp } from 'lucide-react';
 
 const ExhibitorLeads = () => {
@@ -30,8 +30,8 @@ const ExhibitorLeads = () => {
         </div>
         <div className="bg-slate-900/80 border border-slate-800 p-3 rounded-2xl">
           <div className="text-slate-500 text-[10px] uppercase font-bold">Sync Status</div>
-          <div className="text-xs font-bold text-emerald-500 flex items-center gap-1">
-             <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
+          <div className="text-xs font-bold text-brand-primary flex items-center gap-1">
+             <div className="w-1.5 h-1.5 bg-brand-primary rounded-full animate-pulse"></div>
              Cloud Ready
           </div>
         </div>
@@ -59,7 +59,7 @@ const ExhibitorLeads = () => {
                   <h2 className="text-2xl font-black text-white">{scanResult.name}</h2>
                   <p className="text-indigo-400 font-bold text-sm">{scanResult.company}</p>
                 </div>
-                <div className="bg-emerald-500/20 text-emerald-500 px-4 py-2 rounded-2xl border border-emerald-500/30">
+                <div className="bg-brand-primary/20 text-brand-primary px-4 py-2 rounded-2xl border border-brand-primary/30">
                   <span className="text-xs font-bold uppercase">Match</span>
                   <div className="text-lg font-black">{scanResult.matchScore}%</div>
                 </div>

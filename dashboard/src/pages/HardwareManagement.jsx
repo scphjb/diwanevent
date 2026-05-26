@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import DashboardLayout from '../layouts/DashboardLayout';
 import { 
@@ -42,16 +42,16 @@ const DeviceRow = ({ device, onToggle }) => {
         <div className="flex items-center gap-4">
           <div className={cn(
             "w-10 h-10 rounded-xl flex items-center justify-center",
-            isOnline ? "bg-emerald-500/10" : "bg-white/5"
+            isOnline ? "bg-brand-primary/10" : "bg-white/5"
           )}>
             {device.type === 'ZEBRA' || device.type === 'SCANNER'
-              ? <Smartphone className={cn("w-5 h-5", isOnline ? "text-emerald-400" : "text-white/20")} />
+              ? <Smartphone className={cn("w-5 h-5", isOnline ? "text-brand-secondary" : "text-white/20")} />
               : <Printer className={cn("w-5 h-5", isOnline ? "text-amber-500" : "text-white/20")} />
             }
           </div>
           <div>
             <div className="text-white font-bold">{device.id}</div>
-            <div className="text-emerald-400/20 text-xs">{device.type || 'Universal Scanner'}</div>
+            <div className="text-brand-secondary/20 text-xs">{device.type || 'Universal Scanner'}</div>
           </div>
         </div>
       </td>
@@ -60,17 +60,17 @@ const DeviceRow = ({ device, onToggle }) => {
         <span className={cn(
           "inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold border",
           isOnline
-            ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+            ? "bg-brand-primary/10 text-brand-secondary border-brand-primary/20"
             : "bg-red-500/10 text-red-400 border-red-500/20"
         )}>
-          <div className={cn("w-1.5 h-1.5 rounded-full", isOnline ? "bg-emerald-400 animate-pulse" : "bg-red-400")} />
+          <div className={cn("w-1.5 h-1.5 rounded-full", isOnline ? "bg-brand-secondary animate-pulse" : "bg-red-400")} />
           {device.status}
         </span>
       </td>
 
       <td className="px-8 py-6">
         <div className="flex items-center gap-2">
-          <Battery className={cn("w-4 h-4", lowBattery ? "text-red-400" : "text-emerald-400")} />
+          <Battery className={cn("w-4 h-4", lowBattery ? "text-red-400" : "text-brand-secondary")} />
           <span className={cn("font-mono text-sm", lowBattery ? "text-red-400" : "text-white")}>
             {device.battery ?? '—'}%
           </span>
@@ -79,7 +79,7 @@ const DeviceRow = ({ device, onToggle }) => {
       </td>
 
       <td className="px-8 py-6">
-        <div className="text-emerald-400/30 text-xs font-mono">
+        <div className="text-brand-secondary/30 text-xs font-mono">
           {device.last_ping ? new Date(device.last_ping).toLocaleTimeString(i18n.language === 'ar' ? 'ar-DZ' : 'en-US') : '—'}
         </div>
       </td>
@@ -91,7 +91,7 @@ const DeviceRow = ({ device, onToggle }) => {
             "p-2 rounded-xl transition-all",
             isOnline
               ? "bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white"
-              : "bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500 hover:text-white"
+              : "bg-brand-primary/10 text-brand-secondary hover:bg-brand-primary hover:text-white"
           )}
           title={isOnline ? t('hardware.table.turn_off') : t('hardware.table.turn_on')}
         >
@@ -200,11 +200,11 @@ const HardwareManagement = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
         <div>
           <h1 className="text-4xl font-bold text-white mb-2">{t('hardware.title', 'إدارة العتاد')}</h1>
-          <p className="text-emerald-400/50 flex items-center gap-2">
+          <p className="text-brand-secondary/50 flex items-center gap-2">
             <Cpu className="w-4 h-4" />
             {t('hardware.subtitle', 'مراقبة الأجهزة والماسحات المتصلة بالنظام')}
-            <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 ml-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-brand-primary/10 text-brand-secondary border border-brand-primary/20 ml-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-brand-secondary animate-pulse" />
               {t('hardware.live', 'Live')}
             </span>
           </p>
@@ -248,7 +248,7 @@ const HardwareManagement = () => {
             className={cn(
               "mb-6 flex items-center gap-3 px-6 py-4 rounded-2xl font-bold text-sm",
               pingResult.success
-                ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400"
+                ? "bg-brand-primary/10 border border-brand-primary/20 text-brand-secondary"
                 : "bg-red-500/10 border border-red-500/20 text-red-400"
             )}
           >
@@ -268,10 +268,10 @@ const HardwareManagement = () => {
             icon: Activity,
             label: t('hardware.stats.online', 'الأجهزة المتصلة'),
             value: onlineDevices,
-            color: 'bg-emerald-600/20',
-            textColor: 'text-emerald-400',
+            color: 'bg-brand-primary/20',
+            textColor: 'text-brand-secondary',
             bar: devices.length ? (onlineDevices / devices.length) * 100 : 0,
-            barColor: 'bg-emerald-500'
+            barColor: 'bg-brand-primary'
           },
           {
             icon: WifiOff,
@@ -316,7 +316,7 @@ const HardwareManagement = () => {
       <div className="bg-white/5 border border-white/10 rounded-[40px] overflow-hidden backdrop-blur-md">
         <div className="p-8 border-b border-white/5 flex items-center justify-between bg-white/5">
           <h2 className="text-xl font-bold text-white">{t('hardware.table.title', 'قائمة الأجهزة')}</h2>
-          <span className="text-emerald-400/30 text-sm font-bold">
+          <span className="text-brand-secondary/30 text-sm font-bold">
             {t('hardware.table.count', { count: devices.length })}
           </span>
         </div>
@@ -324,7 +324,7 @@ const HardwareManagement = () => {
         <div className="overflow-x-auto">
           <table className="w-full text-right">
             <thead>
-              <tr className="bg-white/5 text-emerald-400/50 text-[10px] uppercase tracking-widest border-b border-white/5">
+              <tr className="bg-white/5 text-brand-secondary/50 text-[10px] uppercase tracking-widest border-b border-white/5">
                 <th className="px-8 py-6 font-bold">{t('hardware.table.device')}</th>
                 <th className="px-8 py-6 font-bold">{t('hardware.table.status')}</th>
                 <th className="px-8 py-6 font-bold">{t('hardware.table.battery')}</th>
@@ -357,9 +357,9 @@ const HardwareManagement = () => {
 
           {!loading && devices.length === 0 && (
             <div className="p-16 text-center">
-              <Cpu className="w-16 h-16 text-emerald-400/10 mx-auto mb-4" />
-              <p className="text-emerald-400/20 font-bold">{t('hardware.table.no_devices', 'لا توجد أجهزة متصلة حالياً')}</p>
-              <p className="text-emerald-400/10 text-sm mt-1">{t('hardware.table.auto_appear', 'ستظهر الأجهزة تلقائياً عند اتصالها بالشبكة')}</p>
+              <Cpu className="w-16 h-16 text-brand-secondary/10 mx-auto mb-4" />
+              <p className="text-brand-secondary/20 font-bold">{t('hardware.table.no_devices', 'لا توجد أجهزة متصلة حالياً')}</p>
+              <p className="text-brand-secondary/10 text-sm mt-1">{t('hardware.table.auto_appear', 'ستظهر الأجهزة تلقائياً عند اتصالها بالشبكة')}</p>
             </div>
           )}
         </div>

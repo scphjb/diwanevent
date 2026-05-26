@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Map, AlertTriangle, Users, TrendingUp } from 'lucide-react';
 
 const SpatialHeatmap = ({ eventId }) => {
@@ -23,7 +23,7 @@ const SpatialHeatmap = ({ eventId }) => {
   const getDensityColor = (density) => {
     if (density > 80) return 'bg-red-500/60 border-red-600 shadow-[0_0_15px_rgba(239,68,68,0.5)]';
     if (density > 50) return 'bg-yellow-500/60 border-yellow-600 shadow-[0_0_15px_rgba(245,158,11,0.5)]';
-    return 'bg-emerald-500/60 border-emerald-600 shadow-[0_0_15px_rgba(16,185,129,0.5)]';
+    return 'bg-brand-primary/60 border-brand-primary shadow-[0_0_15px_rgba(16,185,129,0.5)]';
   };
 
   return (
@@ -87,7 +87,7 @@ const SpatialHeatmap = ({ eventId }) => {
       {/* وسيلة الإيضاح (Legend) */}
       <div className="mt-8 flex justify-center gap-8 text-sm">
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 bg-emerald-500 rounded-full shadow-[0_0_5px_rgba(16,185,129,0.5)]"></div>
+          <div className="w-3 h-3 bg-brand-primary rounded-full shadow-[0_0_5px_rgba(16,185,129,0.5)]"></div>
           <span className="text-slate-300">Comfortable</span>
         </div>
         <div className="flex items-center gap-2">

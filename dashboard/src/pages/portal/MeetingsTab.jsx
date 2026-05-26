@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, MapPin, Check, X, UserPlus, Info } from 'lucide-react';
 import networkingService from '../../services/networkingService';
 
@@ -93,7 +93,7 @@ const MeetingsTab = ({ myId }) => {
         <h3 style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, margin: 0 }}>جدول الاجتماعات</h3>
         <button 
           onClick={() => setIsProposing(!isProposing)}
-          style={{ background: '#D4AF37', color: '#022C22', border: 'none', borderRadius: 20, padding: '6px 14px', fontFamily: 'Cairo', fontSize: 12, fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+          style={{ background: '#D4AF37', color: '#050B18', border: 'none', borderRadius: 20, padding: '6px 14px', fontFamily: 'Cairo', fontSize: 12, fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
         >
           <Calendar size={14} /> طلب اجتماع جديد
         </button>
@@ -128,7 +128,7 @@ const MeetingsTab = ({ myId }) => {
           <textarea placeholder="موضوع الاجتماع / الأجندة" value={agenda} onChange={e => setAgenda(e.target.value)} style={{ width: '100%', padding: 10, background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: '#fff', fontFamily: 'Cairo', marginBottom: 12, minHeight: 60, boxSizing: 'border-box' }} />
           
           <div style={{ display: 'flex', gap: 10 }}>
-            <button type="submit" style={{ flex: 1, background: '#D4AF37', color: '#022C22', border: 'none', borderRadius: 8, padding: 10, fontWeight: 'bold', cursor: 'pointer', fontFamily: 'Cairo' }}>إرسال الطلب</button>
+            <button type="submit" style={{ flex: 1, background: '#D4AF37', color: '#050B18', border: 'none', borderRadius: 8, padding: 10, fontWeight: 'bold', cursor: 'pointer', fontFamily: 'Cairo' }}>إرسال الطلب</button>
             <button type="button" onClick={() => setIsProposing(false)} style={{ background: 'transparent', color: '#fff', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 8, padding: 10, cursor: 'pointer', fontFamily: 'Cairo' }}>إلغاء</button>
           </div>
         </form>

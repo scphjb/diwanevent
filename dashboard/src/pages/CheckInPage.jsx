@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import DashboardLayout from '../layouts/DashboardLayout';
 import { 
   Search, 
@@ -174,14 +174,14 @@ const CheckInPage = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
         <div>
           <h1 className="text-4xl font-bold text-white mb-2">{t('checkin.title', 'تسجيل الحضور الميداني')}</h1>
-          <p className="text-emerald-400/50 flex items-center gap-2">
+          <p className="text-brand-secondary/50 flex items-center gap-2">
             <QrCode className="w-4 h-4" />
             {t('checkin.subtitle', 'البحث عبر الاسم، رقم التسجيل، أو المسح الضوئي')}
             <span className={cn(
               "flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-black uppercase border ml-2",
-              scannerStatus === 'ONLINE' ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-red-500/10 text-red-400 border-red-500/20"
+              scannerStatus === 'ONLINE' ? "bg-brand-primary/10 text-brand-secondary border-brand-primary/20" : "bg-red-500/10 text-red-400 border-red-500/20"
             )}>
-              <div className={cn("w-1.5 h-1.5 rounded-full animate-pulse", scannerStatus === 'ONLINE' ? "bg-emerald-400" : "bg-red-400")} />
+              <div className={cn("w-1.5 h-1.5 rounded-full animate-pulse", scannerStatus === 'ONLINE' ? "bg-brand-secondary" : "bg-red-400")} />
               Scanner: {scannerStatus}
             </span>
           </p>
@@ -195,7 +195,7 @@ const CheckInPage = () => {
                 onClick={() => setSelectedGate(gate)}
                 className={cn(
                   "px-4 h-12 rounded-xl text-sm font-black transition-all",
-                  selectedGate === gate ? "bg-emerald-500 text-emerald-950" : "text-emerald-400/40 hover:text-emerald-400"
+                  selectedGate === gate ? "bg-brand-primary text-brand-dark" : "text-brand-secondary/40 hover:text-brand-secondary"
                 )}
               >
                 {gate}
@@ -205,7 +205,7 @@ const CheckInPage = () => {
 
           <Button 
             variant="outline" 
-            className="h-14 px-6 gap-2 bg-white/5 border-white/10 text-emerald-400 hover:bg-emerald-500/10"
+            className="h-14 px-6 gap-2 bg-white/5 border-white/10 text-brand-secondary hover:bg-brand-primary/10"
             onClick={() => setShowScanner(true)}
           >
             <Camera className="w-5 h-5" />
@@ -241,7 +241,7 @@ const CheckInPage = () => {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="mb-6 flex items-center gap-3 px-6 py-4 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-bold"
+            className="mb-6 flex items-center gap-3 px-6 py-4 rounded-2xl bg-brand-primary/15 border border-brand-primary/30 text-brand-secondary font-bold"
           >
             <UserCheck className="w-5 h-5 shrink-0" />
             {successMsg}
@@ -250,17 +250,17 @@ const CheckInPage = () => {
       </AnimatePresence>
 
       <div className="relative mb-12">
-        <Search className="absolute ltr:left-6 rtl:right-6 top-1/2 -translate-y-1/2 w-6 h-6 text-emerald-400/30" />
+        <Search className="absolute ltr:left-6 rtl:right-6 top-1/2 -translate-y-1/2 w-6 h-6 text-brand-secondary/30" />
         <Input 
           autoFocus
           placeholder={t('checkin.search_placeholder', 'ابحث عن مشارك...')} 
-          className="h-20 ltr:pl-16 rtl:pr-16 text-2xl font-bold bg-white/5 border-white/10 rounded-[32px] focus:border-emerald-500 transition-all shadow-2xl"
+          className="h-20 ltr:pl-16 rtl:pr-16 text-2xl font-bold bg-white/5 border-white/10 rounded-[32px] focus:border-brand-primary transition-all shadow-2xl"
           value={query}
           onChange={(e) => handleSearch(e.target.value)}
         />
         {loading && (
           <div className="absolute ltr:right-6 rtl:left-6 top-1/2 -translate-y-1/2">
-            <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+            <div className="w-6 h-6 border-2 border-brand-primary border-t-transparent rounded-full animate-spin" />
           </div>
         )}
       </div>
@@ -278,20 +278,20 @@ const CheckInPage = () => {
               <div className="flex items-center gap-6">
                 <div className={cn(
                   "w-16 h-16 rounded-2xl flex items-center justify-center font-bold text-2xl",
-                  p.payment_status === 'paid' ? "bg-emerald-500/20 text-emerald-400" : "bg-white/5 text-white/20"
+                  p.payment_status === 'paid' ? "bg-brand-primary/20 text-brand-secondary" : "bg-white/5 text-white/20"
                 )}>
                   {p.payment_status === 'paid' ? <Check className="w-8 h-8" /> : p.full_name[0]}
                 </div>
                 <div>
                   <h3 className="text-xl font-bold text-white mb-1">{p.full_name}</h3>
-                  <p className="text-emerald-400/40 text-sm font-medium">{p.organization} • {p.order_num}</p>
+                  <p className="text-brand-secondary/40 text-sm font-medium">{p.organization} • {p.order_num}</p>
                 </div>
               </div>
 
               <div className="flex items-center gap-4 w-full md:w-auto">
                 {p.payment_status === 'paid' ? (
                   <>
-                    <div className="px-6 py-3 rounded-2xl bg-emerald-500/10 text-emerald-400 font-bold border border-emerald-500/20 flex items-center gap-2">
+                    <div className="px-6 py-3 rounded-2xl bg-brand-primary/10 text-brand-secondary font-bold border border-brand-primary/20 flex items-center gap-2">
                       <Clock className="w-4 h-4" />
                       {t('checkin.status.checked_in', 'تم تسجيل الحضور')}
                     </div>
@@ -319,25 +319,25 @@ const CheckInPage = () => {
 
       {/* Walk-in Modal — متعدد الأدوار */}
       {showWalkinModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 backdrop-blur-xl bg-emerald-950/40">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 backdrop-blur-xl bg-brand-dark/40">
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-[#022C22] border border-white/10 rounded-[40px] p-10 w-full max-w-xl shadow-2xl"
+            className="bg-[#050B18] border border-white/10 rounded-[40px] p-10 w-full max-w-xl shadow-2xl"
           >
             <div className="flex items-center justify-between mb-8">
               <div>
                 <h2 className="text-2xl font-bold text-white">{t('checkin.walkin_modal.title', 'تسجيل ميداني جديد')}</h2>
-                <p className="text-emerald-400/40 text-sm mt-1">تسجيل فوري عند الوصول — بدون حجز مسبق</p>
+                <p className="text-brand-secondary/40 text-sm mt-1">تسجيل فوري عند الوصول — بدون حجز مسبق</p>
               </div>
-              <button onClick={() => setShowWalkinModal(false)} className="text-emerald-400/20 hover:text-white transition-colors">
+              <button onClick={() => setShowWalkinModal(false)} className="text-brand-secondary/20 hover:text-white transition-colors">
                 <X className="w-6 h-6" />
               </button>
             </div>
 
             {/* نوع المشارك */}
             <div className="mb-6">
-              <label className="text-xs font-bold text-emerald-400/50 uppercase tracking-widest mb-3 block">نوع الحضور</label>
+              <label className="text-xs font-bold text-brand-secondary/50 uppercase tracking-widest mb-3 block">نوع الحضور</label>
               <div className="grid grid-cols-2 gap-2">
                 {[
                   { value: 'attendee', label: '👤 مشارك عادي', color: 'emerald' },
@@ -363,33 +363,33 @@ const CheckInPage = () => {
 
             <div className="space-y-4">
               <div className="space-y-2">
-                <label className="text-sm font-bold text-emerald-100/50">{t('checkin.walkin_modal.full_name', 'الاسم الكامل')} *</label>
+                <label className="text-sm font-bold text-brand-secondary/50">{t('checkin.walkin_modal.full_name', 'الاسم الكامل')} *</label>
                 <Input value={walkinData.name} onChange={(e) => setWalkinData(prev => ({ ...prev, name: e.target.value }))} placeholder="اسم المشارك..." />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-emerald-100/50">{t('checkin.walkin_modal.organization', 'الجهة / المؤسسة')} *</label>
+                  <label className="text-sm font-bold text-brand-secondary/50">{t('checkin.walkin_modal.organization', 'الجهة / المؤسسة')} *</label>
                   <Input value={walkinData.organization} onChange={(e) => setWalkinData(prev => ({ ...prev, organization: e.target.value }))} placeholder="اسم الجهة أو المؤسسة..." />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-emerald-100/50">{t('checkin.walkin_modal.department', 'القسم / التخصص')} *</label>
+                  <label className="text-sm font-bold text-brand-secondary/50">{t('checkin.walkin_modal.department', 'القسم / التخصص')} *</label>
                   <Input value={walkinData.department} onChange={(e) => setWalkinData(prev => ({ ...prev, department: e.target.value }))} placeholder="القسم أو التخصص..." />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-emerald-100/50">البريد الإلكتروني</label>
+                  <label className="text-sm font-bold text-brand-secondary/50">البريد الإلكتروني</label>
                   <Input type="email" value={walkinData.email} onChange={(e) => setWalkinData(prev => ({ ...prev, email: e.target.value }))} placeholder="اختياري..." />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-emerald-100/50">رقم الهاتف</label>
+                  <label className="text-sm font-bold text-brand-secondary/50">رقم الهاتف</label>
                   <Input type="tel" value={walkinData.phone || ''} onChange={(e) => setWalkinData(prev => ({ ...prev, phone: e.target.value }))} placeholder="اختياري..." />
                 </div>
               </div>
 
               {/* خيار إرسال QR بالبريد إذا أُدخل */}
               {walkinData.email && (
-                <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20">
+                <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-brand-primary/10 border border-brand-primary/20">
                   <input
                     type="checkbox"
                     id="sendQR"
@@ -397,7 +397,7 @@ const CheckInPage = () => {
                     onChange={e => setWalkinData(prev => ({ ...prev, sendQR: e.target.checked }))}
                     className="w-4 h-4 accent-amber-500"
                   />
-                  <label htmlFor="sendQR" className="text-sm text-emerald-400 font-bold cursor-pointer">
+                  <label htmlFor="sendQR" className="text-sm text-brand-secondary font-bold cursor-pointer">
                     📧 إرسال رمز QR للبريد الإلكتروني
                   </label>
                 </div>
@@ -438,14 +438,14 @@ const ScannerModal = ({ isOpen, onClose }) => {
       <motion.div 
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="bg-[#022C22] border border-white/10 rounded-[40px] p-8 w-full max-w-lg shadow-2xl relative"
+        className="bg-[#050B18] border border-white/10 rounded-[40px] p-8 w-full max-w-lg shadow-2xl relative"
       >
         <button onClick={onClose} className="absolute top-6 right-6 text-white/20 hover:text-white z-10">
           <X className="w-8 h-8" />
         </button>
         <h2 className="text-2xl font-black text-white mb-8 text-center">{t('checkin.scanner_modal.title', 'ماسح الـ QR الذكي')}</h2>
         <div id="reader" className="overflow-hidden rounded-[30px] border-4 border-white/5" />
-        <p className="text-emerald-400/40 text-center mt-6 text-xs font-bold uppercase tracking-widest">{t('checkin.scanner_modal.hint', 'ضع الرمز داخل المربع للمسح')}</p>
+        <p className="text-brand-secondary/40 text-center mt-6 text-xs font-bold uppercase tracking-widest">{t('checkin.scanner_modal.hint', 'ضع الرمز داخل المربع للمسح')}</p>
       </motion.div>
     </div>
   );

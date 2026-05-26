@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../hooks/useAuth';
 import {
@@ -72,16 +72,16 @@ const Sidebar = ({ activePath }) => {
   ];
 
   return (
-    <aside className="w-72 h-screen bg-[#022C22] border-r border-white/10 flex flex-col sticky top-0">
+    <aside className="w-72 h-screen bg-[#050B18] border-r border-white/10 flex flex-col sticky top-0">
       {/* Logo Section */}
       <div className="p-8">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-900/40">
-            <span className="text-emerald-950 font-bold text-xl">D</span>
+            <span className="text-brand-dark font-bold text-xl">D</span>
           </div>
           <div>
             <h2 className="text-white font-bold text-lg leading-tight">{t('common.app_name', 'ديوان')}</h2>
-            <p className="text-emerald-400/50 text-xs">{t('common.app_subtitle', 'منصة تسيير الفعاليات')}</p>
+            <p className="text-brand-secondary/50 text-xs">{t('common.app_subtitle', 'منصة تسيير الفعاليات')}</p>
           </div>
         </div>
       </div>
@@ -89,7 +89,7 @@ const Sidebar = ({ activePath }) => {
       {/* Navigation Links */}
       <nav className="flex-1 px-4 py-4 space-y-2 overflow-y-auto custom-scrollbar">
 
-        <div className="px-4 mb-3 text-[10px] uppercase tracking-widest text-emerald-500/50 font-bold">{t('common.sidebar.events_group')}</div>
+        <div className="px-4 mb-3 text-[10px] uppercase tracking-widest text-brand-primary/50 font-bold">{t('common.sidebar.events_group')}</div>
         {menuItems.map((item) => {
           const isActive = activePath === item.path;
           return (
@@ -99,8 +99,8 @@ const Sidebar = ({ activePath }) => {
               className={cn(
                 "flex items-center gap-4 px-4 py-3 rounded-2xl transition-all group",
                 isActive
-                  ? "bg-emerald-600/20 text-emerald-400 border border-emerald-600/30"
-                  : "text-emerald-100/40 hover:text-emerald-100 hover:bg-white/5"
+                  ? "bg-brand-primary/20 text-brand-secondary border border-brand-primary/30"
+                  : "text-brand-secondary/40 hover:text-brand-secondary hover:bg-white/5"
               )}
             >
               <item.icon className={cn("w-5 h-5", isActive ? "text-amber-500" : "group-hover:text-amber-500")} />
@@ -114,7 +114,7 @@ const Sidebar = ({ activePath }) => {
 
         {/* Engagement Section */}
         <div className="mt-6 pt-6 border-t border-white/5">
-          <div className="px-4 mb-3 text-[10px] uppercase tracking-widest text-emerald-500/50 font-bold">{t('common.sidebar.engagement_group')}</div>
+          <div className="px-4 mb-3 text-[10px] uppercase tracking-widest text-brand-primary/50 font-bold">{t('common.sidebar.engagement_group')}</div>
           {engagementItems.map((item) => {
             const isActive = activePath === item.path;
             return (
@@ -124,8 +124,8 @@ const Sidebar = ({ activePath }) => {
                 className={cn(
                   "flex items-center gap-4 px-4 py-3 rounded-2xl transition-all group",
                   isActive
-                    ? "bg-emerald-600/20 text-emerald-400 border border-emerald-600/30"
-                    : "text-emerald-100/40 hover:text-emerald-100 hover:bg-white/5"
+                    ? "bg-brand-primary/20 text-brand-secondary border border-brand-primary/30"
+                    : "text-brand-secondary/40 hover:text-brand-secondary hover:bg-white/5"
                 )}
               >
                 <item.icon className={cn("w-5 h-5", isActive ? "text-amber-500" : "group-hover:text-amber-500")} />
@@ -137,7 +137,7 @@ const Sidebar = ({ activePath }) => {
 
         {/* Technical Section */}
         <div className="mt-6 pt-6 border-t border-white/5">
-          <div className="px-4 mb-3 text-[10px] uppercase tracking-widest text-emerald-500/50 font-bold">{t('common.sidebar.technical_group')}</div>
+          <div className="px-4 mb-3 text-[10px] uppercase tracking-widest text-brand-primary/50 font-bold">{t('common.sidebar.technical_group')}</div>
           {technicalItems.map((item) => {
             const isActive = activePath === item.path;
             return (
@@ -147,8 +147,8 @@ const Sidebar = ({ activePath }) => {
                 className={cn(
                   "flex items-center gap-4 px-4 py-3 rounded-2xl transition-all group",
                   isActive
-                    ? "bg-emerald-600/20 text-emerald-400 border border-emerald-600/30"
-                    : "text-emerald-100/40 hover:text-emerald-100 hover:bg-white/5"
+                    ? "bg-brand-primary/20 text-brand-secondary border border-brand-primary/30"
+                    : "text-brand-secondary/40 hover:text-brand-secondary hover:bg-white/5"
                 )}
               >
                 <item.icon className={cn("w-5 h-5", isActive ? "text-amber-500" : "group-hover:text-amber-500")} />

@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { motion } from 'framer-motion';
 import { Monitor, Shield, Zap } from 'lucide-react';
 import { useLang } from '../../utils/useLang';
@@ -51,7 +51,7 @@ const DashboardShowcase = () => {
             className="absolute -bottom-10 end-[-40px] glass-card p-6 rounded-3xl shadow-2xl border border-brand-border hidden md:flex items-center gap-6 z-20"
           >
             <div className="flex items-center gap-4 pe-6 border-e border-white/10">
-              <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+              <div className="w-10 h-10 rounded-full bg-brand-primary/10 flex items-center justify-center text-brand-primary">
                 <Zap size={20} />
               </div>
               <div>

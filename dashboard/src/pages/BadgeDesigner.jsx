@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+﻿import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import DashboardLayout from '../layouts/DashboardLayout';
 import BadgeCanvas from '../components/designer/BadgeCanvas';
 import LeftPanel, { BADGE_ELEMENTS, BADGE_PRESETS } from '../components/designer/LeftPanel';
@@ -27,7 +27,7 @@ function setNestedProp(obj, path, value) {
 
 // ── مكوّن إجراءات الرأس ───────────────────────────────────────────
 const Header = ({ templateName, setTemplateName, onSave, onExport, saving, exporting, canUndo, canRedo, onUndo, onRedo }) => (
-  <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 24px', background: '#0A3D2B', borderBottom: '1px solid rgba(212,175,55,0.15)', direction: 'rtl', fontFamily: 'Cairo' }}>
+  <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 24px', background: '#0D1527', borderBottom: '1px solid rgba(212,175,55,0.15)', direction: 'rtl', fontFamily: 'Cairo' }}>
     <div style={{ fontSize: 18, fontWeight: '900', color: '#D4AF37' }}>مصمم الشارات</div>
     <input
       value={templateName}
@@ -52,7 +52,7 @@ const Header = ({ templateName, setTemplateName, onSave, onExport, saving, expor
     <button
       onClick={onSave}
       disabled={saving}
-      style={{ background: '#D4AF37', color: '#022C22', border: 'none', borderRadius: 8, padding: '7px 22px', cursor: 'pointer', fontFamily: 'Cairo', fontWeight: '900', fontSize: 13 }}
+      style={{ background: '#D4AF37', color: '#050B18', border: 'none', borderRadius: 8, padding: '7px 22px', cursor: 'pointer', fontFamily: 'Cairo', fontWeight: '900', fontSize: 13 }}
     >
       {saving ? 'جاري الحفظ...' : '💾 حفظ القالب'}
     </button>
@@ -63,7 +63,7 @@ const Header = ({ templateName, setTemplateName, onSave, onExport, saving, expor
 const BadgeDesigner = () => {
   const { selectedEventId: eventId } = useEvent();
   const [elements, setElements] = useState([]);
-  const [background, setBackground] = useState({ color: '#022C22' });
+  const [background, setBackground] = useState({ color: '#050B18' });
   const [selectedId, setSelectedId] = useState(null);
   const [templateName, setTemplateName] = useState('قالب شارة جديد');
   const [templateId, setTemplateId] = useState(null);
@@ -95,7 +95,7 @@ const BadgeDesigner = () => {
           setTemplateName(t.name);
           const design = JSON.parse(t.design_json || '{}');
           const loadedElements = design.elements || [];
-          const loadedBackground = design.background || { color: '#022C22' };
+          const loadedBackground = design.background || { color: '#050B18' };
           setElements(loadedElements);
           setBackground(loadedBackground);
           // إعادة ضبط سجل التاريخ بشكل صحيح
@@ -274,7 +274,7 @@ const BadgeDesigner = () => {
   return (
     <DashboardLayout activePath="/dashboard/designer/badge">
       <Toaster position="top-center" />
-      <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 80px)', background: '#022C22', borderRadius: 20, overflow: 'hidden', border: '1px solid rgba(212,175,55,0.15)' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 80px)', background: '#050B18', borderRadius: 20, overflow: 'hidden', border: '1px solid rgba(212,175,55,0.15)' }}>
         
         <Header
           templateName={templateName}

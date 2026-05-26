@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Webhook, Plus, ExternalLink, Activity, ToggleLeft as Toggle, RotateCcw, AlertCircle, CheckCircle } from "lucide-react";
 import { Button } from "./ui/Button";
@@ -51,7 +51,7 @@ const WebhooksManager = () => {
                   <div className="flex-1 min-w-0">
                     <h3 className="text-xl font-black text-white truncate max-w-2xl mb-3 font-mono">{hook.url}</h3>
                     <div className="flex flex-wrap items-center gap-4 mt-2">
-                      <Badge variant="outline" className={`rounded-full border-0 px-5 py-1.5 font-bold text-xs ${hook.status === 'stable' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}`}>
+                      <Badge variant="outline" className={`rounded-full border-0 px-5 py-1.5 font-bold text-xs ${hook.status === 'stable' ? 'bg-brand-primary/10 text-brand-primary' : 'bg-amber-500/10 text-amber-500'}`}>
                         {hook.status === 'stable' ? <CheckCircle className="w-3 h-3 ml-2" /> : <AlertCircle className="w-3 h-3 ml-2" />}
                         {hook.status === 'stable' ? t('dev_portal.webhooks.status_stable', 'مستقر') : t('dev_portal.webhooks.status_warning', 'تحذير')}
                       </Badge>

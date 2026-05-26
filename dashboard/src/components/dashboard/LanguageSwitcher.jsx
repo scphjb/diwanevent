@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+﻿import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Globe, ChevronDown, Check } from 'lucide-react';
 import { cn } from '../../utils/cn';
@@ -39,9 +39,9 @@ const LanguageSwitcher = () => {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-all text-emerald-400 group"
+        className="flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-all text-brand-secondary group"
       >
-        <div className="p-1 rounded-lg bg-emerald-500/10 text-emerald-500 group-hover:bg-emerald-500 group-hover:text-white transition-all">
+        <div className="p-1 rounded-lg bg-brand-primary/10 text-brand-primary group-hover:bg-brand-primary group-hover:text-white transition-all">
           <Globe className="w-4 h-4" />
         </div>
         <span className="text-sm font-bold text-white hidden md:block">
@@ -59,7 +59,7 @@ const LanguageSwitcher = () => {
             className="absolute top-full mt-3 right-0 w-56 bg-[#032e24] border border-white/10 rounded-[24px] shadow-2xl py-3 z-[100] backdrop-blur-xl"
           >
             <div className="px-4 mb-2">
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500/50">{t('common.lang_switcher.choose_lang', 'اختر اللغة')}</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-primary/50">{t('common.lang_switcher.choose_lang', 'اختر اللغة')}</p>
             </div>
             {languages.map((lang) => (
               <button

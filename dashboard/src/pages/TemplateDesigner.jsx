@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -122,17 +122,17 @@ const BadgePreview = ({ config, zoom, eventName, lang = 'ar' }) => {
                  style={{ color: getContrastColor(bodyBg) }}
                >
                   <div className="flex flex-col items-center gap-1">
-                     <Calendar className={cn("w-4 h-4 mb-1", getContrastColor(bodyBg) === '#FFFFFF' ? "text-white" : "text-emerald-600")} />
+                     <Calendar className={cn("w-4 h-4 mb-1", getContrastColor(bodyBg) === '#FFFFFF' ? "text-white" : "text-brand-primary")} />
                      <span>20 - 22 مايو 2026</span>
                   </div>
                   <div className="flex flex-col items-center gap-1">
-                     <MapPin className={cn("w-4 h-4 mb-1", getContrastColor(bodyBg) === '#FFFFFF' ? "text-white" : "text-emerald-600")} />
+                     <MapPin className={cn("w-4 h-4 mb-1", getContrastColor(bodyBg) === '#FFFFFF' ? "text-white" : "text-brand-primary")} />
                      <span>الجزائر، فندق الأوراسي</span>
                   </div>
                </div>
             </div>
              <div className={cn("flex items-center justify-between px-8 border-t border-black/5", isCR80 ? "h-[20%]" : "h-[15%]")} style={{ backgroundColor: footerBg }}>
-                <QrCode className={cn(isCR80 ? "w-12 h-12" : "w-16 h-16", "text-emerald-950/20")} />
+                <QrCode className={cn(isCR80 ? "w-12 h-12" : "w-16 h-16", "text-brand-dark/20")} />
                 
                 <div 
                   className={cn("text-white font-black uppercase rounded-lg px-6 flex items-center justify-center", isCR80 ? "h-6 text-[7px]" : "h-10 text-[10px]")} 
@@ -210,11 +210,11 @@ const BadgePreview = ({ config, zoom, eventName, lang = 'ar' }) => {
                     style={{ color: getContrastColor(bodyBg) }}
                   >
                      <div className="flex flex-col items-start gap-1">
-                        <Calendar className="w-4 h-4 text-emerald-600 mb-1" />
+                        <Calendar className="w-4 h-4 text-brand-primary mb-1" />
                         <span>20 - 22 مايو 2026</span>
                      </div>
                      <div className="flex flex-col items-start gap-1">
-                        <MapPin className="w-4 h-4 text-emerald-600 mb-1" />
+                        <MapPin className="w-4 h-4 text-brand-primary mb-1" />
                         <span>الجزائر، فندق الأوراسي</span>
                      </div>
                   </div>
@@ -236,7 +236,7 @@ const getContrastColor = (hexColor) => {
   const g = parseInt(hexColor.slice(3, 5), 16);
   const b = parseInt(hexColor.slice(5, 7), 16);
   const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
-  return (yiq >= 128) ? '#022C22' : '#FFFFFF';
+  return (yiq >= 128) ? '#050B18' : '#FFFFFF';
 };
 
 const TemplateDesigner = () => {
@@ -248,7 +248,7 @@ const TemplateDesigner = () => {
   const [config, setConfig] = useState({
     activeStyle: 'royal',
     pageSize: 'A6',
-    headerBg: '#022C22',
+    headerBg: '#050B18',
     bodyBg: '#FFFFFF',
     footerBg: '#F8FAFC',
     accentColor: '#D4AF37'
@@ -298,15 +298,15 @@ const TemplateDesigner = () => {
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-12">
         <div className="space-y-3">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center shadow-lg">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-primary to-brand-primary flex items-center justify-center shadow-lg">
               <Sparkles className="text-white w-8 h-8" />
             </div>
             <div>
               <h1 className="text-4xl font-black text-white tracking-tight flex items-center gap-3">
                 Identity Studio
-                <span className="text-[10px] bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full text-emerald-400 font-bold uppercase tracking-widest">Official v4.0</span>
+                <span className="text-[10px] bg-brand-primary/10 border border-brand-primary/20 px-3 py-1 rounded-full text-brand-secondary font-bold uppercase tracking-widest">Official v4.0</span>
               </h1>
-              <p className="text-emerald-400/40 font-medium text-sm mt-1">تنسيق الهويات الرسمية والبعثات الدبلوماسية</p>
+              <p className="text-brand-secondary/40 font-medium text-sm mt-1">تنسيق الهويات الرسمية والبعثات الدبلوماسية</p>
             </div>
           </div>
         </div>
@@ -314,9 +314,9 @@ const TemplateDesigner = () => {
         <button 
           onClick={handleSave}
           disabled={saving}
-          className="h-16 px-10 bg-emerald-500 text-emerald-950 font-black rounded-[24px] shadow-2xl shadow-emerald-500/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-3 group"
+          className="h-16 px-10 bg-brand-primary text-brand-dark font-black rounded-[24px] shadow-2xl shadow-brand-primary/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center gap-3 group"
         >
-          {saving ? <div className="w-5 h-5 border-2 border-emerald-950 border-t-transparent animate-spin rounded-full" /> : <Save className="w-5 h-5" />}
+          {saving ? <div className="w-5 h-5 border-2 border-brand-dark border-t-transparent animate-spin rounded-full" /> : <Save className="w-5 h-5" />}
           تطبيق التغييرات
         </button>
       </div>
@@ -335,7 +335,7 @@ const TemplateDesigner = () => {
                   onClick={() => setConfig(prev => ({ ...prev, activeStyle: style.id }))}
                   className={cn(
                     "flex flex-col items-center gap-3 p-5 rounded-[28px] border-2 transition-all",
-                    config.activeStyle === style.id ? "bg-white/10 border-emerald-500 text-emerald-400" : "bg-white/5 border-white/5 text-white/40 hover:bg-white/10"
+                    config.activeStyle === style.id ? "bg-white/10 border-brand-primary text-brand-secondary" : "bg-white/5 border-white/5 text-white/40 hover:bg-white/10"
                   )}
                 >
                   <style.icon className="w-6 h-6" />
@@ -347,7 +347,7 @@ const TemplateDesigner = () => {
 
           <section className="bg-white/5 border border-white/10 rounded-[40px] p-8 space-y-8">
             <h3 className="text-[10px] font-black text-white/30 uppercase tracking-widest flex items-center gap-3">
-              <Palette className="w-4 h-4 text-emerald-400" />
+              <Palette className="w-4 h-4 text-brand-secondary" />
               تخصيص الألوان الرسمية
             </h3>
             
@@ -383,7 +383,7 @@ const TemplateDesigner = () => {
                    onClick={() => setConfig(prev => ({ ...prev, pageSize: size }))}
                    className={cn(
                      "flex-1 h-14 rounded-2xl font-black text-[11px] uppercase transition-all",
-                     config.pageSize === size ? "bg-white text-emerald-950 shadow-xl" : "bg-white/5 text-white/40 hover:text-white"
+                     config.pageSize === size ? "bg-white text-brand-dark shadow-xl" : "bg-white/5 text-white/40 hover:text-white"
                    )}
                  >
                    {size}

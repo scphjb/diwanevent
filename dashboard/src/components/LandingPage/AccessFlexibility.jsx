@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { motion } from 'framer-motion';
 import { Smartphone, Scan, Monitor, UserCheck, ShieldCheck } from 'lucide-react';
 import { useLang } from '../../utils/useLang';
@@ -19,7 +19,7 @@ const AccessFlexibility = () => {
       desc: L({ ar: "تكامل مباشر مع الماسحات الضوئية اللاسلكية للسرعة القصوى.", en: "Direct integration with wireless scanners for maximum speed.", fr: "Intégration directe avec les scanners sans fil pour une vitesse maximale.", es: "Integración directa con escáneres inalámbricos para máxima velocidad." }),
       accuracy: "100%",
       icon: Scan,
-      color: "from-emerald-500/20 to-teal-500/20"
+      color: "from-brand-primary/20 to-teal-500/20"
     },
     {
       title: L({ ar: "خدمة ذاتية", en: "Self-service Kiosk", fr: "Borne Libre-service", es: "Quiosco Autoservicio" }),

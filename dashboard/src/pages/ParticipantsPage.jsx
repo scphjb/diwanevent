@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import DashboardLayout from '../layouts/DashboardLayout';
 import { 
   Users, 
@@ -368,7 +368,7 @@ const ParticipantsPage = () => {
   if (loading) {
     return (
       <DashboardLayout activePath="/dashboard/participants">
-        <div className="p-20 text-center text-emerald-400 animate-pulse">
+        <div className="p-20 text-center text-brand-secondary animate-pulse">
           {t('common.loading', 'جاري تحميل قائمة المشاركين...')}
         </div>
       </DashboardLayout>
@@ -383,7 +383,7 @@ const ParticipantsPage = () => {
             <AlertTriangle className="w-8 h-8 text-amber-500" />
           </div>
           <h3 className="text-white font-bold text-xl mb-2">{t('participants.no_event_selected', 'لم يتم اختيار فعالية')}</h3>
-          <p className="text-emerald-400/30">{t('participants.select_event_desc', 'يرجى اختيار فعالية من القائمة العلوية للبدء.')}</p>
+          <p className="text-brand-secondary/30">{t('participants.select_event_desc', 'يرجى اختيار فعالية من القائمة العلوية للبدء.')}</p>
         </div>
       </DashboardLayout>
     );
@@ -395,7 +395,7 @@ const ParticipantsPage = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
         <div>
           <h1 className="text-4xl font-bold text-white mb-2">{t('participants.title')}</h1>
-          <p className="text-emerald-400/50 flex items-center gap-2">
+          <p className="text-brand-secondary/50 flex items-center gap-2">
             <Users className="w-4 h-4" />
             {t('participants.total_registered')}: {totalCount}
           </p>
@@ -404,10 +404,10 @@ const ParticipantsPage = () => {
         <div className="flex items-center gap-3">
           <Button 
             variant="outline" 
-            className="flex items-center gap-2 border-emerald-500/50 text-white bg-emerald-600/20 hover:bg-emerald-600 hover:text-white"
+            className="flex items-center gap-2 border-brand-primary/50 text-white bg-brand-primary/20 hover:bg-brand-primary hover:text-white"
             onClick={handleBulkActivate}
           >
-            <Zap className="w-4 h-4 text-emerald-400" />
+            <Zap className="w-4 h-4 text-brand-secondary" />
             {t('common.bulk_activate', 'تفعيل الكل')}
           </Button>
           <Button 
@@ -420,7 +420,7 @@ const ParticipantsPage = () => {
           </Button>
           <Button 
             variant="outline" 
-            className="flex items-center gap-2 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10"
+            className="flex items-center gap-2 border-brand-primary/30 text-brand-secondary hover:bg-brand-primary/10"
             onClick={handleBulkPrint}
           >
             <Printer className="w-4 h-4" />
@@ -453,7 +453,7 @@ const ParticipantsPage = () => {
       {/* Filters Section */}
       <div className="bg-white/5 border border-white/10 rounded-[32px] p-6 mb-8 flex flex-col lg:flex-row lg:items-center gap-6">
         <div className="flex-1 relative">
-          <Search className="absolute ltr:left-4 rtl:right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-emerald-400/30" />
+          <Search className="absolute ltr:left-4 rtl:right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-brand-secondary/30" />
           <Input 
             placeholder={t('participants.search_placeholder')} 
             className="ltr:pl-12 rtl:pr-12 bg-white/5 border-white/5 h-14"
@@ -463,7 +463,7 @@ const ParticipantsPage = () => {
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="flex bg-emerald-950/50 p-1.5 rounded-2xl border border-white/5">
+          <div className="flex bg-brand-dark/50 p-1.5 rounded-2xl border border-white/5">
             {[
               { id: 'all', label: t('common.all', 'الكل') },
               { id: 'checked_in', label: 'حاضر الآن (بالداخل)' },
@@ -476,8 +476,8 @@ const ParticipantsPage = () => {
                 className={cn(
                   "px-6 py-2 rounded-xl text-sm font-medium transition-all",
                   statusFilter === tab.id 
-                    ? "bg-emerald-600 text-white shadow-lg" 
-                    : "text-emerald-400/50 hover:text-emerald-400"
+                    ? "bg-brand-primary text-white shadow-lg" 
+                    : "text-brand-secondary/50 hover:text-brand-secondary"
                 )}
               >
                 {tab.label}
@@ -496,7 +496,7 @@ const ParticipantsPage = () => {
         <div className="overflow-x-auto">
           <table className="w-full ltr:text-left rtl:text-right">
             <thead>
-              <tr className="bg-white/5 text-emerald-400/50 text-xs uppercase tracking-widest border-b border-white/5">
+              <tr className="bg-white/5 text-brand-secondary/50 text-xs uppercase tracking-widest border-b border-white/5">
                 <th className="px-8 py-6 font-bold">{t('common.participants')}</th>
                 <th className="px-8 py-6 font-bold">{t('participants.organization', 'الجهة / المؤسسة')}</th>
                 <th className="px-8 py-6 font-bold">{t('participants.status')}</th>
@@ -523,7 +523,7 @@ const ParticipantsPage = () => {
                     >
                       <td className="px-8 py-6">
                         <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-full bg-emerald-600/20 flex items-center justify-center text-emerald-400 border border-emerald-500/20 group-hover:bg-amber-500/20 group-hover:text-amber-500 transition-all">
+                          <div className="w-10 h-10 rounded-full bg-brand-primary/20 flex items-center justify-center text-brand-secondary border border-brand-primary/20 group-hover:bg-amber-500/20 group-hover:text-amber-500 transition-all">
                             <Users className="w-5 h-5" />
                           </div>
                           <div>
@@ -533,19 +533,19 @@ const ParticipantsPage = () => {
                                 <AlertTriangle className="w-4 h-4 text-amber-500" title={t('participants.needs_review', 'بيانات تحتاج مراجعة')} />
                               )}
                             </div>
-                            <div className="text-emerald-400/30 text-xs">{p.order_num}</div>
+                            <div className="text-brand-secondary/30 text-xs">{p.order_num}</div>
                           </div>
                         </div>
                       </td>
                       <td className="px-8 py-6">
-                        <div className="text-emerald-100/70">{p.organization || '—'}</div>
-                        <div className="text-emerald-400/20 text-xs">{p.department || ''}</div>
+                        <div className="text-brand-secondary/70">{p.organization || '—'}</div>
+                        <div className="text-brand-secondary/20 text-xs">{p.department || ''}</div>
                       </td>
                       <td className="px-8 py-6">
                         <span className={cn(
                           "inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold",
                           p.check_in_time 
-                            ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" 
+                            ? "bg-brand-primary/10 text-brand-secondary border border-brand-primary/20" 
                             : p.payment_status === 'paid'
                               ? "bg-blue-500/10 text-blue-400 border border-blue-500/20"
                               : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
@@ -559,14 +559,14 @@ const ParticipantsPage = () => {
                           }
                         </span>
                       </td>
-                      <td className="px-8 py-6 font-mono text-sm text-emerald-400/50">
+                      <td className="px-8 py-6 font-mono text-sm text-brand-secondary/50">
                         {formatTime(p.check_in_time)}
                       </td>
                       <td className="px-8 py-6 text-center">
                         <div className="flex items-center justify-center gap-2">
                           <button 
                             onClick={() => handlePrint(p.id)}
-                            className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500 hover:text-white transition-all shadow-sm"
+                            className="p-2 rounded-xl bg-brand-primary/10 text-brand-secondary hover:bg-brand-primary hover:text-white transition-all shadow-sm"
                             title={t('common.print')}
                           >
                             <Printer className="w-5 h-5" />
@@ -581,7 +581,7 @@ const ParticipantsPage = () => {
                           <div className="relative">
                             <button 
                               onClick={(e) => handleMenuClick(e, p.id)}
-                              className="p-2 rounded-xl hover:bg-white/10 text-emerald-400/50 hover:text-white transition-all"
+                              className="p-2 rounded-xl hover:bg-white/10 text-brand-secondary/50 hover:text-white transition-all"
                             >
                               <MoreVertical className="w-5 h-5" />
                             </button>
@@ -593,12 +593,12 @@ const ParticipantsPage = () => {
                                   exit={{ opacity: 0, scale: 0.95 }}
                                   transition={{ duration: 0.1 }}
                                   onClick={e => e.stopPropagation()}
-                                  className="absolute left-0 mt-2 w-48 bg-[#022c22] border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden py-2"
+                                  className="absolute left-0 mt-2 w-48 bg-[#050B18] border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden py-2"
                                 >
                                   {!p.check_in_time ? (
                                     <button 
                                       onClick={() => handleManualCheckIn(p.id)}
-                                      className="w-full text-right px-4 py-3 text-sm text-emerald-400 font-bold hover:bg-emerald-500/10 flex items-center gap-3 transition-colors"
+                                      className="w-full text-right px-4 py-3 text-sm text-brand-secondary font-bold hover:bg-brand-primary/10 flex items-center gap-3 transition-colors"
                                     >
                                       <CheckCircle className="w-4 h-4" />
                                       {t('participants.check_in', 'تسجيل الحضور')}
@@ -614,7 +614,7 @@ const ParticipantsPage = () => {
                                   )}
                                   <button 
                                     onClick={() => handleEditClick(p)}
-                                    className="w-full text-right px-4 py-3 text-sm text-emerald-300 font-bold hover:bg-emerald-500/10 flex items-center gap-3 transition-colors"
+                                    className="w-full text-right px-4 py-3 text-sm text-brand-secondary font-bold hover:bg-brand-primary/10 flex items-center gap-3 transition-colors"
                                   >
                                     <Edit className="w-4 h-4" />
                                     {t('participants.edit_participant', 'تعديل البيانات')}
@@ -642,20 +642,20 @@ const ParticipantsPage = () => {
           {!loading && filteredParticipants.length === 0 && (
             <div className="p-20 text-center">
               <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Search className="w-8 h-8 text-emerald-400/20" />
+                <Search className="w-8 h-8 text-brand-secondary/20" />
               </div>
               <h3 className="text-white font-bold text-xl mb-2">{t('participants.no_results')}</h3>
-              <p className="text-emerald-400/30">{t('participants.check_filters')}</p>
+              <p className="text-brand-secondary/30">{t('participants.check_filters')}</p>
             </div>
           )}
         </div>
         
         {/* Pagination Placeholder */}
-        <div className="p-6 bg-white/5 border-t border-white/5 flex items-center justify-between text-sm text-emerald-400/30 font-medium">
+        <div className="p-6 bg-white/5 border-t border-white/5 flex items-center justify-between text-sm text-brand-secondary/30 font-medium">
           <div>{t('participants.viewing', { count: filteredParticipants.length, total: totalCount })}</div>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" disabled>{t('common.previous', 'السابق')}</Button>
-            <Button variant="outline" size="sm" className="border-emerald-500/50 text-emerald-400">1</Button>
+            <Button variant="outline" size="sm" className="border-brand-primary/50 text-brand-secondary">1</Button>
             <Button variant="outline" size="sm">{t('common.next', 'التالي')}</Button>
           </div>
         </div>
@@ -668,21 +668,21 @@ const ParticipantsPage = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-emerald-950/90 backdrop-blur-xl"
+              className="absolute inset-0 bg-brand-dark/90 backdrop-blur-xl"
               onClick={() => setShowMappingModal(false)}
             />
             <motion.div 
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="bg-[#022c22] border border-white/10 w-full max-w-2xl rounded-[40px] shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh]"
+              className="bg-[#050B18] border border-white/10 w-full max-w-2xl rounded-[40px] shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh]"
             >
               <div className="p-8 border-b border-white/5 shrink-0">
                 <h2 className="text-2xl font-black text-white flex items-center gap-3">
                   <FileUp className="text-amber-500" />
                   {t('participants.import_modal.title', 'ربط حقول الإكسيل')}
                 </h2>
-                <p className="text-emerald-400/40 text-sm mt-2">{t('participants.import_modal.subtitle', 'يرجى تحديد العمود المناسب لكل حقل في النظام لضمان دقة الاستيراد.')}</p>
+                <p className="text-brand-secondary/40 text-sm mt-2">{t('participants.import_modal.subtitle', 'يرجى تحديد العمود المناسب لكل حقل في النظام لضمان دقة الاستيراد.')}</p>
               </div>
 
               <div className="p-8 space-y-6 overflow-y-auto flex-1 custom-scrollbar">
@@ -696,13 +696,13 @@ const ParticipantsPage = () => {
                 ].map(field => (
                   <div key={field.id} className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center p-4 bg-white/5 rounded-2xl border border-white/5">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
-                        <field.icon className="w-5 h-5 text-emerald-400" />
+                      <div className="w-10 h-10 rounded-xl bg-brand-primary/10 flex items-center justify-center">
+                        <field.icon className="w-5 h-5 text-brand-secondary" />
                       </div>
                       <span className="font-bold text-white">{field.label}</span>
                     </div>
                     <select 
-                      className="bg-emerald-950 border border-white/10 rounded-xl h-12 px-4 outline-none text-emerald-400 font-medium focus:border-emerald-500 transition-all"
+                      className="bg-brand-dark border border-white/10 rounded-xl h-12 px-4 outline-none text-brand-secondary font-medium focus:border-brand-primary transition-all"
                       value={mapping[field.id]}
                       onChange={(e) => setMapping({ ...mapping, [field.id]: e.target.value })}
                     >
@@ -744,27 +744,27 @@ const ParticipantsPage = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-emerald-950/90 backdrop-blur-xl"
+              className="absolute inset-0 bg-brand-dark/90 backdrop-blur-xl"
               onClick={() => setEditingParticipant(null)}
             />
             <motion.div 
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="bg-[#022c22] border border-white/10 w-full max-w-2xl rounded-[40px] shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh]"
+              className="bg-[#050B18] border border-white/10 w-full max-w-2xl rounded-[40px] shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh]"
             >
               <div className="p-8 border-b border-white/5 shrink-0">
                 <h2 className="text-2xl font-black text-white flex items-center gap-3">
-                  <Edit className="text-emerald-400 w-6 h-6" />
+                  <Edit className="text-brand-secondary w-6 h-6" />
                   {t('participants.edit_modal_title', 'تعديل بيانات المشارك')}
                 </h2>
-                <p className="text-emerald-400/40 text-sm mt-2">{t('participants.edit_modal_desc', 'قم بتحديث بيانات المشارك وتعديل معلوماته المسجلة في النظام.')}</p>
+                <p className="text-brand-secondary/40 text-sm mt-2">{t('participants.edit_modal_desc', 'قم بتحديث بيانات المشارك وتعديل معلوماته المسجلة في النظام.')}</p>
               </div>
 
               <form onSubmit={handleEditSubmit} className="flex flex-col flex-1 overflow-hidden">
                 <div className="p-8 space-y-6 overflow-y-auto flex-1 custom-scrollbar">
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-emerald-400">{t('participants.name', 'الاسم الكامل *')}</label>
+                    <label className="text-sm font-bold text-brand-secondary">{t('participants.name', 'الاسم الكامل *')}</label>
                     <Input 
                       required
                       placeholder="الاسم الكامل للمشارك"
@@ -776,7 +776,7 @@ const ParticipantsPage = () => {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-emerald-400">{t('participants.organization_label', 'الجهة / المؤسسة')}</label>
+                      <label className="text-sm font-bold text-brand-secondary">{t('participants.organization_label', 'الجهة / المؤسسة')}</label>
                       <Input 
                         placeholder="الجهة أو الكيان التابع له"
                         className="bg-white/5 border-white/10 h-12"
@@ -785,7 +785,7 @@ const ParticipantsPage = () => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-emerald-400">{t('participants.department_label', 'القسم / التخصص')}</label>
+                      <label className="text-sm font-bold text-brand-secondary">{t('participants.department_label', 'القسم / التخصص')}</label>
                       <Input 
                         placeholder="القسم أو التخصص الوظيفي"
                         className="bg-white/5 border-white/10 h-12"
@@ -797,7 +797,7 @@ const ParticipantsPage = () => {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-emerald-400">{t('participants.role_label', 'الصفة / الدور')}</label>
+                      <label className="text-sm font-bold text-brand-secondary">{t('participants.role_label', 'الصفة / الدور')}</label>
                       <Input 
                         placeholder="الصفة (VIP, متحدث, إلخ)"
                         className="bg-white/5 border-white/10 h-12"
@@ -806,7 +806,7 @@ const ParticipantsPage = () => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-emerald-400">{t('participants.seat_info_label', 'رقم المقعد')}</label>
+                      <label className="text-sm font-bold text-brand-secondary">{t('participants.seat_info_label', 'رقم المقعد')}</label>
                       <Input 
                         placeholder="رقم القاعة أو الكرسي"
                         className="bg-white/5 border-white/10 h-12"
@@ -818,7 +818,7 @@ const ParticipantsPage = () => {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-emerald-400">{t('participants.email', 'البريد الإلكتروني')}</label>
+                      <label className="text-sm font-bold text-brand-secondary">{t('participants.email', 'البريد الإلكتروني')}</label>
                       <Input 
                         type="email"
                         placeholder="البريد الإلكتروني للمشارك"
@@ -828,7 +828,7 @@ const ParticipantsPage = () => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-emerald-400">{t('participants.phone', 'رقم الهاتف')}</label>
+                      <label className="text-sm font-bold text-brand-secondary">{t('participants.phone', 'رقم الهاتف')}</label>
                       <Input 
                         placeholder="رقم الهاتف للتواصل"
                         className="bg-white/5 border-white/10 h-12"

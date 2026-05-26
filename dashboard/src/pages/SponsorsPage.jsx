@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import DashboardLayout from '../layouts/DashboardLayout';
 import { 
@@ -130,7 +130,7 @@ const SponsorsPage = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
         <div>
           <h1 className="text-4xl font-bold text-white mb-2">{t('sponsors.title', 'شركاء النجاح')}</h1>
-          <p className="text-emerald-400/50 flex items-center gap-2">
+          <p className="text-brand-secondary/50 flex items-center gap-2">
             <Heart className="w-4 h-4" />
             {t('sponsors.subtitle', 'إدارة الرعاة والشركاء الرسميين للفعالية')}
           </p>
@@ -164,7 +164,7 @@ const SponsorsPage = () => {
                     </span>
                     <span className={cn(
                       "px-2 py-0.5 rounded-full text-[10px] font-black uppercase border",
-                      (sponsor.type || 'sponsor') === 'media' ? "text-orange-400 border-orange-500/20 bg-orange-500/10" : "text-emerald-400 border-emerald-500/20 bg-emerald-500/10"
+                      (sponsor.type || 'sponsor') === 'media' ? "text-orange-400 border-orange-500/20 bg-orange-500/10" : "text-brand-secondary border-brand-primary/20 bg-brand-primary/10"
                     )}>
                       {(sponsor.type || 'sponsor') === 'media' ? t('sponsors.media', 'إعلامي') : t('sponsors.sponsor', 'راعي')}
                     </span>
@@ -180,7 +180,7 @@ const SponsorsPage = () => {
                 </div>
                 <h3 className="text-lg font-bold text-white mb-1">{sponsor.name}</h3>
                 {sponsor.website_url && (
-                  <a href={sponsor.website_url} target="_blank" rel="noreferrer" className="text-emerald-400/30 text-xs flex items-center gap-1 hover:text-emerald-400 transition-colors">
+                  <a href={sponsor.website_url} target="_blank" rel="noreferrer" className="text-brand-secondary/30 text-xs flex items-center gap-1 hover:text-brand-secondary transition-colors">
                     <ExternalLink className="w-3 h-3" />
                     {t('sponsors.website', 'الموقع الإلكتروني')}
                   </a>
@@ -193,19 +193,19 @@ const SponsorsPage = () => {
 
       {sponsors.length === 0 && !loading && (
         <div className="text-center py-20 bg-white/5 rounded-[32px] border border-white/10">
-          <Heart className="w-16 h-16 text-emerald-400/10 mx-auto mb-4" />
+          <Heart className="w-16 h-16 text-brand-secondary/10 mx-auto mb-4" />
           <h3 className="text-xl font-bold text-white">{t('sponsors.no_sponsors', 'لا يوجد رعاة حالياً')}</h3>
-          <p className="text-emerald-400/30 mt-2">{t('sponsors.no_sponsors_desc', 'ابدأ بإضافة أول شريك للفعالية.')}</p>
+          <p className="text-brand-secondary/30 mt-2">{t('sponsors.no_sponsors_desc', 'ابدأ بإضافة أول شريك للفعالية.')}</p>
         </div>
       )}
 
       {/* Add Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 backdrop-blur-xl bg-emerald-950/40">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 backdrop-blur-xl bg-brand-dark/40">
           <motion.div 
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-[#022C22] border border-white/10 rounded-[40px] p-10 w-full max-w-xl shadow-2xl"
+            className="bg-[#050B18] border border-white/10 rounded-[40px] p-10 w-full max-w-xl shadow-2xl"
           >
             <h2 className="text-2xl font-bold text-white mb-8">
               {editingSponsor ? t('sponsors.edit_title', 'تعديل بيانات الراعي') : t('sponsors.add_title', 'إضافة راع جديد')}
@@ -213,40 +213,40 @@ const SponsorsPage = () => {
             <div className="space-y-6">
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-emerald-100/50">{t('sponsors.modal.name', 'الاسم')}</label>
+                  <label className="text-sm font-bold text-brand-secondary/50">{t('sponsors.modal.name', 'الاسم')}</label>
                   <Input 
                     value={newSponsor.name} 
                     onChange={(e) => setNewSponsor(prev => ({ ...prev, name: e.target.value }))}
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-emerald-100/50">{t('sponsors.modal.tier', 'الفئة')}</label>
+                  <label className="text-sm font-bold text-brand-secondary/50">{t('sponsors.modal.tier', 'الفئة')}</label>
                   <select 
-                    className="w-full h-12 bg-white/5 border border-white/10 rounded-xl px-4 text-white outline-none focus:border-emerald-500"
+                    className="w-full h-12 bg-white/5 border border-white/10 rounded-xl px-4 text-white outline-none focus:border-brand-primary"
                     value={newSponsor.tier}
                     onChange={(e) => setNewSponsor(prev => ({ ...prev, tier: e.target.value }))}
                   >
-                    <option value="platinum" className="bg-[#022C22]">Platinum</option>
-                    <option value="gold" className="bg-[#022C22]">Gold</option>
-                    <option value="silver" className="bg-[#022C22]">Silver</option>
+                    <option value="platinum" className="bg-[#050B18]">Platinum</option>
+                    <option value="gold" className="bg-[#050B18]">Gold</option>
+                    <option value="silver" className="bg-[#050B18]">Silver</option>
                   </select>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-bold text-emerald-100/50">{t('sponsors.modal.type', 'نوع الشراكة')}</label>
+                <label className="text-sm font-bold text-brand-secondary/50">{t('sponsors.modal.type', 'نوع الشراكة')}</label>
                 <select 
-                  className="w-full h-12 bg-white/5 border border-white/10 rounded-xl px-4 text-white outline-none focus:border-emerald-500"
+                  className="w-full h-12 bg-white/5 border border-white/10 rounded-xl px-4 text-white outline-none focus:border-brand-primary"
                   value={newSponsor.type}
                   onChange={(e) => setNewSponsor(prev => ({ ...prev, type: e.target.value }))}
                 >
-                  <option value="sponsor" className="bg-[#022C22]">{t('sponsors.sponsor', 'راعي رسمي (Sponsor)')}</option>
-                  <option value="media" className="bg-[#022C22]">{t('sponsors.media', 'شريك إعلامي (Media Partner)')}</option>
+                  <option value="sponsor" className="bg-[#050B18]">{t('sponsors.sponsor', 'راعي رسمي (Sponsor)')}</option>
+                  <option value="media" className="bg-[#050B18]">{t('sponsors.media', 'شريك إعلامي (Media Partner)')}</option>
                 </select>
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-bold text-emerald-100/50">{t('sponsors.modal.website', 'الموقع الإلكتروني')}</label>
+                <label className="text-sm font-bold text-brand-secondary/50">{t('sponsors.modal.website', 'الموقع الإلكتروني')}</label>
                 <Input 
                   placeholder="https://..." 
                   value={newSponsor.website_url} 
@@ -255,23 +255,23 @@ const SponsorsPage = () => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-bold text-emerald-100/50">{t('sponsors.modal.logo', 'الشعار (Logo)')}</label>
+                <label className="text-sm font-bold text-brand-secondary/50">{t('sponsors.modal.logo', 'الشعار (Logo)')}</label>
                 <div 
                   className={cn(
                     "w-full h-32 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all",
-                    logoFile ? "border-emerald-500 bg-emerald-500/10" : "border-white/10 bg-white/5 hover:bg-white/10"
+                    logoFile ? "border-brand-primary bg-brand-primary/10" : "border-white/10 bg-white/5 hover:bg-white/10"
                   )}
                   onClick={() => document.getElementById('logo-upload').click()}
                 >
                   {logoFile ? (
-                    <div className="text-emerald-400 flex items-center gap-2">
+                    <div className="text-brand-secondary flex items-center gap-2">
                       <Check className="w-5 h-5" />
                       <span className="font-bold">{logoFile.name}</span>
                     </div>
                   ) : (
                     <>
-                      <ImageIcon className="w-8 h-8 text-emerald-400/20 mb-2" />
-                      <span className="text-xs text-emerald-400/30">{t('sponsors.modal.choose_logo', 'اختر صورة الشعار')}</span>
+                      <ImageIcon className="w-8 h-8 text-brand-secondary/20 mb-2" />
+                      <span className="text-xs text-brand-secondary/30">{t('sponsors.modal.choose_logo', 'اختر صورة الشعار')}</span>
                     </>
                   )}
                   <input 

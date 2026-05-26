@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, Check, Trash2, Info, AlertCircle, Award } from 'lucide-react';
@@ -11,7 +11,7 @@ const NotificationPanel = ({ isOpen, onClose, notifications = [], onClearAll }) 
   
   const getIcon = (level) => {
     switch (level) {
-      case 'success': return <Award className="text-emerald-500" size={18} />;
+      case 'success': return <Award className="text-brand-primary" size={18} />;
       case 'warning': return <AlertCircle className="text-amber-500" size={18} />;
       case 'error': return <AlertCircle className="text-red-500" size={18} />;
       default: return <Info className="text-blue-500" size={18} />;
@@ -29,16 +29,16 @@ const NotificationPanel = ({ isOpen, onClose, notifications = [], onClearAll }) 
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
             className="absolute top-full mt-3 left-0 w-96 bg-[#032e24] border border-white/10 rounded-[24px] shadow-2xl overflow-hidden z-[101] backdrop-blur-2xl"
           >
-            <div className="p-5 border-b border-white/5 flex items-center justify-between bg-emerald-500/5">
+            <div className="p-5 border-b border-white/5 flex items-center justify-between bg-brand-primary/5">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-                  <Bell className="text-emerald-500 w-4 h-4" />
+                <div className="w-8 h-8 rounded-lg bg-brand-primary/10 flex items-center justify-center">
+                  <Bell className="text-brand-primary w-4 h-4" />
                 </div>
                 <h3 className="text-md font-bold text-white">{t('common.notifications.title')}</h3>
               </div>
               <button 
                 onClick={onClearAll}
-                className="text-[10px] uppercase tracking-widest font-bold text-emerald-500/50 hover:text-emerald-500 transition-colors"
+                className="text-[10px] uppercase tracking-widest font-bold text-brand-primary/50 hover:text-brand-primary transition-colors"
               >
                 {t('common.notifications.clear_all')}
               </button>
@@ -49,13 +49,13 @@ const NotificationPanel = ({ isOpen, onClose, notifications = [], onClearAll }) 
                 notifications.map((notif) => (
                   <div key={notif.id} className="p-5 border-b border-white/5 hover:bg-white/5 transition-all group cursor-pointer relative overflow-hidden">
                     <div className="flex gap-4">
-                      <div className="shrink-0 w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center group-hover:bg-emerald-500/10 transition-colors">
+                      <div className="shrink-0 w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center group-hover:bg-brand-primary/10 transition-colors">
                         {getIcon(notif.level)}
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center justify-between mb-1">
-                          <span className="font-bold text-sm text-white group-hover:text-emerald-400 transition-colors">{notif.title}</span>
-                          <span className="text-[10px] text-emerald-400/30">{notif.time}</span>
+                          <span className="font-bold text-sm text-white group-hover:text-brand-secondary transition-colors">{notif.title}</span>
+                          <span className="text-[10px] text-brand-secondary/30">{notif.time}</span>
                         </div>
                         <p className="text-xs text-white/40 leading-relaxed line-clamp-2">{notif.message}</p>
                       </div>
@@ -78,7 +78,7 @@ const NotificationPanel = ({ isOpen, onClose, notifications = [], onClearAll }) 
                   navigate('/dashboard/profile?tab=alerts');
                   onClose();
                 }}
-                className="text-xs font-bold text-emerald-400 hover:text-emerald-300 transition-colors"
+                className="text-xs font-bold text-brand-secondary hover:text-brand-secondary transition-colors"
               >
                 {t('common.notifications.view_all')}
               </button>

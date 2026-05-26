@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 
 const ParticipantTable = ({ eventId }) => {
@@ -33,7 +33,7 @@ const ParticipantTable = ({ eventId }) => {
     return (
         <div className="overflow-x-auto shadow-xl rounded-2xl bg-white/10 backdrop-blur-md border border-white/20">
             <table className="w-full text-left border-collapse">
-                <thead className="bg-emerald-900/50 text-emerald-400">
+                <thead className="bg-brand-dark/50 text-brand-secondary">
                     <tr>
                         <th className="p-4 font-semibold uppercase text-sm">Full Name</th>
                         <th className="p-4 font-semibold uppercase text-sm">Council</th>
@@ -49,7 +49,7 @@ const ParticipantTable = ({ eventId }) => {
                             <td className="p-4 font-mono text-xs">{p.qr_code}</td>
                             <td className="p-4">
                                 <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                                    p.payment_status === 'paid' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'
+                                    p.payment_status === 'paid' ? 'bg-brand-primary/20 text-brand-secondary' : 'bg-yellow-500/20 text-yellow-400'
                                 }`}>
                                     {p.payment_status}
                                 </span>

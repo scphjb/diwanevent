@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import DraggableElement from './DraggableElement';
 
 const BadgeCanvas = ({ elements, background, selectedId, onSelect, onMove, onResize, canvasW = 533, canvasH = 378, eventLogo }) => {
@@ -10,7 +10,7 @@ const BadgeCanvas = ({ elements, background, selectedId, onSelect, onMove, onRes
       style={{
         width: canvasW,
         height: canvasH,
-        backgroundColor: background?.color || '#022C22',
+        backgroundColor: background?.color || '#050B18',
         backgroundImage: background?.image ? `url(${background.image})` : (background?.gradient || 'none'),
         backgroundSize: 'cover',
         backgroundPosition: 'center',

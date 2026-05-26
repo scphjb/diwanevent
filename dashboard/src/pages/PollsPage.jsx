@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import DashboardLayout from '../layouts/DashboardLayout';
 import { 
@@ -115,9 +115,9 @@ const PollsPage = () => {
     return (
       <DashboardLayout activePath="/dashboard/polls">
         <div className="text-center py-20 bg-white/5 border border-white/10 rounded-[32px] p-10 max-w-3xl mx-auto backdrop-blur-md">
-          <BarChart2 className="w-16 h-16 text-emerald-400/20 mx-auto mb-4" />
+          <BarChart2 className="w-16 h-16 text-brand-secondary/20 mx-auto mb-4" />
           <h3 className="text-2xl font-bold text-white mb-2">{t('polls.no_event_selected', 'لم يتم اختيار فعالية')}</h3>
-          <p className="text-emerald-400/30 text-sm max-w-md mx-auto">{t('polls.no_event_selected_desc', 'يرجى اختيار فعالية نشطة أو إنشاء فعالية جديدة لإدارة استطلاعات الرأي.')}</p>
+          <p className="text-brand-secondary/30 text-sm max-w-md mx-auto">{t('polls.no_event_selected_desc', 'يرجى اختيار فعالية نشطة أو إنشاء فعالية جديدة لإدارة استطلاعات الرأي.')}</p>
         </div>
       </DashboardLayout>
     );
@@ -128,7 +128,7 @@ const PollsPage = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
         <div>
           <h1 className="text-4xl font-bold text-white mb-2">{t('polls.title', 'استطلاعات الرأي')}</h1>
-          <p className="text-emerald-400/50 flex items-center gap-2">
+          <p className="text-brand-secondary/50 flex items-center gap-2">
             <BarChart2 className="w-4 h-4" />
             {t('polls.subtitle', 'التفاعل المباشر مع الحضور عبر التصويت اللحظي')}
           </p>
@@ -151,7 +151,7 @@ const PollsPage = () => {
               className="bg-white/5 border border-white/10 rounded-[32px] p-6 hover:bg-white/10 transition-all flex flex-col h-full"
             >
               <div className="flex justify-between items-start mb-6">
-                <div className="p-3 rounded-2xl bg-emerald-500/10 text-emerald-400">
+                <div className="p-3 rounded-2xl bg-brand-primary/10 text-brand-secondary">
                   <BarChart2 className="w-6 h-6" />
                 </div>
                 <div className="flex gap-2">
@@ -171,12 +171,12 @@ const PollsPage = () => {
                 {poll.options.map((opt, i) => (
                   <div key={i} className="space-y-1">
                     <div className="flex justify-between text-xs font-bold mb-1 px-1">
-                      <span className="text-emerald-100/70">{opt.text}</span>
+                      <span className="text-brand-secondary/70">{opt.text}</span>
                       <span className="text-amber-500">{opt.percent ?? 0}%</span>
                     </div>
                     <div className="h-2 bg-white/5 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-700"
+                        className="h-full bg-gradient-to-r from-brand-primary to-teal-400 transition-all duration-700"
                         style={{ width: `${opt.percent ?? 0}%` }}
                       />
                     </div>
@@ -185,7 +185,7 @@ const PollsPage = () => {
               </div>
 
               <div className="pt-6 border-t border-white/5 flex items-center justify-between">
-                <div className="flex items-center gap-2 text-emerald-400/30 text-xs font-bold">
+                <div className="flex items-center gap-2 text-brand-secondary/30 text-xs font-bold">
                   <Users className="w-4 h-4" />
                   <span>{poll.total_votes ?? 0} {t('polls.participant_count', 'مشارك')}</span>
                 </div>
@@ -195,8 +195,8 @@ const PollsPage = () => {
                     className={cn(
                       "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all",
                       poll.is_active 
-                        ? "bg-amber-500 text-emerald-950 hover:bg-amber-400 shadow-lg shadow-amber-500/20" 
-                        : "bg-white/5 text-emerald-400 hover:bg-emerald-500 hover:text-white border border-emerald-500/20"
+                        ? "bg-amber-500 text-brand-dark hover:bg-amber-400 shadow-lg shadow-amber-500/20" 
+                        : "bg-white/5 text-brand-secondary hover:bg-brand-primary hover:text-white border border-brand-primary/20"
                     )}
                   >
                     {poll.is_active ? (
@@ -209,7 +209,7 @@ const PollsPage = () => {
                   <span className={cn(
                     "px-3 py-1 rounded-full text-[10px] font-bold ml-2",
                     poll.is_active
-                      ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                      ? "bg-brand-primary/10 text-brand-secondary border border-brand-primary/20"
                       : "bg-white/5 text-white/30 border border-white/10"
                   )}>
                     {poll.is_active ? t('polls.active', 'نشط') : t('polls.ended', 'متوقف')}
@@ -223,24 +223,24 @@ const PollsPage = () => {
 
       {polls.length === 0 && !loading && (
         <div className="text-center py-20 bg-white/5 rounded-[32px] border border-white/10">
-          <BarChart2 className="w-16 h-16 text-emerald-400/10 mx-auto mb-4" />
+          <BarChart2 className="w-16 h-16 text-brand-secondary/10 mx-auto mb-4" />
           <h3 className="text-xl font-bold text-white">{t('polls.no_polls', 'لا توجد تصويتات حتى الآن')}</h3>
-          <p className="text-emerald-400/30 mt-2">{t('polls.start_desc', 'ابدأ بإشراك جمهورك عبر إنشاء أول تصويت.')}</p>
+          <p className="text-brand-secondary/30 mt-2">{t('polls.start_desc', 'ابدأ بإشراك جمهورك عبر إنشاء أول تصويت.')}</p>
         </div>
       )}
 
       {/* Add Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 backdrop-blur-xl bg-emerald-950/40">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 backdrop-blur-xl bg-brand-dark/40">
           <motion.div 
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-[#022C22] border border-white/10 rounded-[40px] p-10 w-full max-w-xl shadow-2xl"
+            className="bg-[#050B18] border border-white/10 rounded-[40px] p-10 w-full max-w-xl shadow-2xl"
           >
             <h2 className="text-2xl font-bold text-white mb-8">{t('polls.modal.title', 'إنشاء استطلاع')}</h2>
             <div className="space-y-6">
               <div className="space-y-2">
-                <label className="text-sm font-bold text-emerald-100/50">{t('polls.modal.question', 'السؤال')}</label>
+                <label className="text-sm font-bold text-brand-secondary/50">{t('polls.modal.question', 'السؤال')}</label>
                 <Input 
                   placeholder={t('polls.modal.question_placeholder', 'اكتب سؤالك هنا...')} 
                   value={newPoll.question} 
@@ -248,7 +248,7 @@ const PollsPage = () => {
                 />
               </div>
               <div className="space-y-4">
-                <label className="text-sm font-bold text-emerald-100/50">{t('polls.modal.options', 'الخيارات')}</label>
+                <label className="text-sm font-bold text-brand-secondary/50">{t('polls.modal.options', 'الخيارات')}</label>
                 {newPoll.options.map((opt, i) => (
                   <div key={i} className="flex gap-3">
                     <Input 
@@ -263,7 +263,7 @@ const PollsPage = () => {
                     <button onClick={() => removeOption(i)} className="p-3 text-red-400/50 hover:text-red-400"><Trash2 className="w-5 h-5"/></button>
                   </div>
                 ))}
-                <button onClick={addOption} className="text-emerald-400 font-bold text-sm flex items-center gap-2 hover:text-emerald-300">
+                <button onClick={addOption} className="text-brand-secondary font-bold text-sm flex items-center gap-2 hover:text-brand-secondary">
                   <Plus className="w-4 h-4" /> {t('polls.modal.add_option', 'إضافة خيار')}
                 </button>
               </div>

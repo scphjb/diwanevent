@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Play, Copy, Code, Layers, Search, Server } from "lucide-react";
 import { Button } from "./ui/Button";
@@ -20,9 +20,9 @@ const ApiPlayground = () => {
       {/* Sidebar: Endpoints List */}
       <div className="lg:col-span-4 space-y-6">
         <div className="relative group">
-          <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-emerald-500 transition-colors" />
+          <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-brand-primary transition-colors" />
           <input 
-            className="w-full bg-white/5 border border-white/5 rounded-2xl py-4 pr-12 pl-4 text-sm focus:border-emerald-500/50 transition-all outline-none text-white font-medium"
+            className="w-full bg-white/5 border border-white/5 rounded-2xl py-4 pr-12 pl-4 text-sm focus:border-brand-primary/50 transition-all outline-none text-white font-medium"
             placeholder={t('dev_portal.playground.search_placeholder', 'البحث عن نقطة نهاية...')}
           />
         </div>
@@ -32,10 +32,10 @@ const ApiPlayground = () => {
             <button
               key={ep.path}
               onClick={() => setSelectedPath(ep.path)}
-              className={`w-full text-right p-5 rounded-[2rem] border transition-all duration-500 group relative overflow-hidden ${selectedPath === ep.path ? 'bg-emerald-500/10 border-emerald-500/30 shadow-2xl shadow-emerald-900/20' : 'bg-white/5 border-white/5 hover:border-white/20'}`}
+              className={`w-full text-right p-5 rounded-[2rem] border transition-all duration-500 group relative overflow-hidden ${selectedPath === ep.path ? 'bg-brand-primary/10 border-brand-primary/30 shadow-2xl shadow-brand-dark/20' : 'bg-white/5 border-white/5 hover:border-white/20'}`}
             >
               <div className="flex items-center gap-3 mb-2 relative z-10">
-                <span className={`text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest ${ep.method === 'GET' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-indigo-500/20 text-indigo-400'}`}>
+                <span className={`text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest ${ep.method === 'GET' ? 'bg-brand-primary/20 text-brand-secondary' : 'bg-indigo-500/20 text-indigo-400'}`}>
                   {ep.method}
                 </span>
                 <span className="text-sm font-mono text-white/90 truncate">{ep.path}</span>
@@ -43,7 +43,7 @@ const ApiPlayground = () => {
               <p className="text-xs text-slate-500 font-bold pr-1 relative z-10">{ep.description}</p>
               
               {selectedPath === ep.path && (
-                <div className="absolute top-0 right-0 w-1 h-full bg-emerald-500" />
+                <div className="absolute top-0 right-0 w-1 h-full bg-brand-primary" />
               )}
             </button>
           ))}
@@ -57,19 +57,19 @@ const ApiPlayground = () => {
           <div className="p-10 border-b border-white/5 bg-white/[0.02]">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-6">
               <div className="flex items-center gap-4">
-                <div className="p-4 bg-emerald-500/10 rounded-2xl border border-emerald-500/20">
-                  <Server className="w-6 h-6 text-emerald-400" />
+                <div className="p-4 bg-brand-primary/10 rounded-2xl border border-brand-primary/20">
+                  <Server className="w-6 h-6 text-brand-secondary" />
                 </div>
                 <h3 className="text-2xl font-black text-white">{t('dev_portal.playground.request_details', 'تفاصيل الطلب')}</h3>
               </div>
-              <Button className="bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl px-10 py-6 h-auto font-black shadow-lg shadow-emerald-900/20 transition-all hover:scale-105">
+              <Button className="bg-brand-primary hover:bg-brand-primary text-white rounded-2xl px-10 py-6 h-auto font-black shadow-lg shadow-brand-dark/20 transition-all hover:scale-105">
                 <Play className="w-5 h-5 ml-2" /> {t('dev_portal.playground.run_request', 'تنفيذ الطلب')}
               </Button>
             </div>
 
             <div className="bg-black/40 p-6 rounded-[2rem] border border-white/10 font-mono text-sm flex items-center justify-between gap-4 group">
               <span className="text-slate-300 truncate">
-                <span className="text-emerald-500 font-black ml-2">{selectedEndpoint.method}</span> 
+                <span className="text-brand-primary font-black ml-2">{selectedEndpoint.method}</span> 
                 <span className="opacity-50">https://api.diwan.event</span>{selectedEndpoint.path}
               </span>
               <Button variant="ghost" size="icon" className="rounded-xl hover:bg-white/10 transition-colors shrink-0" onClick={() => navigator.clipboard.writeText(`https://api.diwan.event${selectedEndpoint.path}`)}>
@@ -82,9 +82,9 @@ const ApiPlayground = () => {
           <div className="p-10 grid grid-cols-1 xl:grid-cols-2 gap-10">
             <div className="space-y-4">
               <div className="flex items-center gap-3 text-xs font-black uppercase text-slate-500 tracking-[0.2em] px-2">
-                <Code className="w-4 h-4 text-emerald-500" /> {t('dev_portal.playground.curl_label', 'شفرة الاستدعاء (cURL)')}
+                <Code className="w-4 h-4 text-brand-primary" /> {t('dev_portal.playground.curl_label', 'شفرة الاستدعاء (cURL)')}
               </div>
-              <div className="bg-black/60 rounded-[2.5rem] p-8 font-mono text-xs text-emerald-400/90 h-[320px] overflow-auto border border-white/5 scrollbar-thin scrollbar-thumb-white/10">
+              <div className="bg-black/60 rounded-[2.5rem] p-8 font-mono text-xs text-brand-secondary/90 h-[320px] overflow-auto border border-white/5 scrollbar-thin scrollbar-thumb-white/10">
                 <pre className="leading-relaxed">
 {`curl -X ${selectedEndpoint.method} \\
   'https://api.diwan.event${selectedEndpoint.path}' \\

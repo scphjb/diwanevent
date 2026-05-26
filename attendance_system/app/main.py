@@ -157,7 +157,7 @@ async def get_dynamic_settings(db: AsyncSession, event_id: int = 1):
             "id": 1,
             "event_name": "Diwan Event Platform",
             "primary_color": "#D4AF37",
-            "secondary_color": "#022C22",
+            "secondary_color": "#050B18",
             "logo_url": "/static/img/logo.png",
         }
     return event

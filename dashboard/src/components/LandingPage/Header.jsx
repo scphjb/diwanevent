@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, LayoutDashboard, Globe, ChevronDown } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
@@ -66,8 +66,8 @@ const Header = () => {
               : <a key={link.name} href={link.href} className="text-sm font-medium text-brand-muted hover:text-brand-secondary transition-colors">{link.name}</a>
           ))}
           <div className="flex items-center gap-2 px-3 py-1 bg-brand-primary/10 rounded-full border border-brand-primary/20">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-            <span className="text-[10px] font-bold text-green-500 uppercase tracking-wider">
+            <div className="w-2 h-2 bg-brand-primary rounded-full animate-pulse" />
+            <span className="text-[10px] font-bold text-brand-primary uppercase tracking-wider">
               {L({ ar: 'مباشر الآن', en: 'Live Now', fr: 'En direct', es: 'En vivo' })}
             </span>
           </div>

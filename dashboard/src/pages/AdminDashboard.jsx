@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../layouts/DashboardLayout';
 import { Shield, Users, Calendar, CreditCard, Activity } from 'lucide-react';
 import api from '../services/api';
@@ -31,7 +31,7 @@ const AdminDashboard = () => {
     return (
       <DashboardLayout activePath="/dashboard/super-admin">
         <div className="flex items-center justify-center h-96">
-          <div className="text-emerald-400 animate-pulse font-bold text-xl">جاري تحميل بيانات النظام الشاملة...</div>
+          <div className="text-brand-secondary animate-pulse font-bold text-xl">جاري تحميل بيانات النظام الشاملة...</div>
         </div>
       </DashboardLayout>
     );
@@ -50,22 +50,22 @@ const AdminDashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
         <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
           <Users className="w-6 h-6 text-blue-400 mb-4" />
-          <div className="text-emerald-400/50 text-sm">إجمالي المنظمين</div>
+          <div className="text-brand-secondary/50 text-sm">إجمالي المنظمين</div>
           <div className="text-3xl font-bold">{stats?.total_organizers || 0}</div>
         </div>
         <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
-          <Calendar className="w-6 h-6 text-emerald-400 mb-4" />
-          <div className="text-emerald-400/50 text-sm">إجمالي الفعاليات</div>
+          <Calendar className="w-6 h-6 text-brand-secondary mb-4" />
+          <div className="text-brand-secondary/50 text-sm">إجمالي الفعاليات</div>
           <div className="text-3xl font-bold">{stats?.total_events || 0}</div>
         </div>
         <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
           <Activity className="w-6 h-6 text-purple-400 mb-4" />
-          <div className="text-emerald-400/50 text-sm">إجمالي المشاركين</div>
+          <div className="text-brand-secondary/50 text-sm">إجمالي المشاركين</div>
           <div className="text-3xl font-bold">{stats?.total_participants || 0}</div>
         </div>
         <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
           <CreditCard className="w-6 h-6 text-amber-400 mb-4" />
-          <div className="text-emerald-400/50 text-sm">اشتراكات نشطة</div>
+          <div className="text-brand-secondary/50 text-sm">اشتراكات نشطة</div>
           <div className="text-3xl font-bold">{stats?.active_subscriptions || 0}</div>
         </div>
       </div>
@@ -75,7 +75,7 @@ const AdminDashboard = () => {
           <h2 className="text-xl font-bold">إدارة المنظمين</h2>
         </div>
         <table className="w-full text-right">
-          <thead className="bg-white/5 text-emerald-400/50 text-xs uppercase tracking-widest">
+          <thead className="bg-white/5 text-brand-secondary/50 text-xs uppercase tracking-widest">
             <tr>
               <th className="px-8 py-4">المنظم</th>
               <th className="px-8 py-4">الفعاليات</th>
@@ -89,7 +89,7 @@ const AdminDashboard = () => {
               <tr key={org.id} className="hover:bg-white/5 transition-colors">
                 <td className="px-8 py-6">
                   <div className="font-bold">{org.full_name}</div>
-                  <div className="text-xs text-emerald-400/30">{org.email}</div>
+                  <div className="text-xs text-brand-secondary/30">{org.email}</div>
                 </td>
                 <td className="px-8 py-6">{org.event_count}</td>
                 <td className="px-8 py-6">
@@ -98,12 +98,12 @@ const AdminDashboard = () => {
                   </span>
                 </td>
                 <td className="px-8 py-6">
-                   <span className={`px-3 py-1 rounded-full text-xs font-bold border ${org.status ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
+                   <span className={`px-3 py-1 rounded-full text-xs font-bold border ${org.status ? 'bg-brand-primary/10 text-brand-secondary border-brand-primary/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
                     {org.status ? 'نشط' : 'معطل'}
                   </span>
                 </td>
                 <td className="px-8 py-6 text-center">
-                  <button className="text-sm text-emerald-400 hover:underline">تعديل</button>
+                  <button className="text-sm text-brand-secondary hover:underline">تعديل</button>
                 </td>
               </tr>
             ))}

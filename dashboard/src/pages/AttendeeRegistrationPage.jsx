@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -127,13 +127,13 @@ const AttendeeRegistrationPage = () => {
   const selectedRole = PARTICIPANT_ROLES.find(r => r.value === formData.role) || PARTICIPANT_ROLES[0];
 
   if (loading) return (
-    <div className="min-h-screen bg-[#022C22] flex items-center justify-center">
+    <div className="min-h-screen bg-[#050B18] flex items-center justify-center">
       <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full" />
     </div>
   );
 
   if (!event) return (
-    <div className="min-h-screen bg-[#022C22] flex items-center justify-center text-white">
+    <div className="min-h-screen bg-[#050B18] flex items-center justify-center text-white">
       <p>تعذر تحميل بيانات الفعالية</p>
     </div>
   );
@@ -141,7 +141,7 @@ const AttendeeRegistrationPage = () => {
   // ─── شاشة النجاح ─────────────────────────────────────────────────
   if (step === 'success' || step === 'otp_sent') {
     return (
-      <div className="min-h-screen bg-[#022C22] flex items-center justify-center p-6" dir="rtl">
+      <div className="min-h-screen bg-[#050B18] flex items-center justify-center p-6" dir="rtl">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -160,7 +160,7 @@ const AttendeeRegistrationPage = () => {
               ? 'تم تأكيد دعوتك المسبقة!' 
               : (step === 'otp_sent' ? 'تحقق من بريدك!' : 'تم التسجيل بنجاح!')}
           </h1>
-          <p className="text-emerald-400/60 mb-8 text-sm leading-relaxed">
+          <p className="text-brand-secondary/60 mb-8 text-sm leading-relaxed">
             {registrationResult?.merged
               ? (step === 'otp_sent' 
                   ? `لقد وجدنا بياناتك المسبقة. تم تحديثها وإرسال رمز التحقق إلى ${formData.email}`
@@ -203,9 +203,9 @@ const AttendeeRegistrationPage = () => {
   // ─── التسجيل مغلق: عرض المعلومات العامة فقط ─────────────────────────
   if (!event.registration_enabled) {
     return (
-      <div className="min-h-screen bg-[#022C22] text-white flex items-center justify-center px-6" dir="rtl">
+      <div className="min-h-screen bg-[#050B18] text-white flex items-center justify-center px-6" dir="rtl">
         <div className="fixed inset-0 pointer-events-none opacity-20">
-          <div className="absolute top-[-10%] right-[-10%] w-[60%] h-[60%] bg-emerald-500 blur-[120px] rounded-full" />
+          <div className="absolute top-[-10%] right-[-10%] w-[60%] h-[60%] bg-brand-primary blur-[120px] rounded-full" />
           <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-slate-700 blur-[100px] rounded-full" />
         </div>
         <motion.div
@@ -252,9 +252,9 @@ const AttendeeRegistrationPage = () => {
 
   // ─── نموذج التسجيل (التسجيل مفتوح) ──────────────────────────────────
   return (
-    <div className="min-h-screen bg-[#022C22] text-white selection:bg-amber-500 selection:text-emerald-950 overflow-x-hidden" dir="rtl">
+    <div className="min-h-screen bg-[#050B18] text-white selection:bg-amber-500 selection:text-brand-dark overflow-x-hidden" dir="rtl">
       <div className="fixed inset-0 pointer-events-none opacity-20">
-        <div className="absolute top-[-10%] right-[-10%] w-[60%] h-[60%] bg-emerald-500 blur-[120px] rounded-full" />
+        <div className="absolute top-[-10%] right-[-10%] w-[60%] h-[60%] bg-brand-primary blur-[120px] rounded-full" />
         <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-amber-500 blur-[100px] rounded-full" />
       </div>
 
@@ -265,7 +265,7 @@ const AttendeeRegistrationPage = () => {
           <motion.div initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} className="space-y-8 lg:sticky lg:top-12">
             <div className={`inline-flex items-center gap-3 px-4 py-2 rounded-full text-sm font-bold border ${
               event.registration_enabled
-                ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                ? 'bg-brand-primary/10 border-brand-primary/20 text-brand-secondary'
                 : 'bg-slate-700/40 border-slate-600/30 text-slate-400'
             }`}>
               <Sparkles size={16} />
@@ -306,7 +306,7 @@ const AttendeeRegistrationPage = () => {
           <motion.div initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} className="bg-white/5 backdrop-blur-3xl border border-white/10 p-8 md:p-10 rounded-[40px] shadow-2xl">
             <div className="mb-8">
               <h2 className="text-2xl font-black mb-2">بيانات التسجيل</h2>
-              <p className="text-emerald-400/40 text-sm font-bold">يرجى إكمال النموذج أدناه</p>
+              <p className="text-brand-secondary/40 text-sm font-bold">يرجى إكمال النموذج أدناه</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">
@@ -327,7 +327,7 @@ const AttendeeRegistrationPage = () => {
                     {showRolePicker && (
                       <motion.div
                         initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
-                        className="absolute top-full mt-2 w-full bg-[#0a3d2b] border border-white/10 rounded-2xl overflow-hidden z-50 shadow-2xl"
+                        className="absolute top-full mt-2 w-full bg-[#0D1527] border border-white/10 rounded-2xl overflow-hidden z-50 shadow-2xl"
                       >
                         {PARTICIPANT_ROLES.map(role => (
                           <button
@@ -406,9 +406,9 @@ const AttendeeRegistrationPage = () => {
                 <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400 text-sm font-bold text-center">{error}</div>
               )}
 
-              <Button type="submit" disabled={submitting || !event.registration_enabled} className="w-full h-16 bg-amber-500 hover:bg-amber-600 text-emerald-950 rounded-[24px] text-lg font-black flex items-center justify-center gap-3 shadow-2xl shadow-amber-500/20 mt-2">
+              <Button type="submit" disabled={submitting || !event.registration_enabled} className="w-full h-16 bg-amber-500 hover:bg-amber-600 text-brand-dark rounded-[24px] text-lg font-black flex items-center justify-center gap-3 shadow-2xl shadow-amber-500/20 mt-2">
                 {submitting
-                  ? <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} className="w-6 h-6 border-4 border-emerald-950/20 border-t-emerald-950 rounded-full" />
+                  ? <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} className="w-6 h-6 border-4 border-brand-dark/20 border-t-brand-dark rounded-full" />
                   : <>{event.require_payment ? '💳 تأكيد التسجيل والانتقال للدفع' : '🎟 إتمام التسجيل مجاناً'}</>
                 }
               </Button>

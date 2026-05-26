@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+﻿import React, { memo } from 'react';
 import { motion } from 'framer-motion';
 import { Play, ArrowRight, Zap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -7,7 +7,7 @@ import { useLang } from '../../utils/useLang';
 const DashboardMockup = memo(() => {
   const { L } = useLang();
   return (
-    <div className="bg-[#0A3D2B] rounded-2xl p-4 border border-[#D4AF37]/20 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.7)] transform rotate-2 hover:rotate-0 transition-transform duration-700">
+    <div className="bg-[#0D1527] rounded-2xl p-4 border border-[#D4AF37]/20 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.7)] transform rotate-2 hover:rotate-0 transition-transform duration-700">
     {/* Header bar */}
     <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/10">
       <div className="flex gap-2">
@@ -17,15 +17,15 @@ const DashboardMockup = memo(() => {
       </div>
       <div className="text-[10px] text-white/40 font-mono">Diwan Dashboard · Live</div>
       <div className="flex items-center gap-1">
-        <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"/>
-        <span className="text-[10px] text-green-400">{L({ ar: 'مباشر', en: 'Live', fr: 'Direct', es: 'En vivo' })}</span>
+        <div className="w-2 h-2 rounded-full bg-brand-secondary animate-pulse"/>
+        <span className="text-[10px] text-brand-secondary">{L({ ar: 'مباشر', en: 'Live', fr: 'Direct', es: 'En vivo' })}</span>
       </div>
     </div>
     
     {/* Stats row */}
     <div className="grid grid-cols-3 gap-2 mb-4">
       {[
-        {label: L({ ar: 'الحاضرون', en: 'Attendees', fr: 'Participants', es: 'Asistentes' }), value:'847', color:'#1DB58A'},
+        {label: L({ ar: 'الحاضرون', en: 'Attendees', fr: 'Participants', es: 'Asistentes' }), value:'847', color:'#2A64EC'},
         {label: L({ ar: 'في الانتظار', en: 'Waiting', fr: 'En attente', es: 'En espera' }), value:'353', color:'#D4AF37'},
         {label: L({ ar: 'الإجمالي', en: 'Total', fr: 'Total', es: 'Total' }), value:'1,200', color:'#6B7280'},
       ].map((s,i)=>(
@@ -60,7 +60,7 @@ const DashboardMockup = memo(() => {
           className="flex items-center justify-between bg-black/10 rounded px-2 py-1 border border-white/5"
         >
           <span className="text-[11px] text-white/80">{name}</span>
-          <span className="text-[9px] text-green-400 font-mono">09:{30+i*3}:00</span>
+          <span className="text-[9px] text-brand-secondary font-mono">09:{30+i*3}:00</span>
         </motion.div>
       ))}
     </div>

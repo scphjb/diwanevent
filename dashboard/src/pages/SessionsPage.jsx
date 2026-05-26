@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '../layouts/DashboardLayout';
 import {
   Calendar,
@@ -37,10 +37,10 @@ const SessionCard = ({ session, idx, onEdit, onDelete, t }) => (
     <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
       <div className="flex-1">
         <div className="flex items-center gap-3 mb-4">
-          <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-bold uppercase tracking-wider border border-emerald-500/20">
+          <span className="px-3 py-1 rounded-full bg-brand-primary/10 text-brand-secondary text-[10px] font-bold uppercase tracking-wider border border-brand-primary/20">
             {session.hall || t('sessions.main_hall', 'Main Hall')}
           </span>
-          <span className="text-emerald-400/30 text-xs flex items-center gap-1">
+          <span className="text-brand-secondary/30 text-xs flex items-center gap-1">
             <Clock className="w-3 h-3" />
             {session.start_time} - {session.end_time}
           </span>
@@ -49,13 +49,13 @@ const SessionCard = ({ session, idx, onEdit, onDelete, t }) => (
           {session.title}
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="flex items-center gap-2 text-emerald-100/60 text-sm">
+          <div className="flex items-center gap-2 text-brand-secondary/60 text-sm">
             <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center">
               <User className="w-4 h-4 text-amber-500" />
             </div>
             {session.speaker_name || t('sessions.no_speaker', '—')}
           </div>
-          <div className="flex items-center gap-2 text-emerald-100/60 text-sm">
+          <div className="flex items-center gap-2 text-brand-secondary/60 text-sm">
             <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center">
               <MapPin className="w-4 h-4 text-amber-500" />
             </div>
@@ -79,7 +79,7 @@ const SessionCard = ({ session, idx, onEdit, onDelete, t }) => (
 /* ⚠️ مُعرَّف خارج SessionsPage تماماً لتجنب إعادة الإنشاء عند كل render */
 const FormField = ({ label, name, type = 'text', required = false, value, onChange }) => (
   <div className="flex flex-col gap-1.5">
-    <label className="text-sm text-emerald-300/70 font-medium">
+    <label className="text-sm text-brand-secondary/70 font-medium">
       {label} {required && <span className="text-red-400">*</span>}
     </label>
     <input
@@ -88,7 +88,7 @@ const FormField = ({ label, name, type = 'text', required = false, value, onChan
       value={value}
       onChange={onChange}
       required={required}
-      className="h-11 bg-white/5 border border-white/10 rounded-xl px-4 text-white text-sm outline-none focus:border-emerald-500/60 transition-all placeholder:text-white/20"
+      className="h-11 bg-white/5 border border-white/10 rounded-xl px-4 text-white text-sm outline-none focus:border-brand-primary/60 transition-all placeholder:text-white/20"
     />
   </div>
 );
@@ -156,7 +156,7 @@ const SessionModal = ({ eventId, onClose, onSaved, initialData = null }) => {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.92, y: 30 }}
           transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-          className="w-full max-w-lg bg-[#0d1f1a] border border-emerald-500/20 rounded-[28px] p-8 shadow-2xl"
+          className="w-full max-w-lg bg-[#0d1f1a] border border-brand-primary/20 rounded-[28px] p-8 shadow-2xl"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
@@ -165,7 +165,7 @@ const SessionModal = ({ eventId, onClose, onSaved, initialData = null }) => {
               <h2 className="text-2xl font-bold text-white">
                 {initialData ? t('sessions.modal.edit_title', 'تعديل الجلسة') : t('sessions.modal.add_title', 'إضافة جلسة جديدة')}
               </h2>
-              <p className="text-emerald-400/40 text-sm mt-0.5">{t('sessions.modal.subtitle', 'أدخل تفاصيل الجلسة أدناه')}</p>
+              <p className="text-brand-secondary/40 text-sm mt-0.5">{t('sessions.modal.subtitle', 'أدخل تفاصيل الجلسة أدناه')}</p>
             </div>
             <button
               onClick={onClose}
@@ -195,13 +195,13 @@ const SessionModal = ({ eventId, onClose, onSaved, initialData = null }) => {
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm text-emerald-300/70 font-medium">{t('sessions.modal.form.description', 'وصف الجلسة')}</label>
+              <label className="text-sm text-brand-secondary/70 font-medium">{t('sessions.modal.form.description', 'وصف الجلسة')}</label>
               <textarea
                 name="description"
                 value={form.description}
                 onChange={handleChange}
                 rows={3}
-                className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-emerald-500/60 transition-all resize-none placeholder:text-white/20"
+                className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-brand-primary/60 transition-all resize-none placeholder:text-white/20"
                 placeholder={t('sessions.modal.form.description_placeholder', 'اختياري...')}
               />
             </div>
@@ -217,7 +217,7 @@ const SessionModal = ({ eventId, onClose, onSaved, initialData = null }) => {
               <button
                 type="submit"
                 disabled={saving}
-                className="flex-1 h-12 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold text-sm hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex-1 h-12 rounded-2xl bg-gradient-to-r from-brand-primary to-teal-600 text-white font-bold text-sm hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {saving ? (
                   <>
@@ -307,7 +307,7 @@ const SessionsPage = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
         <div>
           <h1 className="text-4xl font-bold text-white mb-2">{t('sessions.title', 'أجندة الفعالية')}</h1>
-          <p className="text-emerald-400/50 flex items-center gap-2">
+          <p className="text-brand-secondary/50 flex items-center gap-2">
             <Calendar className="w-4 h-4" />
             {t('sessions.subtitle', 'إدارة الجلسات وورش العمل ({{count}} جلسات مبرمجة)', { count: sessions.length })}
           </p>
@@ -317,13 +317,13 @@ const SessionsPage = () => {
           <div className="bg-white/5 p-1 rounded-xl border border-white/5 flex gap-1 mr-4">
             <button
               onClick={() => setView('grid')}
-              className={cn('p-2 rounded-lg transition-all', view === 'grid' ? 'bg-emerald-600 text-white' : 'text-emerald-400/30')}
+              className={cn('p-2 rounded-lg transition-all', view === 'grid' ? 'bg-brand-primary text-white' : 'text-brand-secondary/30')}
             >
               <LayoutGrid className="w-4 h-4" />
             </button>
             <button
               onClick={() => setView('list')}
-              className={cn('p-2 rounded-lg transition-all', view === 'list' ? 'bg-emerald-600 text-white' : 'text-emerald-400/30')}
+              className={cn('p-2 rounded-lg transition-all', view === 'list' ? 'bg-brand-primary text-white' : 'text-brand-secondary/30')}
             >
               <ListIcon className="w-4 h-4" />
             </button>
@@ -343,22 +343,22 @@ const SessionsPage = () => {
 
       {/* Search */}
       <div className="mb-8 relative max-w-xl">
-        <Search className="absolute ltr:left-4 rtl:right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-emerald-400/30" />
+        <Search className="absolute ltr:left-4 rtl:right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-brand-secondary/30" />
         <input
           type="text"
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder={t('sessions.search_placeholder', "ابحث عن جلسة أو متحدث...")}
-          className="w-full h-14 bg-white/5 border border-white/5 rounded-2xl ltr:pl-12 rtl:pr-12 text-white outline-none focus:border-emerald-500/50 transition-all"
+          className="w-full h-14 bg-white/5 border border-white/5 rounded-2xl ltr:pl-12 rtl:pr-12 text-white outline-none focus:border-brand-primary/50 transition-all"
         />
       </div>
 
       {/* No event selected */}
       {!eventId && !loading && (
         <div className="text-center py-20 bg-white/5 rounded-[32px] border border-white/10">
-          <Calendar className="w-16 h-16 text-emerald-400/10 mx-auto mb-4" />
+          <Calendar className="w-16 h-16 text-brand-secondary/10 mx-auto mb-4" />
           <h3 className="text-xl font-bold text-white">{t('sessions.no_event_selected', 'لم يتم اختيار فعالية')}</h3>
-          <p className="text-emerald-400/30 mt-2">{t('sessions.select_event_desc', 'يرجى اختيار فعالية أولاً من القائمة العلوية.')}</p>
+          <p className="text-brand-secondary/30 mt-2">{t('sessions.select_event_desc', 'يرجى اختيار فعالية أولاً من القائمة العلوية.')}</p>
         </div>
       )}
 
@@ -367,7 +367,7 @@ const SessionsPage = () => {
         <div className={cn('gap-6', view === 'grid' ? 'grid grid-cols-1 md:grid-cols-2' : 'flex flex-col')}>
           {loading ? (
             <div className="flex justify-center py-20 col-span-2">
-              <Loader2 className="w-12 h-12 text-emerald-500 animate-spin" />
+              <Loader2 className="w-12 h-12 text-brand-primary animate-spin" />
             </div>
           ) : filtered.length > 0 ? (
             filtered.map((session, idx) => (
@@ -382,17 +382,17 @@ const SessionsPage = () => {
             ))
           ) : (
             <div className="text-center py-20 bg-white/5 rounded-[32px] border border-white/10 col-span-2">
-              <Calendar className="w-16 h-16 text-emerald-400/10 mx-auto mb-4" />
+              <Calendar className="w-16 h-16 text-brand-secondary/10 mx-auto mb-4" />
               <h3 className="text-xl font-bold text-white">
                 {search ? t('sessions.no_results', 'لا توجد نتائج مطابقة') : t('sessions.no_sessions_yet', 'لا توجد جلسات مضافة بعد')}
               </h3>
-              <p className="text-emerald-400/30 mt-2">
+              <p className="text-brand-secondary/30 mt-2">
                 {search ? t('sessions.try_another', 'جرّب كلمة بحث أخرى.') : t('sessions.start_adding', 'ابدأ بإضافة جلسات الأجندة لفعاليتك.')}
               </p>
               {!search && (
                 <button
                   onClick={() => setShowModal(true)}
-                  className="mt-6 px-6 py-3 rounded-2xl bg-emerald-600/20 border border-emerald-500/30 text-emerald-400 text-sm font-medium hover:bg-emerald-600/30 transition-all inline-flex items-center gap-2"
+                  className="mt-6 px-6 py-3 rounded-2xl bg-brand-primary/20 border border-brand-primary/30 text-brand-secondary text-sm font-medium hover:bg-brand-primary/30 transition-all inline-flex items-center gap-2"
                 >
                   <Plus className="w-4 h-4" />
                   {t('sessions.add_first', 'إضافة أول جلسة')}

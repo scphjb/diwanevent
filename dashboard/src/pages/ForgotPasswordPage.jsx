@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Mail, ArrowRight, ShieldCheck, ChevronRight, CheckCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -56,8 +56,8 @@ const ForgotPasswordPage = () => {
 
             {sent ? (
               <div className="relative z-10 text-center py-8">
-                <div className="w-20 h-20 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <CheckCircle className="text-emerald-400 w-10 h-10" />
+                <div className="w-20 h-20 bg-brand-primary/10 border border-brand-primary/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <CheckCircle className="text-brand-secondary w-10 h-10" />
                 </div>
                 <h2 className="text-2xl font-black text-white mb-3">تم الإرسال بنجاح</h2>
                 <p className="text-brand-muted text-sm leading-relaxed">

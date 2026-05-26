@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus, Copy, Trash2, ShieldAlert, Eye, EyeOff, CheckCircle2, Globe, Key } from "lucide-react";
 import { Button } from "./ui/Button";
@@ -39,7 +39,7 @@ const ApiKeysManager = () => {
           <h2 className="text-3xl font-black text-white mb-2">{t('dev_portal.api_keys.heading', 'مفاتيح الوصول (API Keys)')}</h2>
           <p className="text-slate-400 font-medium text-sm">{t('dev_portal.api_keys.desc', 'إدارة مفاتيح الوصول لربط تطبيقاتك الخارجية بنظام ديوان.')}</p>
         </div>
-        <Button onClick={handleCreateKey} className="bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl px-8 py-6 h-auto font-black shadow-lg shadow-emerald-900/20 transition-all hover:scale-105">
+        <Button onClick={handleCreateKey} className="bg-brand-primary hover:bg-brand-primary text-white rounded-2xl px-8 py-6 h-auto font-black shadow-lg shadow-brand-dark/20 transition-all hover:scale-105">
           <Plus className="w-5 h-5 ml-2" /> {t('dev_portal.api_keys.create_btn', 'إنشاء مفتاح جديد')}
         </Button>
       </div>
@@ -73,17 +73,17 @@ const ApiKeysManager = () => {
 
       <div className="grid gap-6">
         {keys.map((apiKey) => (
-          <div key={apiKey.id} className="bg-white/5 border border-white/5 rounded-[3rem] p-8 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8 hover:bg-white/10 hover:border-emerald-500/20 transition-all duration-500 group relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 blur-3xl -mr-16 -mt-16 group-hover:bg-emerald-500/10 transition-colors" />
+          <div key={apiKey.id} className="bg-white/5 border border-white/5 rounded-[3rem] p-8 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8 hover:bg-white/10 hover:border-brand-primary/20 transition-all duration-500 group relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-brand-primary/5 blur-3xl -mr-16 -mt-16 group-hover:bg-brand-primary/10 transition-colors" />
             
             <div className="flex gap-6 relative z-10 w-full lg:w-auto">
-              <div className="p-5 bg-white/5 border border-white/10 rounded-[2rem] group-hover:bg-emerald-500/10 group-hover:border-emerald-500/20 transition-all duration-500">
-                <Key className="w-8 h-8 text-emerald-400" />
+              <div className="p-5 bg-white/5 border border-white/10 rounded-[2rem] group-hover:bg-brand-primary/10 group-hover:border-brand-primary/20 transition-all duration-500">
+                <Key className="w-8 h-8 text-brand-secondary" />
               </div>
               <div className="flex-1">
                 <h3 className="text-xl font-black text-white mb-2">{apiKey.name}</h3>
                 <div className="flex flex-wrap items-center gap-4 text-sm">
-                  <span className="font-mono bg-black/40 px-4 py-1.5 rounded-full border border-white/5 text-emerald-400/70">{apiKey.key}</span>
+                  <span className="font-mono bg-black/40 px-4 py-1.5 rounded-full border border-white/5 text-brand-secondary/70">{apiKey.key}</span>
                   <span className="flex items-center gap-2 text-slate-500 font-bold bg-white/5 px-4 py-1.5 rounded-full">
                     <Globe className="w-4 h-4" />
                     {t('dev_portal.api_keys.last_used', 'آخر استخدام')}: {apiKey.lastUsed}

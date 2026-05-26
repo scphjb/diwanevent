@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Lock, ArrowRight, ShieldCheck, CheckCircle } from 'lucide-react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
@@ -70,8 +70,8 @@ const ResetPasswordPage = () => {
           <div className="bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[40px] p-8 md:p-12 shadow-2xl relative overflow-hidden">
             {success ? (
               <div className="text-center py-8">
-                <div className="w-20 h-20 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <CheckCircle className="text-emerald-400 w-10 h-10" />
+                <div className="w-20 h-20 bg-brand-primary/10 border border-brand-primary/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <CheckCircle className="text-brand-secondary w-10 h-10" />
                 </div>
                 <h2 className="text-2xl font-black text-white mb-3">تم تغيير كلمة المرور</h2>
                 <p className="text-brand-muted text-sm">سيتم توجيهك لتسجيل الدخول خلال ثوانٍ...</p>

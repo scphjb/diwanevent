@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { 
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
     PieChart, Pie, Cell 
@@ -6,7 +6,7 @@ import {
 import axios from 'axios';
 import useAttendanceSocket from '../hooks/useAttendanceSocket';
 
-const COLORS = ['#10B981', '#F59E0B', '#3B82F6', '#EF4444'];
+const COLORS = ['#2A64EC', '#F59E0B', '#3B82F6', '#EF4444'];
 
 /**
  * مكون لوحة التحليلات - يعرض البيانات بجلبها من الـ API وتحديثها لحظياً.
@@ -39,12 +39,12 @@ const AnalyticsDashboard = ({ eventId }) => {
     if (loading) return <div className="p-10 text-center">جاري تحميل البيانات...</div>;
 
     return (
-        <div className="p-6 space-y-8 bg-emerald-950 min-h-screen text-white">
+        <div className="p-6 space-y-8 bg-brand-dark min-h-screen text-white">
             <h2 className="text-2xl font-bold border-r-4 border-amber-500 pr-4">تحليلات الفعالية</h2>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <StatCard label="إجمالي المسجلين" value={data.overview.total_invited} />
-                <StatCard label="الحضور الفعلي" value={data.overview.checked_in} color="text-emerald-400" />
+                <StatCard label="الحضور الفعلي" value={data.overview.checked_in} color="text-brand-secondary" />
                 <StatCard label="نسبة الحضور" value={`${data.overview.attendance_rate}%`} color="text-amber-400" />
             </div>
 
@@ -58,7 +58,7 @@ const AnalyticsDashboard = ({ eventId }) => {
                                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
                                 <XAxis dataKey="name" stroke="#94a3b8" />
                                 <YAxis stroke="#94a3b8" />
-                                <Tooltip contentStyle={{ backgroundColor: '#022C22', border: 'none' }} />
+                                <Tooltip contentStyle={{ backgroundColor: '#050B18', border: 'none' }} />
                                 <Bar dataKey="value" fill="#D4AF37" radius={[4, 4, 0, 0]} />
                             </BarChart>
                         </ResponsiveContainer>
@@ -81,7 +81,7 @@ const AnalyticsDashboard = ({ eventId }) => {
                                     paddingAngle={5}
                                     dataKey="value"
                                 >
-                                    <Cell fill="#10B981" />
+                                    <Cell fill="#2A64EC" />
                                     <Cell fill="rgba(255,255,255,0.1)" />
                                 </Pie>
                                 <Tooltip />

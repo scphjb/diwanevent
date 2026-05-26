@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'react-hot-toast';
 import { showSuccess, showError, showConfirm } from '../../utils/swal';
@@ -177,7 +177,7 @@ const Plans = () => {
               {plan.features && plan.features.length > 0 && (
                 <div className="border-t border-white/10 pt-4 space-y-2">
                   {plan.features.map((f, j) => (
-                    <div key={j} className="flex items-center gap-2 text-white/50 text-xs"><Check size={12} className="text-emerald-400" /><span>{f}</span></div>
+                    <div key={j} className="flex items-center gap-2 text-white/50 text-xs"><Check size={12} className="text-brand-secondary" /><span>{f}</span></div>
                   ))}
                 </div>
               )}

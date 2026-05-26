@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, UserPlus, Save, AlertCircle, Mail, User, Shield } from 'lucide-react';
 import api from '../../services/api';
@@ -50,7 +50,7 @@ const CreateOrganizerModal = ({ isOpen, onClose, onSuccess }) => {
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            className="relative w-full max-w-lg bg-[#0A3D2B] border border-white/10 rounded-[2.5rem] shadow-2xl overflow-hidden"
+            className="relative w-full max-w-lg bg-[#0D1527] border border-white/10 rounded-[2.5rem] shadow-2xl overflow-hidden"
           >
             <div className="p-8 border-b border-white/5 flex justify-between items-center bg-white/5">
               <h2 className="text-2xl font-black text-white flex items-center gap-3">
@@ -136,7 +136,7 @@ const CreateOrganizerModal = ({ isOpen, onClose, onSuccess }) => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex-grow py-4 bg-[#1DB58A] text-white font-black rounded-2xl hover:bg-[#1DB58A]/90 transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#1DB58A]/20"
+                  className="flex-grow py-4 bg-[#2A64EC] text-white font-black rounded-2xl hover:bg-[#2A64EC]/90 transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#2A64EC]/20"
                 >
                   {loading ? (
                     <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />

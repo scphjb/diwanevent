@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+﻿import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import DashboardLayout from '../layouts/DashboardLayout';
 import BadgeCanvas from '../components/designer/BadgeCanvas';
 import LeftPanel from '../components/designer/LeftPanel';
@@ -15,8 +15,8 @@ const CANVAS_H = 750;
 export const CERTIFICATE_ELEMENTS = [
   { id: 'cert_title',    icon: '📜', label: 'عنوان الشهادة',  type: 'static_text',    value: 'شهادة حضور', defaultW: 800, defaultH: 80, defaultStyle: { color: '#D4AF37', fontSize: '48px', fontWeight: '900', textAlign: 'center', fontFamily: 'Cairo, sans-serif' } },
   { id: 'cert_body',     icon: '📝', label: 'نص الشهادة',     type: 'multiline_text', value: 'يُشهد بأن السيد/ة', defaultW: 800, defaultH: 50, defaultStyle: { color: '#333333', fontSize: '24px', textAlign: 'center', fontFamily: 'Cairo, sans-serif' } },
-  { id: 'full_name',     icon: '👤', label: 'اسم المشارك',    type: 'dynamic_text',   placeholder: 'الاسم الكامل', defaultW: 800, defaultH: 70, defaultStyle: { color: '#022C22', fontSize: '42px', fontWeight: '900', textAlign: 'center', fontFamily: 'Cairo, sans-serif' } },
-  { id: 'event_name',    icon: '📅', label: 'اسم الفعالية',   type: 'dynamic_text',   placeholder: '[اسم الفعالية]', defaultW: 800, defaultH: 50, defaultStyle: { color: '#022C22', fontSize: '28px', fontWeight: 'bold', textAlign: 'center', fontFamily: 'Cairo, sans-serif' } },
+  { id: 'full_name',     icon: '👤', label: 'اسم المشارك',    type: 'dynamic_text',   placeholder: 'الاسم الكامل', defaultW: 800, defaultH: 70, defaultStyle: { color: '#050B18', fontSize: '42px', fontWeight: '900', textAlign: 'center', fontFamily: 'Cairo, sans-serif' } },
+  { id: 'event_name',    icon: '📅', label: 'اسم الفعالية',   type: 'dynamic_text',   placeholder: '[اسم الفعالية]', defaultW: 800, defaultH: 50, defaultStyle: { color: '#050B18', fontSize: '28px', fontWeight: 'bold', textAlign: 'center', fontFamily: 'Cairo, sans-serif' } },
   { id: 'event_date',    icon: '🕐', label: 'تاريخ الفعالية', type: 'dynamic_text',   placeholder: '[التاريخ]', defaultW: 400, defaultH: 40, defaultStyle: { color: '#555555', fontSize: '20px', textAlign: 'center', fontFamily: 'Cairo, sans-serif' } },
   { id: 'event_location',icon: '📍', label: 'مكان الفعالية',  type: 'dynamic_text',   placeholder: '[المكان]', defaultW: 400, defaultH: 40, defaultStyle: { color: '#555555', fontSize: '20px', textAlign: 'center', fontFamily: 'Cairo, sans-serif' } },
   { id: 'cert_number',   icon: '#',  label: 'رقم الشهادة',    type: 'dynamic_text',   placeholder: 'CERT-2026-0001', defaultW: 300, defaultH: 30, defaultStyle: { color: '#AAAAAA', fontSize: '14px', fontFamily: 'monospace', textAlign: 'left' } },
@@ -25,7 +25,7 @@ export const CERTIFICATE_ELEMENTS = [
   { id: 'logo',          icon: '🖼', label: 'شعار الجهة',     type: 'image',          defaultW: 150, defaultH: 150 },
   { id: 'border_frame',  icon: '🔲', label: 'إطار زخرفي',     type: 'frame',          defaultW: 1060, defaultH: 750, color: '#D4AF37' },
   { id: 'divider',       icon: '—',  label: 'خط فاصل',        type: 'shape',          defaultW: 800, defaultH: 3, color: '#D4AF37' },
-  { id: 'background',    icon: '▬',  label: 'شريط خلفي',      type: 'shape',          defaultW: 1060, defaultH: 100, color: '#022C22' },
+  { id: 'background',    icon: '▬',  label: 'شريط خلفي',      type: 'shape',          defaultW: 1060, defaultH: 100, color: '#050B18' },
   { id: 'watermark',     icon: '💧', label: 'علامة مائية',    type: 'watermark',      value: 'DIWAN EVENT', defaultW: 600, defaultH: 300, defaultStyle: { color: 'rgba(2,44,34,0.03)', fontSize: '120px' } },
 ];
 
@@ -36,13 +36,13 @@ export const CERTIFICATE_PRESETS = [
     background: { color: '#FFFFFF' },
     elements: [
       { id: 'frame', type: 'frame', color: '#D4AF37', x: 0, y: 0, width: 1060, height: 750, zIndex: 1 },
-      { id: 'top_bar', type: 'shape', color: '#022C22', x: 30, y: 30, width: 1000, height: 80, zIndex: 2 },
+      { id: 'top_bar', type: 'shape', color: '#050B18', x: 30, y: 30, width: 1000, height: 80, zIndex: 2 },
       { id: 'cert_title', type: 'static_text', value: 'شـهـادة حـضـور', x: 30, y: 38, width: 1000, height: 60, zIndex: 3, style: { color: '#D4AF37', fontSize: '36px', fontWeight: '900', textAlign: 'center', fontFamily: 'Cairo, sans-serif', letterSpacing: '8px' } },
       { id: 'basmala', type: 'static_text', value: 'بسم الله الرحمن الرحيم', x: 30, y: 130, width: 1000, height: 30, zIndex: 2, style: { color: '#7B5B00', fontSize: '18px', textAlign: 'center', fontFamily: 'Amiri, serif' } },
       { id: 'cert_body', type: 'multiline_text', value: 'يُشهد بأن السيد/ة', x: 30, y: 180, width: 1000, height: 40, zIndex: 2, style: { color: '#333333', fontSize: '22px', textAlign: 'center', fontFamily: 'Cairo, sans-serif' } },
-      { id: 'full_name', type: 'dynamic_text', placeholder: 'اسم المشارك الكامل', x: 30, y: 230, width: 1000, height: 70, zIndex: 3, style: { color: '#022C22', fontSize: '42px', fontWeight: '900', textAlign: 'center', fontFamily: 'Cairo, sans-serif' } },
+      { id: 'full_name', type: 'dynamic_text', placeholder: 'اسم المشارك الكامل', x: 30, y: 230, width: 1000, height: 70, zIndex: 3, style: { color: '#050B18', fontSize: '42px', fontWeight: '900', textAlign: 'center', fontFamily: 'Cairo, sans-serif' } },
       { id: 'cert_body_2', type: 'multiline_text', value: 'قد حضر فعالية', x: 30, y: 310, width: 1000, height: 36, zIndex: 2, style: { color: '#333333', fontSize: '22px', textAlign: 'center', fontFamily: 'Cairo, sans-serif' } },
-      { id: 'event_name', type: 'dynamic_text', placeholder: '[اسم الفعالية]', x: 30, y: 360, width: 1000, height: 50, zIndex: 3, style: { color: '#022C22', fontSize: '28px', fontWeight: 'bold', textAlign: 'center', fontFamily: 'Cairo, sans-serif' } },
+      { id: 'event_name', type: 'dynamic_text', placeholder: '[اسم الفعالية]', x: 30, y: 360, width: 1000, height: 50, zIndex: 3, style: { color: '#050B18', fontSize: '28px', fontWeight: 'bold', textAlign: 'center', fontFamily: 'Cairo, sans-serif' } },
       { id: 'event_date_loc', type: 'dynamic_text', placeholder: '[التاريخ والمكان]', x: 30, y: 430, width: 1000, height: 30, zIndex: 2, style: { color: '#555555', fontSize: '18px', textAlign: 'center', fontFamily: 'Cairo, sans-serif' } },
       { id: 'bottom_bar', type: 'shape', color: '#D4AF37', x: 230, y: 530, width: 600, height: 2, zIndex: 2 },
       { id: 'signature', type: 'signature', signerName: 'توقيع المنظم', x: 700, y: 550, width: 250, height: 140, zIndex: 3 },
@@ -56,12 +56,12 @@ export const CERTIFICATE_PRESETS = [
     name: 'حديث مبسط',
     background: { color: '#FFFDF5' },
     elements: [
-      { id: 'side_bar', type: 'shape', color: '#022C22', x: 0, y: 0, width: 30, height: 750, zIndex: 1 },
-      { id: 'cert_title', type: 'static_text', value: 'شهادة مشاركة', x: 80, y: 80, width: 900, height: 80, zIndex: 3, style: { color: '#022C22', fontSize: '48px', fontWeight: '900', textAlign: 'right', fontFamily: 'Cairo, sans-serif' } },
+      { id: 'side_bar', type: 'shape', color: '#050B18', x: 0, y: 0, width: 30, height: 750, zIndex: 1 },
+      { id: 'cert_title', type: 'static_text', value: 'شهادة مشاركة', x: 80, y: 80, width: 900, height: 80, zIndex: 3, style: { color: '#050B18', fontSize: '48px', fontWeight: '900', textAlign: 'right', fontFamily: 'Cairo, sans-serif' } },
       { id: 'cert_body', type: 'multiline_text', value: 'تُسلَّم هذه الشهادة لـ', x: 80, y: 200, width: 900, height: 40, zIndex: 2, style: { color: '#555555', fontSize: '20px', textAlign: 'right', fontFamily: 'Cairo, sans-serif' } },
       { id: 'full_name', type: 'dynamic_text', placeholder: 'الاسم الكامل', x: 80, y: 250, width: 900, height: 70, zIndex: 3, style: { color: '#D4AF37', fontSize: '46px', fontWeight: '900', textAlign: 'right', fontFamily: 'Cairo, sans-serif' } },
       { id: 'cert_body_2', type: 'multiline_text', value: 'تقديراً لمشاركته الفاعلة في:', x: 80, y: 340, width: 900, height: 36, zIndex: 2, style: { color: '#555555', fontSize: '20px', textAlign: 'right', fontFamily: 'Cairo, sans-serif' } },
-      { id: 'event_name', type: 'dynamic_text', placeholder: '[اسم الفعالية]', x: 80, y: 390, width: 900, height: 50, zIndex: 3, style: { color: '#022C22', fontSize: '28px', fontWeight: 'bold', textAlign: 'right', fontFamily: 'Cairo, sans-serif' } },
+      { id: 'event_name', type: 'dynamic_text', placeholder: '[اسم الفعالية]', x: 80, y: 390, width: 900, height: 50, zIndex: 3, style: { color: '#050B18', fontSize: '28px', fontWeight: 'bold', textAlign: 'right', fontFamily: 'Cairo, sans-serif' } },
       { id: 'qr_verify', type: 'qr', x: 80, y: 550, width: 120, height: 120, zIndex: 3 },
       { id: 'signature', type: 'signature', signerName: 'الرئيس', x: 730, y: 550, width: 250, height: 140, zIndex: 3 },
     ]
@@ -83,7 +83,7 @@ function setNestedProp(obj, path, value) {
 
 // ── مكوّن إجراءات الرأس ───────────────────────────────────────────
 const Header = ({ templateName, setTemplateName, certType, setCertType, onSave, onExport, saving, exporting, canUndo, canRedo, onUndo, onRedo }) => (
-  <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 24px', background: '#0A3D2B', borderBottom: '1px solid rgba(212,175,55,0.15)', direction: 'rtl', fontFamily: 'Cairo' }}>
+  <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 24px', background: '#0D1527', borderBottom: '1px solid rgba(212,175,55,0.15)', direction: 'rtl', fontFamily: 'Cairo' }}>
     <div style={{ fontSize: 18, fontWeight: '900', color: '#D4AF37' }}>مصمم الشهادة</div>
     
     <select
@@ -119,7 +119,7 @@ const Header = ({ templateName, setTemplateName, certType, setCertType, onSave, 
     <button
       onClick={onSave}
       disabled={saving}
-      style={{ background: '#D4AF37', color: '#022C22', border: 'none', borderRadius: 8, padding: '7px 22px', cursor: 'pointer', fontFamily: 'Cairo', fontWeight: '900', fontSize: 13 }}
+      style={{ background: '#D4AF37', color: '#050B18', border: 'none', borderRadius: 8, padding: '7px 22px', cursor: 'pointer', fontFamily: 'Cairo', fontWeight: '900', fontSize: 13 }}
     >
       {saving ? 'جاري الحفظ...' : '💾 حفظ القالب'}
     </button>
@@ -241,7 +241,7 @@ const CertificateDesigner = () => {
       width: elDef.defaultW || 200,
       height: elDef.defaultH || 50,
       zIndex: elements.length + 1,
-      style: elDef.defaultStyle || { color: '#022C22', fontSize: '20px', fontFamily: 'Cairo, sans-serif', textAlign: 'center' },
+      style: elDef.defaultStyle || { color: '#050B18', fontSize: '20px', fontFamily: 'Cairo, sans-serif', textAlign: 'center' },
     };
     setElements(prev => { const n = [...prev, el]; pushHistory(n); return n; });
     setSelectedId(id);
@@ -335,7 +335,7 @@ const CertificateDesigner = () => {
   return (
     <DashboardLayout activePath="/dashboard/designer/certificate">
       <Toaster position="top-center" />
-      <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 80px)', background: '#022C22', borderRadius: 20, overflow: 'hidden', border: '1px solid rgba(212,175,55,0.15)' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 80px)', background: '#050B18', borderRadius: 20, overflow: 'hidden', border: '1px solid rgba(212,175,55,0.15)' }}>
         
         <Header
           templateName={templateName}

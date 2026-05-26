@@ -56,4 +56,4 @@ scheduler = start_background_services()
 if __name__ == "__main__":
     logger.info("🚀 Launching Diwan Event Platform v3.0...")
     # في الإنتاج: استخدم gunicorn -w 4 -k uvicorn.workers.UvicornWorker main:app
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True, workers=1)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True, reload_dirs=["app"], workers=1)

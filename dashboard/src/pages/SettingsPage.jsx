@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../layouts/DashboardLayout';
 import { 
   Settings as SettingsIcon, 
@@ -34,12 +34,12 @@ import { showSuccess, showError, showConfirm, showToast } from '../utils/swal';
 const SettingsSection = ({ title, description, children, icon: Icon }) => (
   <div className="bg-white/5 border border-white/10 rounded-[32px] p-8 mb-8 backdrop-blur-md">
     <div className="flex items-center gap-4 mb-8">
-      <div className="w-12 h-12 rounded-2xl bg-emerald-600/20 flex items-center justify-center border border-emerald-500/30">
-        <Icon className="w-6 h-6 text-emerald-400" />
+      <div className="w-12 h-12 rounded-2xl bg-brand-primary/20 flex items-center justify-center border border-brand-primary/30">
+        <Icon className="w-6 h-6 text-brand-secondary" />
       </div>
       <div>
         <h3 className="text-xl font-bold text-white">{title}</h3>
-        <p className="text-emerald-400/30 text-sm">{description}</p>
+        <p className="text-brand-secondary/30 text-sm">{description}</p>
       </div>
     </div>
     <div className="space-y-6">
@@ -162,7 +162,7 @@ const SettingsPage = () => {
     }
   };
 
-  if (loading) return <DashboardLayout><div className="p-20 text-center text-emerald-400">{t('settings.loading', 'جاري تحميل الإعدادات...')}</div></DashboardLayout>;
+  if (loading) return <DashboardLayout><div className="p-20 text-center text-brand-secondary">{t('settings.loading', 'جاري تحميل الإعدادات...')}</div></DashboardLayout>;
   if (!settings) return <DashboardLayout><div className="p-20 text-center text-red-400">{t('settings.load_error', 'فشل في تحميل الإعدادات.')}</div></DashboardLayout>;
 
   return (
@@ -170,7 +170,7 @@ const SettingsPage = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
         <div>
           <h1 className="text-4xl font-bold text-white mb-2">{t('settings.title', 'إعدادات الفعالية')}</h1>
-          <p className="text-emerald-400/50 flex items-center gap-2">
+          <p className="text-brand-secondary/50 flex items-center gap-2">
             <SettingsIcon className="w-4 h-4" />
             {t('settings.subtitle', 'تخصيص الهوية والخيارات المتقدمة للنظام')}
           </p>
@@ -206,8 +206,8 @@ const SettingsPage = () => {
               className={cn(
                 "w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all text-right",
                 activeTab === tab.id 
-                  ? "bg-emerald-600/20 text-emerald-400 border border-emerald-600/30" 
-                  : "text-emerald-400/40 hover:bg-white/5 hover:text-emerald-400"
+                  ? "bg-brand-primary/20 text-brand-secondary border border-brand-primary/30" 
+                  : "text-brand-secondary/40 hover:bg-white/5 hover:text-brand-secondary"
               )}
             >
               <tab.icon className="w-5 h-5" />
@@ -229,18 +229,18 @@ const SettingsPage = () => {
                 <SettingsSection title={t('settings.general.title', 'الإعدادات العامة')} description={t('settings.general.desc', 'المعلومات الأساسية للفعالية.')} icon={Globe}>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-emerald-100/50">{t('settings.general.event_name', 'اسم الفعالية')}</label>
+                      <label className="text-sm font-bold text-brand-secondary/50">{t('settings.general.event_name', 'اسم الفعالية')}</label>
                       <Input value={settings.event_name} onChange={(e) => handleChange('event_name', e.target.value)} />
                     </div>
-                    <div className="flex items-center gap-3 bg-emerald-500/10 p-4 rounded-2xl">
+                    <div className="flex items-center gap-3 bg-brand-primary/10 p-4 rounded-2xl">
                       <input 
                         type="checkbox" 
                         id="registration_enabled"
                         checked={settings.registration_enabled}
                         onChange={(e) => handleChange('registration_enabled', e.target.checked)}
-                        className="w-5 h-5 accent-emerald-500"
+                        className="w-5 h-5 accent-brand-primary"
                       />
-                      <label htmlFor="registration_enabled" className="font-bold text-emerald-400">{t('settings.general.registration_enabled', 'فتح باب التسجيل للجمهور')}</label>
+                      <label htmlFor="registration_enabled" className="font-bold text-brand-secondary">{t('settings.general.registration_enabled', 'فتح باب التسجيل للجمهور')}</label>
                     </div>
                     <div className="flex items-center gap-3 bg-amber-500/10 p-4 rounded-2xl">
                       <input 
@@ -253,7 +253,7 @@ const SettingsPage = () => {
                       <label htmlFor="is_public" className="font-bold text-amber-400">عرض الفعالية في الدليل العام (صفحة الهبوط)</label>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-emerald-100/50">{t('settings.general.max_registration', 'الحد الأقصى للمسجلين (0 تعني غير محدود)')}</label>
+                      <label className="text-sm font-bold text-brand-secondary/50">{t('settings.general.max_registration', 'الحد الأقصى للمسجلين (0 تعني غير محدود)')}</label>
                       <Input 
                         type="number" 
                         value={settings.total_invited} 
@@ -261,13 +261,13 @@ const SettingsPage = () => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-emerald-100/50">{t('settings.general.event_date', 'تاريخ الفعالية')}</label>
+                      <label className="text-sm font-bold text-brand-secondary/50">{t('settings.general.event_date', 'تاريخ الفعالية')}</label>
                       <Input type="date" value={settings.event_date} onChange={(e) => handleChange('event_date', e.target.value)} />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-emerald-100/50">{t('settings.general.language', 'لغة النظام والبطاقات')}</label>
+                      <label className="text-sm font-bold text-brand-secondary/50">{t('settings.general.language', 'لغة النظام والبطاقات')}</label>
                       <select 
-                        className="w-full bg-white/5 border border-white/10 rounded-xl h-12 px-4 outline-none text-emerald-400 font-bold"
+                        className="w-full bg-white/5 border border-white/10 rounded-xl h-12 px-4 outline-none text-brand-secondary font-bold"
                         value={settings.language || 'ar'}
                         onChange={(e) => handleChange('language', e.target.value)}
                       >
@@ -276,16 +276,16 @@ const SettingsPage = () => {
                       </select>
                     </div>
                     <div className="space-y-2 md:col-span-2">
-                      <label className="text-sm font-bold text-emerald-100/50">{t('settings.general.organizer_text', 'الجهات المنظمة / العناوين الرئيسية (سطر لكل جهة)')}</label>
+                      <label className="text-sm font-bold text-brand-secondary/50">{t('settings.general.organizer_text', 'الجهات المنظمة / العناوين الرئيسية (سطر لكل جهة)')}</label>
                       <textarea 
-                        className="w-full bg-white/5 border border-white/10 rounded-xl p-4 outline-none text-emerald-400 font-bold min-h-[120px]"
+                        className="w-full bg-white/5 border border-white/10 rounded-xl p-4 outline-none text-brand-secondary font-bold min-h-[120px]"
                         value={settings.organizer_text || ''} 
                         placeholder="وزارة العدل&#10;الغرفة الوطنية للمحضرين القضائيين"
                         onChange={(e) => handleChange('organizer_text', e.target.value)} 
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-emerald-100/50">{t('settings.general.location', 'الموقع')}</label>
+                      <label className="text-sm font-bold text-brand-secondary/50">{t('settings.general.location', 'الموقع')}</label>
                       <Input value={settings.location} onChange={(e) => handleChange('location', e.target.value)} />
                     </div>
                   </div>
@@ -305,7 +305,7 @@ const SettingsPage = () => {
                     ].map(feat => (
                       <div key={feat.id} className="flex items-center justify-between bg-white/5 p-6 rounded-[24px] border border-white/5 hover:bg-white/10 transition-all group">
                          <div className="flex items-center gap-4">
-                           <div className="text-emerald-400/50 group-hover:text-emerald-400 transition-colors">
+                           <div className="text-brand-secondary/50 group-hover:text-brand-secondary transition-colors">
                               <feat.icon size={24} />
                            </div>
                            <span className="font-bold text-white">{feat.label}</span>
@@ -317,7 +317,7 @@ const SettingsPage = () => {
                               checked={settings[feat.id]}
                               onChange={(e) => handleChange(feat.id, e.target.checked)}
                             />
-                            <div className="w-14 h-7 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:start-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-emerald-500"></div>
+                            <div className="w-14 h-7 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:start-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-brand-primary"></div>
                          </div>
                       </div>
                     ))}
@@ -329,9 +329,9 @@ const SettingsPage = () => {
                 <SettingsSection title={t('settings.registration.title', 'بناء نموذج التسجيل')} description={t('settings.registration.desc', 'حدد البيانات التي تطلبها من المشاركين عند التسجيل الذاتي.')} icon={ListPlus}>
                   <div className="space-y-6">
                     {/* New Field Form */}
-                    <div className="bg-emerald-500/5 border border-emerald-500/10 p-6 rounded-3xl grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                    <div className="bg-brand-primary/5 border border-brand-primary/10 p-6 rounded-3xl grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                       <div className="md:col-span-1">
-                        <label className="text-xs font-bold text-emerald-400/50 mb-2 block">{t('settings.registration.new_field_label', 'اسم الحقل (مثلاً: رقم الهاتف)')}</label>
+                        <label className="text-xs font-bold text-brand-secondary/50 mb-2 block">{t('settings.registration.new_field_label', 'اسم الحقل (مثلاً: رقم الهاتف)')}</label>
                         <Input 
                           placeholder={t('settings.registration.placeholder', 'الاسم المعروض...')} 
                           value={newField.display_label}
@@ -339,9 +339,9 @@ const SettingsPage = () => {
                         />
                       </div>
                       <div>
-                        <label className="text-xs font-bold text-emerald-400/50 mb-2 block">{t('settings.registration.field_type', 'نوع الحقل')}</label>
+                        <label className="text-xs font-bold text-brand-secondary/50 mb-2 block">{t('settings.registration.field_type', 'نوع الحقل')}</label>
                         <select 
-                          className="w-full bg-white/5 border border-white/10 rounded-xl h-12 px-4 outline-none text-emerald-400"
+                          className="w-full bg-white/5 border border-white/10 rounded-xl h-12 px-4 outline-none text-brand-secondary"
                           value={newField.field_type}
                           onChange={e => setNewField({...newField, field_type: e.target.value})}
                         >
@@ -356,11 +356,11 @@ const SettingsPage = () => {
                           id="is_req" 
                           checked={newField.is_required}
                           onChange={e => setNewField({...newField, is_required: e.target.checked})}
-                          className="w-5 h-5 accent-emerald-500"
+                          className="w-5 h-5 accent-brand-primary"
                         />
                         <label htmlFor="is_req" className="text-sm font-bold">{t('settings.registration.is_required', 'إجباري؟')}</label>
                       </div>
-                      <Button onClick={handleAddField} className="h-12 bg-emerald-500 hover:bg-emerald-600 text-emerald-950">
+                      <Button onClick={handleAddField} className="h-12 bg-brand-primary hover:bg-brand-primary text-brand-dark">
                         <Plus className="w-5 h-5 mr-2" /> {t('settings.registration.add_field', 'إضافة حقل')}
                       </Button>
                     </div>
@@ -368,19 +368,19 @@ const SettingsPage = () => {
                     {/* Fields List */}
                     <div className="space-y-3">
                       {customFields.length === 0 ? (
-                        <div className="p-12 text-center border-2 border-dashed border-white/5 rounded-[32px] text-emerald-400/20 italic">
+                        <div className="p-12 text-center border-2 border-dashed border-white/5 rounded-[32px] text-brand-secondary/20 italic">
                           {t('settings.registration.no_custom_fields', 'لا توجد حقول مخصصة حالياً. الحقول الافتراضية هي (الاسم، البريد، الجهة).')}
                         </div>
                       ) : (
                         customFields.map(field => (
                           <div key={field.id} className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-colors">
                             <div className="flex items-center gap-4">
-                              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 font-bold">
+                              <div className="w-10 h-10 rounded-xl bg-brand-primary/10 flex items-center justify-center text-brand-primary font-bold">
                                 {field.field_type === 'text' ? 'T' : field.field_type === 'number' ? '#' : 'D'}
                               </div>
                               <div>
                                 <div className="font-bold text-white">{field.display_label}</div>
-                                <div className="text-xs text-emerald-400/40">{field.is_required ? 'حقل إجباري' : 'حقل اختياري'} • {field.field_type}</div>
+                                <div className="text-xs text-brand-secondary/40">{field.is_required ? 'حقل إجباري' : 'حقل اختياري'} • {field.field_type}</div>
                               </div>
                             </div>
                             <button 
@@ -407,7 +407,7 @@ const SettingsPage = () => {
                 <SettingsSection title={t('settings.design.title', 'الهوية البصرية')} description={t('settings.design.desc', 'تخصيص الألوان والشعار.')} icon={Palette}>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="space-y-4">
-                      <label className="text-sm font-bold text-emerald-100/50">{t('settings.design.logo_label', 'شعار الفعالية')}</label>
+                      <label className="text-sm font-bold text-brand-secondary/50">{t('settings.design.logo_label', 'شعار الفعالية')}</label>
                       <div className="flex flex-col gap-4">
                         {settings.logo_url && (
                           <div className="w-32 h-32 rounded-2xl bg-white p-4 border border-white/10 overflow-hidden shadow-xl">
@@ -419,7 +419,7 @@ const SettingsPage = () => {
                           </div>
                         )}
                         <div className="flex items-center gap-4">
-                          <label className="flex-1 flex items-center justify-center gap-3 h-14 rounded-2xl border-2 border-dashed border-white/10 bg-white/5 hover:bg-white/10 hover:border-emerald-500/50 transition-all cursor-pointer text-emerald-400 font-bold group">
+                          <label className="flex-1 flex items-center justify-center gap-3 h-14 rounded-2xl border-2 border-dashed border-white/10 bg-white/5 hover:bg-white/10 hover:border-brand-primary/50 transition-all cursor-pointer text-brand-secondary font-bold group">
                             <ImageIcon className="w-6 h-6 group-hover:scale-110 transition-transform" />
                             <span>{settings.logo_url ? t('settings.design.change_logo', 'تغيير الشعار') : t('settings.design.upload_logo', 'رفع الشعار')}</span>
                             <input 
@@ -444,7 +444,7 @@ const SettingsPage = () => {
                     </div>
                     <div className="space-y-6">
                       <div className="space-y-2">
-                        <label className="text-sm font-bold text-emerald-100/50">{t('settings.design.primary_color', 'اللون الأساسي')}</label>
+                        <label className="text-sm font-bold text-brand-secondary/50">{t('settings.design.primary_color', 'اللون الأساسي')}</label>
                         <div className="flex items-center gap-4">
                           <input type="color" className="w-12 h-12 rounded-xl bg-transparent border-none cursor-pointer" value={settings.primary_color} onChange={(e) => handleChange('primary_color', e.target.value)} />
                           <Input value={settings.primary_color} onChange={(e) => handleChange('primary_color', e.target.value)} />
@@ -458,9 +458,9 @@ const SettingsPage = () => {
               {activeTab === 'halls' && (
                 <SettingsSection title={t('settings.halls.title', 'إدارة القاعات')} description={t('settings.halls.desc', 'تعريف القاعات المختلفة وسعة كل منها.')} icon={Tv}>
                    <div className="space-y-6">
-                    <div className="bg-emerald-500/5 border border-emerald-500/10 p-6 rounded-3xl grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                    <div className="bg-brand-primary/5 border border-brand-primary/10 p-6 rounded-3xl grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                       <div>
-                        <label className="text-xs font-bold text-emerald-400/50 mb-2 block">{t('settings.halls.name_label', 'اسم القاعة (مثلاً: القاعة الكبرى)')}</label>
+                        <label className="text-xs font-bold text-brand-secondary/50 mb-2 block">{t('settings.halls.name_label', 'اسم القاعة (مثلاً: القاعة الكبرى)')}</label>
                         <Input 
                           placeholder={t('settings.halls.name_placeholder', 'اسم القاعة...')} 
                           value={newHall.name}
@@ -468,33 +468,33 @@ const SettingsPage = () => {
                         />
                       </div>
                       <div>
-                        <label className="text-xs font-bold text-emerald-400/50 mb-2 block">{t('settings.halls.capacity_label', 'السعة الاستيعابية')}</label>
+                        <label className="text-xs font-bold text-brand-secondary/50 mb-2 block">{t('settings.halls.capacity_label', 'السعة الاستيعابية')}</label>
                         <Input 
                           type="number"
                           value={newHall.capacity}
                           onChange={e => setNewHall({...newHall, capacity: parseInt(e.target.value) || 0})}
                         />
                       </div>
-                      <Button onClick={handleAddHall} className="h-12 bg-emerald-500 hover:bg-emerald-600 text-emerald-950">
+                      <Button onClick={handleAddHall} className="h-12 bg-brand-primary hover:bg-brand-primary text-brand-dark">
                         <Plus className="w-5 h-5 mr-2" /> {t('settings.halls.add_hall', 'إضافة قاعة')}
                       </Button>
                     </div>
 
                     <div className="space-y-3">
                       {halls.length === 0 ? (
-                        <div className="p-12 text-center border-2 border-dashed border-white/5 rounded-[32px] text-emerald-400/20 italic">
+                        <div className="p-12 text-center border-2 border-dashed border-white/5 rounded-[32px] text-brand-secondary/20 italic">
                           {t('settings.halls.no_halls', 'لا توجد قاعات معرفة حالياً.')}
                         </div>
                       ) : (
                         halls.map(hall => (
                           <div key={hall.id} className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-colors">
                             <div className="flex items-center gap-4">
-                              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 font-bold">
+                              <div className="w-10 h-10 rounded-xl bg-brand-primary/10 flex items-center justify-center text-brand-primary font-bold">
                                 <Tv className="w-5 h-5" />
                               </div>
                               <div>
                                 <div className="font-bold text-white">{hall.name}</div>
-                                <div className="text-xs text-emerald-400/40">{t('settings.halls.capacity_count', 'السعة: {{count}} مقعد', { count: hall.capacity })}</div>
+                                <div className="text-xs text-brand-secondary/40">{t('settings.halls.capacity_count', 'السعة: {{count}} مقعد', { count: hall.capacity })}</div>
                               </div>
                             </div>
                             <button 
@@ -515,19 +515,19 @@ const SettingsPage = () => {
                 <SettingsSection title={t('settings.payments.title', 'الدفع والاشتراكات')} description={t('settings.payments.desc', 'إعدادات بوابة الدفع وتذاكر الفعالية.')} icon={CreditCard}>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="flex items-center gap-3 bg-white/5 p-4 rounded-2xl md:col-span-2">
-                      <input type="checkbox" id="require_payment" checked={settings.require_payment} onChange={(e) => handleChange('require_payment', e.target.checked)} className="w-5 h-5 accent-emerald-500" />
+                      <input type="checkbox" id="require_payment" checked={settings.require_payment} onChange={(e) => handleChange('require_payment', e.target.checked)} className="w-5 h-5 accent-brand-primary" />
                       <label htmlFor="require_payment" className="font-bold">{t('settings.payments.require_payment', 'تفعيل الدفع الإلزامي للتسجيل')}</label>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-emerald-100/50">{t('settings.payments.ticket_price', 'مبلغ الاشتراك')}</label>
+                      <label className="text-sm font-bold text-brand-secondary/50">{t('settings.payments.ticket_price', 'مبلغ الاشتراك')}</label>
                       <Input type="number" value={settings.ticket_price} onChange={(e) => handleChange('ticket_price', e.target.value)} />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-emerald-100/50">{t('settings.payments.currency', 'العملة')}</label>
+                      <label className="text-sm font-bold text-brand-secondary/50">{t('settings.payments.currency', 'العملة')}</label>
                       <Input value={settings.currency} onChange={(e) => handleChange('currency', e.target.value)} />
                     </div>
                     <div className="space-y-2 md:col-span-2">
-                      <label className="text-sm font-bold text-emerald-100/50">{t('settings.payments.chargily_api_key', 'مفتاح API الخاص بـ Chargily Pay')}</label>
+                      <label className="text-sm font-bold text-brand-secondary/50">{t('settings.payments.chargily_api_key', 'مفتاح API الخاص بـ Chargily Pay')}</label>
                       <Input type="password" value={settings.chargily_api_key} onChange={(e) => handleChange('chargily_api_key', e.target.value)} />
                     </div>
                   </div>
@@ -538,11 +538,11 @@ const SettingsPage = () => {
                 <SettingsSection title={t('settings.welcome.title', 'شاشة الترحيب')} description={t('settings.welcome.desc', 'ما يظهر للضيوف عند مسح الكود أو الدخول للقاعة.')} icon={Tv}>
                   <div className="space-y-6">
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-emerald-100/50">{t('settings.welcome.welcome_title', 'عنوان الترحيب')}</label>
+                      <label className="text-sm font-bold text-brand-secondary/50">{t('settings.welcome.welcome_title', 'عنوان الترحيب')}</label>
                       <Input value={settings.welcome_title} onChange={(e) => handleChange('welcome_title', e.target.value)} />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-emerald-100/50">{t('settings.welcome.welcome_subtitle', 'الوصف الفرعي')}</label>
+                      <label className="text-sm font-bold text-brand-secondary/50">{t('settings.welcome.welcome_subtitle', 'الوصف الفرعي')}</label>
                       <Input value={settings.welcome_subtitle} onChange={(e) => handleChange('welcome_subtitle', e.target.value)} />
                     </div>
                   </div>
@@ -559,7 +559,7 @@ const SettingsPage = () => {
                       { id: 'org_label_4', label: t('settings.labels.org_label_4', 'تسمية الحقل 4 (الموقع)') },
                     ].map(field => (
                       <div key={field.id} className="space-y-2">
-                        <label className="text-sm font-bold text-emerald-100/50">{field.label}</label>
+                        <label className="text-sm font-bold text-brand-secondary/50">{field.label}</label>
                         <Input value={settings[field.id]} onChange={(e) => handleChange(field.id, e.target.value)} />
                       </div>
                     ))}
@@ -572,10 +572,10 @@ const SettingsPage = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="bg-white/5 border border-white/10 rounded-3xl p-8">
                        <h4 className="text-xl font-bold mb-4 flex items-center gap-2">
-                         <Save className={cn("w-5 h-5", settings.list_frozen ? "text-blue-400" : "text-emerald-400")} />
+                         <Save className={cn("w-5 h-5", settings.list_frozen ? "text-blue-400" : "text-brand-secondary")} />
                          {t('settings.advanced.freeze_title', 'تجميد القائمة')}
                        </h4>
-                       <p className="text-emerald-400/30 text-sm mb-8">{t('settings.advanced.freeze_desc', 'عند تجميد القائمة، لن يتمكن أحد من تسجيل حضور جديد أو تعديل البيانات.')}</p>
+                       <p className="text-brand-secondary/30 text-sm mb-8">{t('settings.advanced.freeze_desc', 'عند تجميد القائمة، لن يتمكن أحد من تسجيل حضور جديد أو تعديل البيانات.')}</p>
                        <Button 
                         variant={settings.list_frozen ? "outline" : "gold"} 
                         className="w-full h-14"

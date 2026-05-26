@@ -15,8 +15,34 @@ export default {
           muted: 'var(--brand-muted)',
           gold: {
             DEFAULT: 'var(--brand-secondary)',
-            light: '#F0C040'
+            light: '#7DD3FC'
           },
+        },
+        emerald: {
+          50: '#f0f9ff',
+          100: '#e0f2fe',
+          200: '#bae6fd',
+          300: '#7dd3fc',
+          400: 'var(--brand-secondary)',
+          500: 'var(--brand-primary)',
+          600: '#1D4ED8',
+          700: '#1E40AF',
+          800: 'var(--brand-surface)',
+          900: 'var(--brand-dark)',
+          950: 'var(--brand-dark)',
+        },
+        green: {
+          50: '#f0f9ff',
+          100: '#e0f2fe',
+          200: '#bae6fd',
+          300: '#7dd3fc',
+          400: 'var(--brand-secondary)',
+          500: 'var(--brand-primary)',
+          600: '#1D4ED8',
+          700: '#1E40AF',
+          800: 'var(--brand-surface)',
+          900: 'var(--brand-dark)',
+          950: 'var(--brand-dark)',
         }
       },
       fontFamily: {
@@ -25,7 +51,7 @@ export default {
         arabic: ['Cairo', 'sans-serif'],
       },
       backgroundImage: {
-        'hero-gradient': 'radial-gradient(ellipse at 20% 50%, rgba(29, 181, 138, 0.15), transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(212, 175, 55, 0.1), transparent 50%)',
+        'hero-gradient': 'radial-gradient(ellipse at 20% 50%, rgba(42, 100, 236, 0.15), transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(56, 189, 248, 0.1), transparent 50%)',
       }
     },
   },

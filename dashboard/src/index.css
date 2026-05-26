@@ -6,24 +6,27 @@
 
 :root {
   /* Core Brand Colors */
-  --brand-dark: #022C22;
-  /* Deep Emerald Background */
-  --brand-primary: #1DB58A;
-  /* Primary Emerald */
-  --brand-secondary: #D4AF37;
-  /* Primary Gold */
-  --brand-surface: #0A3D2B;
+  --brand-dark: #050B18;
+  /* Deep Velvet Navy Background */
+  --brand-primary: #2A64EC;
+  /* Primary Royal Blue */
+  --brand-secondary: #38BDF8;
+  /* Vibrant Ice Blue */
+  --brand-surface: #0D1527;
   /* Surface/Card Background */
 
   /* Gradients */
-  --gold-gradient: linear-gradient(135deg, #FCD34D 0%, #D97706 100%);
-  --brand-text: #F0F4F2;
-  --brand-muted: rgba(240, 244, 242, 0.55);
+  --gold-gradient: linear-gradient(135deg, #38BDF8 0%, #2A64EC 100%);
+  --brand-text: #F3F4F6;
+  --brand-muted: rgba(243, 244, 246, 0.55);
+  
+  /* Fallback for legacy color references */
+  --emerald-deep: var(--brand-dark);
 }
 
 body {
   margin: 0;
-  background-color: var(--emerald-deep);
+  background-color: var(--brand-dark);
   color: white;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }

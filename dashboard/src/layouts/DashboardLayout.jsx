@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import Sidebar from '../components/dashboard/Sidebar';
 import EventSelector from '../components/dashboard/EventSelector';
 import AdminNotifications from '../components/dashboard/AdminNotifications';
@@ -57,7 +57,7 @@ const DashboardLayout = ({ children, activePath }) => {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#022C22] text-white" dir={t('dir', 'rtl')}>
+    <div className="flex min-h-screen bg-[#050B18] text-white" dir={t('dir', 'rtl')}>
       <AdminNotifications eventId={selectedEventId} />
       {/* Sidebar */}
       <Sidebar activePath={activePath} />
@@ -66,10 +66,10 @@ const DashboardLayout = ({ children, activePath }) => {
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col relative overflow-hidden">
         {/* Background Decor */}
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-emerald-600/5 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-brand-primary/5 rounded-full blur-[120px] pointer-events-none" />
 
         {/* Header / Topbar */}
-        <header className="h-24 border-b border-white/10 flex items-center justify-between px-10 relative z-[60] backdrop-blur-md bg-[#022C22]/80 sticky top-0">
+        <header className="h-24 border-b border-white/10 flex items-center justify-between px-10 relative z-[60] backdrop-blur-md bg-[#050B18]/80 sticky top-0">
           <div className="flex items-center gap-8">
             <EventSelector
               selectedEventId={selectedEventId}
@@ -77,12 +77,12 @@ const DashboardLayout = ({ children, activePath }) => {
             />
 
             {/* Search Bar */}
-            <div className="hidden lg:flex items-center gap-3 bg-white/5 border border-white/5 px-4 py-2.5 rounded-2xl w-80 focus-within:border-emerald-500/50 transition-all">
-              <Search className="w-4 h-4 text-emerald-400/50" />
+            <div className="hidden lg:flex items-center gap-3 bg-white/5 border border-white/5 px-4 py-2.5 rounded-2xl w-80 focus-within:border-brand-primary/50 transition-all">
+              <Search className="w-4 h-4 text-brand-secondary/50" />
               <input
                 type="text"
                 placeholder={t('common.search')}
-                className="bg-transparent border-none outline-none text-sm w-full placeholder:text-emerald-400/20"
+                className="bg-transparent border-none outline-none text-sm w-full placeholder:text-brand-secondary/20"
               />
             </div>
           </div>
@@ -95,11 +95,11 @@ const DashboardLayout = ({ children, activePath }) => {
                 onClick={() => setIsNotifOpen(!isNotifOpen)}
                 className={cn(
                   "w-12 h-12 rounded-xl border flex items-center justify-center transition-all relative",
-                  isNotifOpen ? "bg-emerald-500 text-emerald-950 border-emerald-500 shadow-lg shadow-emerald-900/40" : "bg-white/5 border-white/5 text-emerald-400 hover:bg-white/10"
+                  isNotifOpen ? "bg-brand-primary text-brand-dark border-brand-primary shadow-lg shadow-brand-dark/40" : "bg-white/5 border-white/5 text-brand-secondary hover:bg-white/10"
                 )}
               >
                 <Bell className="w-5 h-5" />
-                {!isNotifOpen && <span className="absolute top-3 right-3 w-2 h-2 bg-amber-500 rounded-full border-2 border-[#022C22]" />}
+                {!isNotifOpen && <span className="absolute top-3 right-3 w-2 h-2 bg-amber-500 rounded-full border-2 border-[#050B18]" />}
               </button>
               <NotificationPanel
                 isOpen={isNotifOpen}
@@ -110,7 +110,7 @@ const DashboardLayout = ({ children, activePath }) => {
             </div>
             <button
               onClick={() => setIsHelpOpen(true)}
-              className="w-12 h-12 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center text-emerald-400 hover:bg-white/10 transition-all"
+              className="w-12 h-12 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center text-brand-secondary hover:bg-white/10 transition-all"
             >
               <HelpCircle className="w-5 h-5" />
             </button>
@@ -118,10 +118,10 @@ const DashboardLayout = ({ children, activePath }) => {
             <div className="flex items-center gap-3 relative group cursor-pointer">
               <div className="text-right">
                 <div className="text-sm font-bold">{userName}</div>
-                <div className="text-[10px] text-emerald-400/50 uppercase tracking-widest font-bold">{userRole}</div>
+                <div className="text-[10px] text-brand-secondary/50 uppercase tracking-widest font-bold">{userRole}</div>
               </div>
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 p-[2px]">
-                <div className="w-full h-full rounded-[10px] bg-emerald-950 flex items-center justify-center overflow-hidden">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-primary to-brand-primary p-[2px]">
+                <div className="w-full h-full rounded-[10px] bg-brand-dark flex items-center justify-center overflow-hidden">
                   <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=022C22&color=10B981`} alt="Avatar" />
                 </div>
               </div>
@@ -129,7 +129,7 @@ const DashboardLayout = ({ children, activePath }) => {
               {/* Dropdown Menu on Hover */}
               <div className="absolute top-full left-0 mt-2 w-48 bg-[#032e24] border border-white/10 rounded-[20px] shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all py-2 z-50 backdrop-blur-xl">
                 <Link to="/dashboard/profile" className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-white/5 transition-colors">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                  <div className="w-2 h-2 rounded-full bg-brand-primary" />
                   {t('common.profile')}
                 </Link>
                 <Link to="/dashboard/settings" className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-white/5 transition-colors">

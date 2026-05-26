@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+﻿import React, { useCallback } from 'react';
 import { QrCode } from 'lucide-react';
 import { getImageUrl } from '../../utils/image';
 
@@ -48,7 +48,7 @@ const ElementContent = ({ element }) => {
         <div style={{ 
           width:'100%', 
           height:'100%', 
-          background: `linear-gradient(90deg, ${element.roleColors?.vip || '#F59E0B'} 0%, ${element.roleColors?.speaker || '#8B5CF6'} 30%, ${element.roleColors?.press || '#3B82F6'} 60%, ${element.roleColors?.default || '#10B981'} 100%)`, 
+          background: `linear-gradient(90deg, ${element.roleColors?.vip || '#F59E0B'} 0%, ${element.roleColors?.speaker || '#8B5CF6'} 30%, ${element.roleColors?.press || '#3B82F6'} 60%, ${element.roleColors?.default || '#2A64EC'} 100%)`, 
           borderRadius: element.borderRadius || 0, 
           display: 'flex', 
           alignItems: 'center', 
@@ -102,7 +102,7 @@ const DraggableElement = ({ element, isSelected, onSelect, onMove, onResize, can
       {isSelected && (
         <>
           <ResizeHandles element={element} onResize={(u) => onResize(element.id, u)} />
-          <div style={{ position:'absolute', top:-20, left:0, background:'#D4AF37', color:'#022C22', fontSize:9, fontFamily:'monospace', fontWeight:'bold', padding:'1px 6px', borderRadius:4, whiteSpace:'nowrap', pointerEvents:'none' }}>
+          <div style={{ position:'absolute', top:-20, left:0, background:'#D4AF37', color:'#050B18', fontSize:9, fontFamily:'monospace', fontWeight:'bold', padding:'1px 6px', borderRadius:4, whiteSpace:'nowrap', pointerEvents:'none' }}>
             {Math.round(element.x)}, {Math.round(element.y)} · {Math.round(element.width)}×{Math.round(element.height)}
           </div>
         </>

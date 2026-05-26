@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../layouts/DashboardLayout';
 import { useTranslation } from 'react-i18next';
 import { 
@@ -117,9 +117,9 @@ const SpeakersPage = () => {
     return (
       <DashboardLayout activePath="/dashboard/speakers">
         <div className="text-center py-20 bg-white/5 border border-white/10 rounded-[32px] p-10 max-w-3xl mx-auto backdrop-blur-md">
-          <Mic className="w-16 h-16 text-emerald-400/20 mx-auto mb-4" />
+          <Mic className="w-16 h-16 text-brand-secondary/20 mx-auto mb-4" />
           <h3 className="text-2xl font-bold text-white mb-2">{t('speakers.no_event_selected', 'لم يتم اختيار فعالية')}</h3>
-          <p className="text-emerald-400/30 text-sm max-w-md mx-auto">{t('speakers.no_event_selected_desc', 'يرجى اختيار فعالية نشطة أو إنشاء فعالية جديدة لإدارة المتحدثين.')}</p>
+          <p className="text-brand-secondary/30 text-sm max-w-md mx-auto">{t('speakers.no_event_selected_desc', 'يرجى اختيار فعالية نشطة أو إنشاء فعالية جديدة لإدارة المتحدثين.')}</p>
         </div>
       </DashboardLayout>
     );
@@ -128,7 +128,7 @@ const SpeakersPage = () => {
   if (loading) {
     return (
       <DashboardLayout activePath="/dashboard/speakers">
-        <div className="p-20 text-center text-emerald-400 font-bold">{t('speakers.loading', 'جاري تحميل البيانات...')}</div>
+        <div className="p-20 text-center text-brand-secondary font-bold">{t('speakers.loading', 'جاري تحميل البيانات...')}</div>
       </DashboardLayout>
     );
   }
@@ -138,7 +138,7 @@ const SpeakersPage = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
         <div>
           <h1 className="text-4xl font-bold text-white mb-2">{t('speakers.title', 'المتحدثون والخبراء')}</h1>
-          <p className="text-emerald-400/50 flex items-center gap-2">
+          <p className="text-brand-secondary/50 flex items-center gap-2">
             <Mic className="w-4 h-4" />
             {t('speakers.subtitle', 'إدارة قائمة المتحدثين في الجلسات والورشات')}
           </p>
@@ -158,17 +158,17 @@ const SpeakersPage = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.05 }}
-              className="bg-white/5 border border-white/10 rounded-[32px] overflow-hidden group hover:border-emerald-500/30 transition-all"
+              className="bg-white/5 border border-white/10 rounded-[32px] overflow-hidden group hover:border-brand-primary/30 transition-all"
             >
-              <div className="h-48 relative overflow-hidden bg-emerald-900/20">
+              <div className="h-48 relative overflow-hidden bg-brand-dark/20">
                 {speaker.image_url ? (
                   <img src={getImageUrl(speaker.image_url)} alt={speaker.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
-                    <UserIcon className="w-16 h-16 text-emerald-400/10" />
+                    <UserIcon className="w-16 h-16 text-brand-secondary/10" />
                   </div>
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-[#022C22] to-transparent opacity-60" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#050B18] to-transparent opacity-60" />
                 <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
                   <button 
                     onClick={(e) => { e.stopPropagation(); handleEditOpen(speaker); }}
@@ -189,22 +189,22 @@ const SpeakersPage = () => {
               
               <div className="p-8">
                 <h3 className="text-xl font-bold text-white mb-1">{speaker.name}</h3>
-                <div className="text-emerald-400/50 text-sm flex items-center gap-2 mb-4">
+                <div className="text-brand-secondary/50 text-sm flex items-center gap-2 mb-4">
                   <Briefcase className="w-3 h-3" />
                   {speaker.title || t('speakers.official_speaker', 'متحدث رسمي')}
                 </div>
                 
                 {speaker.topic && (
                   <div className="p-4 rounded-2xl bg-white/5 border border-white/5 mb-4">
-                    <div className="text-[10px] text-emerald-100/30 font-bold uppercase mb-1">{t('speakers.main_topic', 'الموضوع الرئيسي')}</div>
-                    <div className="text-sm text-emerald-100/70 font-medium leading-relaxed">
+                    <div className="text-[10px] text-brand-secondary/30 font-bold uppercase mb-1">{t('speakers.main_topic', 'الموضوع الرئيسي')}</div>
+                    <div className="text-sm text-brand-secondary/70 font-medium leading-relaxed">
                       {speaker.topic}
                     </div>
                   </div>
                 )}
 
                 {speaker.bio && (
-                  <p className="text-emerald-100/30 text-xs line-clamp-2">
+                  <p className="text-brand-secondary/30 text-xs line-clamp-2">
                     {speaker.bio}
                   </p>
                 )}
@@ -216,19 +216,19 @@ const SpeakersPage = () => {
 
       {speakers.length === 0 && !loading && (
         <div className="text-center py-20 bg-white/5 rounded-[32px] border border-white/10">
-          <Mic className="w-16 h-16 text-emerald-400/10 mx-auto mb-4" />
+          <Mic className="w-16 h-16 text-brand-secondary/10 mx-auto mb-4" />
           <h3 className="text-xl font-bold text-white">{t('speakers.no_speakers', 'لا يوجد متحدثون حالياً')}</h3>
-          <p className="text-emerald-400/30 mt-2">{t('speakers.no_speakers_desc', 'ابدأ بإضافة أول متحدث للفعالية.')}</p>
+          <p className="text-brand-secondary/30 mt-2">{t('speakers.no_speakers_desc', 'ابدأ بإضافة أول متحدث للفعالية.')}</p>
         </div>
       )}
 
       {/* Add Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 backdrop-blur-xl bg-emerald-950/40">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 backdrop-blur-xl bg-brand-dark/40">
           <motion.div 
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-[#022C22] border border-white/10 rounded-[40px] p-10 w-full max-w-2xl shadow-2xl overflow-y-auto max-h-[90vh]"
+            className="bg-[#050B18] border border-white/10 rounded-[40px] p-10 w-full max-w-2xl shadow-2xl overflow-y-auto max-h-[90vh]"
           >
             <h2 className="text-2xl font-bold text-white mb-8">
               {editingSpeaker ? t('speakers.modal.title_edit', 'تعديل بيانات المتحدث') : t('speakers.modal.title_add', 'إضافة متحدث جديد')}
@@ -236,21 +236,21 @@ const SpeakersPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="space-y-6">
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-emerald-100/50">{t('speakers.modal.name', 'الاسم الكامل')}</label>
+                  <label className="text-sm font-bold text-brand-secondary/50">{t('speakers.modal.name', 'الاسم الكامل')}</label>
                   <Input 
                     value={newSpeaker.name} 
                     onChange={(e) => setNewSpeaker(prev => ({ ...prev, name: e.target.value }))}
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-emerald-100/50">{t('speakers.modal.job_title', 'المسمى الوظيفي')}</label>
+                  <label className="text-sm font-bold text-brand-secondary/50">{t('speakers.modal.job_title', 'المسمى الوظيفي')}</label>
                   <Input 
                     value={newSpeaker.title} 
                     onChange={(e) => setNewSpeaker(prev => ({ ...prev, title: e.target.value }))}
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-emerald-100/50">{t('speakers.modal.topic', 'موضوع المداخلة')}</label>
+                  <label className="text-sm font-bold text-brand-secondary/50">{t('speakers.modal.topic', 'موضوع المداخلة')}</label>
                   <Input 
                     value={newSpeaker.topic} 
                     onChange={(e) => setNewSpeaker(prev => ({ ...prev, topic: e.target.value }))}
@@ -260,23 +260,23 @@ const SpeakersPage = () => {
 
               <div className="space-y-6">
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-emerald-100/50">{t('speakers.modal.image', 'الصورة الشخصية')}</label>
+                  <label className="text-sm font-bold text-brand-secondary/50">{t('speakers.modal.image', 'الصورة الشخصية')}</label>
                   <div 
                     className={cn(
                       "w-full h-40 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all",
-                      imageFile ? "border-emerald-500 bg-emerald-500/10" : "border-white/10 bg-white/5 hover:bg-white/10"
+                      imageFile ? "border-brand-primary bg-brand-primary/10" : "border-white/10 bg-white/5 hover:bg-white/10"
                     )}
                     onClick={() => document.getElementById('image-upload').click()}
                   >
                     {imageFile ? (
-                      <div className="text-emerald-400 flex items-center gap-2">
+                      <div className="text-brand-secondary flex items-center gap-2">
                         <Check className="w-5 h-5" />
                         <span className="font-bold">{imageFile.name}</span>
                       </div>
                     ) : (
                       <>
-                        <ImageIcon className="w-8 h-8 text-emerald-400/20 mb-2" />
-                        <span className="text-xs text-emerald-400/30">{t('speakers.modal.image_placeholder', 'اختر صورة المتحدث')}</span>
+                        <ImageIcon className="w-8 h-8 text-brand-secondary/20 mb-2" />
+                        <span className="text-xs text-brand-secondary/30">{t('speakers.modal.image_placeholder', 'اختر صورة المتحدث')}</span>
                       </>
                     )}
                     <input 
@@ -289,9 +289,9 @@ const SpeakersPage = () => {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-emerald-100/50">{t('speakers.modal.bio', 'السيرة الذاتية (مختصرة)')}</label>
+                  <label className="text-sm font-bold text-brand-secondary/50">{t('speakers.modal.bio', 'السيرة الذاتية (مختصرة)')}</label>
                   <textarea 
-                    className="w-full h-24 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-emerald-500 text-sm"
+                    className="w-full h-24 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-brand-primary text-sm"
                     value={newSpeaker.bio}
                     onChange={(e) => setNewSpeaker(prev => ({ ...prev, bio: e.target.value }))}
                   />

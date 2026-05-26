@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { Users, MessageCircle, Calendar, Search,
          UserPlus, Check, X, Star, QrCode, ChevronRight,
          Phone, Mail, Award } from 'lucide-react';
@@ -100,7 +100,7 @@ const NetworkingHub = ({ eventId, participant }) => {
   }, []);
 
   return (
-    <div style={{ display:'flex', flexDirection:'column', height:'100%', minHeight: '100vh', background:'#022C22', fontFamily:'Cairo, sans-serif' }}>
+    <div style={{ display:'flex', flexDirection:'column', height:'100%', minHeight: '100vh', background:'#050B18', fontFamily:'Cairo, sans-serif' }}>
       
       {/* Header */}
       <div style={{ padding:'16px 20px', borderBottom:'1px solid rgba(212,175,55,0.15)', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
@@ -109,7 +109,7 @@ const NetworkingHub = ({ eventId, participant }) => {
       </div>
       
       {/* Tabs */}
-      <div style={{ display:'flex', borderBottom:'1px solid rgba(255,255,255,0.08)', background:'#0A3D2B' }}>
+      <div style={{ display:'flex', borderBottom:'1px solid rgba(255,255,255,0.08)', background:'#0D1527' }}>
         {TABS.map(tab => {
           const Icon = tab.icon;
           const badgeCount = tab.badge ? badges[tab.badge] : 0;
@@ -119,7 +119,7 @@ const NetworkingHub = ({ eventId, participant }) => {
               onClick={() => setActiveTab(tab.id)}
               style={{
                 flex:1, padding:'12px 8px', border:'none', cursor:'pointer', fontFamily:'Cairo',
-                background: activeTab === tab.id ? '#022C22' : 'transparent',
+                background: activeTab === tab.id ? '#050B18' : 'transparent',
                 borderBottom: activeTab === tab.id ? '2px solid #D4AF37' : '2px solid transparent',
                 color: activeTab === tab.id ? '#D4AF37' : 'rgba(255,255,255,0.5)',
                 display:'flex', flexDirection:'column', alignItems:'center', gap:4, position:'relative'
@@ -253,7 +253,7 @@ const DirectoryTab = ({ eventId, myId }) => {
         </div>
         <button 
           onClick={toggleVisibility} 
-          style={{ background: isVisible ? 'linear-gradient(135deg, #1DB58A, #10b981)' : 'rgba(255,255,255,0.1)', color: isVisible ? '#fff' : 'rgba(255,255,255,0.5)', border:'none', borderRadius:20, padding:'6px 16px', fontFamily:'Cairo', fontSize:12, fontWeight:'bold', cursor:'pointer', transition:'all 0.3s' }}
+          style={{ background: isVisible ? 'linear-gradient(135deg, #2A64EC, #2A64EC)' : 'rgba(255,255,255,0.1)', color: isVisible ? '#fff' : 'rgba(255,255,255,0.5)', border:'none', borderRadius:20, padding:'6px 16px', fontFamily:'Cairo', fontSize:12, fontWeight:'bold', cursor:'pointer', transition:'all 0.3s' }}
         >
           {isVisible ? '👁 مرئي' : '👁‍🗨 مخفي'}
         </button>
@@ -276,7 +276,7 @@ const DirectoryTab = ({ eventId, myId }) => {
           onClick={() => setOpenToMeetOnly(!openToMeetOnly)}
           style={{ padding:'6px 14px', borderRadius:20, border:'1px solid', fontFamily:'Cairo', fontSize:12, cursor:'pointer', whiteSpace:'nowrap',
             background: openToMeetOnly ? '#D4AF37' : 'transparent',
-            color: openToMeetOnly ? '#022C22' : '#D4AF37',
+            color: openToMeetOnly ? '#050B18' : '#D4AF37',
             borderColor: '#D4AF37'
           }}
         >
@@ -347,7 +347,7 @@ const ParticipantCard = ({ participant: p, onConnect }) => {
       {/* Avatar */}
       <div style={{
         width:48, height:48, borderRadius:'50%', flexShrink:0,
-        background:'linear-gradient(135deg, #022C22, #1DB58A)',
+        background:'linear-gradient(135deg, #050B18, #2A64EC)',
         display:'flex', alignItems:'center', justifyContent:'center',
         fontSize:18, border:'2px solid rgba(212,175,55,0.3)'
       }}>
@@ -451,7 +451,7 @@ const MessagesTab = ({ myId }) => {
           <div key={msg.id} style={{ display:'flex', justifyContent: msg.is_mine ? 'flex-start' : 'flex-end' }}>
             <div style={{
               maxWidth:'75%', padding:'10px 14px', borderRadius:12,
-              background: msg.is_mine ? '#1DB58A' : 'rgba(255,255,255,0.08)',
+              background: msg.is_mine ? '#2A64EC' : 'rgba(255,255,255,0.08)',
               color:'#F0F4F2', fontSize:13, lineHeight:1.5
             }}>
               {msg.content}
@@ -474,7 +474,7 @@ const MessagesTab = ({ myId }) => {
           style={{ flex:1, padding:'10px 14px', background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.1)', borderRadius:20, color:'#F0F4F2', fontFamily:'Cairo', fontSize:13, outline:'none' }}
         />
         <button onClick={sendMessage}
-          style={{ width:40, height:40, borderRadius:'50%', background:'#D4AF37', border:'none', cursor:'pointer', color:'#022C22', fontWeight:'bold', display:'flex', alignItems:'center', justifyContent:'center', fontSize: 18 }}>
+          style={{ width:40, height:40, borderRadius:'50%', background:'#D4AF37', border:'none', cursor:'pointer', color:'#050B18', fontWeight:'bold', display:'flex', alignItems:'center', justifyContent:'center', fontSize: 18 }}>
           ←
         </button>
       </div>
@@ -490,7 +490,7 @@ const MessagesTab = ({ myId }) => {
           <div key={conn.connection_id}
             onClick={() => openChat(conn)}
             style={{ display:'flex', alignItems:'center', gap:12, padding:14, borderRadius:12, marginBottom:8, background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.06)', cursor:'pointer' }}>
-            <div style={{ width:42, height:42, borderRadius:'50%', background:'linear-gradient(135deg, #022C22, #1DB58A)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, position:'relative' }}>
+            <div style={{ width:42, height:42, borderRadius:'50%', background:'linear-gradient(135deg, #050B18, #2A64EC)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, position:'relative' }}>
               {conn.full_name?.charAt(0)}
               {conn.unread_messages > 0 && (
                 <span style={{ position:'absolute', top:-2, right:-2, background:'#ef4444', color:'#fff', borderRadius:'50%', width:16, height:16, fontSize:9, display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'bold' }}>
@@ -531,7 +531,7 @@ const ProfileCompletionBadge = ({ participant }) => (
 
 const RecommendationCard = ({ participant: p, onConnect }) => (
   <div style={{ minWidth:150, background:'rgba(255,255,255,0.04)', borderRadius:12, padding:12, border:'1px solid rgba(212,175,55,0.15)', textAlign:'center' }}>
-    <div style={{ width:40, height:40, borderRadius:'50%', background:'linear-gradient(135deg, #022C22, #1DB58A)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, margin:'0 auto 8px' }}>
+    <div style={{ width:40, height:40, borderRadius:'50%', background:'linear-gradient(135deg, #050B18, #2A64EC)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, margin:'0 auto 8px' }}>
       {p.full_name?.charAt(0)}
     </div>
     <div style={{ color:'#F0F4F2', fontSize:12, fontWeight:'bold', marginBottom:2 }}>{p.full_name?.split(' ')[0]}</div>

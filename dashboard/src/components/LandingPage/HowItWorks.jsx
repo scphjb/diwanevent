@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { motion } from 'framer-motion';
 import { FileSpreadsheet, QrCode, Smartphone, CheckCircle, FileText, Download } from 'lucide-react';
 import { useLang } from '../../utils/useLang';
@@ -19,8 +19,8 @@ const HowItWorks = () => {
       icon: FileSpreadsheet,
       visual: (
         <div className="flex items-center gap-4">
-            <div className="p-4 bg-emerald-500/20 rounded-xl border border-emerald-500/30">
-                <FileSpreadsheet size={40} className="text-emerald-500" />
+            <div className="p-4 bg-brand-primary/20 rounded-xl border border-brand-primary/30">
+                <FileSpreadsheet size={40} className="text-brand-primary" />
             </div>
             <motion.div 
                 animate={{ x: [0, 20, 0] }}

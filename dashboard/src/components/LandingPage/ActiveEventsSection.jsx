@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Calendar, MapPin, ArrowRight, Sparkles, Loader2, UserCheck, Lock, CheckCircle, Clock } from 'lucide-react';
@@ -88,8 +88,8 @@ const ActiveEventsSection = () => {
   const TimeBadge = ({ eventDate }) => {
     const ts = getEventTimeStatus(eventDate);
     if (ts === 'today') return (
-      <span className="px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
-        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse inline-block" />
+      <span className="px-3 py-1 rounded-full bg-brand-primary/20 border border-brand-primary/30 text-brand-secondary text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
+        <span className="w-1.5 h-1.5 rounded-full bg-brand-secondary animate-pulse inline-block" />
         {L({ ar: 'اليوم', en: 'Today', fr: "Aujourd'hui", es: 'Hoy' })}
       </span>
     );
@@ -235,7 +235,7 @@ const ActiveEventsSection = () => {
                       className="w-full py-3.5 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all shadow-xl active:scale-95 hover:scale-[1.02]"
                       style={{
                         backgroundColor: evt.primary_color || '#D4AF37',
-                        color: '#022C22',
+                        color: '#050B18',
                         boxShadow: `0 8px 24px ${evt.primary_color}30`,
                       }}
                     >

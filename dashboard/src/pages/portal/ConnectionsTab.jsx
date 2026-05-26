@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { UserPlus, UserCheck, X, Search, MoreVertical, FileText } from 'lucide-react';
 import networkingService from '../../services/networkingService';
 
@@ -71,7 +71,7 @@ const ConnectionsTab = ({ onBadgeUpdate, myId }) => {
               }}>
                 <div style={{
                   width: 44, height: 44, borderRadius: '50%', flexShrink: 0,
-                  background: 'linear-gradient(135deg, #022C22, #1DB58A)',
+                  background: 'linear-gradient(135deg, #050B18, #2A64EC)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: 18, border: '2px solid rgba(212,175,55,0.3)'
                 }}>
@@ -152,7 +152,7 @@ const ConnectionsTab = ({ onBadgeUpdate, myId }) => {
               }}>
                 <div style={{
                   width: 44, height: 44, borderRadius: '50%', flexShrink: 0,
-                  background: 'linear-gradient(135deg, #022C22, #1DB58A)',
+                  background: 'linear-gradient(135deg, #050B18, #2A64EC)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: 18, position: 'relative'
                 }}>
@@ -162,7 +162,7 @@ const ConnectionsTab = ({ onBadgeUpdate, myId }) => {
                     conn.full_name?.charAt(0)
                   )}
                   {conn.unread_messages > 0 && (
-                     <div style={{ position: 'absolute', top: -2, right: -2, width: 14, height: 14, background: '#ef4444', borderRadius: '50%', border: '2px solid #0A3D2B' }} />
+                     <div style={{ position: 'absolute', top: -2, right: -2, width: 14, height: 14, background: '#ef4444', borderRadius: '50%', border: '2px solid #0D1527' }} />
                   )}
                 </div>
                 

@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 
 export const BADGE_ELEMENTS = [
   { id: 'full_name',  icon: '👤', label: 'اسم المشارك',    type: 'dynamic_text', placeholder: 'اسم المشارك الكامل', defaultW: 320, defaultH: 40,  defaultStyle: { color: '#D4AF37', fontSize: '22px', fontWeight: 'bold', textAlign: 'right', fontFamily: 'Cairo, sans-serif' } },
@@ -7,13 +7,13 @@ export const BADGE_ELEMENTS = [
   { id: 'role',       icon: '💼', label: 'الصفة',          type: 'dynamic_text', placeholder: 'الصفة أو المنصب',    defaultW: 200, defaultH: 24, defaultStyle: { color: '#D4AF37', fontSize: '12px', fontWeight: 'bold', textAlign: 'right', fontFamily: 'Cairo, sans-serif' } },
   { id: 'order_num',  icon: '#',  label: 'رقم المشارك',   type: 'dynamic_text', placeholder: 'DWN-001',            defaultW: 120, defaultH: 20, defaultStyle: { color: 'rgba(255,255,255,0.4)', fontSize: '10px', fontFamily: 'monospace' } },
   { id: 'seat_info',  icon: '💺', label: 'رقم المقعد',    type: 'dynamic_text', placeholder: 'قاعة A - مقعد 15',  defaultW: 200, defaultH: 22, defaultStyle: { color: 'rgba(255,255,255,0.5)', fontSize: '11px', textAlign: 'right', fontFamily: 'Cairo, sans-serif' } },
-  { id: 'event_name', icon: '📅', label: 'اسم الفعالية',  type: 'dynamic_text', placeholder: '[اسم الفعالية]',    defaultW: 533, defaultH: 28, defaultStyle: { color: '#022C22', fontSize: '13px', fontWeight: 'bold', textAlign: 'center', fontFamily: 'Cairo, sans-serif' } },
+  { id: 'event_name', icon: '📅', label: 'اسم الفعالية',  type: 'dynamic_text', placeholder: '[اسم الفعالية]',    defaultW: 533, defaultH: 28, defaultStyle: { color: '#050B18', fontSize: '13px', fontWeight: 'bold', textAlign: 'center', fontFamily: 'Cairo, sans-serif' } },
   { id: 'event_location', icon: '📍', label: 'مكان الفعالية',type: 'dynamic_text', placeholder: '[مكان الفعالية]',  defaultW: 200, defaultH: 22, defaultStyle: { color: 'rgba(255,255,255,0.6)', fontSize: '11px', textAlign: 'center', fontFamily: 'Cairo, sans-serif' } },
   { id: 'event_date', icon: '🕐', label: 'تاريخ الفعالية',type: 'dynamic_text', placeholder: '[تاريخ الفعالية]',  defaultW: 200, defaultH: 22, defaultStyle: { color: 'rgba(255,255,255,0.6)', fontSize: '11px', textAlign: 'center', fontFamily: 'Cairo, sans-serif' } },
   { id: 'qr_code',    icon: '▦',  label: 'رمز QR',        type: 'qr',           defaultW: 90,  defaultH: 90 },
   { id: 'logo',       icon: '🖼', label: 'شعار الفعالية', type: 'image',        defaultW: 80,  defaultH: 80 },
   { id: 'rectangle',  icon: '▬',  label: 'مستطيل / شريط', type: 'shape',        defaultW: 533, defaultH: 28, color: '#D4AF37' },
-  { id: 'role_color_banner', icon: '🎨', label: 'شريط الصفة الديناميكي', type: 'role_color_shape', defaultW: 533, defaultH: 30, roleColors: { vip: '#F59E0B', speaker: '#8B5CF6', press: '#3B82F6', organizer: '#EF4444', default: '#10B981' } },
+  { id: 'role_color_banner', icon: '🎨', label: 'شريط الصفة الديناميكي', type: 'role_color_shape', defaultW: 533, defaultH: 30, roleColors: { vip: '#F59E0B', speaker: '#8B5CF6', press: '#3B82F6', organizer: '#EF4444', default: '#2A64EC' } },
   { id: 'line',       icon: '—',  label: 'خط فاصل',       type: 'shape',        defaultW: 400, defaultH: 2,  color: 'rgba(212,175,55,0.5)' },
 ];
 
@@ -21,11 +21,11 @@ export const BADGE_PRESETS = [
   {
     id: 'classic_dark',
     name: 'كلاسيك داكن',
-    preview: '#022C22',
-    background: { color: '#022C22' },
+    preview: '#050B18',
+    background: { color: '#050B18' },
     elements: [
       { id: 'top_bar', type: 'shape', color: '#D4AF37', x: 0, y: 0, width: 533, height: 30, zIndex: 1 },
-      { id: 'event_name', type: 'dynamic_text', placeholder: '[اسم الفعالية]', x: 0, y: 5, width: 533, height: 22, zIndex: 2, style: { color: '#022C22', fontSize: '13px', fontWeight: 'bold', textAlign: 'center', fontFamily: 'Cairo, sans-serif' } },
+      { id: 'event_name', type: 'dynamic_text', placeholder: '[اسم الفعالية]', x: 0, y: 5, width: 533, height: 22, zIndex: 2, style: { color: '#050B18', fontSize: '13px', fontWeight: 'bold', textAlign: 'center', fontFamily: 'Cairo, sans-serif' } },
       { id: 'full_name', type: 'dynamic_text', placeholder: 'اسم المشارك الكامل', x: 20, y: 55, width: 350, height: 44, zIndex: 3, style: { color: '#D4AF37', fontSize: '24px', fontWeight: '900', textAlign: 'right', fontFamily: 'Cairo, sans-serif' } },
       { id: 'organization', type: 'dynamic_text', placeholder: 'اسم الجهة', x: 20, y: 104, width: 320, height: 26, zIndex: 3, style: { color: '#FFFFFF', fontSize: '14px', textAlign: 'right', fontFamily: 'Cairo, sans-serif' } },
       { id: 'department', type: 'dynamic_text', placeholder: 'القسم / التخصص', x: 20, y: 132, width: 280, height: 22, zIndex: 3, style: { color: 'rgba(255,255,255,0.6)', fontSize: '12px', textAlign: 'right', fontFamily: 'Cairo, sans-serif' } },
@@ -39,9 +39,9 @@ export const BADGE_PRESETS = [
     preview: '#FFFFFF',
     background: { color: '#FFFFFF' },
     elements: [
-      { id: 'side_bar', type: 'shape', color: '#022C22', x: 0, y: 0, width: 10, height: 378, zIndex: 1 },
+      { id: 'side_bar', type: 'shape', color: '#050B18', x: 0, y: 0, width: 10, height: 378, zIndex: 1 },
       { id: 'top_bar', type: 'shape', color: '#D4AF37', x: 0, y: 0, width: 533, height: 4, zIndex: 2 },
-      { id: 'full_name', type: 'dynamic_text', placeholder: 'الاسم الكامل', x: 22, y: 50, width: 380, height: 50, zIndex: 2, style: { color: '#022C22', fontSize: '28px', fontWeight: '900', fontFamily: 'Cairo, sans-serif', textAlign: 'right' } },
+      { id: 'full_name', type: 'dynamic_text', placeholder: 'الاسم الكامل', x: 22, y: 50, width: 380, height: 50, zIndex: 2, style: { color: '#050B18', fontSize: '28px', fontWeight: '900', fontFamily: 'Cairo, sans-serif', textAlign: 'right' } },
       { id: 'organization', type: 'dynamic_text', placeholder: 'الجهة', x: 22, y: 104, width: 380, height: 28, zIndex: 2, style: { color: '#D4AF37', fontSize: '15px', fontFamily: 'Cairo, sans-serif', textAlign: 'right' } },
       { id: 'role', type: 'dynamic_text', placeholder: 'الصفة', x: 22, y: 136, width: 280, height: 22, zIndex: 2, style: { color: '#555', fontSize: '12px', fontFamily: 'Cairo, sans-serif', textAlign: 'right' } },
       { id: 'qr_code', type: 'qr', x: 413, y: 258, width: 100, height: 100, zIndex: 2 },
@@ -91,7 +91,7 @@ const LeftPanel = ({ elements, selectedId, onSelect, onReorder, onAddElement, on
               key={preset.id}
               onClick={() => onLoadPreset(preset)}
               title={preset.name}
-              style={{ aspectRatio: '1.4', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', background: preset.background?.color || '#022C22', overflow: 'hidden', transition: 'border-color 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: 'rgba(255,255,255,0.5)', fontFamily: 'Cairo', textAlign: 'center', padding: '4px' }}
+              style={{ aspectRatio: '1.4', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', background: preset.background?.color || '#050B18', overflow: 'hidden', transition: 'border-color 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: 'rgba(255,255,255,0.5)', fontFamily: 'Cairo', textAlign: 'center', padding: '4px' }}
               onMouseEnter={e => e.currentTarget.style.borderColor = '#D4AF37'}
               onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'}
             >
@@ -105,7 +105,7 @@ const LeftPanel = ({ elements, selectedId, onSelect, onReorder, onAddElement, on
       <div style={{ padding: 12, borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
         <div style={{ fontSize: 10, color: '#D4AF37', fontWeight: 'bold', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>خلفية التصميم</div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
-          <input type="color" value={background?.color || '#022C22'} onChange={e => onBackgroundChange('color', e.target.value)} style={{ width: 32, height: 32, border: 'none', borderRadius: 6, cursor: 'pointer' }} />
+          <input type="color" value={background?.color || '#050B18'} onChange={e => onBackgroundChange('color', e.target.value)} style={{ width: 32, height: 32, border: 'none', borderRadius: 6, cursor: 'pointer' }} />
           <span style={{ fontSize: 12, color: 'rgba(240,244,242,0.5)' }}>لون الخلفية</span>
         </div>
         <label style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.05)', border: '1px dashed rgba(255,255,255,0.15)', borderRadius: 8, padding: '7px 10px', cursor: 'pointer', fontSize: 12, color: 'rgba(240,244,242,0.6)' }}>
