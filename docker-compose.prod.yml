@@ -124,6 +124,7 @@ services:
       - ./attendance_system/fonts:/app/fonts:ro
       - app_exports:/app/exports
       - app_logs:/app/logs
+      - static_data:/app/static
     depends_on:
       pgbouncer:
         condition: service_started
@@ -244,4 +245,6 @@ volumes:
   app_logs:
     driver: local
   nginx_logs:
+    driver: local
+  static_data:
     driver: local
