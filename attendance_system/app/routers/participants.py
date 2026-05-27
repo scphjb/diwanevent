@@ -4,6 +4,7 @@ from typing import List, Optional
 import pandas as pd
 import io
 import os
+import logging
 from app.core.database import get_db
 from app.models.participant import Participant
 from app.schemas.participant import ParticipantOut
@@ -18,6 +19,8 @@ from app.core.rbac import require_permission
 from app.routers.participant_auth import get_current_participant
 from sqlalchemy import select, update, delete, func
 import uuid
+
+logger = logging.getLogger("diwan.participants")
 
 def _participant_to_dict(p):
     return {
