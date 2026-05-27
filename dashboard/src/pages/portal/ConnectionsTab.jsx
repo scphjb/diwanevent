@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { UserPlus, UserCheck, X, Search, MoreVertical, FileText } from 'lucide-react';
 import networkingService from '../../services/networkingService';
 
@@ -7,6 +7,17 @@ const ConnectionsTab = ({ onBadgeUpdate, myId }) => {
   const [connected, setConnected] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+
+  const getIsLightTheme = () => {
+    if (typeof document === 'undefined') return false;
+    return (
+      document.documentElement.classList.contains('light-theme') ||
+      document.body.classList.contains('light-theme') ||
+      localStorage.getItem('portal_theme') === 'light'
+    );
+  };
+
+  const isLightTheme = getIsLightTheme();
 
   const fetchConnections = async () => {
     setLoading(true);
@@ -32,11 +43,9 @@ const ConnectionsTab = ({ onBadgeUpdate, myId }) => {
   const handleRespond = async (connectionId, action) => {
     try {
       await networkingService.respondToRequest(connectionId, action);
-      // Refresh the lists
       fetchConnections();
     } catch (error) {
       console.error(`Failed to ${action} connection:`, error);
-      alert(`حدث خطأ أثناء معالجة الطلب.`);
     }
   };
 
@@ -45,7 +54,6 @@ const ConnectionsTab = ({ onBadgeUpdate, myId }) => {
       await networkingService.downloadVCard(participantId);
     } catch (error) {
       console.error("Failed to download vCard:", error);
-      alert("حدث خطأ أثناء تحميل بطاقة الاتصال.");
     }
   };
 
@@ -60,20 +68,23 @@ const ConnectionsTab = ({ onBadgeUpdate, myId }) => {
       {/* Pending Requests */}
       {pending.length > 0 && (
         <div style={{ marginBottom: 24 }}>
-          <h3 style={{ color: '#D4AF37', fontSize: 14, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+          <h3 style={{ color: isLightTheme ? '#D97706' : '#D4AF37', fontSize: 14, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
             <UserPlus size={16} /> طلبات معلقة ({pending.length})
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {pending.map(req => (
               <div key={req.connection_id} style={{
-                background: 'rgba(212,175,55,0.05)', borderRadius: 12, padding: 14,
-                border: '1px solid rgba(212,175,55,0.2)', display: 'flex', alignItems: 'flex-start', gap: 12
+                background: isLightTheme ? 'rgba(217,119,6,0.05)' : 'rgba(212,175,55,0.05)', 
+                borderRadius: 12, padding: 14,
+                border: isLightTheme ? '1px solid rgba(217,119,6,0.15)' : '1px solid rgba(212,175,55,0.2)', 
+                display: 'flex', alignItems: 'flex-start', gap: 12
               }}>
                 <div style={{
                   width: 44, height: 44, borderRadius: '50%', flexShrink: 0,
-                  background: 'linear-gradient(135deg, #050B18, #2A64EC)',
+                  background: isLightTheme ? '#F1F5F9' : 'linear-gradient(135deg, #050B18, #2A64EC)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 18, border: '2px solid rgba(212,175,55,0.3)'
+                  fontSize: 18, border: isLightTheme ? '2px solid rgba(217,119,6,0.2)' : '2px solid rgba(212,175,55,0.3)',
+                  color: isLightTheme ? '#D97706' : '#FFFFFF'
                 }}>
                   {req.avatar_url ? (
                     <img src={req.avatar_url} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} alt="" />
@@ -83,15 +94,20 @@ const ConnectionsTab = ({ onBadgeUpdate, myId }) => {
                 </div>
                 
                 <div style={{ flex: 1 }}>
-                  <div style={{ color: '#F0F4F2', fontWeight: 'bold', fontSize: 14 }}>{req.full_name}</div>
-                  <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, marginBottom: 6 }}>{req.council} · {req.role}</div>
+                  <div style={{ color: isLightTheme ? '#0F172A' : '#F0F4F2', fontWeight: 'bold', fontSize: 14 }}>{req.full_name}</div>
+                  <div style={{ color: isLightTheme ? '#475569' : 'rgba(255,255,255,0.5)', fontSize: 11, marginBottom: 6 }}>{req.council} · {req.role}</div>
                   {req.message && (
-                    <div style={{ background: 'rgba(0,0,0,0.2)', padding: '6px 10px', borderRadius: 8, fontSize: 12, color: 'rgba(255,255,255,0.8)', marginBottom: 8, fontStyle: 'italic' }}>
+                    <div style={{ 
+                      background: isLightTheme ? '#F1F5F9' : 'rgba(0,0,0,0.2)', 
+                      padding: '6px 10px', borderRadius: 8, fontSize: 12, 
+                      color: isLightTheme ? '#334155' : 'rgba(255,255,255,0.8)', 
+                      marginBottom: 8, fontStyle: 'italic' 
+                    }}>
                       "{req.message}"
                     </div>
                   )}
                   {req.via_qr && (
-                    <div style={{ color: '#D4AF37', fontSize: 10, marginBottom: 8 }}>📷 تم عبر مسح الشارة</div>
+                    <div style={{ color: isLightTheme ? '#D97706' : '#D4AF37', fontSize: 10, marginBottom: 8 }}>📷 تم عبر مسح الشارة</div>
                   )}
                   
                   <div style={{ display: 'flex', gap: 8 }}>
@@ -117,7 +133,7 @@ const ConnectionsTab = ({ onBadgeUpdate, myId }) => {
 
       {/* Connected List */}
       <div>
-        <h3 style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'space-between' }}>
+        <h3 style={{ color: isLightTheme ? '#475569' : 'rgba(255,255,255,0.6)', fontSize: 14, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'space-between' }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
              <UserCheck size={16} /> شبكتي ({connected.length})
           </span>
@@ -125,20 +141,32 @@ const ConnectionsTab = ({ onBadgeUpdate, myId }) => {
         
         {connected.length > 0 && (
           <div style={{ position: 'relative', marginBottom: 16 }}>
-            <Search size={16} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.4)' }} />
+            <Search size={16} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: isLightTheme ? '#64748B' : 'rgba(255,255,255,0.4)' }} />
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="البحث في اتصالاتي..."
-              style={{ width: '100%', padding: '10px 40px 10px 12px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, color: '#F0F4F2', fontFamily: 'Cairo', fontSize: 13, outline: 'none', boxSizing: 'border-box' }}
+              style={{ 
+                width: '100%', padding: '10px 40px 10px 12px', 
+                background: isLightTheme ? '#FFFFFF' : 'rgba(255,255,255,0.06)', 
+                border: isLightTheme ? '1px solid rgba(15,23,42,0.15)' : '1px solid rgba(255,255,255,0.1)', 
+                borderRadius: 10, color: isLightTheme ? '#0F172A' : '#F0F4F2', 
+                fontFamily: 'Cairo', fontSize: 13, outline: 'none', boxSizing: 'border-box' 
+              }}
             />
           </div>
         )}
 
         {loading ? (
-           <div style={{ textAlign: 'center', padding: 20, color: 'rgba(255,255,255,0.4)' }}>جاري التحميل...</div>
+           <div style={{ textAlign: 'center', padding: 20, color: isLightTheme ? '#94A3B8' : 'rgba(255,255,255,0.4)' }}>جاري التحميل...</div>
         ) : filteredConnected.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: 40, color: 'rgba(255,255,255,0.3)', background: 'rgba(255,255,255,0.02)', borderRadius: 12 }}>
+          <div style={{ 
+            textAlign: 'center', padding: 40, 
+            color: isLightTheme ? '#94A3B8' : 'rgba(255,255,255,0.3)', 
+            background: isLightTheme ? '#FFFFFF' : 'rgba(255,255,255,0.02)', 
+            borderRadius: 12,
+            border: isLightTheme ? '1px solid rgba(15,23,42,0.06)' : 'none'
+          }}>
             <UserPlus size={40} style={{ margin: '0 auto 12px', opacity: 0.5 }} />
             <div style={{ fontSize: 14, fontFamily: 'Cairo' }}>{search ? 'لا توجد نتائج مطابقة' : 'ليس لديك اتصالات بعد'}</div>
             {!search && <div style={{ fontSize: 12, marginTop: 4 }}>تصفح الدليل للبحث عن أشخاص وتوسيع شبكتك.</div>}
@@ -147,14 +175,19 @@ const ConnectionsTab = ({ onBadgeUpdate, myId }) => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {filteredConnected.map(conn => (
               <div key={conn.connection_id} style={{
-                background: 'rgba(255,255,255,0.04)', borderRadius: 12, padding: 12,
-                border: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 12
+                background: isLightTheme ? '#FFFFFF' : 'rgba(255,255,255,0.04)', 
+                borderRadius: 12, padding: 12,
+                border: isLightTheme ? '1px solid rgba(15,23,42,0.06)' : '1px solid rgba(255,255,255,0.06)', 
+                display: 'flex', alignItems: 'center', gap: 12,
+                boxShadow: isLightTheme ? '0 4px 12px rgba(15,23,42,0.02)' : 'none'
               }}>
                 <div style={{
                   width: 44, height: 44, borderRadius: '50%', flexShrink: 0,
-                  background: 'linear-gradient(135deg, #050B18, #2A64EC)',
+                  background: isLightTheme ? '#F1F5F9' : 'linear-gradient(135deg, #050B18, #2A64EC)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 18, position: 'relative'
+                  fontSize: 18, position: 'relative',
+                  border: isLightTheme ? '1px solid rgba(217,119,6,0.1)' : 'none',
+                  color: isLightTheme ? '#D97706' : '#FFFFFF'
                 }}>
                   {conn.avatar_url ? (
                     <img src={conn.avatar_url} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} alt="" />
@@ -167,14 +200,19 @@ const ConnectionsTab = ({ onBadgeUpdate, myId }) => {
                 </div>
                 
                 <div style={{ flex: 1 }}>
-                  <div style={{ color: '#F0F4F2', fontWeight: 'bold', fontSize: 14 }}>{conn.full_name}</div>
-                  <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11 }}>{conn.council}</div>
+                  <div style={{ color: isLightTheme ? '#0F172A' : '#F0F4F2', fontWeight: 'bold', fontSize: 14 }}>{conn.full_name}</div>
+                  <div style={{ color: isLightTheme ? '#475569' : 'rgba(255,255,255,0.5)', fontSize: 11 }}>{conn.council}</div>
                 </div>
 
                 <button 
                   onClick={() => handleDownloadVCard(conn.participant_id)}
                   title="حفظ جهة الاتصال (vCard)"
-                  style={{ background: 'rgba(212,175,55,0.1)', color: '#D4AF37', border: '1px solid rgba(212,175,55,0.3)', borderRadius: '50%', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                  style={{ 
+                    background: isLightTheme ? 'rgba(217,119,6,0.08)' : 'rgba(212,175,55,0.1)', 
+                    color: isLightTheme ? '#D97706' : '#D4AF37', 
+                    border: isLightTheme ? '1px solid rgba(217,119,6,0.2)' : '1px solid rgba(212,175,55,0.3)', 
+                    borderRadius: '50%', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' 
+                  }}
                 >
                   <FileText size={16} />
                 </button>
