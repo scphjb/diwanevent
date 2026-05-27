@@ -247,13 +247,118 @@ async def serve_react_app(request: Request, full_path: str = ""):
 
 
 # ═══════════════════════════════════════
-# WebSocket
+# WebSocket - Authenticated Endpoint
 # ═══════════════════════════════════════
+from app.core.security import decode_token
+from app.models.user import User
+from app.models.participant import Participant
+from sqlalchemy import select
+from app.core.database import AsyncSessionLocal
+from fastapi import Query
+from typing import Optional
+import json
+
 @app.websocket("/ws/{event_id}")
-async def websocket_endpoint(websocket: WebSocket, event_id: int, role: str = "guest"):
-    await manager.connect(websocket, event_id, role)
+async def websocket_endpoint(
+    websocket: WebSocket,
+    event_id: int,
+    token: Optional[str] = Query(None),
+    participant_token: Optional[str] = Query(None)
+):
+    """
+    WebSocket مصادق عليه لحماية بيانات المنصة.
+    يقبل:
+    - token: JWT للمنظمين والمسؤولين (role = admin/scanner/viewer)
+    - participant_token: توكن بوابة المشاركين
+    """
+    if not token and not participant_token:
+        await websocket.close(code=4001, reason="Authentication required")
+        return
+    
+    verified_role = "guest"
+    verified_user_id = None
+    
+    # ── 1. التحقق من توكن المنظمين والإداريين ───────────────────────
+    if token:
+        try:
+            payload = decode_token(token)
+            if not payload:
+                await websocket.close(code=4003, reason="Invalid token")
+                return
+            
+            email = payload.get("sub")
+            if not email:
+                await websocket.close(code=4003, reason="Invalid token payload")
+                return
+            
+            async with AsyncSessionLocal() as db:
+                result = await db.execute(
+                    select(User).filter(User.email == email, User.is_active == True)
+                )
+                user = result.scalar_one_or_none()
+            
+            if not user:
+                await websocket.close(code=4003, reason="User not found")
+                return
+            
+            role_map = {
+                'super_admin':  'admin',
+                'organizer':    'admin',
+                'scanner':      'scanner',
+                'viewer':       'viewer'
+            }
+            verified_role = role_map.get(user.role, 'viewer')
+            verified_user_id = user.id
+            
+        except Exception as e:
+            logger.warning(f"WebSocket User Auth Failed: {e}")
+            await websocket.close(code=4003, reason="Token verification failed")
+            return
+            
+    # ── 2. التحقق من توكن بوابة المشاركين ────────────────────────────
+    elif participant_token:
+        try:
+            payload = decode_token(participant_token)
+            if not payload:
+                await websocket.close(code=4003, reason="Invalid participant token")
+                return
+                
+            subject = payload.get("sub", "")
+            if not subject.startswith("participant:"):
+                await websocket.close(code=4003, reason="Invalid participant scope")
+                return
+                
+            verified_role = "participant"
+            verified_user_id = int(subject.split(":")[1])
+            
+        except Exception as e:
+            logger.warning(f"WebSocket Participant Auth Failed: {e}")
+            await websocket.close(code=4003, reason="Participant token invalid")
+            return
+            
+    # ── 3. تفعيل الاتصال الفعلي بعد فحص الصلاحية ─────────────────────
+    await manager.connect(websocket, event_id, verified_role)
+    
     try:
         while True:
-            await websocket.receive_text()
+            data = await websocket.receive_text()
+            try:
+                msg = json.loads(data)
+                msg_type = msg.get("type")
+                
+                # منع الضيوف والمشاركين من بث رسائل تحكم إدارية
+                if msg_type in ("admin_broadcast", "freeze_list", "announcement"):
+                    if verified_role not in ("admin",):
+                        await websocket.send_json({
+                            "type": "error",
+                            "message": "Insufficient permissions to broadcast administrative signals"
+                        })
+                        continue
+                
+                await manager.broadcast_to_event(event_id, msg)
+            except json.JSONDecodeError:
+                pass
+                
     except WebSocketDisconnect:
         manager.disconnect(websocket, event_id)
+        logger.debug(f"WebSocket disconnected gracefully: event={event_id}, role={verified_role}")

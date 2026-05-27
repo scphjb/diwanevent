@@ -815,67 +815,7 @@ async def undo_check_in_participant(
         raise
     except Exception as e:
         import traceback
-        error_details = traceback.format_exc()
-        print(f"Error in undo_check_in_participant: {error_details}")
-        raise HTTPException(status_code=400, detail=f"Internal Error: {str(e)}")
-
-@router.get("/{participant_id}/badge")
-async def get_participant_badge(
-    participant_id: int, 
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
-):
-    """تحميل شارة المشارك مع التحقق من الصلاحية"""
-    from app.utils.badge import generate_badge_pdf
-    participant = await db.get(Participant, participant_id)
-    if not participant:
-        raise HTTPException(status_code=404, detail="المشارك غير موجود")
-    
-    # التحقق من الصلاحية
-    if current_user.role not in ('super_admin', 'organizer'):
-        raise HTTPException(status_code=403, detail="لا صلاحية لك")
-    
-    # جلب القالب والفعالية لضمان تطبيق النمط واللغة المختارين
-    from app.models.event import Event
-    from app.models.template import BadgeTemplate
-    from app.routers.credentials import _participant_to_dict, _event_to_dict, _template_to_dict
-    
-    event = await db.get(Event, participant.event_id)
-    
-    stmt = select(BadgeTemplate).filter(BadgeTemplate.event_id == participant.event_id)
-    res = await db.execute(stmt)
-    template = res.scalars().first()
-    
-    pdf_buffer = generate_badge_pdf(
-        participant=_participant_to_dict(participant),
-        event=_event_to_dict(event),
-        template=_template_to_dict(template)
-    )
-    pdf_bytes = pdf_buffer if isinstance(pdf_buffer, bytes) else pdf_buffer.getvalue()
-    
-    return Response(
-        content=pdf_bytes,
-        media_type="application/pdf",
-        headers={"Content-Disposition": f"attachment; filename=badge_{participant_id}.pdf"}
-    )
-
-@router.post("/analyze-import")
-async def analyze_import(
-    file: UploadFile = File(...),
-    current_user: User = Depends(get_current_active_user)
-):
-    """تحليل ملف الإكسيل وإرجاع أسماء الأعمدة للمنظم ليقوم بالربط"""
-    try:
-        contents = await file.read()
-        df = pd.read_excel(io.BytesIO(contents), engine='openpyxl', nrows=5)
-        df = df.fillna('')
-        columns = df.columns.tolist()
-        sample = df.to_dict(orient='records')
-        return {"columns": columns, "sample": sample}
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"فشل قراءة الملف: {str(e)}")
-
-@router.post("/import")
+        error_details = traceback.f@router.post("/import")
 async def import_participants(
     event_id: int,
     file: UploadFile = File(...),
@@ -886,104 +826,188 @@ async def import_participants(
     _: None = Depends(require_permission("participant:manage"))
 ):
     import json
+    import io
     try:
         field_mapping = json.loads(mapping)
         contents = await file.read()
         df = pd.read_excel(io.BytesIO(contents), engine='openpyxl')
         df = df.fillna('')
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"فشل المعالجة: {str(e)}")
-    
-    added = 0
-    skipped = 0
-    
-    for _, row in df.iterrows():
-        raw_entry = {
-            "full_name": str(row.get(field_mapping.get('full_name'), '')).strip(),
-            "organization": str(row.get(field_mapping.get('organization'), 'مشارك')).strip(),
-            "department": str(row.get(field_mapping.get('department'), 'عام')).strip(),
-            "email": str(row.get(field_mapping.get('email'), '')).strip(),
-            "phone": str(row.get(field_mapping.get('phone'), '')).strip(),
-            "role": str(row.get(field_mapping.get('role'), '')).strip(),
-        }
+        raise HTTPException(status_code=400, detail=f"فشل معالجة الملف: {str(e)}")
         
-        if not raw_entry['full_name']:
+    # ── 1. التحقق من وجود الفعالية وصلاحيتها دفعة واحدة ─────────────
+    from app.models.event import Event
+    event_obj = await db.get(Event, event_id)
+    if not event_obj:
+        raise HTTPException(status_code=404, detail="الفعالية غير موجودة")
+        
+    # جلب المنظم للتحقق من الرصيد والحدود المتاحة
+    organizer = await db.get(User, event_obj.created_by) if event_obj else None
+    has_credits = organizer and (organizer.credits > 0 or organizer.role == 'super_admin')
+    
+    # ── 2. جلب المشاركين الحاليين للتحقق من التكرار محلياً (منع N+1) ───
+    existing_result = await db.execute(
+        select(Participant.email, Participant.phone_number).filter(
+            Participant.event_id == event_id
+        )
+    )
+    existing_rows = existing_result.fetchall()
+    existing_emails = {row.email.lower() for row in existing_rows if row.email}
+    existing_phones = {row.phone_number for row in existing_rows if row.phone_number}
+    
+    participants_to_insert = []
+    skipped = 0
+    added = 0
+    
+    # ── 3. تجميع السجلات وتطهيرها محلياً ────────────────────────────
+    for idx, row in df.iterrows():
+        raw_name = str(row.get(field_mapping.get('full_name'), '')).strip()
+        if not raw_name or raw_name.lower() == 'nan':
             continue
-
-        clean_result = await DataSanitizer.process_row(db, event_id, raw_entry)
-        if clean_result['is_duplicate']:
+            
+        raw_email = str(row.get(field_mapping.get('email'), '')).strip().lower() or None
+        raw_phone = str(row.get(field_mapping.get('phone'), '')).strip() or None
+        
+        # كشف التكرار الفوري محلياً دون استعلامات
+        if raw_email and raw_email in existing_emails:
             skipped += 1
             continue
-
+        if raw_phone and raw_phone in existing_phones:
+            skipped += 1
+            continue
+            
         order_num = f"DWN-{uuid.uuid4().hex[:8].upper()}"
-        new_p = Participant(
-            event_id=event_id,
-            full_name=clean_result['full_name'],
-            organization=raw_entry['organization'],
-            department=raw_entry['department'],
-            role=raw_entry.get('role') or None,
-            email=clean_result['email'],
-            phone_number=clean_result['phone_number'],
-            payment_status='pending',
-            entry_type='imported',
-            order_num=order_num,
-            qr_code=order_num
-        )
-        db.add(new_p)
-        added += 1
+        payment_status = 'pending'
         
-        # جلب المنظم للتحقق من الرصيد لكل سطر
-        from app.models.event import Event
-        event_obj = await db.get(Event, event_id)
-        organizer = await db.get(User, event_obj.created_by) if event_obj else None
-        
-        # لا نقوم بالتفعيل أو إرسال الإيميل إلا إذا توفر رصيد
-        has_credits = organizer and (organizer.credits > 0 or organizer.role == 'super_admin')
-
-        if clean_result['email'] and has_credits:
-            # تفعيل المشارك وخصم الرصيد
-            new_p.payment_status = 'paid'
+        # خصم الرصيد ديناميكياً
+        if raw_email and has_credits:
+            payment_status = 'paid'
             if organizer.role != 'super_admin':
                 organizer.credits -= 1
+                if organizer.credits <= 0:
+                    organizer.credits = 0
+                    has_credits = False # إيقاف الدفع التلقائي للأسطر اللاحقة
+                    
+        participants_to_insert.append({
+            "event_id": event_id,
+            "full_name": raw_name,
+            "organization": str(row.get(field_mapping.get('organization'), 'مشارك')).strip(),
+            "department": str(row.get(field_mapping.get('department'), 'عام')).strip(),
+            "role": str(row.get(field_mapping.get('role'), '')).strip() or None,
+            "email": raw_email,
+            "phone_number": raw_phone,
+            "payment_status": payment_status,
+            "entry_type": "imported",
+            "order_num": order_num,
+            "qr_code": order_num
+        })
+        
+        # تحديث قائمة الكشف الفوري لمنع تكرار الإكسل نفسه
+        if raw_email:
+            existing_emails.add(raw_email)
+        if raw_phone:
+            existing_phones.add(raw_phone)
             
-            from app.routers.participant_auth import generate_otp, create_magic_token, send_unified_welcome_email
-            otp_code = generate_otp()
-            from app.models.otp import ParticipantOTP
-            from datetime import datetime, timedelta
-            
-            # Since new_p needs an ID, we flush to generate the ID
-            await db.flush()
-            
+    # ── 4. الإدراج المجمّع الفائق للبيانات (Bulk Insert with returning) ─
+    if participants_to_insert:
+        from sqlalchemy import insert
+        stmt = insert(Participant).returning(
+            Participant.id,
+            Participant.email,
+            Participant.full_name,
+            Participant.order_num,
+            Participant.qr_code,
+            Participant.payment_status
+        )
+        result = await db.execute(stmt, participants_to_insert)
+        inserted_rows = result.fetchall()
+        added = len(inserted_rows)
+        
+        # ── 5. إنشاء رموز الـ OTP وتجميع حملة الإيميل ───────────────────
+        from app.routers.participant_auth import generate_otp, create_magic_token
+        from app.models.otp import ParticipantOTP
+        from datetime import datetime, timedelta
+        
+        otps_to_insert = []
+        emails_to_notify = []
+        
+        for p_id, p_email, p_name, p_order, p_qr, p_pay in inserted_rows:
+            if p_email and p_pay == 'paid':
+                otp_code = generate_otp()
+                otps_to_insert.append({
+                    "participant_id": p_id,
+                    "email": p_email,
+                    "otp_code": otp_code,
+                    "expires_at": datetime.utcnow() + timedelta(minutes=60)
+                })
+                
+                magic_token = create_magic_token(p_id)
+                frontend_url = _get_frontend_url()
+                magic_link = f"{frontend_url}/participant-login?token={magic_token}"
+                
+                emails_to_notify.append({
+                    "email": p_email,
+                    "participant_name": p_name,
+                    "event_name": event_obj.event_name if event_obj else "Diwan Event",
+                    "order_num": p_order,
+                    "otp": otp_code,
+                    "magic_link": magic_link,
+                    "qr_code": p_qr,
+                    "event_date": str(event_obj.event_date) if event_obj and event_obj.event_date else None,
+                    "event_location": event_obj.location if event_obj else None
+                })
+                
+        if otps_to_insert:
+            # مسح الـ OTPs القديمة وإدراج مجمّع للجديد
+            inserted_ids = [otp['participant_id'] for otp in otps_to_insert]
             await db.execute(
-                delete(ParticipantOTP).filter(ParticipantOTP.participant_id == new_p.id)
+                delete(ParticipantOTP).filter(ParticipantOTP.participant_id.in_(inserted_ids))
             )
-            new_otp = ParticipantOTP(
-                participant_id=new_p.id,
-                email=new_p.email,
-                otp_code=otp_code,
-                expires_at=datetime.utcnow() + timedelta(minutes=60)
-            )
-            db.add(new_otp)
+            await db.execute(insert(ParticipantOTP), otps_to_insert)
             
-            magic_token = create_magic_token(new_p.id)
-            frontend_url = _get_frontend_url()
-            magic_link = f"{frontend_url}/participant-login?token={magic_token}"
-
-            background_tasks.add_task(
-                send_unified_welcome_email,
-                email=new_p.email,
-                participant_name=new_p.full_name,
-                event_name=event_obj.event_name if event_obj else "Diwan Event",
-                order_num=new_p.order_num,
-                otp=otp_code,
-                magic_link=magic_link,
-                qr_code=new_p.qr_code,
-                event_date=str(event_obj.event_date) if event_obj and event_obj.event_date else None,
-                event_location=event_obj.location if event_obj else None
-            )
-            
-    await db.commit()
+        await db.commit()
+        
+        # ── 6. ترحيل حملة الإيميل لـ Celery خارج الـ Event Loop ─────────
+        if emails_to_notify:
+            try:
+                from app.tasks.email_tasks import send_bulk_welcome_emails_task
+                send_bulk_welcome_emails_task.delay(emails_to_notify, event_id)
+            except Exception as e:
+                logger.warning(f"Failed dispatching to Celery, falling back to BackgroundTasks: {e}")
+                if background_tasks:
+                    background_tasks.add_task(
+                        _send_welcome_emails_batch,
+                        emails_to_notify,
+                        batch_size=10,
+                        delay_between_batches=1.0
+                    )
+                    
     return {"status": "success", "added": added, "skipped": skipped}
+
+
+async def _send_welcome_emails_batch(recipients: list, batch_size: int = 10, delay_between_batches: float = 1.0):
+    """إرسال الإيميلات الاحتياطي المبطأ لمنع خنق خادم الويب عند توقف Celery"""
+    import asyncio
+    from app.routers.participant_auth import send_unified_welcome_email
+    for i in range(0, len(recipients), batch_size):
+        batch = recipients[i:i + batch_size]
+        for recipient in batch:
+            try:
+                await send_unified_welcome_email(
+                    email=recipient["email"],
+                    participant_name=recipient["participant_name"],
+                    event_name=recipient["event_name"],
+                    order_num=recipient["order_num"],
+                    otp=recipient["otp"],
+                    magic_link=recipient["magic_link"],
+                    qr_code=recipient["qr_code"],
+                    event_date=recipient["event_date"],
+                    event_location=recipient["event_location"]
+                )
+            except Exception as e:
+                logger.error(f"Fallback Email failed for {recipient.get('email')}: {e}")
+        if i + batch_size < len(recipients):
+            await asyncio.sleep(delay_between_batches)
 
 @router.post("/register", response_model=ParticipantOut)
 async def register_participant(

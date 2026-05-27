@@ -47,6 +47,7 @@ import UpdatesPage   from './pages/UpdatesPage';
 import BlogPage      from './pages/BlogPage';
 import JobsPage      from './pages/JobsPage';
 import InstallPrompt from './components/pwa/InstallPrompt';
+import { useOfflineStatus } from './hooks/useOfflineStatus';
 
 /**
  * مكون لحماية المسارات — يدعم التحقق من التوكن والأدوار (RBAC).
@@ -73,8 +74,22 @@ const ProtectedRoute = ({ children, requiredRole }) => {
 import { EventProvider } from './context/EventContext';
 
 function App() {
+  const { isOffline } = useOfflineStatus();
+  
   return (
     <EventProvider>
+      {isOffline && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, zIndex: 99999,
+          background: '#BA7517', color: '#fff', padding: '10px',
+          textAlign: 'center', fontFamily: 'Cairo, sans-serif', fontSize: '13px',
+          fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          gap: '8px', boxShadow: '0 4px 10px rgba(0,0,0,0.3)', direction: 'rtl'
+        }}>
+          <span>📡</span>
+          <span>أنت تعمل حالياً في وضع عدم الاتصال — يتم استعراض البيانات المحفوظة محلياً</span>
+        </div>
+      )}
       <InstallPrompt />
       <Routes>
       {/* ═══ المسارات العامة ═══ */}

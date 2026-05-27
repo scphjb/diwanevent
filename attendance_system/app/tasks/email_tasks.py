@@ -146,3 +146,62 @@ def send_bulk_emails_task(
 
     logger.info(f"[BULK EMAIL] اكتمل: {sent} مُرسَل، {failed} فشل")
     return {"sent": sent, "failed": failed, "total": len(participants)}
+
+
+@shared_task(
+    name="app.tasks.email_tasks.send_bulk_welcome_emails_task",
+    bind=True,
+    max_retries=3,
+    default_retry_delay=60,
+    queue="emails"
+)
+def send_bulk_welcome_emails_task(self, recipients: List[Dict[str, Any]], event_id: int = None) -> Dict:
+    """
+    إرسال إيميلات ترحيبية مجهزة مسبقاً بشكل مجمّع ومعدل بطيء.
+    تعمل بالكامل في طابور مهام Celery بدون استهلاك اتصالات قاعدة البيانات.
+    """
+    import asyncio
+    from app.routers.participant_auth import send_unified_welcome_email
+    
+    total = len(recipients)
+    sent = 0
+    failed = 0
+    
+    logger.info(f"[CELERY BULK welcome] Starting task for {total} pre-built emails")
+    
+    for i, recipient in enumerate(recipients):
+        try:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            
+            loop.run_until_complete(
+                send_unified_welcome_email(
+                    email=recipient["email"],
+                    participant_name=recipient["participant_name"],
+                    event_name=recipient["event_name"],
+                    order_num=recipient["order_num"],
+                    otp=recipient["otp"],
+                    magic_link=recipient["magic_link"],
+                    qr_code=recipient["qr_code"],
+                    event_date=recipient.get("event_date"),
+                    event_location=recipient.get("event_location")
+                )
+            )
+            loop.close()
+            sent += 1
+            
+            # معدل إرسال آمن: 10 إيميلات في الثانية (100ms تأخير بين كل إرسال)
+            time.sleep(0.1)
+            
+            if (i + 1) % 50 == 0:
+                logger.info(f"[CELERY BULK welcome] Progress: {i+1}/{total}")
+                self.update_state(
+                    state='PROGRESS',
+                    meta={'sent': sent, 'failed': failed, 'total': total}
+                )
+        except Exception as e:
+            failed += 1
+            logger.error(f"[CELERY BULK] Failed sending to {recipient.get('email')}: {e}")
+            
+    logger.info(f"[CELERY BULK welcome] Completed campaign: {sent} sent, {failed} failed")
+    return {"status": "success", "sent": sent, "failed": failed, "total": total}

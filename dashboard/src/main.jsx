@@ -1,4 +1,4 @@
-﻿import React, { Suspense } from 'react'
+import React, { Suspense } from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import App from './App'
@@ -52,6 +52,32 @@ window.confirm = (message) => {
     }
   });
 };
+
+// تسجيل الـ Service Worker لضمان عمل الواجهات دون إنترنت (PWA)
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', async () => {
+    try {
+      const registration = await navigator.serviceWorker.register('/sw.js', {
+        scope: '/'
+      });
+      console.log('Service Worker registered successfully with scope:', registration.scope);
+      
+      // الكشف عن التحديثات وتنبيه العميل لإعادة التثبيت
+      registration.addEventListener('updatefound', () => {
+        const newWorker = registration.installing;
+        if (newWorker) {
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              console.info('🔄 تحديث جديد متاح — يُنصح بإعادة تحميل الصفحة');
+            }
+          });
+        }
+      });
+    } catch (error) {
+      console.warn('⚠️ Service Worker registration failed:', error);
+    }
+  });
+}
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
