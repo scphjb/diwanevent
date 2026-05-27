@@ -149,6 +149,18 @@ async def health_check():
     return {"status": "healthy", "version": "3.0.0"}
 
 
+@app.get("/api/v1/health", tags=["🔧 النظام"])
+async def health_check_v1():
+    """نقطة فحص صحة النظام للـ PWA."""
+    return {"status": "healthy", "version": "3.0.0"}
+
+
+@app.get("/api/health", tags=["🔧 النظام"])
+async def health_check_api():
+    """نقطة فحص صحة النظام للـ API العامة."""
+    return {"status": "healthy", "version": "3.0.0"}
+
+
 # Helper to get event settings for legacy templates or dynamic pages
 async def get_dynamic_settings(db: AsyncSession, event_id: int = 1):
     event = await db.get(Event, event_id)
