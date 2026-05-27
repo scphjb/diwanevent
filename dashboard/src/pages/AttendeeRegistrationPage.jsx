@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -21,6 +21,20 @@ const safeFormatDate = (dateString) => {
       numberingSystem: 'latn'
     });
   } catch (e) { return 'سيتم التحديد لاحقاً'; }
+};
+
+const getFullUrl = (url) => {
+  if (!url) return '';
+  if (url.startsWith('http')) return url;
+  
+  let baseApi = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1/';
+  if (!import.meta.env.DEV && (!import.meta.env.VITE_API_URL || baseApi.includes('localhost'))) {
+    baseApi = window.location.origin + '/api/v1/';
+  }
+  const baseUrl = baseApi.replace('/api/v1/', '');
+  const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+  const cleanUrl = url.startsWith('/') ? url : '/' + url;
+  return `${cleanBase}${cleanUrl}`;
 };
 
 const PARTICIPANT_ROLES = [
@@ -213,7 +227,7 @@ const AttendeeRegistrationPage = () => {
           className="relative z-10 max-w-lg w-full text-center space-y-8"
         >
           {event.logo_url && (
-            <img src={event.logo_url} alt="logo" className="w-20 h-20 mx-auto rounded-2xl object-contain" />
+            <img src={getFullUrl(event.logo_url)} alt="logo" className="w-20 h-20 mx-auto rounded-2xl object-contain" />
           )}
           <h1 className="text-3xl font-black leading-tight">{event.event_name}</h1>
 
@@ -271,6 +285,13 @@ const AttendeeRegistrationPage = () => {
               <Sparkles size={16} />
               {event.registration_enabled ? 'التسجيل مفتوح الآن' : 'التسجيل مغلق'}
             </div>
+            {event.logo_url && (
+              <img 
+                src={getFullUrl(event.logo_url)} 
+                alt="logo" 
+                className="w-24 h-24 rounded-3xl object-contain shadow-2xl bg-white/5 border border-white/10 p-2 block" 
+              />
+            )}
             <h1 className={`font-black leading-tight ${event.event_name?.length > 40 ? 'text-2xl lg:text-4xl' : 'text-4xl lg:text-6xl'}`}>
               انضم إلينا في
               <span className="block mt-3 text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">

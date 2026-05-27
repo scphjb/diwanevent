@@ -16,15 +16,21 @@ const credentialService = {
   },
   
   getBadgeUrl: (token) => {
-    return `${api.defaults.baseURL}/credentials/badges/secure-download/${token}`;
+    const baseURL = api.defaults.baseURL || '/api/v1/';
+    const base = baseURL.endsWith('/') ? baseURL.slice(0, -1) : baseURL;
+    return `${base}/credentials/badges/secure-download/${token}`;
   },
   
   getCertificateUrl: (token) => {
-    return `${api.defaults.baseURL}/credentials/certificates/secure-download/${token}`;
+    const baseURL = api.defaults.baseURL || '/api/v1/';
+    const base = baseURL.endsWith('/') ? baseURL.slice(0, -1) : baseURL;
+    return `${base}/credentials/certificates/secure-download/${token}`;
   },
 
   getCertificatePreviewUrl: (eventId) => {
-    return `${api.defaults.baseURL}/credentials/certificates/preview/${eventId}`;
+    const baseURL = api.defaults.baseURL || '/api/v1/';
+    const base = baseURL.endsWith('/') ? baseURL.slice(0, -1) : baseURL;
+    return `${base}/credentials/certificates/preview/${eventId}`;
   },
 
   saveCertificateDesign: async (eventId, data) => {

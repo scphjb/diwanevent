@@ -11,6 +11,15 @@ const interactionService = {
     const res = await api.post('social/', postData);
     return res.data;
   },
+
+  uploadPostImage: async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await api.post('social/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    return res.data;
+  },
   
   // Gamification
   getLeaderboard: async (eventId, limit = 10) => {

@@ -12,6 +12,8 @@ import {
   Download,
   HelpCircle,
   X,
+  Heart,
+  MessageCircle,
   Search, 
   Users,
   Users as NetworkingIcon,
@@ -23,7 +25,10 @@ import {
   Monitor,
   Printer,
   CheckCircle,
-  FileText
+  FileText,
+  Star,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -41,8 +46,16 @@ import toast, { Toaster } from 'react-hot-toast';
 const getFullUrl = (url) => {
   if (!url) return '#';
   if (url.startsWith('http')) return url;
-  const baseUrl = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1/').replace('/api/v1/', '');
-  return `${baseUrl}${url}`;
+  
+  let baseApi = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1/';
+  // In production, fallback to the current dynamic domain origin if no custom VITE_API_URL is supplied or it points to localhost
+  if (!import.meta.env.DEV && (!import.meta.env.VITE_API_URL || baseApi.includes('localhost'))) {
+    baseApi = window.location.origin + '/api/v1/';
+  }
+  const baseUrl = baseApi.replace('/api/v1/', '');
+  const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+  const cleanUrl = url.startsWith('/') ? url : '/' + url;
+  return `${cleanBase}${cleanUrl}`;
 };
 
 const ParticipantPortal = () => {
@@ -75,6 +88,189 @@ const ParticipantPortal = () => {
   });
   const [tagInput, setTagInput] = useState('');
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [favorites, setFavorites] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`diwan_favorites_${eventId}`);
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+  const [agendaFilter, setAgendaFilter] = useState('all');
+  const [expandedSessionId, setExpandedSessionId] = useState(null);
+  
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState('');
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+
+  // States for likes & comments (Instagram-style mini social platform)
+  const [likedPosts, setLikedPosts] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`diwan_liked_${eventId}`);
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+  const [expandedCommentsPostId, setExpandedCommentsPostId] = useState(null);
+  const [postComments, setPostComments] = useState({});
+  const [commentInputs, setCommentInputs] = useState({});
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+
+  // Session Rating & Offline support states
+  const [sessionRatings, setSessionRatings] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`diwan_ratings_${eventId}`);
+      return saved ? JSON.parse(saved) : {};
+    } catch (e) {
+      return {};
+    }
+  });
+
+  const [theme, setTheme] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`diwan_theme_${eventId}`);
+      return saved || 'dark';
+    } catch (e) {
+      return 'dark';
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(`diwan_theme_${eventId}`, theme);
+      if (theme === 'light') {
+        document.documentElement.classList.add('light-theme');
+      } else {
+        document.documentElement.classList.remove('light-theme');
+      }
+    } catch (e) {
+      console.error('Failed to set theme classes', e);
+    }
+  }, [theme, eventId]);
+
+  const handleImageSelect = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('حجم الصورة كبير جداً، الحد الأقصى 5 ميجابايت.');
+      return;
+    }
+    setSelectedImage(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleClearImage = () => {
+    setSelectedImage(null);
+    setImagePreview('');
+  };
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(`diwan_favorites_${eventId}`, JSON.stringify(favorites));
+    } catch (e) {
+      console.error('Failed to save favorites to localStorage', e);
+    }
+  }, [favorites, eventId]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(`diwan_liked_${eventId}`, JSON.stringify(likedPosts));
+    } catch (e) {
+      console.error('Failed to save liked posts to localStorage', e);
+    }
+  }, [likedPosts, eventId]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(`diwan_ratings_${eventId}`, JSON.stringify(sessionRatings));
+    } catch (e) {
+      console.error('Failed to save session ratings', e);
+    }
+  }, [sessionRatings, eventId]);
+
+  const toggleFavorite = (sessionId, e) => {
+    if (e) e.stopPropagation();
+    if (favorites.includes(sessionId)) {
+      setFavorites(favorites.filter(id => id !== sessionId));
+      toast('تمت الإزالة من مفضلتك ⭐', { icon: '🗑️' });
+    } else {
+      setFavorites([...favorites, sessionId]);
+      toast('تمت الإضافة إلى مفضلتك ⭐', { icon: '💖' });
+    }
+  };
+
+  const getGoogleCalendarUrl = (session) => {
+    try {
+      const dateStr = eventSettings.event_date ? eventSettings.event_date.split('T')[0] : new Date().toISOString().split('T')[0];
+      const startTime = session.start_time || '09:00';
+      const endTime = session.end_time || '10:00';
+      const startISO = `${dateStr.replace(/-/g, '')}T${startTime.replace(/:/g, '')}00`;
+      const endISO = `${dateStr.replace(/-/g, '')}T${endTime.replace(/:/g, '')}00`;
+      return `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(session.title)}&dates=${startISO}/${endISO}&details=${encodeURIComponent(session.description || '')}&location=${encodeURIComponent(session.hall || '')}&sf=true&output=xml`;
+    } catch (e) { return '#'; }
+  };
+
+  const getIcsCalendarUrl = (session) => {
+    try {
+      const dateStr = eventSettings.event_date ? eventSettings.event_date.split('T')[0] : new Date().toISOString().split('T')[0];
+      const startTime = session.start_time || '09:00';
+      const endTime = session.end_time || '10:00';
+      const startISO = `${dateStr.replace(/-/g, '')}T${startTime.replace(/:/g, '')}00`;
+      const endISO = `${dateStr.replace(/-/g, '')}T${endTime.replace(/:/g, '')}00`;
+      const icsContent = [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'BEGIN:VEVENT',
+        `SUMMARY:${session.title}`,
+        `DESCRIPTION:${session.description || ''}`,
+        `LOCATION:${session.hall || ''}`,
+        `DTSTART:${startISO}`,
+        `DTEND:${endISO}`,
+        'END:VEVENT',
+        'END:VCALENDAR'
+      ].join('\n');
+      return `data:text/calendar;charset=utf-8,${encodeURIComponent(icsContent)}`;
+    } catch (e) { return '#'; }
+  };
+
+  const [isScanMode, setIsScanMode] = useState(false);
+  const [wakeLock, setWakeLock] = useState(null);
+
+  const toggleScanMode = async () => {
+    if (!isScanMode) {
+      setIsScanMode(true);
+      toast.success('وضع المسح نشط: تم تنشيط الشاشة ومنع الإيقاف التلقائي ⚡');
+      try {
+        if ('wakeLock' in navigator) {
+          const lock = await navigator.wakeLock.request('screen');
+          setWakeLock(lock);
+        }
+      } catch (err) {
+        console.warn('Wake Lock request failed:', err);
+      }
+    } else {
+      setIsScanMode(false);
+      if (wakeLock) {
+        try {
+          await wakeLock.release();
+        } catch (e) {}
+        setWakeLock(null);
+      }
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (wakeLock) {
+        wakeLock.release().catch(() => {});
+      }
+    };
+  }, [wakeLock]);
 
   // مراقبة حالة الشبكة
   useEffect(() => {
@@ -94,10 +290,51 @@ const ParticipantPortal = () => {
     }
   }, [eventId, participantToken]);
 
+  const loadOptionalDataFromCache = () => {
+    try {
+      const cachedSettings = localStorage.getItem(`diwan_cache_settings_${eventId}`);
+      const cachedAgenda = localStorage.getItem(`diwan_cache_agenda_${eventId}`);
+      const cachedLeaderboard = localStorage.getItem(`diwan_cache_leaderboard_${eventId}`);
+      const cachedDirectory = localStorage.getItem(`diwan_cache_directory_${eventId}`);
+      const cachedPosts = localStorage.getItem(`diwan_cache_posts_${eventId}`);
+      const cachedPolls = localStorage.getItem(`diwan_cache_polls_${eventId}`);
+      const cachedDocs = localStorage.getItem(`diwan_cache_documents_${eventId}`);
+
+      if (cachedSettings) setEventSettings(JSON.parse(cachedSettings));
+      if (cachedAgenda) setAgenda(JSON.parse(cachedAgenda));
+      if (cachedLeaderboard) setLeaderboard(JSON.parse(cachedLeaderboard));
+      if (cachedDirectory) setDirectory(JSON.parse(cachedDirectory));
+      if (cachedPosts) setPosts(JSON.parse(cachedPosts));
+      if (cachedPolls) setPolls(JSON.parse(cachedPolls));
+      if (cachedDocs) setDocuments(JSON.parse(cachedDocs));
+    } catch (e) {
+      console.error('Failed to load optional data from cache', e);
+    }
+  };
+
+  const loadParticipantFromCache = () => {
+    try {
+      const cachedParticipant = localStorage.getItem(`diwan_cache_participant_${participantToken}`);
+      if (cachedParticipant) {
+        const parsed = JSON.parse(cachedParticipant);
+        setParticipant(parsed);
+        setProfileData({
+          bio: parsed.custom_values?.bio || '',
+          linkedin: parsed.custom_values?.linkedin || '',
+          specialties: parsed.custom_values?.specialties || [],
+          website: parsed.custom_values?.website || ''
+        });
+        setIsOptedIn(parsed.custom_values?.is_visible || false);
+        loadOptionalDataFromCache();
+      }
+    } catch (e) {
+      console.error('Failed to load participant from cache', e);
+    }
+  };
+
   const fetchInitialData = async () => {
     setLoading(true);
     try {
-      // استخدام الـ endpoint العام الجديد (بالـ Token) لضمان الأمان
       const pRes = await api.get(`participants/public/access/${participantToken}`);
       setParticipant(pRes.data);
       
@@ -108,15 +345,21 @@ const ParticipantPortal = () => {
         website: pRes.data.custom_values?.website || ''
       });
       
-      // دائماً نرسل التوكن في الـ Header للطلبات اللاحقة (يدعم JWT أو رقم الطلب)
+      // Save participant to local cache
+      try {
+        localStorage.setItem(`diwan_cache_participant_${participantToken}`, JSON.stringify(pRes.data));
+      } catch (e) {
+        console.error('Failed to write participant cache', e);
+      }
+
       if (participantToken) {
         api.defaults.headers.common['Authorization'] = `Bearer ${participantToken}`;
       }
       
       setIsOptedIn(pRes.data.custom_values?.is_visible || false);
         
-        try {
-          const [settings, ag, lead, dirRes, wallPosts, activePolls, eventDocs] = await Promise.all([
+      try {
+        const [settings, ag, lead, dirRes, wallPosts, activePolls, eventDocs] = await Promise.all([
           api.get(`events/public/${eventId}`).then(res => res.data),
           agendaService.getSessions(eventId),
           interactionService.getLeaderboard(eventId),
@@ -132,36 +375,190 @@ const ParticipantPortal = () => {
         setPosts(wallPosts || []);
         setPolls(activePolls || []);
         setDocuments(eventDocs || []);
+
+        // Cache all successfully loaded event resources
+        try {
+          localStorage.setItem(`diwan_cache_settings_${eventId}`, JSON.stringify(settings || {}));
+          localStorage.setItem(`diwan_cache_agenda_${eventId}`, JSON.stringify(ag || []));
+          localStorage.setItem(`diwan_cache_leaderboard_${eventId}`, JSON.stringify(lead || []));
+          localStorage.setItem(`diwan_cache_directory_${eventId}`, JSON.stringify(dirRes.data || []));
+          localStorage.setItem(`diwan_cache_posts_${eventId}`, JSON.stringify(wallPosts || []));
+          localStorage.setItem(`diwan_cache_polls_${eventId}`, JSON.stringify(activePolls || []));
+          localStorage.setItem(`diwan_cache_documents_${eventId}`, JSON.stringify(eventDocs || []));
+        } catch (e) {
+          console.error('Failed to write resource cache', e);
+        }
       } catch (e) {
-        // البيانات الإضافية اختيارية — لا نوقف الصفحة إذا فشلت
-        console.warn('Optional data fetch failed', e);
+        console.warn('Optional data fetch failed, fallback to cache', e);
+        loadOptionalDataFromCache();
       }
     } catch (err) {
-      console.error('Failed to fetch participant data', err);
+      console.error('Failed to fetch participant data, fallback to cache', err);
+      loadParticipantFromCache();
     } finally {
       setLoading(false);
     }
   };
 
-  const handlePostToWall = async () => {
-    if (!newPost.trim()) return;
+  const handleRateSession = async (sessionId, rating) => {
+    setSessionRatings(prev => ({
+      ...prev,
+      [sessionId]: rating
+    }));
+    toast.success("\u0634\u0643\u0631\u0627\u064b \u0644\u062a\u0642\u064a\u064a\u0645\u0643 \u0627\u0644\u062c\u0644\u0633\u0629! \u2B50"); // شكراً لتقييمك الجلسة! ⭐
+    
     try {
+      await api.post('social/session-feedback', {
+        session_id: sessionId,
+        rating: rating,
+        participant_id: participant?.id
+      });
+    } catch (err) {
+      console.warn('Session rating backend sync failed', err);
+    }
+  };
+
+  const handlePostToWall = async () => {
+    if (!newPost.trim() && !selectedImage) return;
+    setIsUploadingImage(true);
+    try {
+      let uploadedImageUrl = null;
+      if (selectedImage) {
+        const uploadRes = await interactionService.uploadPostImage(selectedImage);
+        uploadedImageUrl = uploadRes.url;
+      }
+
       const response = await interactionService.createPost({
         event_id: eventId,
         author_name: participant.full_name,
-        content: newPost
+        content: newPost,
+        image_url: uploadedImageUrl
       });
-      // Backend returns { message: "...", post_id: ... }
+
       const newOptimisticPost = {
         id: response.post_id || Date.now(),
         author_name: participant.full_name,
         content: newPost,
+        image_url: uploadedImageUrl || imagePreview,
         is_pending: true
       };
       
       setPosts([newOptimisticPost, ...posts]);
       setNewPost('');
-    } catch (err) { toast.error('فشل النشر'); }
+      handleClearImage();
+      toast.success('تم إرسال منشورك للمراجعة بنجاح! 💬');
+    } catch (err) { 
+      console.error('Failed to post to wall:', err);
+      toast.error('فشل النشر، يرجى المحاولة مرة أخرى.'); 
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  const handleToggleLike = async (postId) => {
+    const isLiked = likedPosts.includes(postId);
+    
+    // 1. Optimistic UI update
+    setLikedPosts(prev => isLiked ? prev.filter(id => id !== postId) : [...prev, postId]);
+    setPosts(prev => prev.map(p => {
+      if (p.id === postId) {
+        const currentCount = p.likes_count || 0;
+        return {
+          ...p,
+          likes_count: isLiked ? Math.max(0, currentCount - 1) : currentCount + 1
+        };
+      }
+      return p;
+    }));
+
+    try {
+      if (isLiked) {
+        await api.delete(`social/${postId}/like`, {
+          params: { session_key: participant.qr_code }
+        });
+      } else {
+        await api.post(`social/${postId}/like`, null, {
+          params: { 
+            session_key: participant.qr_code,
+            user_name: participant.full_name
+          }
+        });
+      }
+    } catch (err) {
+      console.error('Failed to toggle like on backend:', err);
+      // Revert optimistic updates on error
+      setLikedPosts(prev => isLiked ? [...prev, postId] : prev.filter(id => id !== postId));
+      setPosts(prev => prev.map(p => {
+        if (p.id === postId) {
+          const currentCount = p.likes_count || 0;
+          return {
+            ...p,
+            likes_count: isLiked ? currentCount + 1 : Math.max(0, currentCount - 1)
+          };
+        }
+        return p;
+      }));
+      toast.error('حدث خطأ أثناء تحديث الإعجاب');
+    }
+  };
+
+  const handleToggleComments = async (postId) => {
+    if (expandedCommentsPostId === postId) {
+      setExpandedCommentsPostId(null);
+    } else {
+      setExpandedCommentsPostId(postId);
+      if (!postComments[postId]) {
+        await loadComments(postId);
+      }
+    }
+  };
+
+  const loadComments = async (postId) => {
+    try {
+      const res = await api.get(`social/${postId}/comments`);
+      setPostComments(prev => ({ ...prev, [postId]: res.data }));
+    } catch (err) {
+      console.error('Failed to load comments:', err);
+    }
+  };
+
+  const handleSubmitComment = async (postId) => {
+    const text = commentInputs[postId]?.trim();
+    if (!text) return;
+    setIsSubmittingComment(true);
+    try {
+      const response = await api.post(`social/${postId}/comment`, {
+        author_name: participant.full_name,
+        content: text
+      });
+      
+      const newComment = {
+        id: response.data?.id || Date.now(),
+        author_name: participant.full_name,
+        content: text,
+        timestamp: new Date().toISOString()
+      };
+      
+      setPostComments(prev => ({
+        ...prev,
+        [postId]: [newComment, ...(prev[postId] || [])]
+      }));
+
+      setPosts(prev => prev.map(p => {
+        if (p.id === postId) {
+          return { ...p, comments_count: (p.comments_count || 0) + 1 };
+        }
+        return p;
+      }));
+
+      setCommentInputs(prev => ({ ...prev, [postId]: '' }));
+      toast.success('تمت إضافة تعليقك بنجاح! 💬');
+    } catch (err) {
+      console.error('Failed to post comment:', err);
+      toast.error('فشل إرسال التعليق');
+    } finally {
+      setIsSubmittingComment(false);
+    }
   };
 
   const handleAskQuestion = async () => {
@@ -272,10 +669,21 @@ const ParticipantPortal = () => {
     </div>
   );
 
+  const myLeaderboardEntry = (leaderboard || []).find(entry => entry.id === participant.id);
+  const myPoints = myLeaderboardEntry ? myLeaderboardEntry.points : 0;
+
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(participant?.qr_code || '')}`;
 
   return (
     <div className="min-h-screen bg-[#050B18] text-white selection:bg-amber-500 selection:text-brand-dark flex flex-col font-arabic overflow-x-hidden">
+      {/* Offline Glow Warning Banner */}
+      {!isOnline && (
+        <div className="bg-gradient-to-r from-amber-600/90 to-amber-800/90 backdrop-blur-md text-white text-center py-2.5 px-4 text-xs font-black tracking-wide flex items-center justify-center gap-2 border-b border-amber-500/20 z-[60] sticky top-0 animate-fade-in shadow-lg">
+          <span className="animate-pulse">⚠️</span>
+          <span>{"\u0623\u0646\u062a \u062a\u062a\u0635\u0641\u062d \u0627\u0644\u0628\u0648\u0627\u0628\u0629 \u062d\u0627\u0644\u064a\u0627\u064b \u062f\u0648\u0646 \u0627\u062a\u0635\u0627\u0644 \u0628\u0627\u0644\u0625\u0646\u062a\u0631\u0646\u062a. \u062a\u0645 \u062a\u0641\u0639\u064a\u0644 \u0627\u0644\u062d\u0641\u0638 \u0627\u0644\u0645\u062d\u0644\u064a \u0644\u0644\u0623\u062c\u0646\u062f\u0629 \u0648\u0627\u0644\u0634\u0627\u0631\u0629."}</span>
+        </div>
+      )}
+
       {/* Dynamic Background Glows */}
       <div className="fixed inset-0 pointer-events-none z-0">
         <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-brand-primary/10 blur-[120px] rounded-full animate-pulse" />
@@ -303,22 +711,29 @@ const ParticipantPortal = () => {
           </div>
         </div>
         <div className="flex items-center gap-2">
-           <div className={cn(
-             "px-3 py-1 rounded-full text-[10px] font-black border transition-all",
-             isOnline
-               ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
-               : "bg-red-500/10 border-red-500/20 text-red-400 animate-pulse"
-           )}>
-             {isOnline ? '🟢 متصل' : '🔴 غير متصل'}
-           </div>
+          {/* Dynamic Theme Switcher Button */}
+          <button
+            onClick={() => setTheme(prev => prev === 'dark' ? 'light' : 'dark')}
+            className={cn(
+              "p-2 rounded-xl border transition-all duration-300",
+              theme === 'dark'
+                ? "bg-white/5 border-white/10 text-amber-500 hover:bg-white/10"
+                : "bg-slate-100 border-slate-200 text-amber-600 hover:bg-slate-200"
+            )}
+          >
+            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
+
+          <div className={cn(
+            "px-3 py-1 rounded-full text-[10px] font-black border transition-all",
+            isOnline
+              ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
+              : "bg-red-500/10 border-red-500/20 text-red-400 animate-pulse"
+          )}>
+            {isOnline ? '🟢 متصل' : '🔴 غير متصل'}
+          </div>
         </div>
       </header>
-
-      {!isOnline && (
-        <div className="bg-red-500 text-center py-2 text-[10px] font-black uppercase tracking-widest sticky top-[88px] z-40">
-           أنت تعمل الآن في وضع عدم الاتصال
-        </div>
-      )}
 
       <main className="flex-1 p-6 pb-40 relative z-10 overflow-y-auto">
         <AnimatePresence mode="wait">
@@ -342,7 +757,14 @@ const ParticipantPortal = () => {
                   </div>
                   
                   <h2 className="text-3xl font-black mb-1 tracking-tight text-[#F0F4F2]">{participant.full_name}</h2>
-                  <p className="text-amber-500 font-bold text-sm mb-6 uppercase tracking-wider">{participant.organization}</p>
+                  <p className="text-[#F0F4F2]/60 font-bold text-xs mb-3 uppercase tracking-wider">{participant.organization}</p>
+                  
+                  {/* Gamification Hub Badge */}
+                  <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs font-black text-amber-500 uppercase tracking-wider mb-6 shadow-sm">
+                    <span>{myPoints >= 200 ? 'مشارك بلاتيني 👑' : myPoints >= 100 ? 'مشارك ذهبي 🏆' : myPoints >= 50 ? 'مشارك فضي 🎖️' : 'مشارك نشط 👤'}</span>
+                    <span className="w-1 h-1 rounded-full bg-amber-500/40" />
+                    <span>{myPoints} نقطة تفاعلية</span>
+                  </div>
                   
                   {participant.custom_values?.specialties?.length > 0 && (
                     <div className="flex flex-wrap justify-center gap-2 mb-6">
@@ -439,6 +861,21 @@ const ParticipantPortal = () => {
                     </div>
                   </div>
 
+                  <div className="mb-6">
+                    <button 
+                      onClick={toggleScanMode}
+                      className={cn(
+                        "w-full flex items-center justify-center gap-3 py-4 px-6 rounded-2xl font-black text-xs uppercase tracking-widest transition-all duration-300 shadow-lg border",
+                        isScanMode 
+                          ? "bg-amber-500 text-brand-dark border-amber-400 animate-pulse shadow-[0_0_20px_rgba(245,158,11,0.4)]" 
+                          : "bg-white/5 text-white border-white/10 hover:bg-white/10 hover:border-amber-500/30"
+                      )}
+                    >
+                      <Smartphone size={16} className={isScanMode ? "text-brand-dark" : "text-amber-500"} />
+                      تفعيل وضع المسح السريع ⚡
+                    </button>
+                  </div>
+
                   <div className="grid grid-cols-2 gap-4 mb-8">
                      <div className="bg-white/[0.03] p-4 rounded-2xl border border-white/5">
                         <div className="text-[10px] text-amber-500/50 font-bold uppercase tracking-widest mb-1">المقعد</div>
@@ -466,20 +903,169 @@ const ParticipantPortal = () => {
 
           {activeTab === 'agenda' && (
             <motion.div key="agenda" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
-               <h3 className="text-2xl font-black tracking-tight mb-8">أجندة الفعالية 📅</h3>
+               <div className="flex justify-between items-center mb-4">
+                 <h3 className="text-2xl font-black tracking-tight">أجندة الفعالية 📅</h3>
+               </div>
+
+               {/* Segmented Filter Bar */}
+               <div className="flex gap-2 p-1.5 bg-white/[0.03] border border-white/10 rounded-[24px] mb-6">
+                 <button 
+                   onClick={() => setAgendaFilter('all')}
+                   className={cn(
+                     "flex-1 py-3 text-xs font-black rounded-2xl transition-all duration-300",
+                     agendaFilter === 'all' 
+                       ? "bg-amber-500 text-brand-dark shadow-[0_4px_20px_rgba(245,158,11,0.25)]" 
+                       : "text-white/50 hover:text-white"
+                   )}
+                 >
+                   كل الجلسات ({agenda.length})
+                 </button>
+                 <button 
+                   onClick={() => setAgendaFilter('favorites')}
+                   className={cn(
+                     "flex-1 py-3 text-xs font-black rounded-2xl transition-all duration-300 flex items-center justify-center gap-2",
+                     agendaFilter === 'favorites' 
+                       ? "bg-amber-500 text-brand-dark shadow-[0_4px_20px_rgba(245,158,11,0.25)]" 
+                       : "text-white/50 hover:text-white"
+                   )}
+                 >
+                   ⭐ مفضلتي ({favorites.length})
+                 </button>
+               </div>
+
                <div className="space-y-4">
-                  {agenda.map((item) => (
-                    <div key={item.id} className="bg-white/5 border border-white/10 p-6 rounded-[35px] flex items-center gap-6 group hover:bg-white/10 transition-all cursor-pointer">
-                       <div className="w-20 text-center flex flex-col items-center">
-                          <div className="text-amber-500 font-black text-sm">{item.start_time}</div>
-                          <div className="w-1 h-8 bg-white/5 rounded-full mt-2" />
-                       </div>
-                       <div className="flex-1">
-                          <h4 className="font-black text-lg mb-1 group-hover:text-amber-500 transition-colors">{item.title}</h4>
-                          <p className="text-brand-secondary/50 text-xs font-bold">{item.speaker_name} • {item.hall}</p>
-                       </div>
+                  {agenda.filter(item => agendaFilter === 'all' || favorites.includes(item.id)).length === 0 ? (
+                    <div className="text-center py-12 bg-white/[0.02] border border-white/5 rounded-[30px] p-8">
+                      <span className="text-4xl mb-4 block">⭐</span>
+                      <p className="text-white/40 text-sm font-bold">لا توجد جلسات في القائمة حالياً.</p>
+                      {agendaFilter === 'favorites' && (
+                        <p className="text-amber-500/60 text-xs mt-2">قم بالضغط على النجمة في أي جلسة لإضافتها لجدولك الخاص!</p>
+                      )}
                     </div>
-                  ))}
+                  ) : (
+                    agenda
+                      .filter(item => agendaFilter === 'all' || favorites.includes(item.id))
+                      .map((item) => {
+                        const isFav = favorites.includes(item.id);
+                        const isExpanded = expandedSessionId === item.id;
+                        
+                        return (
+                          <div 
+                            key={item.id} 
+                            onClick={() => setExpandedSessionId(isExpanded ? null : item.id)}
+                            className={cn(
+                              "bg-white/5 border p-6 rounded-[35px] transition-all duration-300 cursor-pointer overflow-hidden relative",
+                              isExpanded ? "border-amber-500/40 bg-white/[0.08]" : "border-white/10 hover:bg-white/10"
+                            )}
+                          >
+                             <div className="flex items-center gap-4">
+                                <div className="w-20 text-center flex flex-col items-center shrink-0">
+                                   <div className="text-amber-500 font-black text-sm">{item.start_time}</div>
+                                   {item.end_time && <div className="text-white/30 text-[10px] mt-1 font-bold">{item.end_time}</div>}
+                                   <div className="w-1 h-8 bg-white/5 rounded-full mt-2" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                   <h4 className="font-black text-base md:text-lg mb-1 truncate text-white">{item.title}</h4>
+                                   <p className="text-brand-secondary/50 text-xs font-bold truncate">{item.speaker_name} • {item.hall}</p>
+                                </div>
+                                <button 
+                                  onClick={(e) => toggleFavorite(item.id, e)} 
+                                  className="p-3 rounded-full hover:bg-white/10 transition-colors shrink-0"
+                                >
+                                  <Star className={cn("w-5 h-5 transition-all duration-300", isFav ? "fill-amber-500 text-amber-500" : "text-white/20")} />
+                                </button>
+                             </div>
+
+                             {/* Expandable Details Container */}
+                             <AnimatePresence>
+                               {isExpanded && (
+                                 <motion.div 
+                                   initial={{ height: 0, opacity: 0, marginTop: 0 }}
+                                   animate={{ height: 'auto', opacity: 1, marginTop: 16 }}
+                                   exit={{ height: 0, opacity: 0, marginTop: 0 }}
+                                   transition={{ duration: 0.3 }}
+                                   onClick={(e) => e.stopPropagation()} // Prevent collapse when clicking details
+                                   className="border-t border-white/5 pt-4 space-y-4 text-right"
+                                 >
+                                   {item.description ? (
+                                     <p className="text-white/70 text-sm leading-relaxed bg-black/20 p-4 rounded-[20px] border border-white/5">
+                                       {item.description}
+                                     </p>
+                                   ) : (
+                                     <p className="text-white/30 text-xs italic">لا يوجد وصف مضاف لهذه الجلسة.</p>
+                                   )}
+
+                                   {/* Calendar Sync Options */}
+                                   <div className="space-y-3">
+                                     <div className="text-[10px] text-amber-500/50 font-black uppercase tracking-widest">إضافة إلى تقويمك الخاص:</div>
+                                     <div className="grid grid-cols-2 gap-3">
+                                       <a 
+                                         href={getGoogleCalendarUrl(item)} 
+                                         target="_blank" 
+                                         rel="noopener noreferrer"
+                                         className="h-12 bg-white/5 border border-white/10 hover:bg-white/10 hover:border-amber-500/30 rounded-2xl flex items-center justify-center gap-2 text-xs font-bold text-white transition-all shadow-md"
+                                       >
+                                         <span className="text-base">📅</span>
+                                         <span>تقويم Google</span>
+                                       </a>
+                                       <a 
+                                         href={getIcsCalendarUrl(item)} 
+                                         download={`${item.title.replace(/\s+/g, '_')}.ics`}
+                                         className="h-12 bg-white/5 border border-white/10 hover:bg-white/10 hover:border-amber-500/30 rounded-2xl flex items-center justify-center gap-2 text-xs font-bold text-white transition-all shadow-md"
+                                       >
+                                         <span className="text-base">📲</span>
+                                         <span>تقويم الهاتف (iCal)</span>
+                                       </a>
+                                     </div>
+                                    </div>
+
+                                    {/* Live Session Rating Widget */}
+                                    <div className="border-t border-white/5 pt-4 space-y-3">
+                                      <div className="text-[10px] text-amber-500/50 font-black uppercase tracking-widest">{"تقييم الجلسة والمتحدث:"}</div>
+                                      <div className="bg-black/20 p-4 rounded-[20px] border border-white/5 flex flex-col items-center justify-center gap-3">
+                                        {sessionRatings[item.id] ? (
+                                          <div className="text-center py-2 animate-fade-in flex flex-col items-center justify-center">
+                                            <div className="flex justify-center gap-1 mb-2">
+                                              {[1, 2, 3, 4, 5].map((star) => (
+                                                <Star 
+                                                  key={star} 
+                                                  className={cn(
+                                                    "w-5 h-5", 
+                                                    star <= sessionRatings[item.id] ? "text-amber-500 fill-amber-500" : "text-white/10"
+                                                  )} 
+                                                />
+                                              ))}
+                                            </div>
+                                            <div className="text-xs text-white/40 font-bold">{"شكراً لتقييمك! تم حفظ مشاركتك بنجاح ❤️"}</div>
+                                          </div>
+                                        ) : (
+                                          <>
+                                            <div className="text-xs text-white/60 font-bold mb-1">{"ما هو تقييمك لمحتوى وأداء هذه الجلسة؟"}</div>
+                                            <div className="flex gap-2">
+                                              {[1, 2, 3, 4, 5].map((star) => (
+                                                <button
+                                                  key={star}
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleRateSession(item.id, star);
+                                                  }}
+                                                  className="hover:scale-125 transition-transform p-1"
+                                                >
+                                                  <Star className="w-6 h-6 text-white/20 hover:text-amber-500 hover:fill-amber-500 transition-colors" />
+                                                </button>
+                                              ))}
+                                            </div>
+                                          </>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </motion.div>
+                               )}
+                             </AnimatePresence>
+                          </div>
+                        );
+                      })
+                  )}
                </div>
             </motion.div>
           )}
@@ -663,11 +1249,44 @@ const ParticipantPortal = () => {
                     placeholder="شاركنا انطباعك عن الفعالية..." 
                     className="w-full bg-transparent border-none outline-none text-xl font-bold placeholder:text-white/10 min-h-[120px] resize-none"
                   />
+
+                  {/* Image Attachment Preview */}
+                  {imagePreview && (
+                    <div className="relative mt-2 mb-6 inline-block group">
+                      <img src={imagePreview} alt="Attached Preview" className="max-h-40 rounded-2xl border border-white/10 shadow-lg object-cover" />
+                      <button 
+                        onClick={handleClearImage}
+                        className="absolute -top-2 -left-2 w-7 h-7 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  )}
+
+                  <input 
+                    type="file" 
+                    id="social-post-image-input" 
+                    accept="image/*" 
+                    className="hidden" 
+                    onChange={handleImageSelect} 
+                  />
+
                   <div className="flex items-center justify-between pt-6 border-t border-white/5">
-                     <button className="w-14 h-14 rounded-2xl bg-white/5 text-brand-secondary flex items-center justify-center border border-white/10">
-                        <Camera className="w-6 h-6" />
+                     <button 
+                       onClick={() => document.getElementById('social-post-image-input')?.click()}
+                       disabled={isUploadingImage}
+                       className="w-14 h-14 rounded-2xl bg-white/5 text-brand-secondary flex items-center justify-center border border-white/10 hover:bg-white/10 hover:border-amber-500/30 transition-all"
+                     >
+                        <Camera className="w-6 h-6 text-amber-500" />
                      </button>
-                     <Button variant="gold" className="px-12 h-14 rounded-[20px] text-lg font-black shadow-lg" onClick={handlePostToWall}>نشر</Button>
+                     <Button 
+                       variant="gold" 
+                       className="px-12 h-14 rounded-[20px] text-lg font-black shadow-lg" 
+                       onClick={handlePostToWall}
+                       disabled={isUploadingImage}
+                     >
+                       {isUploadingImage ? 'جاري النشر...' : 'نشر'}
+                     </Button>
                   </div>
                </div>
 
@@ -680,15 +1299,103 @@ const ParticipantPortal = () => {
                        </span>
                      )}
                      <div className="flex items-center gap-3 mb-4">
-                       <div className="w-10 h-10 rounded-full bg-brand-primary/20 flex items-center justify-center text-brand-secondary font-bold border border-brand-primary/20">
-                         {post.author_name[0]}
-                       </div>
+                        <div className="w-10 h-10 rounded-full bg-brand-primary/20 flex items-center justify-center text-brand-secondary font-bold border border-brand-primary/20">
+                          {post.author_name ? post.author_name[0] : '👤'}
+                        </div>
                        <div>
                          <div className="font-black text-white text-sm">{post.author_name}</div>
                          <div className="text-[10px] text-brand-secondary/40 font-bold">الآن</div>
                        </div>
                      </div>
-                     <p className="text-white/80 font-bold text-lg leading-relaxed">{post.content}</p>
+                      <p className="text-white/80 font-bold text-lg leading-relaxed">{post.content}</p>
+                      {post.image_url && (
+                        <div className="mt-4 overflow-hidden rounded-[20px] border border-white/5 max-h-[300px] bg-black/20">
+                          <img 
+                            src={getFullUrl(post.image_url)} 
+                            alt="Social Wall Attached Media" 
+                            className="w-full h-full object-contain max-h-[300px]"
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                            }}
+                          />
+                        </div>
+                      )}
+
+                      {/* Action Buttons: Like & Comment */}
+                      <div className="flex items-center gap-6 mt-6 pt-4 border-t border-white/5 text-sm font-bold">
+                        <button 
+                          onClick={() => handleToggleLike(post.id)}
+                          className={cn(
+                            "flex items-center gap-2 transition-all hover:scale-105",
+                            likedPosts.includes(post.id) ? "text-rose-500 font-black animate-heartbeat" : "text-white/60 hover:text-white"
+                          )}
+                        >
+                          <Heart className={cn("w-5 h-5", likedPosts.includes(post.id) && "fill-current")} />
+                          <span>{likedPosts.includes(post.id) ? "\u0623\u0639\u062c\u0628\u0646\u064a" : "\u0625\u0639\u062c\u0627\u0628"} ({post.likes_count || 0})</span>
+                        </button>
+                        
+                        <button 
+                          onClick={() => handleToggleComments(post.id)}
+                          className={cn(
+                            "flex items-center gap-2 transition-all hover:scale-105",
+                            expandedCommentsPostId === post.id ? "text-amber-500 font-black" : "text-white/60 hover:text-white"
+                          )}
+                        >
+                          <MessageCircle className="w-5 h-5" />
+                          <span>{"\u0627\u0644\u062a\u0639\u0644\u064a\u0642\u0627\u062a"} ({post.comments_count || 0})</span>
+                        </button>
+                      </div>
+
+                      {/* Expandable Comments Tray */}
+                      <AnimatePresence>
+                        {expandedCommentsPostId === post.id && (
+                          <motion.div 
+                            initial={{ opacity: 0, height: 0 }} 
+                            animate={{ opacity: 1, height: "auto" }} 
+                            exit={{ opacity: 0, height: 0 }}
+                            className="overflow-hidden mt-4 pt-4 border-t border-white/5 space-y-4"
+                          >
+                            {/* Comment Input */}
+                            <div className="flex gap-2">
+                              <input 
+                                type="text"
+                                value={commentInputs[post.id] || ""}
+                                onChange={(e) => setCommentInputs(prev => ({ ...prev, [post.id]: e.target.value }))}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") handleSubmitComment(post.id);
+                                }}
+                                placeholder="\u0627\u0643\u062a\u0628 \u062a\u0639\u0644\u064a\u0642\u0627\u064b..."
+                                className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-amber-500/50 text-right"
+                              />
+                              <button 
+                                onClick={() => handleSubmitComment(post.id)}
+                                disabled={isSubmittingComment || !commentInputs[post.id]?.trim()}
+                                className="px-4 py-2 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 disabled:hover:bg-amber-500 text-brand-dark font-black rounded-xl text-xs transition-colors"
+                              >
+                                {"\u0625\u0631\u0633\u0627\u0644"}
+                              </button>
+                            </div>
+
+                            {/* Comments List */}
+                            <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
+                              {postComments[post.id]?.map(comment => (
+                                <div key={comment.id} className="bg-white/[0.02] border border-white/5 rounded-xl p-3 text-right">
+                                  <div className="flex justify-between items-center mb-1">
+                                    <span className="font-bold text-white text-xs">{comment.author_name}</span>
+                                    <span className="text-[9px] text-white/40">
+                                      {comment.timestamp ? new Date(comment.timestamp).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" }) : "\u0627\u0644\u0622\u0646"}
+                                    </span>
+                                  </div>
+                                  <p className="text-white/80 text-xs leading-relaxed">{comment.content}</p>
+                                </div>
+                              ))}
+                              {(!postComments[post.id] || postComments[post.id].length === 0) && (
+                                <div className="text-center py-4 text-white/30 text-xs">{"\u0644\u0627 \u062a\u0648\u062c\u062f \u062aع\u0644\u064a\u0642\u0627\u062a \u0628\u0639\u062f؎ \u0643\u0646 \u0623و\u0644 \u0645\u0646 \u064aعلق!"}</div>
+                              )}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                    </div>
                  ))}
                  {posts.length === 0 && (
@@ -913,6 +1620,74 @@ const ParticipantPortal = () => {
           ))}
         </div>
       </nav>
+
+      {/* Scan Mode Fullscreen Modal */}
+      <AnimatePresence>
+        {isScanMode && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-white flex flex-col items-center justify-between p-8 text-black"
+          >
+            {/* Top Close Button */}
+            <div className="w-full flex justify-between items-center">
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">منصة ديوان الذكية · وضع المسح السريع</span>
+              <button 
+                onClick={toggleScanMode} 
+                className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-slate-200 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Middle QR Code with Pulse Line */}
+            <div className="flex-1 flex flex-col items-center justify-center text-center">
+              <div className="relative p-6 bg-white border-4 border-amber-500 rounded-[40px] shadow-[0_0_50px_rgba(245,158,11,0.25)] mb-8 overflow-hidden">
+                {/* Golden Laser Pulse Overlay */}
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 shadow-[0_0_15px_rgba(245,158,11,0.8)] animate-laser-pulse z-10" />
+                <img src={qrUrl} alt="QR Code Large" className="w-64 h-64 relative z-0" />
+              </div>
+              <h2 className="text-3xl font-black mb-2 text-slate-900 leading-tight">{participant.full_name}</h2>
+              <p className="text-amber-600 font-bold text-sm uppercase tracking-wider mb-2">{participant.organization}</p>
+              <div className="px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-[10px] font-black text-amber-600 uppercase tracking-widest">
+                {participant.role === 'vip' ? 'ضيف شرف ⭐ VIP' : 
+                 participant.role === 'speaker' ? 'متحدث / خبير 🎤 SPEAKER' : 
+                 participant.role === 'press' ? 'صحافة وإعلام 📰 PRESS' : 'مشارك معتمد 👤 ATTENDEE'}
+              </div>
+            </div>
+
+            {/* Bottom Instructions */}
+            <div className="w-full text-center space-y-4">
+              <div className="flex items-center justify-center gap-2 text-xs font-bold text-slate-500">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                تم تنشيط الشاشة ومنع القفل التلقائي تلقائياً
+              </div>
+              <button 
+                onClick={toggleScanMode}
+                className="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-black text-xs tracking-widest uppercase shadow-xl transition-colors"
+              >
+                إنهاء وضع المسح
+              </button>
+            </div>
+
+            {/* Custom Laser CSS */}
+            <style dangerouslySetInnerHTML={{__html: `
+              @keyframes laser-pulse {
+                0% { top: 0%; opacity: 0.8; }
+                50% { top: 100%; opacity: 1; }
+                100% { top: 0%; opacity: 0.8; }
+              }
+              .animate-laser-pulse {
+                animation: laser-pulse 3s linear infinite;
+              }
+            `}} />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

@@ -18,6 +18,10 @@ except ImportError:
 
 router = APIRouter()
 
+from fastapi import UploadFile, File
+import os
+import uuid
+
 class PostCreate(BaseModel):
     event_id: int
     author_name: str
@@ -28,6 +32,29 @@ class PostCreate(BaseModel):
 class CommentCreate(BaseModel):
     author_name: str
     content: str
+
+@router.post("/upload")
+async def upload_social_image(file: UploadFile = File(...)):
+    # 1. التحقق من امتداد الملف لمنع الثغرات الأمنية
+    ext = os.path.splitext(file.filename or "")[1].lower()
+    if ext not in {'.png', '.jpg', '.jpeg', '.gif', '.webp'}:
+        raise HTTPException(status_code=400, detail="نوع الملف غير مدعوم. يسمح فقط بالصور.")
+    
+    # 2. التحقق من حجم الملف ومنع تجاوز 5MB
+    content = await file.read(5 * 1024 * 1024 + 1)
+    if len(content) > 5 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="حجم الصورة كبير جداً، الحد الأقصى هو 5 ميجابايت.")
+    
+    # 3. حفظ الملف في مجلد الصور الاجتماعي
+    static_social_dir = os.path.join("static", "social")
+    os.makedirs(static_social_dir, exist_ok=True)
+    filename = f"{uuid.uuid4()}{ext}"
+    file_path = os.path.join(static_social_dir, filename)
+    
+    with open(file_path, "wb") as buffer:
+        buffer.write(content)
+        
+    return {"url": f"/static/social/{filename}"}
 
 @router.post("/")
 @limiter.limit("5/minute")

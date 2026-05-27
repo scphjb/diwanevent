@@ -14,17 +14,34 @@ DEFAULT_CERTIFICATE_DESIGN = {
     "background": {"color": "#FFFFFF"},
     "elements": [
       {"id": "frame", "type": "frame", "color": "#D4AF37", "x": 0, "y": 0, "width": 1060, "height": 750, "zIndex": 1},
-      {"id": "top_bar", "type": "shape", "color": "#022C22", "x": 30, "y": 30, "width": 1000, "height": 80, "zIndex": 2},
+      {"id": "top_bar", "type": "shape", "color": "#050B18", "x": 30, "y": 30, "width": 1000, "height": 80, "zIndex": 2},
       {"id": "cert_title", "type": "static_text", "value": "شـهـادة حـضـور", "x": 30, "y": 38, "width": 1000, "height": 60, "zIndex": 3, "style": {"color": "#D4AF37", "fontSize": "36px", "fontWeight": "900", "textAlign": "center"}},
       {"id": "basmala", "type": "static_text", "value": "بسم الله الرحمن الرحيم", "x": 30, "y": 130, "width": 1000, "height": 30, "zIndex": 2, "style": {"color": "#7B5B00", "fontSize": "18px", "textAlign": "center"}},
       {"id": "cert_body", "type": "multiline_text", "value": "يُشهد بأن السيد/ة", "x": 30, "y": 180, "width": 1000, "height": 40, "zIndex": 2, "style": {"color": "#333333", "fontSize": "22px", "textAlign": "center"}},
-      {"id": "full_name", "type": "dynamic_text", "placeholder": "اسم المشارك الكامل", "x": 30, "y": 230, "width": 1000, "height": 70, "zIndex": 3, "style": {"color": "#022C22", "fontSize": "42px", "fontWeight": "900", "textAlign": "center"}},
+      {"id": "full_name", "type": "dynamic_text", "placeholder": "اسم المشارك الكامل", "x": 30, "y": 230, "width": 1000, "height": 70, "zIndex": 3, "style": {"color": "#050B18", "fontSize": "42px", "fontWeight": "900", "textAlign": "center"}},
       {"id": "cert_body_2", "type": "multiline_text", "value": "قد حضر فعالية", "x": 30, "y": 310, "width": 1000, "height": 36, "zIndex": 2, "style": {"color": "#333333", "fontSize": "22px", "textAlign": "center"}},
-      {"id": "event_name", "type": "dynamic_text", "placeholder": "[اسم الفعالية]", "x": 30, "y": 360, "width": 1000, "height": 50, "zIndex": 3, "style": {"color": "#022C22", "fontSize": "28px", "fontWeight": "bold", "textAlign": "center"}},
+      {"id": "event_name", "type": "dynamic_text", "placeholder": "[اسم الفعالية]", "x": 30, "y": 360, "width": 1000, "height": 50, "zIndex": 3, "style": {"color": "#050B18", "fontSize": "28px", "fontWeight": "bold", "textAlign": "center"}},
       {"id": "event_date_loc", "type": "dynamic_text", "placeholder": "[التاريخ والمكان]", "x": 30, "y": 430, "width": 1000, "height": 30, "zIndex": 2, "style": {"color": "#555555", "fontSize": "18px", "textAlign": "center"}},
       {"id": "bottom_bar", "type": "shape", "color": "#D4AF37", "x": 230, "y": 530, "width": 600, "height": 2, "zIndex": 2},
       {"id": "qr_verify", "type": "qr", "x": 480, "y": 570, "width": 100, "height": 100, "zIndex": 3},
       {"id": "cert_number", "type": "dynamic_text", "placeholder": "CERT-2026-0001", "x": 30, "y": 710, "width": 300, "height": 20, "zIndex": 2, "style": {"color": "#AAAAAA", "fontSize": "12px", "textAlign": "left"}},
+    ]
+}
+
+DEFAULT_BADGE_DESIGN = {
+    "background": {"color": "#FFFFFF"},
+    "width_mm": 90,
+    "height_mm": 120,
+    "elements": [
+        {"id": "header", "type": "shape", "color": "#050B18", "x": 0, "y": 0, "width": 340, "height": 80, "zIndex": 1},
+        {"id": "title", "type": "static_text", "value": "ديوان إيفنت", "x": 0, "y": 20, "width": 340, "height": 30, "zIndex": 2, "style": {"color": "#D4AF37", "fontSize": "20px", "fontWeight": "bold", "textAlign": "center"}},
+        {"id": "subtitle", "type": "static_text", "value": "DIWAN EVENT", "x": 0, "y": 48, "width": 340, "height": 20, "zIndex": 2, "style": {"color": "#ffffff", "fontSize": "10px", "textAlign": "center"}},
+        {"id": "full_name", "type": "dynamic_text", "placeholder": "اسم المشارك الكامل", "x": 10, "y": 120, "width": 320, "height": 40, "zIndex": 2, "style": {"color": "#050B18", "fontSize": "22px", "fontWeight": "bold", "textAlign": "center"}},
+        {"id": "role", "type": "dynamic_text", "placeholder": "الدور", "x": 40, "y": 170, "width": 260, "height": 25, "zIndex": 2, "style": {"color": "#D4AF37", "backgroundColor": "#050B18", "fontSize": "12px", "fontWeight": "bold", "textAlign": "center", "borderRadius": "6px"}},
+        {"id": "organization", "type": "dynamic_text", "placeholder": "الجهة", "x": 10, "y": 210, "width": 320, "height": 25, "zIndex": 2, "style": {"color": "#64748B", "fontSize": "14px", "textAlign": "center"}},
+        {"id": "qr_code", "type": "qr", "x": 95, "y": 250, "width": 150, "height": 150, "zIndex": 2},
+        {"id": "order_num", "type": "dynamic_text", "placeholder": "رقم التسجيل", "x": 10, "y": 415, "width": 320, "height": 20, "zIndex": 2, "style": {"color": "#94A3B8", "fontSize": "11px", "textAlign": "center"}},
+        {"id": "footer_bar", "type": "shape", "color": "#D4AF37", "x": 0, "y": 445, "width": 340, "height": 5, "zIndex": 1}
     ]
 }
 
@@ -97,11 +114,9 @@ async def print_badge(participant_id: int, db: AsyncSession = Depends(get_db)):
     res = await db.execute(stmt)
     template = res.scalars().first()
     
-    if not template:
-        raise HTTPException(status_code=404, detail="قالب الشارة غير موجود للفعالية")
+    design = json.loads(template.design_json) if template else DEFAULT_BADGE_DESIGN
 
     try:
-        design = json.loads(template.design_json)
         participant_data = _participant_to_dict(p)
         participant_data.update(_event_to_dict(event)) # دمج معلومات الفعالية
         
@@ -138,11 +153,9 @@ async def download_badge_by_token(token: str, db: AsyncSession = Depends(get_db)
     res_tmpl = await db.execute(stmt_tmpl)
     template = res_tmpl.scalars().first()
     
-    if not template:
-        raise HTTPException(status_code=404, detail="قالب الشارة غير موجود للفعالية")
+    design = json.loads(template.design_json) if template else DEFAULT_BADGE_DESIGN
 
     try:
-        design = json.loads(template.design_json)
         participant_data = _participant_to_dict(p)
         participant_data.update(_event_to_dict(event))
         

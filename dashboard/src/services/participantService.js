@@ -67,14 +67,20 @@ const participantService = {
   },
 
   printBadge: async (participantId) => {
-    // نبني الـ URL مباشرة نحو الـ backend لتفادي فتحه على port الـ frontend
-    const backendBase = import.meta.env.VITE_API_URL?.replace(/\/$/, '') || 'http://localhost:8000/api/v1';
+    let backendBase = import.meta.env.VITE_API_URL?.replace(/\/$/, '') || 'http://localhost:8000/api/v1';
+    // في الإنتاج، نتجنب استخدام localhost إذا كان الفرونت إند يعمل على السيرفر
+    if (!import.meta.env.DEV && backendBase.includes('localhost')) {
+      backendBase = window.location.origin + '/api/v1';
+    }
     const url = `${backendBase}/credentials/badges/print/${participantId}`;
     window.open(url, '_blank');
   },
 
   downloadCertificate: async (participantId) => {
-    const backendBase = import.meta.env.VITE_API_URL?.replace(/\/$/, '') || 'http://localhost:8000/api/v1';
+    let backendBase = import.meta.env.VITE_API_URL?.replace(/\/$/, '') || 'http://localhost:8000/api/v1';
+    if (!import.meta.env.DEV && backendBase.includes('localhost')) {
+      backendBase = window.location.origin + '/api/v1';
+    }
     const url = `${backendBase}/credentials/certificates/download/${participantId}`;
     window.open(url, '_blank');
   }

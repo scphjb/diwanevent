@@ -81,7 +81,9 @@ def initialize_db():
             location="الجزائر العاصمة",
             event_date=date.today(),
             created_by=admin_id,
-            primary_color="#10b981",
+            primary_color="#D4AF37",
+            secondary_color="#050B18",
+            accent_color="#2A64EC",
             welcome_title="مرحباً بكم في ديوان",
             welcome_subtitle="نحو إدارة ذكية وفعالة للفعاليات"
         )

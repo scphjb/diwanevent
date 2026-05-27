@@ -48,8 +48,8 @@ class Event(Base, TimestampMixin):
     participant_label = Column(String, default='مشارك')
     participant_label_plural = Column(String, default='مشاركين')
     primary_color = Column(String, default='#D4AF37')
-    secondary_color = Column(String, default='#022C22')
-    accent_color = Column(String, default='#10B981')
+    secondary_color = Column(String, default='#050B18')
+    accent_color = Column(String, default='#2A64EC')
     logo_url = Column(Text)
     
     # Payments
