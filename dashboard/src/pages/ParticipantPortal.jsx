@@ -28,7 +28,9 @@ import {
   FileText,
   Star,
   Sun,
-  Moon
+  Moon,
+  Trash2,
+  Clock
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -56,6 +58,22 @@ const getFullUrl = (url) => {
   const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
   const cleanUrl = url.startsWith('/') ? url : '/' + url;
   return `${cleanBase}${cleanUrl}`;
+};
+
+const formatPostTime = (timestamp) => {
+  if (!timestamp) return 'الآن';
+  const date = new Date(timestamp);
+  if (isNaN(date.getTime())) return 'الآن';
+  const now = new Date();
+  const diffSecs = Math.floor((now - date) / 1000);
+  const diffMins = Math.floor(diffSecs / 60);
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffSecs < 60) return 'الآن';
+  if (diffMins < 60) return `منذ ${diffMins} دقيقة`;
+  if (diffHours < 24) return `منذ ${diffHours} ساعة`;
+  if (diffDays < 7) return `منذ ${diffDays} يوم`;
+  return date.toLocaleDateString('ar-EG', { day: 'numeric', month: 'long' }) + ' · ' + date.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
 };
 
 const ParticipantPortal = () => {
@@ -452,6 +470,19 @@ const ParticipantPortal = () => {
       toast.error('فشل النشر، يرجى المحاولة مرة أخرى.'); 
     } finally {
       setIsUploadingImage(false);
+    }
+  };
+
+  const handleDeletePost = async (postId) => {
+    if (!window.confirm('هل تريد حذف هذا المنشور نهائياً؟')) return;
+    setPosts(prev => prev.filter(p => p.id !== postId));
+    try {
+      await api.delete(`social/${postId}/self`, { params: { session_key: participant.qr_code } });
+      toast.success('تم حذف المنشور 🗑️');
+    } catch (err) {
+      toast.error('فشل حذف المنشور');
+      const postsRes = await api.get(`social/${eventId}/approved`);
+      setPosts(postsRes.data || []);
     }
   };
 
@@ -1304,7 +1335,10 @@ const ParticipantPortal = () => {
                         </div>
                        <div>
                          <div className="font-black text-white text-sm">{post.author_name}</div>
-                         <div className="text-[10px] text-brand-secondary/40 font-bold">الآن</div>
+                         <div className="text-[10px] text-white/30 font-bold flex items-center gap-1">
+                           <Clock size={9} />
+                           {formatPostTime(post.created_at)}
+                         </div>
                        </div>
                      </div>
                       <p className="text-white/80 font-bold text-lg leading-relaxed">{post.content}</p>
@@ -1344,6 +1378,15 @@ const ParticipantPortal = () => {
                           <MessageCircle className="w-5 h-5" />
                           <span>{"\u0627\u0644\u062a\u0639\u0644\u064a\u0642\u0627\u062a"} ({post.comments_count || 0})</span>
                         </button>
+                        {post.author_name === participant.full_name && (
+                           <button
+                             onClick={() => handleDeletePost(post.id)}
+                             className="mr-auto flex items-center gap-1 text-red-400/40 hover:text-red-400 transition-all hover:scale-110"
+                             title="حذف منشوري"
+                           >
+                             <Trash2 className="w-4 h-4" />
+                           </button>
+                         )}
                       </div>
 
                       {/* Expandable Comments Tray */}
@@ -1643,10 +1686,13 @@ const ParticipantPortal = () => {
 
             {/* Middle QR Code with Pulse Line */}
             <div className="flex-1 flex flex-col items-center justify-center text-center">
-              <div className="relative p-6 bg-white border-4 border-amber-500 rounded-[40px] shadow-[0_0_50px_rgba(245,158,11,0.25)] mb-8 overflow-hidden">
-                {/* Golden Laser Pulse Overlay */}
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 shadow-[0_0_15px_rgba(245,158,11,0.8)] animate-laser-pulse z-10" />
-                <img src={qrUrl} alt="QR Code Large" className="w-64 h-64 relative z-0" />
+              <div className="relative p-8 bg-white border-4 border-amber-500 rounded-[40px] shadow-[0_0_60px_rgba(245,158,11,0.3)] mb-8">
+                {/* Pulsing Corner Brackets — لا تعيق قراءة الـ QR */}
+                <div className="absolute top-2 left-2 w-9 h-9 border-t-[4px] border-l-[4px] border-amber-500 rounded-tl-2xl animate-pulse" />
+                <div className="absolute top-2 right-2 w-9 h-9 border-t-[4px] border-r-[4px] border-amber-500 rounded-tr-2xl animate-pulse" style={{animationDelay:'0.3s'}} />
+                <div className="absolute bottom-2 left-2 w-9 h-9 border-b-[4px] border-l-[4px] border-amber-500 rounded-bl-2xl animate-pulse" style={{animationDelay:'0.6s'}} />
+                <div className="absolute bottom-2 right-2 w-9 h-9 border-b-[4px] border-r-[4px] border-amber-500 rounded-br-2xl animate-pulse" style={{animationDelay:'0.9s'}} />
+                <img src={qrUrl} alt="QR Code Large" className="w-64 h-64" />
               </div>
               <h2 className="text-3xl font-black mb-2 text-slate-900 leading-tight">{participant.full_name}</h2>
               <p className="text-amber-600 font-bold text-sm uppercase tracking-wider mb-2">{participant.organization}</p>
@@ -1674,17 +1720,7 @@ const ParticipantPortal = () => {
               </button>
             </div>
 
-            {/* Custom Laser CSS */}
-            <style dangerouslySetInnerHTML={{__html: `
-              @keyframes laser-pulse {
-                0% { top: 0%; opacity: 0.8; }
-                50% { top: 100%; opacity: 1; }
-                100% { top: 0%; opacity: 0.8; }
-              }
-              .animate-laser-pulse {
-                animation: laser-pulse 3s linear infinite;
-              }
-            `}} />
+
           </motion.div>
         )}
       </AnimatePresence>

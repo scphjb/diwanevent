@@ -363,3 +363,39 @@ async def delete_post(
     })
     
     return {"message": "Post deleted"}
+
+
+@router.delete("/{post_id}/self")
+async def delete_own_post(
+    post_id: int,
+    session_key: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """يسمح للمشارك بحذف منشوره الخاص باستخدام مفتاح الجلسة (qr_code)"""
+    from app.models.participant import Participant
+
+    post = await db.get(SocialPost, post_id)
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+
+    # التحقق من الملكية عبر qr_code
+    stmt = select(Participant).filter(Participant.qr_code == session_key)
+    res = await db.execute(stmt)
+    participant = res.scalars().first()
+
+    if not participant:
+        raise HTTPException(status_code=403, detail="غير مصرح لك بهذا الإجراء")
+
+    if post.author_name != participant.full_name:
+        raise HTTPException(status_code=403, detail="لا يمكنك حذف منشور شخص آخر")
+
+    event_id = post.event_id
+    await db.delete(post)
+    await db.commit()
+
+    await manager.broadcast_to_event(event_id, {
+        "type": "post_deleted",
+        "post_id": post_id
+    })
+
+    return {"message": "تم حذف المنشور بنجاح"}
