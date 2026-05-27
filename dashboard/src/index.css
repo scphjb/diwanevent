@@ -246,3 +246,21 @@ body {
 .light-theme .border-emerald-500\/20 {
   border-color: rgba(5, 150, 105, 0.15) !important;
 }
+.light-theme .placeholder\:text-white\/10::placeholder {
+  color: #94A3B8 !important;
+}
+.light-theme .border-white\/5 {
+  border-color: rgba(15, 23, 42, 0.05) !important;
+}
+.light-theme .text-white\/50 {
+  color: #64748B !important;
+}
+.light-theme .text-white\/30 {
+  color: #94A3B8 !important;
+}
+.light-theme .text-white\/20 {
+  color: #CBD5E1 !important;
+}
+.light-theme input::placeholder, .light-theme textarea::placeholder {
+  color: #94A3B8 !important;
+}
