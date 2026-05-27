@@ -148,9 +148,9 @@ const ParticipantPortal = () => {
   const [theme, setTheme] = useState(() => {
     try {
       const saved = localStorage.getItem(`diwan_theme_${eventId}`);
-      return saved || 'dark';
+      return saved || 'light';
     } catch (e) {
-      return 'dark';
+      return 'light';
     }
   });
 

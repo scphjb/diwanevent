@@ -168,10 +168,81 @@ body {
 }
 
 .light-theme .fixed.inset-0.pointer-events-none.z-0 {
-  background: radial-gradient(circle at 10% 10%, rgba(56, 189, 248, 0.06), transparent 45%),
-              radial-gradient(circle at 90% 90%, rgba(245, 158, 11, 0.06), transparent 45%) !important;
+  background: radial-gradient(circle at 10% 10%, rgba(16, 185, 129, 0.05), transparent 45%),
+              radial-gradient(circle at 90% 90%, rgba(245, 158, 11, 0.05), transparent 45%) !important;
 }
 
 .light-theme .fixed.inset-0.pointer-events-none.z-0 * {
   display: none !important;
+}
+
+/* Specific tailwind class specificity overrides for light theme */
+.light-theme .bg-\[\#050B18\] {
+  background-color: #F8FAFC !important;
+}
+.light-theme .text-\[\#F0F4F2\] {
+  color: #0F172A !important;
+}
+.light-theme .text-\[\#F0F4F2\]\/60 {
+  color: #475569 !important;
+}
+.light-theme .bg-gradient-to-br.from-\[\#0D1527\].to-\[\#050B18\] {
+  background-image: linear-gradient(to bottom right, #FFFFFF, #F8FAFC) !important;
+  border-color: rgba(245, 158, 11, 0.3) !important;
+  box-shadow: 0 20px 50px rgba(245, 158, 11, 0.06) !important;
+}
+.light-theme .bg-\[\#050B18\]\/80 {
+  background-color: rgba(15, 23, 42, 0.3) !important;
+}
+.light-theme .bg-\[\#050B18\]\/90 {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  border-top-color: rgba(15, 23, 42, 0.08) !important;
+  box-shadow: 0 -8px 30px rgba(15, 23, 42, 0.06) !important;
+}
+.light-theme .bg-gradient-to-b.from-white\/\[0\.06\].to-white\/\[0\.01\] {
+  background-image: none !important;
+  background-color: #FFFFFF !important;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.03) !important;
+}
+.light-theme .text-brand-secondary {
+  color: #B45309 !important;
+}
+.light-theme .text-brand-secondary\/50 {
+  color: #475569 !important;
+}
+.light-theme .text-brand-secondary\/40 {
+  color: #64748B !important;
+}
+.light-theme .text-brand-secondary\/30 {
+  color: #94A3B8 !important;
+}
+.light-theme .border-brand-primary\/20 {
+  border-color: rgba(217, 119, 6, 0.15) !important;
+}
+.light-theme .bg-brand-primary\/20 {
+  background-color: rgba(217, 119, 6, 0.08) !important;
+}
+.light-theme .border-amber-500\/20 {
+  border-color: rgba(217, 119, 6, 0.25) !important;
+}
+.light-theme .bg-amber-500\/10 {
+  background-color: rgba(217, 119, 6, 0.08) !important;
+}
+.light-theme .text-amber-500 {
+  color: #D97706 !important;
+}
+.light-theme .bg-white\/10 {
+  background-color: rgba(15, 23, 42, 0.03) !important;
+}
+.light-theme .bg-white\/5 {
+  background-color: #FFFFFF !important;
+}
+.light-theme .text-emerald-400 {
+  color: #059669 !important;
+}
+.light-theme .bg-emerald-500\/10 {
+  background-color: rgba(5, 150, 105, 0.08) !important;
+}
+.light-theme .border-emerald-500\/20 {
+  border-color: rgba(5, 150, 105, 0.15) !important;
 }

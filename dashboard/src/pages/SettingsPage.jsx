@@ -32,6 +32,7 @@ import { useTranslation } from 'react-i18next';
 import { showSuccess, showError, showConfirm, showToast } from '../utils/swal';
 import PushNotificationManager from '../components/pwa/PushNotificationManager';
 import { Bell } from 'lucide-react';
+import { getImageUrl } from '../utils/image';
 
 const SettingsSection = ({ title, description, children, icon: Icon }) => (
   <div className="bg-white/5 border border-white/10 rounded-[32px] p-8 mb-8 backdrop-blur-md">
@@ -415,7 +416,7 @@ const SettingsPage = () => {
                         {settings.logo_url && (
                           <div className="w-32 h-32 rounded-2xl bg-white p-4 border border-white/10 overflow-hidden shadow-xl">
                             <img 
-                              src={settings.logo_url?.startsWith('http') ? settings.logo_url : `${(import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1').replace('/api/v1', '')}${settings.logo_url}`} 
+                              src={getImageUrl(settings.logo_url)} 
                               alt="Logo Preview" 
                               className="w-full h-full object-contain" 
                             />
