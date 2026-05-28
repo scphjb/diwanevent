@@ -65,18 +65,17 @@ async def startup_db_migration():
         from sqlalchemy import text
         from app.core.database import async_engine
         async with async_engine.begin() as conn:
-            check_sql = text(
-                "SELECT column_name FROM information_schema.columns "
-                "WHERE table_name='users' AND column_name='avatar_url';"
-            )
-            result = await conn.execute(check_sql)
-            row = result.fetchone()
-            if not row:
-                alter_sql = text("ALTER TABLE users ADD COLUMN avatar_url VARCHAR NULL;")
-                await conn.execute(alter_sql)
-                logger.info("✅ Database Migration: Added column 'avatar_url' to 'users' table.")
+            # استخدام IF NOT EXISTS لمنع الأخطاء في التعددية
+            alter_sql = text("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url VARCHAR NULL;")
+            await conn.execute(alter_sql)
+            logger.info("✅ Database Migration: Checked 'avatar_url' column in 'users' table.")
     except Exception as e:
-        logger.error(f"❌ Database Startup Migration Failed: {e}")
+        err_msg = str(e)
+        if "already exists" in err_msg or "DuplicateColumn" in err_msg:
+            # تجاهل الخطأ في حالة وجود العمود مسبقاً (نتيجة سباق العمال المتعددين)
+            logger.info("✅ Database Migration: 'avatar_url' column already exists in 'users' table.")
+        else:
+            logger.error(f"❌ Database Startup Migration Failed: {e}")
 
 # --- React Dashboard Serving (SPA Support) ---
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
