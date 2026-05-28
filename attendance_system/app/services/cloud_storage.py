@@ -21,7 +21,8 @@ class StorageService:
                 's3',
                 aws_access_key_id=settings.AWS_ACCESS_KEY,
                 aws_secret_access_key=settings.AWS_SECRET_KEY,
-                endpoint_url=settings.S3_ENDPOINT # لدعم Cloudflare R2 / MinIO
+                endpoint_url=settings.S3_ENDPOINT, # لدعم Cloudflare R2 / MinIO
+                region_name='auto' # مطلوب خصيصاً من كلودفلار R2
             )
             self.bucket_name = settings.S3_BUCKET_NAME
         else:
