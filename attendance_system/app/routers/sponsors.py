@@ -59,18 +59,15 @@ async def create_sponsor(
     _: None = Depends(require_permission("event:write"))
 ):
     """إضافة راع جديد للفعالية المحددة"""
-    upload_dir = os.path.join("static", "sponsors", str(event_id))
-    os.makedirs(upload_dir, exist_ok=True)
-    
-    raw_ext = logo.filename.split('.')[-1] if '.' in logo.filename else 'png'
-    file_ext = "".join(c for c in raw_ext if c.isalnum())
-    filename = f"sponsor_{int(time.time())}.{file_ext}"
-    file_path = os.path.join(upload_dir, filename)
-    
-    with open(file_path, "wb") as buffer:
-        buffer.write(await logo.read())
-        
-    logo_url = f"/static/sponsors/{event_id}/{filename}"
+    from app.services.cloud_storage import StorageService
+    storage = StorageService()
+    logo_content = await logo.read()
+    logo_url = storage.upload_image_or_file(
+        file_content=logo_content,
+        filename=logo.filename,
+        folder=f"sponsors/{event_id}",
+        content_type=logo.content_type or "image/png"
+    )
     
     db_sponsor = Sponsor(
         event_id=event_id,
@@ -146,15 +143,15 @@ async def update_sponsor(
     if is_active is not None: sponsor.is_active = is_active
     
     if logo:
-        upload_dir = os.path.join("static", "sponsors", str(event_id))
-        os.makedirs(upload_dir, exist_ok=True)
-        raw_ext = logo.filename.split('.')[-1] if '.' in logo.filename else 'png'
-        file_ext = "".join(c for c in raw_ext if c.isalnum())
-        filename = f"sponsor_{int(time.time())}.{file_ext}"
-        file_path = os.path.join(upload_dir, filename)
-        with open(file_path, "wb") as buffer:
-            buffer.write(await logo.read())
-        sponsor.logo_url = f"/static/sponsors/{event_id}/{filename}"
+        from app.services.cloud_storage import StorageService
+        storage = StorageService()
+        logo_content = await logo.read()
+        sponsor.logo_url = storage.upload_image_or_file(
+            file_content=logo_content,
+            filename=logo.filename,
+            folder=f"sponsors/{event_id}",
+            content_type=logo.content_type or "image/png"
+        )
 
     await db.commit()
     await db.refresh(sponsor)

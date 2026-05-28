@@ -45,16 +45,17 @@ async def upload_social_image(file: UploadFile = File(...)):
     if len(content) > 5 * 1024 * 1024:
         raise HTTPException(status_code=413, detail="حجم الصورة كبير جداً، الحد الأقصى هو 5 ميجابايت.")
     
-    # 3. حفظ الملف في مجلد الصور الاجتماعي
-    static_social_dir = os.path.join("static", "social")
-    os.makedirs(static_social_dir, exist_ok=True)
-    filename = f"{uuid.uuid4()}{ext}"
-    file_path = os.path.join(static_social_dir, filename)
-    
-    with open(file_path, "wb") as buffer:
-        buffer.write(content)
+    # 3. حفظ الصورة سحابياً أو محلياً
+    from app.services.cloud_storage import StorageService
+    storage = StorageService()
+    image_url = storage.upload_image_or_file(
+        file_content=content,
+        filename=file.filename,
+        folder="social",
+        content_type=file.content_type or "image/png"
+    )
         
-    return {"url": f"/static/social/{filename}"}
+    return {"url": image_url}
 
 @router.post("/")
 @limiter.limit("5/minute")

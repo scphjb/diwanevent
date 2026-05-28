@@ -300,16 +300,17 @@ async def upload_document_file(
         pass
     
     # 4. حفظ الملف
-    static_docs_dir = os.path.join("static", "documents")
-    os.makedirs(static_docs_dir, exist_ok=True)
-    filename = f"{uuid.uuid4()}{ext}"
-    file_path = os.path.join(static_docs_dir, filename)
-    
-    with open(file_path, "wb") as buffer:
-        buffer.write(content)
+    from app.services.cloud_storage import StorageService
+    storage = StorageService()
+    file_url = storage.upload_image_or_file(
+        file_content=content,
+        filename=file.filename,
+        folder="documents",
+        content_type=file.content_type or "application/octet-stream"
+    )
     
     return {
-        "url": f"/static/documents/{filename}",
+        "url": file_url,
         "type": ext.replace(".", "").lower(),
         "size": f"{len(content) / 1024 / 1024:.1f} MB"
     }

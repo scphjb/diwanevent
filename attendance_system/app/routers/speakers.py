@@ -53,15 +53,15 @@ async def create_speaker(
     """إضافة متحدث جديد"""
     image_url = None
     if image:
-        upload_dir = os.path.join("static", "speakers", str(event_id))
-        os.makedirs(upload_dir, exist_ok=True)
-        raw_ext = image.filename.split('.')[-1] if '.' in image.filename else 'png'
-        file_ext = "".join(c for c in raw_ext if c.isalnum())
-        filename = f"speaker_{int(time.time())}.{file_ext}"
-        file_path = os.path.join(upload_dir, filename)
-        with open(file_path, "wb") as buffer:
-            buffer.write(await image.read())
-        image_url = f"/static/speakers/{event_id}/{filename}"
+        from app.services.cloud_storage import StorageService
+        storage = StorageService()
+        image_content = await image.read()
+        image_url = storage.upload_image_or_file(
+            file_content=image_content,
+            filename=image.filename,
+            folder=f"speakers/{event_id}",
+            content_type=image.content_type or "image/png"
+        )
     
     db_speaker = Speaker(
         event_id=event_id,
@@ -129,15 +129,15 @@ async def update_speaker(
     if topic: speaker.topic = topic
     
     if image:
-        upload_dir = os.path.join("static", "speakers", str(event_id))
-        os.makedirs(upload_dir, exist_ok=True)
-        raw_ext = image.filename.split('.')[-1] if '.' in image.filename else 'png'
-        file_ext = "".join(c for c in raw_ext if c.isalnum())
-        filename = f"speaker_{int(time.time())}.{file_ext}"
-        file_path = os.path.join(upload_dir, filename)
-        with open(file_path, "wb") as buffer:
-            buffer.write(await image.read())
-        speaker.image_url = f"/static/speakers/{event_id}/{filename}"
+        from app.services.cloud_storage import StorageService
+        storage = StorageService()
+        image_content = await image.read()
+        speaker.image_url = storage.upload_image_or_file(
+            file_content=image_content,
+            filename=image.filename,
+            folder=f"speakers/{event_id}",
+            content_type=image.content_type or "image/png"
+        )
 
     await db.commit()
     await db.refresh(speaker)

@@ -445,18 +445,15 @@ async def upload_event_logo(
     if not event or (current_user.role != "super_admin" and event.created_by != current_user.id):
         raise HTTPException(status_code=403, detail="Not authorized")
         
-    upload_dir = os.path.join("static", "events", str(event_id))
-    os.makedirs(upload_dir, exist_ok=True)
-    
-    raw_ext = logo.filename.split('.')[-1] if '.' in logo.filename else 'png'
-    file_ext = "".join(c for c in raw_ext if c.isalnum())
-    filename = f"logo_{int(time.time())}.{file_ext}"
-    file_path = os.path.join(upload_dir, filename)
-    
-    with open(file_path, "wb") as buffer:
-        buffer.write(await logo.read())
-        
-    event.logo_url = f"/static/events/{event_id}/{filename}"
+    from app.services.cloud_storage import StorageService
+    storage = StorageService()
+    logo_content = await logo.read()
+    event.logo_url = storage.upload_image_or_file(
+        file_content=logo_content,
+        filename=logo.filename,
+        folder=f"events/{event_id}",
+        content_type=logo.content_type or "image/png"
+    )
     await db.commit()
     await db.refresh(event)
     

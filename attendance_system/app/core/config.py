@@ -77,6 +77,12 @@ class Settings(BaseSettings):
     # توليد المفاتيح: python attendance_system/scripts/generate_vapid_keys.py
     VAPID_PUBLIC_KEY: Optional[str] = None
     VAPID_PRIVATE_KEY: Optional[str] = None
+    # S3 / Cloudflare R2 / MinIO Storage Configuration
+    AWS_ACCESS_KEY: Optional[str] = None
+    AWS_SECRET_KEY: Optional[str] = None
+    S3_ENDPOINT: Optional[str] = None
+    S3_BUCKET_NAME: Optional[str] = None
+    S3_PUBLIC_URL: Optional[str] = None  # لروابط الوصول المباشر العام
 
     # Connection Pool
     DB_POOL_SIZE: int = 10
