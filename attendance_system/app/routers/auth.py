@@ -38,6 +38,7 @@ class UserProfile(BaseModel):
     email: str
     full_name: str
     role: str
+    avatar_url: Optional[str] = None
 
 
 class TokenResponse(BaseModel):
@@ -121,6 +122,7 @@ async def login(
             "email": user.email,
             "full_name": user.full_name,
             "role": user.role,
+            "avatar_url": user.avatar_url,
         },
     }
 
@@ -163,6 +165,7 @@ async def refresh_access_token(
             "email": user.email,
             "full_name": user.full_name,
             "role": user.role,
+            "avatar_url": user.avatar_url,
         },
     }
 
@@ -191,8 +194,40 @@ async def update_profile(
             "email": current_user.email,
             "full_name": current_user.full_name,
             "role": current_user.role,
+            "avatar_url": current_user.avatar_url,
         }
     }
+
+from fastapi import UploadFile, File
+
+@router.post("/profile/avatar")
+async def upload_organizer_avatar(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """رفع الصورة الشخصية للمنظم وحفظها سحابياً أو محلياً"""
+    import os
+    ext = os.path.splitext(file.filename or "")[1].lower()
+    if ext not in {'.png', '.jpg', '.jpeg', '.gif', '.webp'}:
+        raise HTTPException(status_code=400, detail="نوع الملف غير مدعوم. يسمح فقط بالصور.")
+        
+    from app.services.cloud_storage import StorageService
+    storage = StorageService()
+    content = await file.read()
+    
+    avatar_url = storage.upload_image_or_file(
+        file_content=content,
+        filename=file.filename,
+        folder=f"users/{current_user.id}",
+        content_type=file.content_type or "image/png"
+    )
+    
+    current_user.avatar_url = avatar_url
+    await db.commit()
+    await db.refresh(current_user)
+    
+    return {"status": "success", "avatar_url": avatar_url}
 
 @router.get("/me", response_model=UserProfile)
 async def get_me(current_user: User = Depends(get_current_active_user)):
@@ -265,6 +300,7 @@ async def register_organizer(
             "email": new_user.email,
             "full_name": new_user.full_name,
             "role": new_user.role,
+            "avatar_url": new_user.avatar_url,
         },
     }
 

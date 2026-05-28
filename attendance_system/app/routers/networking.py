@@ -79,6 +79,44 @@ async def update_my_profile(
     
     return {"status": "success", "profile": _serialize_profile(me, profile)}
 
+from fastapi import UploadFile, File
+
+@router.post("/profile/avatar")
+async def upload_participant_avatar(
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db),
+    me: Participant = Depends(get_current_participant)
+):
+    """رفع الصورة الشخصية للمشارك وحفظها سحابياً أو محلياً وتحديث الملف الشخصي المهني"""
+    import os
+    ext = os.path.splitext(file.filename or "")[1].lower()
+    if ext not in {'.png', '.jpg', '.jpeg', '.gif', '.webp'}:
+        raise HTTPException(status_code=400, detail="نوع الملف غير مدعوم. يسمح فقط بالصور.")
+        
+    from app.services.cloud_storage import StorageService
+    storage = StorageService()
+    content = await file.read()
+    
+    avatar_url = storage.upload_image_or_file(
+        file_content=content,
+        filename=file.filename,
+        folder=f"participants/{me.event_id}/{me.id}",
+        content_type=file.content_type or "image/png"
+    )
+    
+    profile = await _get_or_create_profile(me, db)
+    profile.avatar_url = avatar_url
+    await db.commit()
+    await db.refresh(profile)
+    
+    # Broadcast لتحديث الدليل في الوقت الفعلي
+    await manager.broadcast_to_event(me.event_id, {
+        "type": "profile_updated",
+        "participant_id": me.id
+    })
+    
+    return {"status": "success", "avatar_url": avatar_url, "profile": _serialize_profile(me, profile)}
+
 @router.get("/profile/{participant_id}")
 async def get_participant_profile(
     participant_id: int,

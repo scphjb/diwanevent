@@ -12,6 +12,7 @@ class User(Base, TimestampMixin):
     credits = Column(Integer, default=50)
     full_name = Column(String)
     is_active = Column(Boolean, default=True)
+    avatar_url = Column(String, nullable=True)
     
     # Two-Factor Authentication
     two_factor_enabled = Column(Boolean, default=False)
