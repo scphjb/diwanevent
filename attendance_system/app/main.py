@@ -58,6 +58,26 @@ app = FastAPI(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
+@app.on_event("startup")
+async def startup_db_migration():
+    """التحقق التلقائي وإضافة عمود avatar_url لجدول المستخدمين إذا لم يكن موجوداً"""
+    try:
+        from sqlalchemy import text
+        from app.core.database import async_engine
+        async with async_engine.begin() as conn:
+            check_sql = text(
+                "SELECT column_name FROM information_schema.columns "
+                "WHERE table_name='users' AND column_name='avatar_url';"
+            )
+            result = await conn.execute(check_sql)
+            row = result.fetchone()
+            if not row:
+                alter_sql = text("ALTER TABLE users ADD COLUMN avatar_url VARCHAR NULL;")
+                await conn.execute(alter_sql)
+                logger.info("✅ Database Migration: Added column 'avatar_url' to 'users' table.")
+    except Exception as e:
+        logger.error(f"❌ Database Startup Migration Failed: {e}")
+
 # --- React Dashboard Serving (SPA Support) ---
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DASHBOARD_DIST = os.path.join(os.path.dirname(BASE_DIR), "dashboard", "dist")
