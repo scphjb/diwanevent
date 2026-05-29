@@ -106,6 +106,14 @@ async def upload_participant_avatar(
     
     profile = await _get_or_create_profile(me, db)
     profile.avatar_url = avatar_url
+    
+    # حفظ أيضاً في custom_values للمشارك لضمان المزامنة التامة وتجنب أي اختفاء للملف الشخصي
+    cv = me.custom_values or {}
+    cv["avatar_url"] = avatar_url
+    me.custom_values = cv
+    from sqlalchemy.orm.attributes import flag_modified
+    flag_modified(me, "custom_values")
+    
     await db.commit()
     await db.refresh(profile)
     

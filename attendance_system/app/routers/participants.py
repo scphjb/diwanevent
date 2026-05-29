@@ -94,13 +94,14 @@ async def get_participant_by_token(
 ):
     """الدخول الآمن للبوابة باستخدام رمز الـ QR أو رقم الطلب أو JWT Token"""
     from app.core.security import decode_token
+    from sqlalchemy.orm import selectinload
     
     participant = None
     if token.startswith("DWN-") or token.startswith("REG-"):
         # البحث بواسطة رقم الطلب مباشرة
         stmt = select(Participant).filter(
             (Participant.order_num == token) | (Participant.qr_code == token)
-        )
+        ).options(selectinload(Participant.profile))
         result = await db.execute(stmt)
         participant = result.scalars().first()
     else:
@@ -109,12 +110,18 @@ async def get_participant_by_token(
         if payload and payload.get("sub", "").startswith("participant:"):
             try:
                 p_id = int(payload.get("sub").split(":")[1])
-                participant = await db.get(Participant, p_id)
+                stmt = select(Participant).filter(Participant.id == p_id).options(selectinload(Participant.profile))
+                result = await db.execute(stmt)
+                participant = result.scalars().first()
             except: pass
 
     if not participant:
         raise HTTPException(status_code=404, detail="الرمز غير صالح أو الجلسة منتهية")
     
+    avatar_url = participant.profile.avatar_url if participant.profile else None
+    if not avatar_url and participant.custom_values:
+        avatar_url = participant.custom_values.get("avatar_url")
+        
     return {
         "id": participant.id,
         "full_name": participant.full_name,
@@ -123,6 +130,7 @@ async def get_participant_by_token(
         "qr_code": participant.qr_code,
         "seat_info": participant.seat_info,
         "event_id": participant.event_id,
+        "avatar_url": avatar_url,
         "custom_values": participant.custom_values or {}
     }
 
@@ -142,10 +150,17 @@ async def get_public_participant_info(
     db: AsyncSession = Depends(get_db)
 ):
     """جلب بيانات المشارك العامة (بدون مصادقة) — يُستخدم في بوابة المشارك."""
-    participant = await db.get(Participant, participant_id)
+    from sqlalchemy.orm import selectinload
+    stmt = select(Participant).filter(Participant.id == participant_id).options(selectinload(Participant.profile))
+    result = await db.execute(stmt)
+    participant = result.scalars().first()
     if not participant:
         raise HTTPException(status_code=404, detail="المشارك غير موجود")
     
+    avatar_url = participant.profile.avatar_url if participant.profile else None
+    if not avatar_url and participant.custom_values:
+        avatar_url = participant.custom_values.get("avatar_url")
+        
     return {
         "id": participant.id,
         "full_name": participant.full_name,
@@ -155,6 +170,7 @@ async def get_public_participant_info(
         "qr_code": participant.qr_code,
         "payment_status": participant.payment_status,
         "seat_info": participant.seat_info,
+        "avatar_url": avatar_url,
         "custom_values": participant.custom_values or {},
     }
 
