@@ -1,6 +1,6 @@
 // service-worker.js - Diwan Event Platform
-const CACHE_VERSION = 'diwan-static-v5';
-const API_CACHE = 'diwan-api-v5';
+const CACHE_VERSION = 'diwan-static-v6';
+const API_CACHE = 'diwan-api-v6';
 
 // Static files cache pool
 const STATIC_ASSETS = [
@@ -118,22 +118,33 @@ self.addEventListener('fetch', (event) => {
     );
     return;
   }
-  // 3. Navigation requests (HTML pages)
+  // 3. Navigation requests (HTML pages) — SPA Strategy
+  //    دائماً يُخدَم index.html حتى في حالة فشل الشبكة.
+  //    تطبيق React يتولى إدارة وضع عدم الاتصال (بانر + البيانات المخبأة).
+  //    offline.html لا تُعرض أبداً للمنظمين أو أي مسار داخل التطبيق.
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request)
-        .catch(() => {
-          // محاولة ثانية للتغلب على قيود المتصفح الصارمة للـ Navigation Requests عبر طلب نظيف للرابط
-          return fetch(request.url);
+        .then((response) => {
+          // تخزين index.html محلياً بعد كل تحديث ناجح
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_VERSION).then((cache) => cache.put('/index.html', clone));
+          }
+          return response;
         })
-        .catch(() => {
-          // إذا فشل الاتصال تماماً، نحن في وضع عدم الاتصال الحقيقي. نرجع index.html أو offline.html
-          return caches.match('/index.html').then((cachedIndex) => {
-            if (cachedIndex) return cachedIndex;
-            return caches.match('/offline.html');
-          });
+        .catch(async () => {
+          // فشل الشبكة — أعد index.html من الكاش (التطبيق يعمل offline)
+          const cached = await caches.match('/index.html', { cacheName: CACHE_VERSION })
+                      || await caches.match('/index.html')
+                      || await caches.match('/');
+          if (cached) return cached;
+
+          // حالة استثنائية جداً: لا كاش ولا شبكة — أعرض offline.html
+          return caches.match('/offline.html');
         })
     );
+    return;
   }
 });
 
