@@ -126,32 +126,43 @@
      * الذي لا يُعيد التوجيه لـ offline.html أبداً.
      */
 
-    let hasFixed = false;
+    let hasRedirected = false;
 
-    async function fixAndRedirect() {
-      if (hasFixed) return;
-      hasFixed = true;
+    async function restoreOriginalPage(forceClean = false) {
+      if (hasRedirected) return;
+      hasRedirected = true;
 
       const el = document.getElementById('status');
       el.className = 'status-bar status-online';
-      el.textContent = '✅ الاتصال موجود — جاري إصلاح الكاش تلقائياً...';
+      el.textContent = forceClean 
+        ? '🧹 جاري تنظيف الكاش وإعادة التحميل...'
+        : '✅ تم استعادة الاتصال! جاري العودة لصفحتك...';
 
-      try {
-        // 1. إلغاء تسجيل جميع الـ Service Workers القديمة
-        if ('serviceWorker' in navigator) {
-          const regs = await navigator.serviceWorker.getRegistrations();
-          await Promise.all(regs.map(r => r.unregister()));
+      if (forceClean) {
+        try {
+          // 1. إلغاء تسجيل الـ Service Workers القديمة
+          if ('serviceWorker' in navigator) {
+            const regs = await navigator.serviceWorker.getRegistrations();
+            await Promise.all(regs.map(r => r.unregister()));
+          }
+          // 2. مسح كاش المتصفح بالكامل لتصحيح الملفات التالفة
+          if ('caches' in window) {
+            const keys = await caches.keys();
+            await Promise.all(keys.map(k => caches.delete(k)));
+          }
+        } catch (e) {
+          console.error('Wipe cache failed:', e);
         }
-        // 2. مسح جميع الكاشات بالكامل
-        if ('caches' in window) {
-          const keys = await caches.keys();
-          await Promise.all(keys.map(k => caches.delete(k)));
-        }
-      } catch (_) {}
+      }
 
-      // 3. الانتقال التام — location.replace يتجاوز أي SW مُعطَّل
-      // يستبدل السجل الحالي (offline.html) بـ / حتى لا يرجع لها الزر "رجوع"
-      window.location.replace('/');
+      // تحديد مسار الوجهة بدقة لتجنب الطرد إلى الصفحة الرئيسية
+      const currentUrl = window.location.href;
+      if (currentUrl.includes('offline.html')) {
+        window.location.replace('/');
+      } else {
+        // العودة لنفس الصفحة تماماً (سواء بوابة المشارك أو لوحة التحكم) دون فقدان المسار!
+        window.location.replace(currentUrl);
+      }
     }
 
     async function checkConnection() {
@@ -160,7 +171,7 @@
       el.textContent = 'جاري فحص الاتصال...';
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
 
       try {
         const res = await fetch('/api/v1/health', {
@@ -170,10 +181,10 @@
         });
         clearTimeout(timeoutId);
 
-        // أي رد من الخادم (حتى 401/403) = الخادم يعمل والاتصال موجود
+        // أي رد من الخادم (حتى 401 أو 403) يعني الخادم حي والاتصال شغال
         if (res.ok || res.status === 401 || res.status === 403 || res.status === 422) {
-          // إصلاح تلقائي دون تدخل المستخدم
-          await fixAndRedirect();
+          // استعادة الصفحة الحالية مباشرة دون تدمير كاش الـ PWA المفيد
+          await restoreOriginalPage(false);
           return true;
         }
       } catch (_) {
@@ -182,7 +193,7 @@
 
       el.className = 'status-bar status-offline';
       el.textContent = '❌ لا يوجد اتصال بالخادم';
-      hasFixed = false; // أعد التهيئة للمحاولة التالية
+      hasRedirected = false;
       return false;
     }
 
@@ -191,7 +202,7 @@
     }
 
     async function clearCacheAndReload() {
-      await fixAndRedirect();
+      await restoreOriginalPage(true);
     }
 
     // مراقبة أحداث الشبكة
