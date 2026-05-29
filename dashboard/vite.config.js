@@ -19,13 +19,13 @@ export default defineConfig({
         navigateFallbackDenylist: [/^\/api/, /^\/ws/, /\/offline\.html/],
         runtimeCaching: [
           {
-            // API calls — Network First
+            // API calls — Network First مع مهلة 4 ثوانٍ للتوافق مع useOfflineStatus ping
             urlPattern: /^https?.*\/api\/v1\/.*/i,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'diwan-api-cache',
               expiration: { maxEntries: 50, maxAgeSeconds: 300 },
-              networkTimeoutSeconds: 10,
+              networkTimeoutSeconds: 4,
             },
           },
           {

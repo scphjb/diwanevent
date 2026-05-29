@@ -684,12 +684,32 @@ const ParticipantPortal = () => {
 
   const handleUpdateProfile = async () => {
     try {
-      const data = {
-        ...profileData
-      };
+      const data = { ...profileData };
       await api.patch('participants/public/profile', data);
-      setParticipant({ ...participant, custom_values: { ...participant.custom_values, ...data } });
+
+      // الإصلاح الجذري: نحافظ على avatar_url في state لأن profileData لا يحتوي عليها
+      const updatedParticipant = {
+        ...participant,
+        custom_values: {
+          ...participant.custom_values,
+          ...data,
+          // الحفاظ الصريح على avatar_url من أي مصدر متاح
+          avatar_url: participant.avatar_url || participant.custom_values?.avatar_url,
+        },
+        // avatar_url على مستوى المشارك مباشرة — المصدر الأول الذي تبحث عنه الواجهة
+        avatar_url: participant.avatar_url || participant.custom_values?.avatar_url,
+      };
+
+      setParticipant(updatedParticipant);
       setIsEditingProfile(false);
+
+      // تحديث الكاش المحلي ليعكس الحالة المحدَّثة مع الصورة
+      try {
+        localStorage.setItem(`diwan_cache_participant_${participantToken}`, JSON.stringify(updatedParticipant));
+      } catch (e) {
+        console.error('Failed to update participant cache after profile update', e);
+      }
+
       toast.success('تم تحديث ملفك الشخصي بنجاح ✅');
     } catch (err) {
       toast.error('فشل تحديث الملف الشخصي');

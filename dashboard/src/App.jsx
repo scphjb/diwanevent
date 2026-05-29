@@ -1,5 +1,6 @@
-import React from 'react';
-import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { EventProvider } from './context/EventContext';
 import LoginPage from './pages/Login';
 import OverviewPage from './pages/Overview';
 import ParticipantsPage from './pages/ParticipantsPage';
@@ -71,40 +72,51 @@ const ProtectedRoute = ({ children, requiredRole }) => {
   return children;
 };
 
-import { EventProvider } from './context/EventContext';
+
+
+/**
+ * مكون مستقل للتوجيه التلقائي عند تشغيل التطبيق في وضع PWA المستقل.
+ * يُشغَّل مرة واحدة فقط عند تحميل التطبيق — لا يعيد تشغيله عند تغيير المسار.
+ */
+const PwaStartupRedirect = () => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const isStandalone =
+      window.matchMedia('(display-mode: standalone)').matches ||
+      window.navigator.standalone === true;
+
+    if (!isStandalone) return;
+
+    const currentPath = window.location.pathname;
+    // نتدخل فقط إذا كان المستخدم على الصفحة الجذر أو صفحة الدخول
+    if (currentPath !== '/' && currentPath !== '/login') return;
+
+    const token   = localStorage.getItem('diwan_token');
+    const user    = JSON.parse(localStorage.getItem('diwan_user') || '{}');
+
+    // 1. منظم / مدير — توجيه للوحة التحكم
+    if (token && user?.role) {
+      navigate(user.role === 'super_admin' ? '/super-admin' : '/dashboard', { replace: true });
+      return;
+    }
+
+    // 2. مشارك — توجيه لآخر بوابة نشطة
+    const lastPortal = localStorage.getItem('last_active_participant_portal');
+    if (lastPortal) {
+      navigate(lastPortal, { replace: true });
+    }
+  }, []); // [] = مرة واحدة فقط عند التحميل
+
+  return null;
+};
 
 function App() {
   const { isOffline } = useOfflineStatus();
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  React.useEffect(() => {
-    // التحقق إذا كان التطبيق يعمل بوضع PWA المستقل (Standalone)
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
-                         window.navigator.standalone === true;
-    if (isStandalone) {
-      const token = localStorage.getItem('diwan_token');
-      const user = JSON.parse(localStorage.getItem('diwan_user') || '{}');
-      
-      // التوجيه التلقائي للمستخدمين لتجنب إحالتهم لصفحة الهبوط أو تسجيل الدخول
-      if (location.pathname === '/' || location.pathname === '/login') {
-        // 1. إذا كان منظماً أو مديراً ولديه توكن فعال، نوجهه للوحة التحكم
-        if (token && user?.role) {
-          navigate(user.role === 'super_admin' ? '/super-admin' : '/dashboard', { replace: true });
-          return;
-        }
-        
-        // 2. إذا كان مشاركاً ولديه بوابة نشطة محفوظة، نوجهه إليها مباشرة
-        const lastPortal = localStorage.getItem('last_active_participant_portal');
-        if (lastPortal) {
-          navigate(lastPortal, { replace: true });
-        }
-      }
-    }
-  }, [navigate, location]);
 
   return (
     <EventProvider>
+      <PwaStartupRedirect />
       {isOffline && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, zIndex: 99999,
