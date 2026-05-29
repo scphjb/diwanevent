@@ -364,9 +364,10 @@ const ParticipantPortal = () => {
         website: pRes.data.custom_values?.website || ''
       });
       
-      // Save participant to local cache
+      // Save participant to local cache and set last active PWA portal path
       try {
         localStorage.setItem(`diwan_cache_participant_${participantToken}`, JSON.stringify(pRes.data));
+        localStorage.setItem('last_active_participant_portal', `/p/${eventId}/${participantToken}`);
       } catch (e) {
         console.error('Failed to write participant cache', e);
       }

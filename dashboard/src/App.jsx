@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import LoginPage from './pages/Login';
 import OverviewPage from './pages/Overview';
 import ParticipantsPage from './pages/ParticipantsPage';
@@ -75,7 +75,34 @@ import { EventProvider } from './context/EventContext';
 
 function App() {
   const { isOffline } = useOfflineStatus();
-  
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  React.useEffect(() => {
+    // التحقق إذا كان التطبيق يعمل بوضع PWA المستقل (Standalone)
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+                         window.navigator.standalone === true;
+    if (isStandalone) {
+      const token = localStorage.getItem('diwan_token');
+      const user = JSON.parse(localStorage.getItem('diwan_user') || '{}');
+      
+      // التوجيه التلقائي للمستخدمين لتجنب إحالتهم لصفحة الهبوط أو تسجيل الدخول
+      if (location.pathname === '/' || location.pathname === '/login') {
+        // 1. إذا كان منظماً أو مديراً ولديه توكن فعال، نوجهه للوحة التحكم
+        if (token && user?.role) {
+          navigate(user.role === 'super_admin' ? '/super-admin' : '/dashboard', { replace: true });
+          return;
+        }
+        
+        // 2. إذا كان مشاركاً ولديه بوابة نشطة محفوظة، نوجهه إليها مباشرة
+        const lastPortal = localStorage.getItem('last_active_participant_portal');
+        if (lastPortal) {
+          navigate(lastPortal, { replace: true });
+        }
+      }
+    }
+  }, [navigate, location]);
+
   return (
     <EventProvider>
       {isOffline && (

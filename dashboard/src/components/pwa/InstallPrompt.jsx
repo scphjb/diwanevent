@@ -34,11 +34,17 @@ const InstallPrompt = () => {
   const [installing, setInstalling] = useState(false);
 
   useEffect(() => {
-    // 1. تحقق إذا كان التطبيق مثبتاً مسبقاً ويعمل بوضع مستقل
+    // 1. تحقق إذا كان التطبيق مثبتاً مسبقاً ويعمل بوضع مستقل أو مسجل في localStorage
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
                          window.navigator.standalone === true;
-    if (isStandalone) {
+    const previouslyInstalled = localStorage.getItem('pwa_installed') === 'true';
+
+    if (isStandalone || previouslyInstalled) {
       setInstalled(true);
+      // حفظ التثبيت محلياً للمرات القادمة
+      if (isStandalone && !previouslyInstalled) {
+        localStorage.setItem('pwa_installed', 'true');
+      }
       return;
     }
 
@@ -79,6 +85,7 @@ const InstallPrompt = () => {
       setInstalled(true);
       setShowBanner(false);
       setShowModal(false);
+      localStorage.setItem('pwa_installed', 'true');
     });
 
     return () => window.removeEventListener('beforeinstallprompt', handler);
@@ -95,6 +102,7 @@ const InstallPrompt = () => {
     if (outcome === 'accepted') {
       setInstalled(true);
       setShowBanner(false);
+      localStorage.setItem('pwa_installed', 'true');
     } else {
       localStorage.setItem('pwa_install_dismissed', 'true');
       setShowBanner(false);
