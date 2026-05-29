@@ -4,7 +4,7 @@
   "description": "منصة احترافية لتسيير الفعاليات والمؤتمرات بتقنية متقدمة",
   "lang": "ar",
   "dir": "rtl",
-  "start_url": "/dashboard",
+  "start_url": "/launch",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",

@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { EventProvider } from './context/EventContext';
 import LoginPage from './pages/Login';
 import OverviewPage from './pages/Overview';
@@ -48,7 +48,9 @@ import UpdatesPage   from './pages/UpdatesPage';
 import BlogPage      from './pages/BlogPage';
 import JobsPage      from './pages/JobsPage';
 import InstallPrompt from './components/pwa/InstallPrompt';
+import BrowserGate   from './components/pwa/BrowserGate';
 import { useOfflineStatus } from './hooks/useOfflineStatus';
+import LaunchPage from './pages/LaunchPage';
 
 /**
  * مكون لحماية المسارات — يدعم التحقق من التوكن والأدوار (RBAC).
@@ -73,50 +75,14 @@ const ProtectedRoute = ({ children, requiredRole }) => {
 };
 
 
-
-/**
- * مكون مستقل للتوجيه التلقائي عند تشغيل التطبيق في وضع PWA المستقل.
- * يُشغَّل مرة واحدة فقط عند تحميل التطبيق — لا يعيد تشغيله عند تغيير المسار.
- */
-const PwaStartupRedirect = () => {
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    const isStandalone =
-      window.matchMedia('(display-mode: standalone)').matches ||
-      window.navigator.standalone === true;
-
-    if (!isStandalone) return;
-
-    const currentPath = window.location.pathname;
-    // نتدخل فقط إذا كان المستخدم على الصفحة الجذر أو صفحة الدخول
-    if (currentPath !== '/' && currentPath !== '/login') return;
-
-    const token   = localStorage.getItem('diwan_token');
-    const user    = JSON.parse(localStorage.getItem('diwan_user') || '{}');
-
-    // 1. منظم / مدير — توجيه للوحة التحكم
-    if (token && user?.role) {
-      navigate(user.role === 'super_admin' ? '/super-admin' : '/dashboard', { replace: true });
-      return;
-    }
-
-    // 2. مشارك — توجيه لآخر بوابة نشطة
-    const lastPortal = localStorage.getItem('last_active_participant_portal');
-    if (lastPortal) {
-      navigate(lastPortal, { replace: true });
-    }
-  }, []); // [] = مرة واحدة فقط عند التحميل
-
-  return null;
-};
-
 function App() {
   const { isOffline } = useOfflineStatus();
 
   return (
     <EventProvider>
-      <PwaStartupRedirect />
+      {/* ─── 1. حارس المتصفح (أعلى شيء في الشجرة) ─── */}
+      <BrowserGate />
+      {/* ─── 2. مؤشر عدم الاتصال ─── */}
       {isOffline && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, zIndex: 99999,
@@ -129,6 +95,7 @@ function App() {
           <span>أنت تعمل حالياً في وضع عدم الاتصال — يتم استعراض البيانات المحفوظة محلياً</span>
         </div>
       )}
+      {/* ─── 3. مطالبة التثبيت ─── */}
       <InstallPrompt />
       <Routes>
       {/* ═══ المسارات العامة ═══ */}
@@ -248,6 +215,9 @@ function App() {
       <Route path="/blog"     element={<BlogPage />} />
       <Route path="/jobs"     element={<JobsPage />} />
       <Route path="/api-docs" element={<ApiDocsPage />} />
+
+      {/* ═══ مسار الإطلاق الذكي للـ PWA — start_url في manifest.json ═══ */}
+      <Route path="/launch" element={<LaunchPage />} />
 
       {/* ═══ التوجيهات التلقائية ═══ */}
       <Route path="/" element={<LandingPage />} />
