@@ -53,28 +53,50 @@ window.confirm = (message) => {
   });
 };
 
-// تسجيل الـ Service Worker لضمان عمل الواجهات دون إنترنت (PWA)
+/**
+ * إدارة تحديثات الـ Service Worker بشكل احترافي.
+ *
+ * ملاحظة: vite-plugin-pwa مع registerType: 'autoUpdate' يُسجّل SW تلقائياً —
+ * نحن هنا فقط نضمن التحديث الفوري بدون انتظار إغلاق التبويبات.
+ */
 if ('serviceWorker' in navigator) {
+  // حارس لمنع إعادة التحميل المزدوجة
+  let isReloading = false;
+
+  const reloadOnce = () => {
+    if (isReloading) return;
+    isReloading = true;
+    window.location.reload();
+  };
+
+  // عند تغيير الـ SW المُسيطر (SW جديد تولّى) → أعد التحميل مرة واحدة فقط
+  navigator.serviceWorker.addEventListener('controllerchange', reloadOnce);
+
   window.addEventListener('load', async () => {
     try {
-      const registration = await navigator.serviceWorker.register('/sw.js', {
-        scope: '/'
+      const reg = await navigator.serviceWorker.getRegistration('/');
+      if (!reg) return;
+
+      // حالة 1: يوجد SW جديد في "انتظار" → أجبره على التفعيل الفوري
+      // إعادة التحميل ستحدث تلقائياً عبر حدث controllerchange أعلاه
+      if (reg.waiting) {
+        reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+        return;
+      }
+
+      // حالة 2: SW جديد يُثبَّت الآن → انتظر اكتماله وأجبره على التفعيل
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        if (!newWorker) return;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            newWorker.postMessage({ type: 'SKIP_WAITING' });
+            // إعادة التحميل ستحدث عبر controllerchange
+          }
+        });
       });
-      console.log('Service Worker registered successfully with scope:', registration.scope);
-      
-      // الكشف عن التحديثات وتنبيه العميل لإعادة التثبيت
-      registration.addEventListener('updatefound', () => {
-        const newWorker = registration.installing;
-        if (newWorker) {
-          newWorker.addEventListener('statechange', () => {
-            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              console.info('🔄 تحديث جديد متاح — يُنصح بإعادة تحميل الصفحة');
-            }
-          });
-        }
-      });
-    } catch (error) {
-      console.warn('⚠️ Service Worker registration failed:', error);
+    } catch (err) {
+      console.warn('SW update check failed:', err);
     }
   });
 }

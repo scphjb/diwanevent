@@ -110,17 +110,58 @@
   </div>
 
   <script>
-    let checkTimer = null;
+    /**
+     * ─── الحل الجذري لمشكلة offline.html ──────────────────────────────
+     *
+     * المشكلة: الـ SW القديم (diwan-static-v5) يعترض navigation requests
+     * ويُعيد offline.html حتى عند وجود الاتصال. إعادة التحميل البسيطة
+     * (window.location.reload) تقع في نفس الفخ لأن الـ SW يعترضها مجدداً.
+     *
+     * الحل: عند اكتشاف الاتصال بالخادم →
+     *   1. إلغاء تسجيل جميع Service Workers القديمة
+     *   2. مسح جميع الكاشات بالكامل
+     *   3. الانتقال لـ / بـ location.replace() الذي يتجاوز الـ SW
+     *
+     * بعد إعادة التحميل: vite-plugin-pwa يُسجّل الـ SW الصحيح (Workbox)
+     * الذي لا يُعيد التوجيه لـ offline.html أبداً.
+     */
 
-    // فحص حقيقي عبر /api/v1/health بدلاً من google.com (لتجنب CORS)
+    let hasFixed = false;
+
+    async function fixAndRedirect() {
+      if (hasFixed) return;
+      hasFixed = true;
+
+      const el = document.getElementById('status');
+      el.className = 'status-bar status-online';
+      el.textContent = '✅ الاتصال موجود — جاري إصلاح الكاش تلقائياً...';
+
+      try {
+        // 1. إلغاء تسجيل جميع الـ Service Workers القديمة
+        if ('serviceWorker' in navigator) {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map(r => r.unregister()));
+        }
+        // 2. مسح جميع الكاشات بالكامل
+        if ('caches' in window) {
+          const keys = await caches.keys();
+          await Promise.all(keys.map(k => caches.delete(k)));
+        }
+      } catch (_) {}
+
+      // 3. الانتقال التام — location.replace يتجاوز أي SW مُعطَّل
+      // يستبدل السجل الحالي (offline.html) بـ / حتى لا يرجع لها الزر "رجوع"
+      window.location.replace('/');
+    }
+
     async function checkConnection() {
       const el = document.getElementById('status');
       el.className = 'status-bar status-checking';
       el.textContent = 'جاري فحص الاتصال...';
-      
+
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
-      
+
       try {
         const res = await fetch('/api/v1/health', {
           method: 'GET',
@@ -128,18 +169,20 @@
           signal: controller.signal
         });
         clearTimeout(timeoutId);
-        if (res.ok || res.status === 401) {
-          // 401 = الخادم يعمل لكن يطلب مصادقة — يعني الاتصال موجود
-          el.className = 'status-bar status-online';
-          el.textContent = '✅ الاتصال موجود — جاري إعادة تحميل الصفحة...';
-          setTimeout(() => window.location.reload(), 1000);
+
+        // أي رد من الخادم (حتى 401/403) = الخادم يعمل والاتصال موجود
+        if (res.ok || res.status === 401 || res.status === 403 || res.status === 422) {
+          // إصلاح تلقائي دون تدخل المستخدم
+          await fixAndRedirect();
           return true;
         }
-      } catch (_) { 
+      } catch (_) {
         clearTimeout(timeoutId);
       }
+
       el.className = 'status-bar status-offline';
       el.textContent = '❌ لا يوجد اتصال بالخادم';
+      hasFixed = false; // أعد التهيئة للمحاولة التالية
       return false;
     }
 
@@ -147,20 +190,11 @@
       await checkConnection();
     }
 
-    // مسح الكاش وإعادة التحميل الكامل
     async function clearCacheAndReload() {
-      try {
-        if ('serviceWorker' in navigator) {
-          const regs = await navigator.serviceWorker.getRegistrations();
-          for (const reg of regs) await reg.unregister();
-        }
-        const keys = await caches.keys();
-        await Promise.all(keys.map(k => caches.delete(k)));
-      } catch (_) {}
-      window.location.reload();
+      await fixAndRedirect();
     }
 
-    // مراقبة حالة الشبكة
+    // مراقبة أحداث الشبكة
     window.addEventListener('online', checkConnection);
     window.addEventListener('offline', () => {
       const el = document.getElementById('status');
@@ -169,9 +203,11 @@
     });
 
     // فحص فوري عند تحميل الصفحة
+    // إذا كان الاتصال موجوداً، سيُصلح نفسه تلقائياً ويُعيد التوجيه للتطبيق
     checkConnection();
-    // فحص كل 8 ثوانٍ
-    checkTimer = setInterval(checkConnection, 8000);
+
+    // فحص دوري كل 6 ثوانٍ
+    setInterval(checkConnection, 6000);
   </script>
 </body>
 </html>
