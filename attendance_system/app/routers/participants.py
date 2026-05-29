@@ -92,20 +92,24 @@ async def get_participant_by_token(
     token: str,
     db: AsyncSession = Depends(get_db)
 ):
-    """الدخول الآمن للبوابة باستخدام رمز الـ QR أو رقم الطلب أو JWT Token"""
+    """
+    الدخول الآمن للبوابة باستخدام رمز QR الدائم (DWN-XXXXXXXX) أو JWT.
+    الرابط يبقى صالحاً حتى يُغلق المنظم الفعالية (status = completed).
+    """
     from app.core.security import decode_token
     from sqlalchemy.orm import selectinload
-    
+    from app.models.event import Event
+
     participant = None
     if token.startswith("DWN-") or token.startswith("REG-"):
-        # البحث بواسطة رقم الطلب مباشرة
+        # البحث بواسطة رمز QR الدائم (order_num / qr_code)
         stmt = select(Participant).filter(
             (Participant.order_num == token) | (Participant.qr_code == token)
         ).options(selectinload(Participant.profile))
         result = await db.execute(stmt)
         participant = result.scalars().first()
     else:
-        # البحث بواسطة JWT Token
+        # احتياطي: JWT قديم (مدة انتقالية)
         payload = decode_token(token)
         if payload and payload.get("sub", "").startswith("participant:"):
             try:
@@ -116,7 +120,15 @@ async def get_participant_by_token(
             except: pass
 
     if not participant:
-        raise HTTPException(status_code=404, detail="الرمز غير صالح أو الجلسة منتهية")
+        raise HTTPException(status_code=404, detail="الرمز غير صالح")
+
+    # ── فحص حالة الفعالية — البوابة تُغلق عند إنهاء الفعالية ────────────
+    event = await db.get(Event, participant.event_id)
+    if event and event.status == "completed":
+        raise HTTPException(
+            status_code=410,
+            detail="event_ended"
+        )
     
     avatar_url = participant.profile.avatar_url if participant.profile else None
     if not avatar_url and participant.custom_values:
@@ -502,7 +514,7 @@ async def public_register_participant(
             existing_by_name.payment_status = 'paid' # تفعيل تلقائي لوجود رصيد
             
             # توليد بيانات الدخول آلياً
-            from app.routers.participant_auth import generate_otp, create_magic_token
+            from app.routers.participant_auth import generate_otp
             otp_code = generate_otp()
             from app.models.otp import ParticipantOTP
             from datetime import datetime, timedelta
@@ -518,9 +530,8 @@ async def public_register_participant(
             db.add(new_otp)
             await db.commit()
 
-            magic_token = create_magic_token(existing_by_name.id)
             frontend_url = _get_frontend_url()
-            magic_link = f"{frontend_url}/participant-login?token={magic_token}"
+            magic_link = f"{frontend_url}/p/{existing_by_name.event_id}/{existing_by_name.qr_code}"
 
             background_tasks.add_task(
                 send_unified_welcome_email,
@@ -576,7 +587,7 @@ async def public_register_participant(
         
         participant.payment_status = 'paid'
         
-        from app.routers.participant_auth import generate_otp, create_magic_token
+        from app.routers.participant_auth import generate_otp
         otp_code = generate_otp()
         from app.models.otp import ParticipantOTP
         from datetime import datetime, timedelta
@@ -589,9 +600,8 @@ async def public_register_participant(
         db.add(new_otp)
         await db.commit()
 
-        magic_token = create_magic_token(participant.id)
         frontend_url = _get_frontend_url()
-        magic_link = f"{frontend_url}/participant-login?token={magic_token}"
+        magic_link = f"{frontend_url}/p/{participant.event_id}/{participant.qr_code}"
 
         background_tasks.add_task(
             send_unified_welcome_email,
@@ -738,7 +748,7 @@ async def bulk_activate_participants(
     activated_count = 0
     
     from app.models.event import Event
-    from app.routers.participant_auth import generate_otp, create_magic_token, send_unified_welcome_email
+    from app.routers.participant_auth import generate_otp, send_unified_welcome_email
     from app.models.otp import ParticipantOTP
     from datetime import datetime, timedelta
 
@@ -771,9 +781,8 @@ async def bulk_activate_participants(
             )
             db.add(new_otp)
             
-            magic_token = create_magic_token(p.id)
             frontend_url = _get_frontend_url()
-            magic_link = f"{frontend_url}/participant-login?token={magic_token}"
+            magic_link = f"{frontend_url}/p/{p.event_id}/{p.qr_code}"
 
             event = await db.get(Event, p.event_id)
             
@@ -854,7 +863,7 @@ async def resend_participant_email(
     if not participant.email:
         raise HTTPException(status_code=400, detail="المشارك ليس لديه بريد إلكتروني مسجل")
         
-    from app.routers.participant_auth import generate_otp, create_magic_token, send_unified_welcome_email
+    from app.routers.participant_auth import generate_otp, send_unified_welcome_email
     from app.models.otp import ParticipantOTP
     from datetime import datetime, timedelta
     
@@ -867,8 +876,8 @@ async def resend_participant_email(
     )
     db.add(new_otp)
     
-    magic_token = create_magic_token(participant.id)
-    magic_link = f"/portal/login?token={magic_token}"
+    frontend_url = _get_frontend_url()
+    magic_link = f"{frontend_url}/p/{participant.event_id}/{participant.qr_code}"
     
     # تحميل تفاصيل الفعالية
     from sqlalchemy import select
@@ -1200,7 +1209,7 @@ async def import_participants(
         added = len(inserted_rows)
         
         # ── 5. إنشاء رموز الـ OTP وتجميع حملة الإيميل ───────────────────
-        from app.routers.participant_auth import generate_otp, create_magic_token
+        from app.routers.participant_auth import generate_otp
         from app.models.otp import ParticipantOTP
         from datetime import datetime, timedelta
         
@@ -1217,9 +1226,8 @@ async def import_participants(
                     "expires_at": datetime.utcnow() + timedelta(minutes=60)
                 })
                 
-                magic_token = create_magic_token(p_id)
                 frontend_url = _get_frontend_url()
-                magic_link = f"{frontend_url}/participant-login?token={magic_token}"
+                magic_link = f"{frontend_url}/p/{event_obj.id if event_obj else 0}/{p_qr}"
                 
                 emails_to_notify.append({
                     "email": p_email,
@@ -1362,7 +1370,7 @@ async def register_participant(
     
     # إرسال البريد الموحد للمشارك المسجل يدوياً
     if new_p.email:
-        from app.routers.participant_auth import generate_otp, create_magic_token
+        from app.routers.participant_auth import generate_otp
         otp_code = generate_otp()
         from app.models.otp import ParticipantOTP
         from datetime import datetime, timedelta
@@ -1376,9 +1384,8 @@ async def register_participant(
         await db.commit()
         await db.refresh(new_p)
         
-        magic_token = create_magic_token(new_p.id)
         frontend_url = _get_frontend_url()
-        magic_link = f"{frontend_url}/participant-login?token={magic_token}"
+        magic_link = f"{frontend_url}/p/{new_p.event_id}/{new_p.qr_code}"
 
         background_tasks.add_task(
             send_unified_welcome_email,

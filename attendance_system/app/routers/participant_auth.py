@@ -290,14 +290,11 @@ async def request_otp(body: OTPRequest, db: AsyncSession = Depends(get_db)):
     if event_obj:
         event_name = event_obj.event_name or event_name
 
-    # 7. توليد Magic Link
-    magic_token = create_magic_token(participant.id)
-    
-    # تحديد رابط البوابة
+    # 7. رابط البوابة الدائم (صالح حتى نهاية الفعالية بدلاً من 24 ساعة)
     frontend_url = settings.FRONTEND_URL
     if "localhost" in frontend_url and "localhost" not in settings.APP_DOMAIN:
         frontend_url = settings.APP_DOMAIN
-    magic_link = f"{frontend_url}/participant-login?token={magic_token}"
+    magic_link = f"{frontend_url}/p/{participant.event_id}/{participant.qr_code}"
 
     # 8. إرسال البريد الموحد
     sent = await send_unified_welcome_email(

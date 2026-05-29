@@ -95,6 +95,7 @@ const ParticipantPortal = () => {
   const [votedPolls, setVotedPolls] = useState([]);
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [portalError, setPortalError] = useState(null); // 'expired' | 'event_ended' | 'not_found' | null
   const [selectedSessionId, setSelectedSessionId] = useState('');
   const [selectedContact, setSelectedContact] = useState(null);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -105,7 +106,7 @@ const ParticipantPortal = () => {
     website: ''
   });
   const [tagInput, setTagInput] = useState('');
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [isOnline, setIsOnline] = useState(true); // managed via window events below
   const [favorites, setFavorites] = useState(() => {
     try {
       const saved = localStorage.getItem(`diwan_favorites_${eventId}`);
@@ -353,6 +354,7 @@ const ParticipantPortal = () => {
 
   const fetchInitialData = async () => {
     setLoading(true);
+    setPortalError(null);
     try {
       const pRes = await api.get(`participants/public/access/${participantToken}`);
       setParticipant(pRes.data);
@@ -396,7 +398,6 @@ const ParticipantPortal = () => {
         setPolls(activePolls || []);
         setDocuments(eventDocs || []);
 
-        // Cache all successfully loaded event resources
         try {
           localStorage.setItem(`diwan_cache_settings_${eventId}`, JSON.stringify(settings || {}));
           localStorage.setItem(`diwan_cache_agenda_${eventId}`, JSON.stringify(ag || []));
@@ -413,12 +414,26 @@ const ParticipantPortal = () => {
         loadOptionalDataFromCache();
       }
     } catch (err) {
-      console.error('Failed to fetch participant data, fallback to cache', err);
-      loadParticipantFromCache();
+      const status = err?.response?.status;
+
+      // ── انتهت الفعالية (410) ───────────────────────────────────────
+      if (status === 410) {
+        try { localStorage.removeItem('last_active_participant_portal'); } catch (_) {}
+        setPortalError('event_ended');
+      // ── رابط غير صالح من الخادم (401/403/404/422) ───────────────────
+      } else if (status === 401 || status === 403 || status === 404 || status === 422) {
+        try { localStorage.removeItem('last_active_participant_portal'); } catch (_) {}
+        setPortalError(status === 404 ? 'not_found' : 'expired');
+      } else {
+        // فشل شبكي حقيقي → محاولة تحميل من الكاش المحلي
+        console.error('Network failure — falling back to cache', err);
+        loadParticipantFromCache();
+      }
     } finally {
       setLoading(false);
     }
   };
+
 
   const handleRateSession = async (sessionId, rating) => {
     setSessionRatings(prev => ({
@@ -743,6 +758,53 @@ const ParticipantPortal = () => {
     </div>
   );
   
+  // ── حالة: انتهت الفعالية — روني
+  if (portalError === 'event_ended') return (
+    <div className="min-h-screen bg-[#050B18] flex flex-col items-center justify-center p-6 text-center">
+      <div className="w-20 h-20 bg-blue-500/10 rounded-full flex items-center justify-center mb-6">
+        <span style={{fontSize:'2.5rem'}}>🎉</span>
+      </div>
+      <h2 className="text-2xl font-black mb-2 text-white">انتهت الفعالية</h2>
+      <p className="text-white/50 font-bold mb-8 max-w-xs leading-relaxed">
+        شكراً لمشاركتك! انتهت الفعالية وأُغلقت البوابة الرقمية من قِبَل المنظمين.
+      </p>
+      <button
+        onClick={() => window.location.href = '/'}
+        style={{
+          background:'rgba(255,255,255,0.06)', color:'rgba(255,255,255,0.6)',
+          fontWeight:700, padding:'12px 32px', borderRadius:14,
+          border:'1px solid rgba(255,255,255,0.1)',
+          fontFamily:'Cairo,system-ui,sans-serif', fontSize:'1rem', cursor:'pointer'
+        }}
+      >
+        العودة للرئيسية
+      </button>
+    </div>
+  );
+
+  // ── حالة: رابط منتهي الصلاحية أو غير صالح
+  if (portalError === 'expired') return (
+    <div className="min-h-screen bg-[#050B18] flex flex-col items-center justify-center p-6 text-center">
+      <div className="w-20 h-20 bg-amber-500/10 rounded-full flex items-center justify-center mb-6">
+        <span style={{fontSize:'2.5rem'}}>⏳</span>
+      </div>
+      <h2 className="text-2xl font-black mb-2 text-white">انتهت صلاحية الرابط</h2>
+      <p className="text-white/50 font-bold mb-8 max-w-xs leading-relaxed">
+        رابط الدخول الخاص بك انتهت صلاحيته. تواصل مع منظمي الفعالية لإرسال رابط جديد إليك.
+      </p>
+      <button
+        onClick={() => window.location.href = '/'}
+        style={{
+          background: 'linear-gradient(135deg,#D4AF37,#F0C040)', color:'#050B18',
+          fontWeight:900, padding:'12px 32px', borderRadius:14, border:'none',
+          fontFamily:'Cairo,system-ui,sans-serif', fontSize:'1rem', cursor:'pointer'
+        }}
+      >
+        العودة للرئيسية
+      </button>
+    </div>
+  );
+
   if (!participant) return (
     <div className="min-h-screen bg-[#050B18] flex flex-col items-center justify-center p-6 text-center">
       <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mb-6">
