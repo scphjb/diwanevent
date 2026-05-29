@@ -23,9 +23,18 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 bearer_scheme = HTTPBearer(auto_error=False)
 
-OTP_EXPIRE_MINUTES = 10  # صلاحية الرمز: 10 دقائق
-MAX_ATTEMPTS = 5          # أقصى محاولات خاطئة قبل إلغاء الرمز
-RESEND_COOLDOWN = 60      # ثوان بين كل إرسال وآخر (حماية من الإرسال المتكرر)
+OTP_EXPIRE_MINUTES = 10
+MAX_ATTEMPTS = 5
+RESEND_COOLDOWN = 60
+
+
+# ─── Hash Helper ──────────────────────────────────────────────────────────────
+
+import hashlib
+
+def hash_otp(otp: str) -> str:
+    """تشفير OTP بـ SHA-256 — لا يُحفظ plain text في DB أبداً."""
+    return hashlib.sha256(otp.encode('utf-8')).hexdigest()
 
 
 # ─── Schemas ──────────────────────────────────────────────────────────────────
@@ -274,7 +283,7 @@ async def request_otp(body: OTPRequest, db: AsyncSession = Depends(get_db)):
     new_otp = ParticipantOTP(
         participant_id=participant.id,
         email=body.email.lower().strip(),
-        otp_code=otp_code,
+        otp_code=hash_otp(otp_code),   # مُشفَّر — لا يُحفظ plain text
         expires_at=expires_at,
     )
     db.add(new_otp)
@@ -364,8 +373,8 @@ async def verify_otp(body: OTPVerify, db: AsyncSession = Depends(get_db)):
         await db.commit()
         raise HTTPException(status_code=410, detail="انتهت صلاحية الرمز. يرجى طلب رمز جديد")
 
-    # التحقق من الرمز نفسه
-    if otp_record.otp_code != body.otp_code.strip():
+    # التحقق من الرمز (مقارنة الهاش)
+    if otp_record.otp_code != hash_otp(body.otp_code.strip()):
         otp_record.attempt_count += 1
         await db.commit()
         remaining = MAX_ATTEMPTS - otp_record.attempt_count

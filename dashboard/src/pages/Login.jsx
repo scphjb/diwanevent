@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { 
@@ -68,6 +68,58 @@ const Login = () => {
       setLoading(false);
     }
   };
+
+  // ── Google Login ──────────────────────────────────────────────────────────
+  const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+  const googleBtnRef = useRef(null);
+
+  const handleGoogleResponse = async (response) => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch('/api/v1/auth/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id_token: response.credential }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'فشل الدخول');
+      localStorage.setItem('diwan_token', data.access_token);
+      localStorage.setItem('diwan_refresh_token', data.refresh_token);
+      localStorage.setItem('diwan_user', JSON.stringify(data.user));
+      if (data.user.role === 'super_admin') navigate('/super-admin');
+      else navigate('/dashboard');
+    } catch (err) {
+      setError(err.message || 'حدث خطأ أثناء تسجيل الدخول عبر Google');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!GOOGLE_CLIENT_ID) return;
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    script.onload = () => {
+      if (!window.google || !googleBtnRef.current) return;
+      window.google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: handleGoogleResponse,
+        use_fedcm_for_prompt: false,
+      });
+      window.google.accounts.id.renderButton(googleBtnRef.current, {
+        theme: 'filled_black',
+        size: 'large',
+        shape: 'rectangular',
+        width: 360,
+        text: 'signin_with',
+      });
+    };
+    document.head.appendChild(script);
+    return () => { try { document.head.removeChild(script); } catch (_) {} };
+  }, [GOOGLE_CLIENT_ID]);
 
   return (
     <div className="min-h-screen bg-brand-dark flex flex-col relative overflow-hidden">
@@ -177,6 +229,17 @@ const Login = () => {
             </form>
 
             <div className="mt-10 pt-8 border-t border-white/5 text-center">
+
+              {/* Google Login — يظهر فقط إذا كان VITE_GOOGLE_CLIENT_ID مضبوطاً */}
+              {GOOGLE_CLIENT_ID && (
+                <div className="mb-8">
+                  <p className="text-[10px] font-black text-white/30 uppercase tracking-widest mb-4">
+                    — أو دخول سريع —
+                  </p>
+                  <div ref={googleBtnRef} className="flex justify-center" />
+                </div>
+              )}
+
               <p className="text-sm text-brand-muted mb-4">
                 {t('landing.auth.login.no_account')}
               </p>

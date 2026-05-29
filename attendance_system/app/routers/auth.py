@@ -254,10 +254,10 @@ async def register_organizer(
             detail="البريد الإلكتروني مسجل مسبقاً",
         )
 
-    if len(body.password) < 8:
+    if len(body.password) < 12:
         raise HTTPException(
             status_code=422,
-            detail="كلمة المرور يجب أن تكون 8 أحرف على الأقل",
+            detail="كلمة المرور يجب أن تكون 12 حرفاً على الأقل",
         )
 
     hashed_password = await hash_password_async(body.password)
@@ -301,6 +301,105 @@ async def register_organizer(
             "full_name": new_user.full_name,
             "role": new_user.role,
             "avatar_url": new_user.avatar_url,
+        },
+    }
+
+
+# ═══════════════════════════════════════
+# تسجيل الدخول عبر Google OAuth2
+# ═══════════════════════════════════════
+class GoogleLoginRequest(BaseModel):
+    id_token: str
+
+
+@router.post("/google", response_model=TokenResponse)
+async def google_login(
+    body: GoogleLoginRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    التحقق من Google ID Token وإنشاء/إيجاد حساب المنظم تلقائياً.
+    يُغني عن تأكيد البريد الإلكتروني (Google يُؤكده مسبقاً).
+    """
+    import httpx
+    from app.core.config import settings
+
+    # ── 1. التحقق مع Google ──────────────────────────────────────────
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        r = await client.get(
+            "https://oauth2.googleapis.com/tokeninfo",
+            params={"id_token": body.id_token}
+        )
+
+    if r.status_code != 200:
+        raise HTTPException(status_code=401, detail="رمز Google غير صالح")
+
+    info = r.json()
+
+    # التحقق من أن الرمز مخصص لهذا التطبيق
+    google_client_id = getattr(settings, "GOOGLE_CLIENT_ID", None)
+    if google_client_id and info.get("aud") != google_client_id:
+        raise HTTPException(status_code=401, detail="رمز Google غير موجه لهذا التطبيق")
+
+    if info.get("email_verified") not in ("true", True):
+        raise HTTPException(status_code=401, detail="البريد الإلكتروني غير مؤكد من Google")
+
+    email = info.get("email", "").lower().strip()
+    name = info.get("name") or email.split("@")[0]
+    picture = info.get("picture")
+
+    if not email:
+        raise HTTPException(status_code=400, detail="تعذر جلب البريد الإلكتروني من Google")
+
+    # ── 2. البحث عن المستخدم أو إنشائه ──────────────────────────────
+    result = await db.execute(select(User).filter(User.email == email))
+    user = result.scalar_one_or_none()
+
+    if not user:
+        # منظم جديد — بريده مؤكد من Google
+        user = User(
+            email=email,
+            hashed_password="",   # لا كلمة مرور للمستخدمين عبر Google
+            full_name=name,
+            role="organizer",
+            is_active=True,
+            avatar_url=picture,
+        )
+        db.add(user)
+        await db.flush()
+
+        free_plan_result = await db.execute(
+            select(SubscriptionPlan).filter(SubscriptionPlan.name.ilike("%free%"))
+        )
+        free_plan = free_plan_result.scalars().first()
+        if free_plan:
+            sub = Subscription(user_id=user.id, plan_id=free_plan.id, status="active")
+            db.add(sub)
+
+        await db.commit()
+        await db.refresh(user)
+    elif not user.is_active:
+        raise HTTPException(status_code=403, detail="الحساب معطّل — تواصل مع الدعم الفني")
+    else:
+        # تحديث صورة الحساب إذا تغيرت
+        if picture and not user.avatar_url:
+            user.avatar_url = picture
+            await db.commit()
+
+    # ── 3. إصدار JWT ─────────────────────────────────────────────────
+    access_token = create_access_token(subject=user.email)
+    refresh_token = create_refresh_token(subject=user.email)
+
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "bearer",
+        "user": {
+            "id": user.id,
+            "email": user.email,
+            "full_name": user.full_name,
+            "role": user.role,
+            "avatar_url": user.avatar_url,
         },
     }
 
@@ -357,10 +456,10 @@ async def reset_password(
             detail="رابط إعادة التعيين غير صالح أو منتهي الصلاحية",
         )
 
-    if len(body.new_password) < 8:
+    if len(body.new_password) < 12:
         raise HTTPException(
             status_code=422,
-            detail="كلمة المرور يجب أن تكون 8 أحرف على الأقل",
+            detail="كلمة المرور يجب أن تكون 12 حرفاً على الأقل",
         )
 
     result = await db.execute(select(User).filter(User.email == email))
@@ -390,10 +489,10 @@ async def change_password(
             detail="كلمة المرور الحالية غير صحيحة",
         )
 
-    if len(body.new_password) < 8:
+    if len(body.new_password) < 12:
         raise HTTPException(
             status_code=422,
-            detail="كلمة المرور الجديدة يجب أن تكون 8 أحرف على الأقل",
+            detail="كلمة المرور الجديدة يجب أن تكون 12 حرفاً على الأقل",
         )
 
     current_user.hashed_password = await hash_password_async(body.new_password)

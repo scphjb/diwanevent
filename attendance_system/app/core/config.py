@@ -84,6 +84,9 @@ class Settings(BaseSettings):
     S3_BUCKET_NAME: Optional[str] = None
     S3_PUBLIC_URL: Optional[str] = None  # لروابط الوصول المباشر العام
 
+    # Google OAuth2 (Social Login للمنظمين)
+    GOOGLE_CLIENT_ID: Optional[str] = None
+
     # Connection Pool
     DB_POOL_SIZE: int = 10
     DB_MAX_OVERFLOW: int = 20
