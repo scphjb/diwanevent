@@ -1,0 +1,1247 @@
+{
+  "dir": "ltr",
+  "common": {
+    "app_name": "Diwan Event",
+    "app_subtitle": "Gestion d'Événements d'Entreprise",
+    "dashboard": "Tableau de bord",
+    "events": "Événements",
+    "participants": "Participants",
+    "sessions": "Agenda",
+    "stats": "Analyses",
+    "moderation": "Modération",
+    "check-in": "Enregistrement",
+    "wall": "Mur Social",
+    "designer": "Concepteur de Badges",
+    "polls": "Sondages",
+    "hardware": "Matériel",
+    "display": "Affichage Public",
+    "developer": "Portail Développeur",
+    "settings": "Paramètres",
+    "speakers": "Intervenants",
+    "sponsors": "Sponsors",
+    "questions": "Questions",
+    "logout": "Déconnexion",
+    "admin_name": "Ahmed Idrissi",
+    "admin_role": "Admin Système",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "loading": "Chargement...",
+    "search": "Rechercher...",
+    "print": "Imprimer",
+    "send_certs": "Envoyer Certificats",
+    "import": "Importer Excel",
+    "export": "Exporter Données",
+    "all": "Tous",
+    "confirmed": "Confirmé",
+    "pending": "En attente",
+    "actions": "Actions",
+    "profile": "Profile",
+    "next": "Next",
+    "sidebar": {
+      "events_group": "Events",
+      "engagement_group": "Engagement & Aesthetics",
+      "technical_group": "Technical Tools"
+    },
+    "roles": {
+      "super_admin": "Super Admin",
+      "organizer": "Event Organizer",
+      "member": "Member",
+      "fallback_name": "Diwan User"
+    },
+    "event_selector": {
+      "active_event": "Active Event",
+      "no_events": "No events found",
+      "choose_event": "Select Event",
+      "create_new": "+ Create New Event"
+    },
+    "lang_switcher": {
+      "choose_lang": "Select Language"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "clear_all": "Clear All",
+      "no_new": "No new notifications",
+      "view_all": "View all alerts",
+      "close": "Close"
+    },
+    "help": {
+      "title": "Need Help?",
+      "subtitle": "We're here to ensure your event's success.",
+      "guide_title": "Help Center",
+      "guide_desc": "Read the full guide for using the Diwan platform.",
+      "guide_action": "Browse Guide",
+      "live_support_title": "Live Support",
+      "live_support_desc": "Chat with one of our technical experts now.",
+      "live_support_action": "Start Chat",
+      "call_title": "Call Us",
+      "call_desc": "Our team is available to answer your phone inquiries.",
+      "call_action": "Show Number",
+      "email_contact": "Or contact us via email"
+    }
+  },
+  "dashboard": {
+    "welcome": "Bon retour sur Diwan Event",
+    "overview_subtitle": "Voici un aperçu rapide de la performance de votre événement aujourd'hui.",
+    "present": "Présents",
+    "absent": "Absents",
+    "expected": "Présences Attendues",
+    "attendance_rate": "Taux de Présence",
+    "recent_checkins": "Enregistrements Récents",
+    "stats_chart_placeholder": "Le graphique des statistiques sera ici...",
+    "hall_status": "État de la Salle",
+    "hall_capacity_msg": "La salle principale est presque pleine (85%)",
+    "open_live_stream": "Ouvrir le Direct",
+    "live_updates": "Live Updates",
+    "loading_data": "Loading event data...",
+    "no_data": "No data available for this event at the moment.",
+    "stats": {
+      "total_invited": "Total Registered",
+      "checked_in": "Present in Hall",
+      "not_present": "Absent",
+      "occupancy": "Occupancy Rate"
+    },
+    "attendance_curve": "Real-time Attendance Curve",
+    "gate": "Gate {{number}}",
+    "room_status": "Hall Status",
+    "status_messages": {
+      "full": "The hall is at full capacity.",
+      "almost_full": "The hall is almost full.",
+      "good": "Good and steady attendance flow.",
+      "early": "The hall is starting to receive guests."
+    },
+    "system_alerts": "System Alerts",
+    "alerts": {
+      "sync_success": "Successfully synced data for {{count}} participants.",
+      "checked_in_count": "{{count}} participants have checked in so far.",
+      "waiting_start": "Waiting for participant check-ins to begin."
+    }
+  },
+  "participants": {
+    "title": "Gestion des Participants",
+    "name": "Nom Complet",
+    "council": "Organisation",
+    "status": "Statut",
+    "time": "Heure d'Entrée",
+    "total_registered": "Total Participants Inscrits",
+    "search_placeholder": "Rechercher par nom, organisation ou réf...",
+    "no_results": "Aucun résultat trouvé",
+    "check_filters": "Veuillez vérifier vos filtres",
+    "viewing": "Showing {{count}} of {{total}} participants",
+    "confirm_send_all": "Are you sure you want to send certificates to all attendees?",
+    "process_started": "Certificate sending process started in the background",
+    "export_error": "Failed to export data",
+    "print_error": "Failed to generate bulk badges",
+    "bulk_print": "Bulk Print",
+    "download_cert": "Download Certificate",
+    "check_in_success": "Attendance registered successfully and updated in statistics",
+    "check_in_error": "Failed to register attendance: ",
+    "undo_check_in_confirm": "Are you sure you want to undo check-in for this participant?",
+    "undo_check_in_success": "Check-in undone successfully",
+    "undo_check_in_error": "Failed to undo check-in: ",
+    "delete_confirm": "Are you sure you want to permanently delete this participant's data?",
+    "delete_error": "Failed to delete participant",
+    "no_event_selected": "No event selected",
+    "select_event_desc": "Please select an event from the top menu to begin.",
+    "check_in": "Check-in",
+    "undo_check_in": "Undo Check-in",
+    "delete_participant": "Delete Participant",
+    "import_modal": {
+      "title": "Excel Field Mapping",
+      "subtitle": "Please select the appropriate column for each system field to ensure import accuracy.",
+      "full_name": "Full Name *",
+      "council": "Organization / Entity",
+      "court": "Department / Speciality",
+      "email": "Email Address",
+      "phone": "Phone Number",
+      "select_col": "-- Select Column --",
+      "execute": "Confirm Bulk Import",
+      "executing": "Importing...",
+      "success": "✅ Import successful!\n\nAdded: {{added}}\nSkipped (Duplicates): {{skipped}}",
+      "error": "Import failed",
+      "analyze_error": "Failed to analyze file",
+      "name_required": "At least 'Full Name' field must be mapped"
+    }
+  },
+  "landing": {
+    "nav": {
+      "solutions": "Solutions",
+      "features": "Fonctionnalités",
+      "for_whom": "Pour Qui",
+      "pricing": "Tarifs",
+      "resources": "Ressources",
+      "about": "À Propos",
+      "request_demo": "Démo",
+      "login": "Connexion",
+      "start_trial": "Essai Gratuit"
+    },
+    "hero": {
+      "headline": "La Plateforme d'Événements Intelligente qui Transforme la Présence en Connexions",
+      "subheadline": "Combinez l'intelligence spatiale en temps réel, le réseautage propulsé par l'IA et la gestion avancée des prospects pour créer des événements à forte valeur commerciale.",
+      "cta_primary": "Essai Gratuit",
+      "cta_secondary": "Voir la Démo",
+      "social_proof": "Approuvé par plus de 500 organisateurs d'événements dans 40+ pays"
+    },
+    "problem": {
+      "title": "L'Industrie de l'Événementiel Face à des Défis Critiques",
+      "sub_headline": "Les méthodes traditionnelles ne suffisent plus face aux exigences du paysage événementiel moderne, axé sur les données.",
+      "organizer": {
+        "title": "Zones d'Ombre dans les Opérations en Temps Réel",
+        "desc": "Les organisateurs manquent de visibilité en temps réel sur le flux de foule, les points de congestion et l'engagement des participants."
+      },
+      "exhibitor": {
+        "title": "Génération de Prospects de Faible Qualité",
+        "desc": "Le scan de badges traditionnel ne fournit aucune intelligence sur la qualité, la pertinence ou le potentiel de suivi des prospects."
+      },
+      "participant": {
+        "title": "Opportunités de Réseautage Manquées",
+        "desc": "Les participants assistent aux événements mais rencontrent rarement les bonnes personnes ou ne découvrent pas les sessions pertinentes."
+      },
+      "learn_more": "En Savoir Plus"
+    },
+    "features": {
+      "title": "Capacités Techniques Fondamentales",
+      "f1": {
+        "title": "Cartes de Chaleur et Analyse de Foule",
+        "desc": "Surveillez la densité et les mouvements des participants en temps réel. Recevez des alertes prédictives avant les embouteillages.",
+        "badge": "Entreprise"
+      },
+      "f2": {
+        "title": "Matchmaking IA Basé sur les Vecteurs",
+        "desc": "Mise en relation intelligente utilisant les compétences et profils professionnels. Connectez automatiquement les participants.",
+        "badge": "Propulsé par GPT-4o"
+      },
+      "f3": {
+        "title": "Scoring et Récupération de Prospects",
+        "desc": "Les exposants obtiennent des scores de qualité instantanés, des notes vocales et des exports prêts pour CRM.",
+        "badge": "Mobile-First"
+      },
+      "f4": {
+        "title": "Support de Scanneurs Professionnels",
+        "desc": "Intégration directe avec Zebra, Honeywell et NFC. Traitez plus de 10 000 scans par seconde.",
+        "badge": "Edge Computing"
+      },
+      "f5": {
+        "title": "Recommandations Actionnables",
+        "desc": "Suggestions IA : 'Ouvrez la porte 4 maintenant' ou 'Déplacez la restauration pour réduire la congestion dans 15 minutes.'",
+        "badge": "Temps Réel"
+      },
+      "f6": {
+        "title": "Conformité RGPD et SOC2",
+        "desc": "Sécurité de classe entreprise, souveraineté des données, contrôle de la confidentialité et pistes d'audit.",
+        "badge": "Certifié"
+      }
+    },
+    "solutions": {
+      "title": "Solutions sur Mesure pour Chaque Format d'Événement",
+      "s1": {
+        "title": "Conférences et Séminaires",
+        "desc": "Gérez les sessions, les intervenants et l'engagement avec un réseautage en temps réel."
+      },
+      "s2": {
+        "title": "Salons et Expositions",
+        "desc": "Maximisez le ROI des exposants avec la capture intelligente de prospects et des analyses en temps réel."
+      },
+      "s3": {
+        "title": "Conventions d'Entreprise",
+        "desc": "Simplifiez les événements internes à grande échelle avec l'intelligence spatiale et le suivi de l'engagement."
+      },
+      "s4": {
+        "title": "Événements d'Incentive et Réseautage",
+        "desc": "Créez des expériences mémorables avec le réseautage IA et des recommandations instantanées."
+      }
+    },
+    "workflow": {
+      "title": "Trois Étapes pour une Gestion Intelligente",
+      "step1": {
+        "title": "Configuration",
+        "desc": "Définissez la structure, les profils des participants, les catégories d'exposants et les indicateurs de succès."
+      },
+      "step2": {
+        "title": "Déploiement",
+        "desc": "Distribuez les apps, interfaces web et intégrations matérielles. Les participants s'enregistrent en fluidité."
+      },
+      "step3": {
+        "title": "Optimisation",
+        "desc": "Suivez les cartes de chaleur, recevez des conseils IA et capturez des prospects en direct."
+      }
+    },
+    "metrics": {
+      "m1": "Événements Gérés",
+      "m2": "Participants Simultanés",
+      "m3": "Matchs de Réseautage",
+      "m4": "Satisfaction Participants"
+    },
+    "pricing": {
+      "title": "Tarifs Transparents pour Tous les Événements",
+      "sub": "Choisissez le forfait qui vous convient. Évoluez selon vos besoins.",
+      "starter": {
+        "title": "Starter",
+        "price": "999$/événement",
+        "desc": "Pour les petits et moyens événements (jusqu'à 1 000 participants)",
+        "features": [
+          "App mobile participants",
+          "Analyses de base",
+          "Capture prospects (100)",
+          "Support email"
+        ]
+      },
+      "pro": {
+        "title": "Professionnel",
+        "price": "2 999$/événement",
+        "desc": "Pour les grands événements (jusqu'à 10 000 participants)",
+        "features": [
+          "Tout du Starter, plus :",
+          "Moteur de réseautage IA",
+          "Scoring avancé prospects",
+          "Intégration scanneurs",
+          "Support prioritaire",
+          "Image de marque"
+        ]
+      },
+      "enterprise": {
+        "title": "Entreprise",
+        "price": "Sur mesure",
+        "desc": "Pour les événements à grande échelle (50 000+ participants)",
+        "features": [
+          "Tout du Pro, plus :",
+          "Analyses prescriptives",
+          "Déploiement Edge",
+          "Gestionnaire de compte dédié",
+          "Intégrations CRM",
+          "Garantie SLA"
+        ]
+      },
+      "cta": "Commencer",
+      "cta_trial": "Essai Gratuit",
+      "cta_sales": "Contacter Ventes",
+      "trial_note": "Tous les forfaits incluent 30 jours d'essai gratuit. Pas de carte de crédit requise."
+    },
+    "product_experience": {
+      "badge": "Visite Interactive du Produit",
+      "title": "Découvrez la Puissance du <br /> <span class=\"text-brand-primary\">Tableau de Bord Diwan</span>",
+      "sub": "Faites une visite guidée de notre interface de gestion. Voyez comme il est simple de contrôler chaque aspect de votre événement.",
+      "tabs": {
+        "analytics": {
+          "title": "Analyses en Direct",
+          "label": "DONNÉES CLÉS",
+          "desc": "Suivez les tendances de présence, les heures de pointe et la vitesse d'enregistrement en temps réel."
+        },
+        "checkin": {
+          "title": "Gestion des Entrées",
+          "label": "OPÉRATIONS SUR SITE",
+          "desc": "Gérez les stations de scan et les files d'impression de badges depuis un centre de commande unifié."
+        },
+        "networking": {
+          "title": "Mur d'Engagement",
+          "label": "PREUVE SOCIALE",
+          "desc": "Affichez les interactions des participants, sondages et flux sociaux pour dynamiser l'événement."
+        }
+      }
+    },
+    "attendee_app": {
+      "badge": "Expérience Mobile",
+      "title": "Votre Événement, <br /> <span class=\"text-brand-primary\">Dans la Poche de vos Invités</span>",
+      "sub": "Offrez à vos participants une expérience mobile complète qui les garde connectés, informés et engagés tout au long de l'événement.",
+      "features": {
+        "agenda": "Agenda Personnalisé",
+        "networking": "Réseautage Intelligent",
+        "scans": "Badge Numérique et QR",
+        "maps": "Plans Interactifs"
+      }
+    },
+    "efficiency_matrix": {
+      "title": "Économisez des Centaines <br /> <span class=\"text-brand-primary\">d'Heures de Travail</span>",
+      "sub": "Pourquoi perdre du temps avec les méthodes traditionnelles ? Diwan Event automatise toutes vos opérations sur site.",
+      "manual": {
+        "title": "Méthodes Traditionnelles",
+        "time": "15+ Minutes",
+        "label": "PAR PARTICIPANT",
+        "steps": [
+          "Listes papier",
+          "Saisie manuelle",
+          "Longues files d'attente",
+          "Impression lente des badges"
+        ]
+      },
+      "diwan": {
+        "title": "Avec Diwan Event",
+        "time": "3 Secondes",
+        "label": "PAR PARTICIPANT",
+        "steps": [
+          "Scan QR instantané",
+          "Synchronisation auto",
+          "Zéro file d'attente",
+          "Impression ultra-rapide"
+        ]
+      }
+    },
+    "hardware_showcase": {
+      "badge": "Infrastructure sur Site",
+      "title": "Support Technique <br /> <span class=\"text-brand-primary\">pour le Matériel Professionnel</span>",
+      "sub": "Diwan Event se connecte parfaitement aux équipements professionnels pour des opérations sur site rapides, fiables et professionnelles.",
+      "items": {
+        "scanners": {
+          "title": "Scanners Ultra-Rapides",
+          "desc": "Support Honeywell et Zebra pour une entrée en fractions de seconde."
+        },
+        "printers": {
+          "title": "Impression à la Demande",
+          "desc": "Impression sans fil de badges qui s'adapte à votre affluence."
+        },
+        "kiosks": {
+          "title": "Bornes Libre-Service",
+          "desc": "Réduisez les coûts de personnel avec des stations d'enregistrement autonomes."
+        }
+      }
+    },
+    "integrations": {
+      "badge": "Intégration Totale",
+      "title": "Intégration Complète avec Votre Stack Technique",
+      "sub": "Diwan Event ne vit pas en vase clos. Nous nous intégrons aux outils que vous utilisez déjà pour garantir que vos données circulent instantanément.",
+      "crm": {
+        "title": "Synchronisation CRM",
+        "desc": "Export instantané des leads"
+      },
+      "api": {
+        "title": "Cloud API",
+        "desc": "Capacités REST complètes et ouvertes"
+      },
+      "tools": {
+        "salesforce": "Gestion Clients",
+        "hubspot": "Marketing",
+        "zebra": "Matériel Logistique",
+        "honeywell": "Capteurs",
+        "dynamics": "Planification Entreprise",
+        "slack": "Communication Interne"
+      }
+    },
+    "marquee": {
+      "badge": "L'Écosystème Technique le Plus Avancé pour les Événements du Futur"
+    },
+    "showcase": {
+      "title": "Conçu pour les Événements <br /> <span class=\"text-brand-primary\">de Nouvelle Génération</span>",
+      "sub": "Découvrez une plateforme alliant puissance et simplicité, inspirée des technologies mondiales de gestion des foules.",
+      "cta": "Voir toutes les fonctionnalités",
+      "active_now": "Actif Maintenant",
+      "registration": {
+        "title": "Enregistrement Instantané et Intelligent",
+        "desc": "Créez des QR codes et des badges en quelques secondes. Notre système gère des milliers d'entrées sans délai."
+      },
+      "analytics": {
+        "title": "Analyses en Temps Réel",
+        "desc": "Suivez la présence, l'engagement et le flux de foule en direct. Obtenez des rapports détaillés dès la fin de l'événement."
+      },
+      "networking": {
+        "title": "Réseautage Intelligent",
+        "desc": "Connectez les participants grâce à une mise en relation intelligente basée sur les intérêts professionnels."
+      }
+    },
+    "event_types": {
+      "title": "Une Plateforme pour <br /> <span class=\"text-brand-primary\">Toutes les Occasions</span>",
+      "sub": "Que vous organisiez une réunion exécutive intime ou un salon international massif, Diwan Event s'adapte à votre flux de travail unique.",
+      "corporate": {
+        "title": "Événements d'Entreprise",
+        "desc": "Des assemblées générales aux lancements de produits, gérez chaque détail avec précision."
+      },
+      "conference": {
+        "title": "Conférences Internationales",
+        "desc": "Étendez votre portée avec un système d'inscription puissant et un support multilingue pour les participants internationaux."
+      },
+      "academic": {
+        "title": "Forums Académiques",
+        "desc": "Simplifiez la soumission d'articles et le suivi des délégations pour l'excellence éducative."
+      },
+      "awards": {
+        "title": "Cérémonies et Galas",
+        "desc": "Créez des expériences exceptionnelles avec la gestion VIP et les plans de table numériques."
+      }
+    },
+    "extra_features": {
+      "title": "Tout ce dont Vous Avez Besoin",
+      "sub": "Une suite complète d'outils conçus pour gérer chaque aspect du cycle de vie de votre événement.",
+      "offline": {
+        "title": "Mode Hors Ligne",
+        "desc": "Synchronisation automatique au retour de la connexion"
+      },
+      "gdpr": {
+        "title": "Conformité RGPD",
+        "desc": "Protection des données de niveau entreprise"
+      },
+      "setup": {
+        "title": "Configuration Instantanée",
+        "desc": "Lancez-vous en moins de 30 minutes"
+      },
+      "multi_lang": {
+        "title": "Multilingue",
+        "desc": "Support natif de plus de 15 langues"
+      },
+      "mobile": {
+        "title": "Application Mobile",
+        "desc": "Apps iOS et Android pour les participants"
+      },
+      "polling": {
+        "title": "Sondages en Direct",
+        "desc": "Outils d'engagement en temps réel"
+      },
+      "api": {
+        "title": "Accès API",
+        "desc": "Intégration avec tout logiciel existant"
+      },
+      "reports": {
+        "title": "Rapports Personnalisés",
+        "desc": "Créez les vues de données dont vous avez besoin"
+      },
+      "roles": {
+        "title": "Gestion des Rôles",
+        "desc": "Permissions granulaires pour votre équipe"
+      },
+      "printing": {
+        "title": "Impression de Badges",
+        "desc": "Intégration d'impression sur site"
+      },
+      "email": {
+        "title": "Automatisation Email",
+        "desc": "Parcours personnalisés pour les participants"
+      },
+      "sso": {
+        "title": "Authentification Unique SSO",
+        "desc": "Intégration SSO sécurisée pour entreprises"
+      }
+    },
+    "faq": {
+      "title": "Foire Aux Questions",
+      "q1": "Comment fonctionne le réseautage IA ?",
+      "a1": "Notre moteur utilise le machine learning pour faire correspondre les intérêts des participants, suggérant les personnes les plus pertinentes.",
+      "q2": "Diwan Event est-il conforme au RGPD ?",
+      "a2": "Oui, nous respectons les normes les plus strictes en matière de protection des données, y compris le RGPD.",
+      "still_questions": "Vous avez encore des questions ?",
+      "help_text": "Notre équipe est là pour vous aider 24h/24.",
+      "contact_cta": "Contacter le Support"
+    },
+    "cta_final": {
+      "title": "Prêt à Transformer Vos Événements ?",
+      "sub": "Rejoignez des centaines d'organisateurs qui ont boosté l'engagement et le ROI avec Diwan Event."
+    },
+    "request_demo": {
+      "badge": "Planifier une Visite Privée",
+      "title": "Découvrez le Futur de l'Intelligence Événementielle",
+      "sub": "Découvrez comment Diwan Event peut transformer votre prochain rassemblement avec des analyses en temps réel, un réseautage IA et une sécurité de classe entreprise.",
+      "f1": "Visite personnalisée de toutes les fonctionnalités",
+      "f2": "Stratégie de prix personnalisée selon votre échelle",
+      "f3": "Analyse d'intégration pour votre stack technique",
+      "f4": "Conseils d'experts sur le flux et l'intelligence spatiale",
+      "form": {
+        "title": "Demander une Démo",
+        "subtitle": "Aucun engagement requis",
+        "name": "Nom Complet",
+        "email": "Email Professionnel",
+        "company": "Entreprise",
+        "size": "Taille de l'Événement",
+        "message": "Parlez-nous de votre prochain événement",
+        "placeholder_message": "Objectifs, dates, lieux...",
+        "submit": "Confirmer la Demande",
+        "success_title": "Demande Envoyée !",
+        "success_msg": "Merci de votre intérêt. Un de nos consultants vous contactera sous 24 heures.",
+        "another": "Envoyer une autre demande",
+        "privacy": "En soumettant, vous acceptez notre politique de confidentialité"
+      }
+    },
+    "common_labels": {
+      "efficiency": "Efficacité Redéfinie",
+      "capabilities": "Capacités Fondamentales",
+      "solutions_badge": "Solutions sur Mesure",
+      "solutions_desc": "Nous fournissons des modules spécialisés conçus pour les exigences uniques de chaque catégorie d'événement.",
+      "explore_solution": "Explorer la Solution",
+      "pricing_badge": "Investissement Flexible",
+      "most_popular": "Le Plus Populaire",
+      "faq_badge": "Base de Connaissances",
+      "faq_sub": "Tout ce que vous devez savoir sur notre plateforme et comment elle peut faire évoluer votre prochain grand événement.",
+      "contact_support": "Contacter le Support",
+      "cta_badge": "Rejoignez la Révolution",
+      "trust_1": "Aucune Carte de Crédit Requise",
+      "trust_2": "Annulez à tout moment",
+      "trust_3": "Accès complet aux fonctionnalités",
+      "integrations_badge": "Connectivité Transparente",
+      "integrations_title": "Connectez tout votre Stack Technique",
+      "integrations_desc": "Diwan Event ne vit pas en vase clos. Nous nous intégrons aux outils que vous utilisez déjà pour garantir que vos données circulent là où elles doivent être, instantanément.",
+      "footer": {
+        "platform": "Plateforme",
+        "industries": "Secteurs",
+        "corporate": "Entreprises",
+        "medical": "Médical",
+        "education": "Éducation",
+        "exhibitions": "Salons et Conférences",
+        "company": "Entreprise",
+        "about": "À Propos",
+        "contact": "Contact",
+        "blog": "Blog",
+        "careers": "Carrières",
+        "legal": "Légal",
+        "privacy": "Politique de Confidentialité",
+        "terms": "Conditions d'Utilisation",
+        "security": "Sécurité Numérique",
+        "gdpr": "Conformité RGPD",
+        "desc": "L'écosystème de gestion d'événements le plus sophistiqué au monde. Conçu pour les environnements d'entreprise à enjeux élevés.",
+        "offices": "Alger, Algérie",
+        "certified": "Certifié SOC2 Type II",
+        "last_update": "Dernière mise à jour : Aujourd'hui"
+      },
+      "hero_mockup": {
+        "badge": "L'Avenir de l'Intelligence Événementielle",
+        "live_analytics": "Analyses en Direct",
+        "active_system": "Système Actif",
+        "system_live": "Système en Ligne",
+        "intelligence": "Intelligence",
+        "roi_metric": "+24% ROI",
+        "analytics": "Analyses d'Événement",
+        "dashboard": "Tableau de Bord Réel",
+        "efficiency": "Efficacité",
+        "accuracy": "Précision de Match",
+        "uptime": "99.9% Disponibilité",
+        "scalable": "Infra Scalable"
+      }
+    },
+    "auth": {
+      "login": {
+        "title": "Connexion",
+        "subtitle": "Bon retour sur Diwan Event",
+        "username": "Nom d'utilisateur",
+        "password": "Mot de passe",
+        "submit": "Se Connecter",
+        "no_account": "Pas encore de compte ?",
+        "register_now": "Essai Gratuit",
+        "error": "Échec de connexion. Vérifiez vos identifiants."
+      },
+      "register": {
+        "title": "Créer un Compte",
+        "subtitle": "Rejoignez le futur de l'événementiel",
+        "fullname": "Nom Complet",
+        "username": "Nom d'utilisateur",
+        "password": "Mot de passe",
+        "role": "Rôle du Compte",
+        "role_admin": "Organisateur (Admin)",
+        "role_scanner": "Scanneur (Sur place)",
+        "role_viewer": "Lecteur (Lecture seule)",
+        "submit": "Créer le Compte",
+        "have_account": "Vous avez déjà un compte ?",
+        "login_now": "Se connecter ici",
+        "success": "Compte créé avec succès ! Connectez-vous.",
+        "error": "Erreur lors de l'inscription. Réessayez."
+      }
+    },
+    "testimonials": {
+      "badge": "Trusted by Industry Leaders",
+      "title": "Success Stories",
+      "t1": {
+        "name": "Dr. Ahmed Mansour",
+        "role": "Director of Operations, TechSummit 2024",
+        "content": "Diwan Event transformed our registration process. What used to take hours now takes minutes. The real-time analytics are a game-changer for our stakeholders."
+      },
+      "t2": {
+        "name": "Sarah Williams",
+        "role": "Head of Events, Global Finance Corp",
+        "content": "The most reliable attendance system we've ever used. The QR scanning is lightning fast, and the dashboard provides the exact insights we need for ROI reporting."
+      },
+      "t3": {
+        "name": "Khalid Al-Rashid",
+        "role": "Founder, Innovation Hub",
+        "content": "Enterprise-grade software with a beautiful user experience. Diwan's support team is world-class, assisting us through every step of our large-scale launch."
+      }
+    }
+  },
+  "sponsors": {
+    "title": "Partenaires de Réussite",
+    "subtitle": "Gérer les sponsors et les partenaires officiels",
+    "add_btn": "Ajouter un Sponsor",
+    "media": "Média",
+    "sponsor": "Sponsor",
+    "website": "Site Web",
+    "no_sponsors": "Aucun sponsor actuellement",
+    "no_sponsors_desc": "Commencez par ajouter votre premier partenaire.",
+    "edit_title": "Modifier le Sponsor",
+    "add_title": "Ajouter un Sponsor",
+    "save_success": "Données enregistrées ✅",
+    "save_error": "Échec de l'enregistrement",
+    "delete_confirm": "Supprimer ce sponsor ?",
+    "delete_error": "Échec de la suppression",
+    "modal": {
+      "name": "Nom",
+      "tier": "Niveau",
+      "type": "Type de Partenariat",
+      "website": "Site Web",
+      "logo": "Logo",
+      "choose_logo": "Choisir le Logo"
+    },
+    "tier": "Tier",
+    "type": "Partnership Type"
+  },
+  "analytics": {
+    "title": "Centre d'Analyse",
+    "subtitle": "Analyse en direct des performances et des taux de présence",
+    "export_btn": "Exporter le Rapport Final",
+    "loading": "Analyse des données...",
+    "load_error": "Échec du chargement des analyses.",
+    "stats": {
+      "total_invited": "Total Inscrits",
+      "checked_in": "Présents",
+      "attendance_rate": "Taux de Présence",
+      "pending": "En Attente d'Arrivée"
+    },
+    "peak_title": "Pic de Présence Pendant la Journée",
+    "councils_title": "Répartition des Présences par Organisation"
+  },
+  "social_moderation": {
+    "title": "Modération du Mur Social",
+    "subtitle": "{{count}} publications en attente d'examen",
+    "refresh": "Rafraîchir la Liste",
+    "save_error": "Échec de la modération",
+    "pending_review": "En Attente d'Examen",
+    "approve": "Approuver la Publication",
+    "no_posts": "Toutes les publications sont examinées",
+    "reject": "Reject"
+  },
+  "questions": {
+    "title": "Questions & Discussions",
+    "subtitle": "Gérer les questions du public adressées aux orateurs",
+    "anonymous": "Participant Anonyme",
+    "mark_answered": "Marquer comme Répondu",
+    "mark_unanswered": "Marquer comme Non Répondu",
+    "pin": "Épingler la Question",
+    "unpin": "Désépingler",
+    "no_questions": "Aucune question pour le moment",
+    "activate_desc": "Assurez-vous que la fonctionnalité de questions est activée.",
+    "tabs": {
+      "pending": "En Attente",
+      "answered": "Répondu",
+      "approved": "Approved",
+      "hidden": "Hidden"
+    },
+    "search_placeholder": "Search questions...",
+    "approve": "Approve",
+    "hide": "Hide",
+    "delete": "Delete",
+    "upvotes": "Upvotes"
+  },
+  "hardware": {
+    "title": "Gestion du Matériel",
+    "subtitle": "Contrôler et surveiller les scanners intelligents",
+    "add_scanner": "Enregistrer un Scanner",
+    "all_devices": "Tous les Appareils",
+    "active": "Actif",
+    "inactive": "Inactif",
+    "no_hardware": "Aucun scanner associé.",
+    "no_hardware_desc": "Ajoutez le premier appareil pour l'enregistrement automatique.",
+    "refresh": "Update Status",
+    "scan_network": "Scan Network",
+    "scanning": "Scanning...",
+    "scan_success": "Successfully scanned {{count}} devices",
+    "stats": {
+      "online": "Connected Devices",
+      "offline": "Disconnected Devices",
+      "low_battery": "Devices Needing Charge"
+    },
+    "table": {
+      "title": "Device List",
+      "count": "{{count}} registered devices",
+      "device": "Device",
+      "status": "Status",
+      "battery": "Battery",
+      "last_ping": "Last Connection",
+      "control": "Control",
+      "no_devices": "No devices currently connected",
+      "auto_appear": "Devices will automatically appear when connected to the network",
+      "turn_off": "Turn Off Device",
+      "turn_on": "Turn On Device"
+    }
+  },
+  "public_display": {
+    "title": "Affichage Public",
+    "subtitle": "Gérer les écrans publics dans les salles",
+    "live_mode": "Mode Direct",
+    "settings": "Paramètres d'Affichage",
+    "live_wall": "Live Social Wall",
+    "live_subtitle": "Live from participant app",
+    "waiting_interaction": "Waiting for audience interaction...",
+    "participant": "Event Participant",
+    "checkin_time": "Check-in Time",
+    "now_live": "Live Attendance Now",
+    "completion_rate": "Completion Rate",
+    "awaiting_arrival": "Awaiting Arrival",
+    "recent_checkins": "Recent Check-ins",
+    "waiting_participants": "Waiting for participants to arrive...",
+    "session_question": "Current Session Question",
+    "live_from_platform": "Live from participant platform",
+    "waiting_questions": "Waiting for audience questions...",
+    "live_poll": "Instant Live Poll",
+    "votes": "Votes",
+    "option": "Option",
+    "sponsors_title": "Success Partners & Sponsors",
+    "welcome": "Welcome",
+    "welcome_default": "Welcome and Greetings",
+    "enjoy_time": "We wish you an enjoyable and useful time",
+    "registration_gateway": "Registration Gateway",
+    "scan_to_confirm": "Scan code to confirm attendance, get certificate, and participate live",
+    "media_partners": "Media Partners & Coverage",
+    "waiting_media": "Waiting for media partners confirmation...",
+    "welcome_visitor": "Welcome: {{name}}",
+    "powered_by": "Powered by Diwan Event"
+  },
+  "badge_designer": {
+    "title": "Créateur de Badges",
+    "subtitle": "Concevoir et personnaliser les modèles de badges",
+    "create_template": "Nouveau Modèle",
+    "my_templates": "Mes Modèles",
+    "no_templates": "Aucun modèle",
+    "no_templates_desc": "Créez un nouveau modèle à utiliser pour les badges.",
+    "background_label": "Badge Background",
+    "upload_hint": "Drag image here",
+    "edit_elements": "Edit Elements",
+    "full_name": "Full Name",
+    "council": "Organization/Institution",
+    "qr_code": "QR Code",
+    "save_template": "Save Template",
+    "saving": "Saving...",
+    "save_success": "Template saved successfully!",
+    "save_error": "Failed to save template",
+    "placeholder_hint": "Upload a background image to start",
+    "participant_name_placeholder": "Participant Full Name",
+    "organization_placeholder": "Department or Organization"
+  },
+  "polls": {
+    "title": "Sondages",
+    "subtitle": "Gérer les votes en direct du public",
+    "create_poll": "Nouveau Sondage",
+    "active_polls": "Sondages Actifs",
+    "closed_polls": "Sondages Clôturés",
+    "no_polls": "Aucun sondage",
+    "no_polls_desc": "Recueillez l'avis de votre public.",
+    "modal": {
+      "question": "Question",
+      "question_placeholder": "Tapez votre question...",
+      "option": "Option",
+      "title": "Create Poll",
+      "options": "Options",
+      "add_option": "Add Option",
+      "submit": "Create Poll"
+    },
+    "create_btn": "Create New Poll",
+    "active": "Active",
+    "ended": "Ended",
+    "total_votes": "Total Votes"
+  },
+  "developer": {
+    "title": "Portail Développeurs",
+    "subtitle": "Intégrez l'intelligence événementielle à vos applications",
+    "api_keys": {
+      "title": "Clés API",
+      "subtitle": "Gérer les clés d'accès API",
+      "create_key": "Générer une Clé",
+      "test_key": "Clé de Test",
+      "prod_key": "Clé de Production",
+      "status": "Statut",
+      "last_used": "Dernière Utilisation",
+      "copy_key": "Copier la Clé",
+      "delete_key": "Supprimer la Clé",
+      "save": "Enregistrer",
+      "cancel": "Annuler",
+      "name": "Nom de la clé",
+      "create_btn": "Create New Key",
+      "security_alert": "Important Security Warning!",
+      "security_desc": "This is the only time your secret key will be shown. Copy it now and save it in a safe place.",
+      "saved_safely": "I have saved the key safely",
+      "quota": "Available Quota",
+      "revoke_btn": "Revoke Key",
+      "edit_perms": "Edit Permissions"
+    },
+    "webhooks": {
+      "title": "Webhooks",
+      "subtitle": "Envoyer des données en temps réel",
+      "add_webhook": "Ajouter un Webhook",
+      "endpoint_url": "URL de Destination",
+      "active": "Actif",
+      "inactive": "Inactif",
+      "last_delivery": "Dernier Envoi",
+      "success_rate": "Taux de Réussite",
+      "logs_btn": "Journaux d'Envoi",
+      "add_btn": "Add Webhook",
+      "status": "Status",
+      "stable": "Stable",
+      "warning": "Warning"
+    },
+    "usage": {
+      "total_requests": "Requêtes Totales (24h)",
+      "avg_latency": "Latence Moy.",
+      "uptime": "Disponibilité",
+      "peak_rps": "Pic de Requêtes",
+      "chart_title": "Trafic API (24h)",
+      "chart_subtitle": "Suivi en direct.",
+      "success_labels": "Succès",
+      "error_labels": "Erreurs"
+    },
+    "playground": {
+      "search_placeholder": "Rechercher un point de terminaison...",
+      "request_details": "Détails de la Requête",
+      "execute_btn": "Exécuter",
+      "curl_code": "Code d'Appel (cURL)",
+      "expected_response": "Réponse Attendue",
+      "auth_mode": "Mode d'Authentification Actuel",
+      "auth_desc": "La 'clé de test' automatique est utilisée.",
+      "change_key": "Changer la clé de test",
+      "endpoints": {
+        "list_events": "Lister les événements",
+        "checkin": "Enregistrer un participant",
+        "heatmap": "Obtenir les données de carte de chaleur"
+      }
+    },
+    "hero_title": "Build your apps with",
+    "hero_subtitle": "Integrate live event intelligence into your own applications using our advanced API and Webhooks system.",
+    "system_status": "System Status",
+    "all_systems_operational": "All systems operational",
+    "tabs": {
+      "api_keys": "API Keys",
+      "webhooks": "Webhooks",
+      "monitoring": "Monitoring & Usage",
+      "playground": "Playground"
+    },
+    "support": {
+      "title": "Need advanced technical support?",
+      "subtitle": "Our engineering team is ready to help you with complex and custom integrations.",
+      "button": "Contact Developer Support"
+    }
+  },
+  "events": {
+    "title": "Vos Événements",
+    "subtitle": "Gérez toutes vos conférences et événements",
+    "create_new": "Créer un Événement",
+    "create_success": "Événement créé avec succès ✅",
+    "create_error": "Échec de la création : ",
+    "delete_confirm": "Voulez-vous vraiment supprimer l'événement \"{{name}}\" ?\nCette action est irréversible.",
+    "delete_error": "Échec de la suppression : ",
+    "location_not_set": "Lieu non défini",
+    "coming_soon": "Bientôt",
+    "enter": "Entrer",
+    "delete_title": "Supprimer",
+    "status_active": "Actif",
+    "add_modal": {
+      "title": "Lancer un Événement",
+      "name_label": "Titre",
+      "name_placeholder": "ex: Sommet Tech 2026",
+      "location_label": "Lieu",
+      "location_placeholder": "Paris",
+      "date_label": "Date",
+      "submit": "Créer"
+    }
+  },
+  "sessions": {
+    "title": "Agenda & Sessions",
+    "subtitle": "Planifiez les sessions et conférences",
+    "add_btn": "Ajouter une Session",
+    "no_sessions": "Aucune session actuellement",
+    "no_sessions_desc": "Ajoutez des sessions à l'agenda.",
+    "delete_confirm": "Voulez-vous vraiment supprimer ?",
+    "time_range": "{{start}} - {{end}}",
+    "modal": {
+      "add_title": "Ajouter",
+      "edit_title": "Modifier",
+      "subtitle": "Saisissez les détails de la session",
+      "form": {
+        "title": "Titre de la session",
+        "title_required": "Le titre est requis",
+        "speaker": "Nom de l'orateur",
+        "location": "Salle / Lieu",
+        "start_time": "Heure de début",
+        "end_time": "Heure de fin",
+        "times_required": "Les heures sont requises",
+        "description": "Description",
+        "description_placeholder": "Optionnel...",
+        "save_success": "Enregistré avec succès",
+        "save_error": "Échec de l'enregistrement",
+        "saving": "Enregistrement...",
+        "submit_add": "Ajouter",
+        "submit_edit": "Enregistrer"
+      }
+    },
+    "main_hall": "Main Hall",
+    "no_speaker": "—",
+    "no_location": "—",
+    "add_session": "Add New Session",
+    "edit_session": "Edit Session",
+    "delete_error": "Failed to delete session",
+    "search_placeholder": "Search for session or speaker...",
+    "no_event_selected": "No event selected",
+    "select_event_desc": "Please select an event first from the top menu.",
+    "no_results": "No matching results",
+    "try_another": "Try another search term.",
+    "no_sessions_yet": "No sessions added yet",
+    "start_adding": "Start by adding agenda sessions to your event.",
+    "add_first": "Add First Session"
+  },
+  "speakers": {
+    "title": "Orateurs",
+    "subtitle": "Gérer les orateurs et les invités",
+    "add_btn": "Ajouter un Orateur",
+    "no_speakers": "Aucun orateur",
+    "no_speakers_desc": "Ajoutez des orateurs pour planifier leurs sessions.",
+    "edit_btn": "Edit",
+    "delete_btn": "Delete",
+    "main_topic": "Main Topic",
+    "official_speaker": "Official Speaker",
+    "save_error": "Failed to save data",
+    "delete_confirm": "Are you sure you want to delete this speaker?",
+    "delete_error": "Deletion failed",
+    "loading": "Loading data...",
+    "modal": {
+      "title_add": "Add New Speaker",
+      "title_edit": "Edit Speaker Data",
+      "name": "Full Name",
+      "job_title": "Job Title",
+      "topic": "Presentation Topic",
+      "image": "Profile Photo",
+      "image_placeholder": "Choose speaker photo",
+      "bio": "Biography (Short)",
+      "save": "Save",
+      "cancel": "Cancel"
+    }
+  },
+  "profile": {
+    "title": "Profil",
+    "subtitle": "Gérer les informations de votre compte",
+    "personal_info": "Informations Personnelles",
+    "name": "Nom Complet",
+    "email": "Adresse Email",
+    "phone": "Numéro de Téléphone",
+    "jobTitle": "Titre du Poste",
+    "save": "Enregistrer",
+    "tabs": {
+      "personal": "Personal Information",
+      "security": "Security & Privacy",
+      "alerts": "Alert History",
+      "settings": "Notification Settings"
+    },
+    "personal": {
+      "title": "Personal Information",
+      "subtitle": "System Admin • Diwan Event",
+      "fullName": "Full Name",
+      "email": "Email Address",
+      "phone": "Phone Number",
+      "jobTitle": "Job Title",
+      "save": "Save Changes",
+      "role_fallback": "System Admin • Diwan Event",
+      "job_title_placeholder": "Event Manager",
+      "name_fallback": "Ahmed Idrissi"
+    },
+    "security": {
+      "password_title": "Change Password",
+      "password_last_change": "Last changed 3 months ago",
+      "update_btn": "Update",
+      "2fa_title": "Two-Factor Authentication (2FA)",
+      "2fa_subtitle": "Extra protection for your account",
+      "2fa_setup": {
+        "title": "Two-Factor Authentication Setup",
+        "desc": "Scan the following QR code using your authenticator app (Google Authenticator or Authy)",
+        "manual_entry": "Or enter the code manually",
+        "verify_label": "6-digit verification code",
+        "enable_btn": "Enable Authentication",
+        "cancel_btn": "Cancel"
+      },
+      "modal": {
+        "title": "Change Password",
+        "subtitle": "Please enter your current and new password",
+        "current_label": "Current Password",
+        "new_label": "New Password",
+        "confirm_label": "Confirm New Password",
+        "submit": "Confirm Change"
+      },
+      "passwords_mismatch": "New passwords do not match",
+      "password_success": "Password changed successfully",
+      "password_error": "Failed to change password",
+      "2fa_disabled": "2FA has been disabled",
+      "2fa_disable_error": "Failed to disable 2FA",
+      "2fa_setup_error": "Failed to start 2FA setup",
+      "2fa_enabled": "2FA has been enabled successfully",
+      "2fa_verify_error": "Incorrect verification code"
+    },
+    "notifications": {
+      "title": "Notification Settings",
+      "subtitle": "Choose how and when you want to receive notifications from the platform.",
+      "email_reg_title": "New Registration Alerts",
+      "email_reg_desc": "Receive an email when a new participant registers for your event.",
+      "sys_alerts_title": "System Alerts",
+      "sys_alerts_desc": "Get notifications about server status and synchronization.",
+      "security_alerts_title": "Security & Privacy",
+      "security_alerts_desc": "Alert you of suspicious login attempts or password changes.",
+      "browser_push_title": "Browser Notifications",
+      "browser_push_desc": "Enable direct desktop notifications.",
+      "save_btn": "Save Notification Preferences",
+      "save_success": "Notification preferences saved successfully"
+    },
+    "alerts_history": {
+      "title": "Alert History",
+      "subtitle": "Review all recent notifications and operations"
+    },
+    "sponsors": {
+      "title": "Success Partners",
+      "subtitle": "Manage sponsors and official event partners",
+      "add_btn": "Add New Sponsor",
+      "media": "Media",
+      "sponsor": "Sponsor",
+      "website": "Website",
+      "no_sponsors": "No sponsors currently",
+      "no_sponsors_desc": "Start by adding your first event partner.",
+      "edit_title": "Edit Sponsor Details",
+      "add_title": "Add New Sponsor",
+      "save_success": "Data saved successfully ✅",
+      "save_error": "Failed to save data",
+      "delete_confirm": "Are you sure you want to delete this sponsor?",
+      "delete_error": "Delete failed",
+      "modal": {
+        "name": "Name",
+        "tier": "Tier",
+        "type": "Partnership Type",
+        "website": "Website",
+        "logo": "Logo",
+        "choose_logo": "Choose Logo Image"
+      }
+    },
+    "analytics": {
+      "title": "Analytics Center",
+      "subtitle": "Live analysis of event performance and attendance rates",
+      "export_btn": "Export Final Report",
+      "loading": "Analyzing data...",
+      "load_error": "Failed to load analytics.",
+      "stats": {
+        "total_invited": "Total Registered",
+        "checked_in": "Checked In",
+        "attendance_rate": "Attendance Rate",
+        "pending": "Awaiting Arrival"
+      },
+      "peak_title": "Attendance Peak During the Day",
+      "councils_title": "Attendance Distribution by Organization"
+    },
+    "social_moderation": {
+      "title": "Social Wall Moderation",
+      "subtitle": "{{count}} posts awaiting review",
+      "refresh": "Refresh List",
+      "save_error": "Moderation failed",
+      "pending_review": "Awaiting Review",
+      "approve": "Approve Post",
+      "no_posts": "All posts are currently reviewed"
+    },
+    "questions": {
+      "title": "Questions & Discussions",
+      "subtitle": "Manage audience questions directed to speakers",
+      "anonymous": "Anonymous Participant",
+      "mark_answered": "Mark as Answered",
+      "mark_unanswered": "Mark as Unanswered",
+      "pin": "Pin Question",
+      "unpin": "Unpin Question",
+      "no_questions": "No questions yet",
+      "activate_desc": "Make sure the questions feature is enabled in the participant portal.",
+      "tabs": {
+        "pending": "Pending",
+        "answered": "Answered"
+      }
+    }
+  },
+  "settings": {
+    "title": "Paramètres",
+    "subtitle": "Personnalisez l'identité visuelle et les options avancées",
+    "saving": "Enregistrement...",
+    "saved": "Enregistré",
+    "save_changes": "Enregistrer",
+    "save_error": "Échec de l'enregistrement",
+    "loading": "Chargement...",
+    "load_error": "Échec du chargement.",
+    "tabs": {
+      "general": "Général",
+      "design": "Identité Visuelle",
+      "registration": "Formulaire d'Inscription",
+      "payments": "Paiements & Billets",
+      "welcome": "Écran d'Accueil",
+      "labels": "Libellés Personnalisés",
+      "advanced": "Actions Avancées"
+    },
+    "general": {
+      "title": "Général",
+      "desc": "Informations de base.",
+      "event_name": "Nom de l'Événement",
+      "registration_enabled": "Activer l'Inscription Publique",
+      "event_date": "Date de l'Événement",
+      "location": "Lieu"
+    },
+    "registration": {
+      "title": "Créer le Formulaire",
+      "desc": "Définissez les données requises lors de l'auto-inscription.",
+      "new_field_label": "Nom du Champ (ex: Téléphone)",
+      "placeholder": "Nom d'affichage...",
+      "field_type": "Type de Champ",
+      "types": {
+        "text": "Texte",
+        "number": "Nombre",
+        "date": "Date"
+      },
+      "is_required": "Obligatoire ?",
+      "add_field": "Ajouter le Champ",
+      "add_error": "Échec de l'ajout",
+      "no_custom_fields": "Aucun champ personnalisé.",
+      "required_badge": "Requis",
+      "optional_badge": "Optionnel",
+      "delete_confirm": "Voulez-vous supprimer ce champ ?",
+      "delete_error": "Échec de la suppression",
+      "note": "Les champs de base sont fixes."
+    },
+    "design": {
+      "title": "Identité Visuelle",
+      "desc": "Personnalisez les couleurs et le logo.",
+      "logo_label": "Logo de l'Événement",
+      "change_logo": "Changer le Logo",
+      "upload_logo": "Télécharger le Logo",
+      "upload_error": "Échec du téléchargement",
+      "primary_color": "Couleur Principale"
+    },
+    "payments": {
+      "title": "Paiements & Billets",
+      "desc": "Paramètres de paiement.",
+      "require_payment": "Activer le Paiement",
+      "ticket_price": "Prix du Billet",
+      "currency": "Devise",
+      "chargily_api_key": "Clé API Chargily Pay"
+    },
+    "welcome": {
+      "title": "Écran d'Accueil",
+      "desc": "Ce que voient les invités.",
+      "welcome_title": "Titre d'Accueil",
+      "welcome_subtitle": "Sous-titre"
+    },
+    "labels": {
+      "title": "Libellés Personnalisés",
+      "desc": "Changez les noms des champs de base.",
+      "org_label_1": "Libellé 1 (Organisation)",
+      "org_label_2": "Libellé 2 (Département)",
+      "org_label_3": "Libellé 3 (Grade)",
+      "org_label_4": "Libellé 4 (Lieu)"
+    },
+    "advanced": {
+      "title": "Actions Avancées",
+      "desc": "Opérations critiques.",
+      "freeze_title": "Geler la Liste",
+      "freeze_desc": "Arrêter les nouvelles inscriptions.",
+      "freeze_btn": "Geler Maintenant",
+      "freeze_btn_undo": "Dégeler",
+      "freeze_confirm": "Voulez-vous vraiment geler/dégeler ?",
+      "delete_title": "Supprimer les Données",
+      "delete_desc": "Attention : suppression définitive.",
+      "delete_btn": "Supprimer Toutes les Données",
+      "delete_confirm": "Avertissement final : êtes-vous sûr ?",
+      "unfreeze": "Unfreeze List ❄️",
+      "freeze": "Freeze List ❄️",
+      "freeze_error": "Failed to freeze list",
+      "reset_attendance_title": "Reset Attendance",
+      "reset_attendance_desc": "Warning: All attendance records will be cleared and set to 'absent'.",
+      "reset_confirm": "Are you sure you want to reset all attendance records?",
+      "reset_success": "Records reset successfully",
+      "reset_error": "Failed to reset records",
+      "reset_btn": "Reset Records ⚠️"
+    }
+  }
+}
