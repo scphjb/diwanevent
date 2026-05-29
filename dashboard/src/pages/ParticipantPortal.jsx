@@ -120,6 +120,7 @@ const ParticipantPortal = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
   // States for likes & comments (Instagram-style mini social platform)
   const [likedPosts, setLikedPosts] = useState(() => {
@@ -648,6 +649,38 @@ const ParticipantPortal = () => {
 
 
 
+  const handleParticipantAvatarChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('حجم الصورة كبير جداً، الحد الأقصى 5 ميجابايت.');
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res = await api.post('networking/profile/avatar', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      const newAvatarUrl = res.data.avatar_url;
+      
+      const updatedParticipant = { ...participant, avatar_url: newAvatarUrl };
+      setParticipant(updatedParticipant);
+      
+      localStorage.setItem(`diwan_cache_participant_${participantToken}`, JSON.stringify(updatedParticipant));
+      
+      toast.success('تم تحديث صورتك الشخصية بنجاح ✅');
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'فشل رفع الصورة الشخصية');
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
   const handleUpdateProfile = async () => {
     try {
       const data = {
@@ -773,7 +806,7 @@ const ParticipantPortal = () => {
                
                {/* 1. Profile Card (Luxury Golden Styling) */}
                <div className="bg-gradient-to-b from-white/[0.06] to-white/[0.01] border border-white/10 rounded-[40px] p-8 backdrop-blur-3xl text-center relative shadow-[0_24px_80px_rgba(0,0,0,0.4)]">
-                  <div className="relative w-32 h-32 mx-auto mb-6">
+                  <div className="relative w-32 h-32 mx-auto mb-6 group/avatar">
                     {participant?.avatar_url ? (
                       <img 
                         src={participant.avatar_url} 
@@ -785,6 +818,22 @@ const ParticipantPortal = () => {
                         <span className="text-5xl font-black">{participant?.full_name?.charAt(0) || 'U'}</span>
                       </div>
                     )}
+                    
+                    <button 
+                      onClick={() => document.getElementById('participant-avatar-input')?.click()}
+                      disabled={isUploadingAvatar}
+                      className="absolute bottom-0 right-0 w-9 h-9 bg-amber-500 rounded-full flex items-center justify-center text-brand-dark shadow-lg group-hover/avatar:scale-110 transition-transform disabled:opacity-50"
+                    >
+                      <Camera className="w-4 h-4 text-brand-dark" />
+                    </button>
+                    <input 
+                      type="file"
+                      id="participant-avatar-input"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleParticipantAvatarChange}
+                      disabled={isUploadingAvatar}
+                    />
                   </div>
                   
                   <h2 className="text-3xl font-black mb-1 tracking-tight text-[#F0F4F2]">{participant.full_name}</h2>
@@ -813,7 +862,16 @@ const ParticipantPortal = () => {
                         <p className="text-white/70 text-sm leading-relaxed mb-4 px-4">{participant.custom_values.bio}</p>
                       )}
                       <div className="grid grid-cols-2 gap-3">
-                        <Button variant="outline" className="rounded-2xl border-white/10 text-white font-bold py-3 text-xs" onClick={() => setIsEditingProfile(true)}>
+                        <Button 
+                          variant="outline" 
+                          className={cn(
+                            "rounded-2xl font-bold py-3 text-xs",
+                            theme === 'dark' 
+                              ? "border-white/10 text-white hover:bg-white/5" 
+                              : "border-slate-300 text-slate-800 hover:bg-slate-100"
+                          )} 
+                          onClick={() => setIsEditingProfile(true)}
+                        >
                           تعديل الملف
                         </Button>
                         <Button variant="gold" className="rounded-2xl font-bold py-3 text-xs" onClick={() => setActiveTab('networking')}>
@@ -899,7 +957,9 @@ const ParticipantPortal = () => {
                         "w-full flex items-center justify-center gap-3 py-4 px-6 rounded-2xl font-black text-xs uppercase tracking-widest transition-all duration-300 shadow-lg border",
                         isScanMode 
                           ? "bg-amber-500 text-brand-dark border-amber-400 animate-pulse shadow-[0_0_20px_rgba(245,158,11,0.4)]" 
-                          : "bg-white/5 text-white border-white/10 hover:bg-white/10 hover:border-amber-500/30"
+                          : theme === 'dark'
+                            ? "bg-white/5 text-white border-white/10 hover:bg-white/10 hover:border-amber-500/30"
+                            : "bg-slate-100 text-slate-800 border-slate-200 hover:bg-slate-200 hover:border-amber-500/30"
                       )}
                     >
                       <Smartphone size={16} className={isScanMode ? "text-brand-dark" : "text-amber-500"} />

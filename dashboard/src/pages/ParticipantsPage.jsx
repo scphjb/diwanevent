@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import DashboardLayout from '../layouts/DashboardLayout';
 import { 
   Users, 
@@ -365,6 +365,17 @@ const ParticipantsPage = () => {
     setActiveMenu(null);
   };
 
+  const handleResendTicket = async (id) => {
+    setActiveMenu(null);
+    try {
+      showToast(t('participants.resending_email', 'جاري إعادة إرسال التذكرة...'), 'info');
+      await api.post(`participants/${id}/resend-email`);
+      showSuccess(t('participants.resend_success', 'تم الإرسال بنجاح'), t('participants.resend_success_desc', 'تم إعادة إرسال تذكرة الدخول والرمز السري للمشارك بنجاح.'));
+    } catch (err) {
+      showError(err.response?.data?.detail || t('participants.resend_error', 'فشل إعادة إرسال البريد الإلكتروني'));
+    }
+  };
+
   if (loading) {
     return (
       <DashboardLayout activePath="/dashboard/participants">
@@ -610,6 +621,15 @@ const ParticipantsPage = () => {
                                     >
                                       <Clock className="w-4 h-4" />
                                       {t('participants.undo_check_in', 'إلغاء الحضور')}
+                                    </button>
+                                  )}
+                                  {p.email && (
+                                    <button 
+                                      onClick={() => handleResendTicket(p.id)}
+                                      className="w-full text-right px-4 py-3 text-sm text-amber-500 font-bold hover:bg-amber-500/10 flex items-center gap-3 transition-colors"
+                                    >
+                                      <Send className="w-4 h-4" />
+                                      {t('participants.resend_ticket', 'إعادة إرسال التذكرة')}
                                     </button>
                                   )}
                                   <button 

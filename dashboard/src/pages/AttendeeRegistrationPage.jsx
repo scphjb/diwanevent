@@ -54,6 +54,9 @@ const AttendeeRegistrationPage = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [step, setStep] = useState('form'); // 'form' | 'success' | 'otp_sent'
+  const [showOtpVerification, setShowOtpVerification] = useState(false);
+  const [verificationCode, setVerificationCode] = useState('');
+  const [sendingOtp, setSendingOtp] = useState(false);
 
   const [formData, setFormData] = useState({
     full_name: '',
@@ -94,9 +97,30 @@ const AttendeeRegistrationPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitting(true);
     setError(null);
 
+    // التحقق من تفعيل التحقق من البريد الإلكتروني بـ OTP
+    if (event.verify_email_on_register && !showOtpVerification) {
+      if (!formData.email) {
+        setError('البريد الإلكتروني مطلوب لتلقي رمز التحقق وإكمال التسجيل.');
+        return;
+      }
+      setSendingOtp(true);
+      try {
+        await api.post('participants/public/send-verification-otp', {
+          email: formData.email,
+          event_id: parseInt(eventId)
+        });
+        setShowOtpVerification(true);
+      } catch (err) {
+        setError(err.response?.data?.detail || 'فشل إرسال رمز التحقق للبريد الإلكتروني.');
+      } finally {
+        setSendingOtp(false);
+      }
+      return;
+    }
+
+    setSubmitting(true);
     try {
       // 1. تسجيل المشارك
       const regResponse = await api.post(`participants/public/register`, {
@@ -104,6 +128,7 @@ const AttendeeRegistrationPage = () => {
         full_name: formData.full_name,
         email: formData.email || null,
         council: formData.council || 'عضو خارجي',
+        verification_code: event.verify_email_on_register ? verificationCode : null,
         custom_values: { ...customValues, role: formData.role, phone_number: formData.phone_number }
       });
 
@@ -390,10 +415,10 @@ const AttendeeRegistrationPage = () => {
               {/* البريد والهاتف */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-xs font-black uppercase tracking-widest text-white/30">البريد الإلكتروني</label>
+                  <label className="text-xs font-black uppercase tracking-widest text-white/30">البريد الإلكتروني {event?.verify_email_on_register ? '*' : ''}</label>
                   <div className="relative group">
                     <Mail className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-amber-500" size={16} />
-                    <input type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} placeholder="email@example.com" className="w-full bg-white/5 border border-white/10 rounded-2xl pr-11 pl-4 py-4 outline-none focus:border-amber-500 transition-all font-bold text-right text-sm" />
+                    <input required={event?.verify_email_on_register} type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} placeholder="email@example.com" className="w-full bg-white/5 border border-white/10 rounded-2xl pr-11 pl-4 py-4 outline-none focus:border-amber-500 transition-all font-bold text-right text-sm" />
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -423,14 +448,59 @@ const AttendeeRegistrationPage = () => {
                 </div>
               )}
 
+              {showOtpVerification && (
+                <motion.div 
+                  initial={{ opacity: 0, height: 0 }} 
+                  animate={{ opacity: 1, height: 'auto' }}
+                  className="space-y-3 bg-amber-500/5 border border-amber-500/20 p-6 rounded-3xl"
+                >
+                  <label className="text-sm font-bold text-amber-400 block">أدخل رمز التحقق (OTP) المرسل لبريدك الإلكتروني *</label>
+                  <div className="relative group">
+                    <ShieldCheck className="absolute right-4 top-1/2 -translate-y-1/2 text-amber-500/60" size={18} />
+                    <input 
+                      required 
+                      type="text" 
+                      maxLength={6} 
+                      value={verificationCode} 
+                      onChange={e => setVerificationCode(e.target.value)} 
+                      placeholder="أدخل الرمز المكون من 6 أرقام..." 
+                      className="w-full bg-white/5 border border-amber-500/30 rounded-2xl pr-12 pl-6 py-4 outline-none focus:border-amber-500 transition-all font-bold tracking-widest text-center text-xl text-white" 
+                    />
+                  </div>
+                  <div className="flex items-center justify-between text-xs font-bold mt-2">
+                    <span className="text-white/40">يرجى فحص صندوق الوارد (أو البريد المزعج)</span>
+                    <button 
+                      type="button" 
+                      onClick={async () => {
+                        setError(null);
+                        setSendingOtp(true);
+                        try {
+                          await api.post('participants/public/send-verification-otp', {
+                            email: formData.email,
+                            event_id: parseInt(eventId)
+                          });
+                        } catch (err) {
+                          setError(err.response?.data?.detail || 'فشل إعادة إرسال الرمز.');
+                        } finally {
+                          setSendingOtp(false);
+                        }
+                      }}
+                      className="text-amber-500 hover:underline"
+                    >
+                      إعادة إرسال الرمز
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+
               {error && (
                 <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400 text-sm font-bold text-center">{error}</div>
               )}
 
-              <Button type="submit" disabled={submitting || !event.registration_enabled} className="w-full h-16 bg-amber-500 hover:bg-amber-600 text-brand-dark rounded-[24px] text-lg font-black flex items-center justify-center gap-3 shadow-2xl shadow-amber-500/20 mt-2">
-                {submitting
+              <Button type="submit" disabled={submitting || sendingOtp || !event.registration_enabled} className="w-full h-16 bg-amber-500 hover:bg-amber-600 text-brand-dark rounded-[24px] text-lg font-black flex items-center justify-center gap-3 shadow-2xl shadow-amber-500/20 mt-2">
+                {submitting || sendingOtp
                   ? <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} className="w-6 h-6 border-4 border-brand-dark/20 border-t-brand-dark rounded-full" />
-                  : <>{event.require_payment ? '💳 تأكيد التسجيل والانتقال للدفع' : '🎟 إتمام التسجيل مجاناً'}</>
+                  : <>{showOtpVerification ? 'تأكيد الرمز وإتمام التسجيل 🎟' : (event.require_payment ? '💳 تأكيد التسجيل والانتقال للدفع' : '🎟 إتمام التسجيل مجاناً')}</>
                 }
               </Button>
 

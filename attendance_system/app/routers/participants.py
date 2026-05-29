@@ -134,6 +134,7 @@ class PublicRegistrationRequest(BaseModel):
     department: str = "عام"
     role: Optional[str] = None
     custom_values: Optional[dict] = None
+    verification_code: Optional[str] = None
 
 @router.get("/public/info/{participant_id}")
 async def get_public_participant_info(
@@ -242,6 +243,150 @@ async def get_public_directory(
             
     return {"items": visible_participants}
 
+from pydantic import BaseModel, EmailStr
+
+class EmailVerificationRequest(BaseModel):
+    email: EmailStr
+    event_id: int
+
+async def send_registration_verification_email(email: str, event_name: str, otp_code: str) -> bool:
+    try:
+        from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
+        from app.core.config import settings
+
+        if not settings.SMTP_PASSWORD or not settings.EMAILS_FROM_EMAIL:
+            return False
+
+        conf = ConnectionConfig(
+            MAIL_USERNAME=settings.SMTP_USERNAME or settings.EMAILS_FROM_EMAIL,
+            MAIL_PASSWORD=settings.SMTP_PASSWORD,
+            MAIL_FROM=settings.EMAILS_FROM_EMAIL,
+            MAIL_PORT=settings.SMTP_PORT,
+            MAIL_SERVER=settings.SMTP_SERVER,
+            MAIL_FROM_NAME=settings.EMAILS_FROM_NAME or "Diwan Event",
+            MAIL_STARTTLS=True,
+            MAIL_SSL_TLS=False,
+            USE_CREDENTIALS=True,
+            VALIDATE_CERTS=True,
+        )
+
+        html = f"""<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
+    body {{
+      font-family: 'Cairo', sans-serif;
+      background-color: #F8FAFC;
+      margin: 0;
+      padding: 0;
+      direction: rtl;
+      text-align: right;
+    }}
+  </style>
+</head>
+<body>
+  <div style="max-width:600px;margin:40px auto;background:#ffffff;border:1px solid #E2E8F0;border-radius:24px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,0.03);">
+    <div style="background:linear-gradient(135deg, #050B18 0%, #0D1527 100%);padding:40px 30px;text-align:center;">
+      <h1 style="color:#ffffff;margin:0;font-size:24px;font-weight:900;">ديوان إيفنت — تحقق من البريد الإلكتروني</h1>
+      <p style="color:rgba(255,255,255,0.6);margin:8px 0 0;font-size:14px;font-weight:700;">{event_name}</p>
+    </div>
+    
+    <div style="padding:40px 30px;">
+      <p style="color:#334155;font-size:15px;line-height:1.8;margin:0 0 24px;font-weight:700;">
+        مرحباً بك،
+      </p>
+      <p style="color:#475569;font-size:14px;line-height:1.8;margin:0 0 32px;">
+        يرجى استخدام رمز التحقق المؤقت أدناه لإكمال عملية التسجيل في الفعالية. هذا الرمز صالح لمدة 10 دقائق فقط ولا يجب مشاركته مع أي شخص.
+      </p>
+      
+      <div style="background:#F1F5F9;border:2px dashed #CBD5E1;border-radius:16px;padding:24px;text-align:center;margin-bottom:32px;">
+        <span style="font-family:monospace;font-size:32px;font-weight:900;color:#050B18;letter-spacing:6px;display:block;">{otp_code}</span>
+      </div>
+      
+      <p style="color:#94A3B8;font-size:12px;line-height:1.6;margin:0;text-align:center;">
+        إذا لم تكن قد طلبت هذا الرمز، يرجى تجاهل هذا البريد الإلكتروني.
+      </p>
+    </div>
+    
+    <div style="background:#F8FAFC;padding:24px 30px;border-top:1px solid #E2E8F0;text-align:center;">
+      <p style="color:#94A3B8;font-size:11px;margin:0;font-weight:bold;">Diwan Event Manager &copy; 2026</p>
+    </div>
+  </div>
+</body>
+</html>
+"""
+
+        message = MessageSchema(
+            subject=f"رمز التحقق من البريد الإلكتروني: {otp_code} — {event_name}",
+            recipients=[email],
+            body=html,
+            subtype=MessageType.html
+        )
+
+        fm = FastMail(conf)
+        await fm.send_message(message)
+        return True
+    except Exception as e:
+        print(f"FAILED TO SEND OTP EMAIL: {e}")
+        return False
+
+@router.post("/public/send-verification-otp")
+async def send_public_verification_otp(
+    body: EmailVerificationRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    إرسال OTP للتحقق من البريد الإلكتروني قبل إكمال عملية التسجيل الذاتي
+    """
+    from app.models.event import Event
+    from app.models.otp import RegistrationOTP
+    from app.routers.participant_auth import generate_otp
+    from datetime import datetime, timedelta
+    
+    event = await db.get(Event, body.event_id)
+    if not event:
+        raise HTTPException(status_code=404, detail="الفعالية غير موجودة")
+    if not event.registration_enabled:
+        raise HTTPException(status_code=403, detail="التسجيل مغلق لهذه الفعالية")
+        
+    # تحقق من تكرار التسجيل بالبريد مسبقاً
+    stmt = select(Participant).filter(
+        Participant.event_id == body.event_id,
+        Participant.email == body.email
+    )
+    res = await db.execute(stmt)
+    existing = res.scalars().first()
+    if existing:
+        raise HTTPException(status_code=409, detail="البريد الإلكتروني مسجل مسبقاً في هذه الفعالية")
+        
+    # توليد OTP
+    otp_code = generate_otp()
+    
+    # حفظ OTP
+    new_otp = RegistrationOTP(
+        email=body.email.lower().strip(),
+        event_id=body.event_id,
+        otp_code=otp_code,
+        expires_at=datetime.utcnow() + timedelta(minutes=10)
+    )
+    db.add(new_otp)
+    await db.commit()
+    
+    # إرسال الإيميل
+    success = await send_registration_verification_email(
+        email=body.email.lower().strip(),
+        event_name=event.event_name,
+        otp_code=otp_code
+    )
+    
+    if not success:
+        raise HTTPException(status_code=500, detail="فشل إرسال رمز التحقق. يرجى التأكد من صحة البريد أو تجربة محاولة أخرى.")
+        
+    return {"message": "تم إرسال رمز التحقق بنجاح إلى بريدك الإلكتروني."}
+
 @router.post("/public/register")
 async def public_register_participant(
     body: PublicRegistrationRequest,
@@ -267,6 +412,33 @@ async def public_register_participant(
         raise HTTPException(status_code=404, detail="الفعالية غير موجودة")
     if not event.registration_enabled:
         raise HTTPException(status_code=403, detail="التسجيل مغلق لهذه الفعالية")
+    
+    # التحقق من البريد الإلكتروني بـ OTP إذا كانت الميزة مفعلة في الإعدادات
+    if event.verify_email_on_register:
+        if not email:
+            raise HTTPException(status_code=400, detail="البريد الإلكتروني مطلوب لتفعيل التحقق")
+        if not body.verification_code:
+            raise HTTPException(status_code=400, detail="رمز التحقق من البريد الإلكتروني مطلوب لإكمال التسجيل")
+            
+        from app.models.otp import RegistrationOTP
+        from datetime import datetime
+        
+        # البحث عن رمز تحقق صالح وغير مستخدم
+        otp_stmt = select(RegistrationOTP).filter(
+            RegistrationOTP.email == email.lower().strip(),
+            RegistrationOTP.event_id == event_id,
+            RegistrationOTP.otp_code == body.verification_code.strip(),
+            RegistrationOTP.is_used == False,
+            RegistrationOTP.expires_at >= datetime.utcnow()
+        )
+        otp_res = await db.execute(otp_stmt)
+        active_otp = otp_res.scalars().first()
+        
+        if not active_otp:
+            raise HTTPException(status_code=400, detail="رمز التحقق من البريد غير صالح أو منتهي الصلاحية")
+            
+        # وضع علامة مستخدم
+        active_otp.is_used = True
     
     # جلب المنظم للتحقق من الرصيد
     organizer = await db.get(User, event.created_by)
@@ -616,7 +788,7 @@ async def update_participant(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
-    """تحديث بيانات مشارك مع التحقق من الصلاحية"""
+    """تحديث بيانات مشارك مع التحقق من الصلاحية والتكرار"""
     participant = await db.get(Participant, participant_id)
     if not participant:
         raise HTTPException(status_code=404, detail="المشارك غير موجود")
@@ -625,6 +797,22 @@ async def update_participant(
     if current_user.role not in ('super_admin', 'organizer'):
         raise HTTPException(status_code=403, detail="لا صلاحية لك")
     
+    # التحقق من تكرار البريد الإلكتروني في نفس الفعالية لمشارك آخر
+    new_email = data.get("email")
+    if new_email and new_email != participant.email:
+        stmt = select(Participant).filter(
+            Participant.event_id == participant.event_id,
+            Participant.email == new_email,
+            Participant.id != participant_id
+        )
+        res = await db.execute(stmt)
+        existing = res.scalars().first()
+        if existing:
+            raise HTTPException(
+                status_code=409,
+                detail="البريد الإلكتروني مسجل مسبقاً لمشارك آخر في هذه الفعالية"
+            )
+    
     for key, value in data.items():
         if hasattr(participant, key):
             setattr(participant, key, value)
@@ -632,6 +820,71 @@ async def update_participant(
     await db.commit()
     await db.refresh(participant)
     return participant
+
+@router.post("/{participant_id}/resend-email")
+async def resend_participant_email(
+    participant_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """إعادة إرسال إيميل الترحيب والدخول الموحد للمشارك بعد تعديل بياناته"""
+    if current_user.role not in ('super_admin', 'organizer'):
+        raise HTTPException(status_code=403, detail="لا صلاحية لك")
+        
+    participant = await db.get(Participant, participant_id)
+    if not participant:
+        raise HTTPException(status_code=404, detail="المشارك غير موجود")
+        
+    if not participant.email:
+        raise HTTPException(status_code=400, detail="المشارك ليس لديه بريد إلكتروني مسجل")
+        
+    from app.routers.participant_auth import generate_otp, create_magic_token, send_unified_welcome_email
+    from app.models.otp import ParticipantOTP
+    from datetime import datetime, timedelta
+    
+    # توليد OTP جديد وحفظه
+    otp_code = generate_otp()
+    new_otp = ParticipantOTP(
+        participant_id=participant.id,
+        otp_code=otp_code,
+        expires_at=datetime.utcnow() + timedelta(minutes=15)
+    )
+    db.add(new_otp)
+    
+    magic_token = create_magic_token(participant.id)
+    magic_link = f"/portal/login?token={magic_token}"
+    
+    # تحميل تفاصيل الفعالية
+    from sqlalchemy import select
+    from app.models.event import Event
+    event_stmt = select(Event).filter(Event.id == participant.event_id)
+    event_res = await db.execute(event_stmt)
+    event = event_res.scalars().first()
+    
+    event_date = event.start_date.strftime("%Y-%m-%d") if event and event.start_date else None
+    event_location = event.venue_name if event else None
+    event_name = event.name if event else "الفعالية"
+    
+    # إرسال البريد الإلكتروني
+    success = await send_unified_welcome_email(
+        email=participant.email,
+        participant_name=participant.full_name,
+        event_name=event_name,
+        order_num=participant.order_num,
+        otp=otp_code,
+        magic_link=magic_link,
+        qr_code=participant.qr_code,
+        event_date=event_date,
+        event_location=event_location
+    )
+    
+    if not success:
+        raise HTTPException(status_code=500, detail="فشل إرسال البريد الإلكتروني. يرجى التحقق من إعدادات SMTP في النظام.")
+        
+    participant.email_status = 'sent'
+    await db.commit()
+    
+    return {"status": "success", "message": "تم إعادة إرسال تذكرة الدخول بنجاح"}
 
 async def _register_attendance_background(
     participant_id: int,
@@ -818,7 +1071,11 @@ async def undo_check_in_participant(
         raise
     except Exception as e:
         import traceback
-        error_details = traceback.f@router.post("/import")
+        error_details = traceback.format_exc()
+        logger.error(f"Error undoing check in: {error_details}")
+        raise HTTPException(status_code=500, detail="حدث خطأ أثناء التراجع عن تسجيل الحضور")
+
+@router.post("/import")
 async def import_participants(
     event_id: int,
     file: UploadFile = File(...),
@@ -1036,6 +1293,20 @@ async def register_participant(
     organizer = await db.get(User, event.created_by)
     if current_user.role != 'super_admin' and organizer.credits <= 0:
         raise HTTPException(status_code=403, detail="رصيد الاعتمادات غير كافٍ للتسجيل اليدوي")
+
+    # تحقق من التكرار بالبريد الإلكتروني في نفس الفعالية
+    if email:
+        stmt = select(Participant).filter(
+            Participant.event_id == event_id,
+            Participant.email == email
+        )
+        res = await db.execute(stmt)
+        existing_by_email = res.scalars().first()
+        if existing_by_email:
+            raise HTTPException(
+                status_code=409,
+                detail="البريد الإلكتروني مسجل مسبقاً لمشارك آخر في هذه الفعالية"
+            )
 
     order_num = f"DWN-{uuid.uuid4().hex[:8].upper()}"
     new_p = Participant(

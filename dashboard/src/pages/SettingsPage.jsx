@@ -246,6 +246,16 @@ const SettingsPage = () => {
                       />
                       <label htmlFor="registration_enabled" className="font-bold text-brand-secondary">{t('settings.general.registration_enabled', 'فتح باب التسجيل للجمهور')}</label>
                     </div>
+                     <div className="flex items-center gap-3 bg-brand-primary/10 p-4 rounded-2xl">
+                       <input 
+                         type="checkbox" 
+                         id="verify_email_on_register"
+                         checked={settings.verify_email_on_register || false}
+                         onChange={(e) => handleChange('verify_email_on_register', e.target.checked)}
+                         className="w-5 h-5 accent-brand-primary"
+                       />
+                       <label htmlFor="verify_email_on_register" className="font-bold text-brand-secondary">التحقق الصارم من البريد (إرسال OTP للتفعيل أثناء التسجيل)</label>
+                     </div>
                     <div className="flex items-center gap-3 bg-amber-500/10 p-4 rounded-2xl">
                       <input 
                         type="checkbox" 

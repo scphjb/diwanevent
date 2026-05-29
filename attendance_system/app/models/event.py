@@ -76,6 +76,7 @@ class Event(Base, TimestampMixin):
     footer_text = Column(String, default='Diwan Event Manager')
     announcement_text = Column(Text, default='')
     registration_enabled = Column(Boolean, default=False)
+    verify_email_on_register = Column(Boolean, default=False)
     
     # Relationships
     participants = relationship("Participant", back_populates="event", cascade="all, delete-orphan")

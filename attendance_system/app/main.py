@@ -60,20 +60,39 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 @app.on_event("startup")
 async def startup_db_migration():
-    """التحقق التلقائي وإضافة عمود avatar_url لجدول المستخدمين إذا لم يكن موجوداً"""
+    """التحقق التلقائي وإضافة الأعمدة الناقصة لقاعدة البيانات عند الإقلاع"""
     try:
         from sqlalchemy import text
         from app.core.database import async_engine
         async with async_engine.begin() as conn:
-            # استخدام IF NOT EXISTS لمنع الأخطاء في التعددية
-            alter_sql = text("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url VARCHAR NULL;")
-            await conn.execute(alter_sql)
+            # 1. عمود avatar_url في جدول المستخدمين
+            alter_users = text("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url VARCHAR NULL;")
+            await conn.execute(alter_users)
             logger.info("✅ Database Migration: Checked 'avatar_url' column in 'users' table.")
+            
+            # 2. عمود verify_email_on_register في جدول إعدادات الفعاليات
+            alter_events = text("ALTER TABLE event_settings ADD COLUMN IF NOT EXISTS verify_email_on_register BOOLEAN DEFAULT FALSE;")
+            await conn.execute(alter_events)
+            logger.info("✅ Database Migration: Checked 'verify_email_on_register' column in 'event_settings' table.")
+            
+            # 3. إنشاء جدول registration_otp إذا لم يكن موجوداً
+            create_otp_table = text("""
+            CREATE TABLE IF NOT EXISTS registration_otp (
+                id SERIAL PRIMARY KEY,
+                email VARCHAR(255) NOT NULL,
+                event_id INTEGER NOT NULL REFERENCES event_settings(id) ON DELETE CASCADE,
+                otp_code VARCHAR(6) NOT NULL,
+                created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT timezone('utc'::text, now()),
+                expires_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+                is_used BOOLEAN DEFAULT FALSE
+            );
+            """)
+            await conn.execute(create_otp_table)
+            logger.info("✅ Database Migration: Checked/Created 'registration_otp' table.")
     except Exception as e:
         err_msg = str(e)
         if "already exists" in err_msg or "DuplicateColumn" in err_msg:
-            # تجاهل الخطأ في حالة وجود العمود مسبقاً (نتيجة سباق العمال المتعددين)
-            logger.info("✅ Database Migration: 'avatar_url' column already exists in 'users' table.")
+            logger.info("✅ Database Migration: Columns already exist.")
         else:
             logger.error(f"❌ Database Startup Migration Failed: {e}")
 

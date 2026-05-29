@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import DashboardLayout from '../layouts/DashboardLayout';
 import { 
@@ -39,6 +39,41 @@ const ProfilePage = () => {
   // Profile States
   const [profileName, setProfileName] = useState(user?.full_name || '');
   const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState(user?.avatar_url || '');
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Check size limit (e.g. 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error(t('profile.personal.avatar_too_large', 'حجم الصورة كبير جداً، الحد الأقصى هو 5 ميجابايت'));
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res = await api.post('/auth/profile/avatar', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      const newAvatarUrl = res.data.avatar_url;
+      setAvatarUrl(newAvatarUrl);
+      
+      const updatedUser = { ...user, avatar_url: newAvatarUrl };
+      localStorage.setItem('diwan_user', JSON.stringify(updatedUser));
+      window.dispatchEvent(new Event('storage'));
+      
+      toast.success(t('profile.personal.avatar_success', 'تم تحديث الصورة الشخصية بنجاح'));
+    } catch (err) {
+      toast.error(err.response?.data?.detail || t('profile.personal.avatar_error', 'فشل رفع الصورة الشخصية'));
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
 
   const handleSaveProfile = async () => {
     if (!profileName.trim()) {
@@ -50,7 +85,7 @@ const ProfilePage = () => {
       const res = await api.put('/auth/profile', { full_name: profileName });
       toast.success(t('profile.personal.save_success', 'تم تحديث الملف الشخصي بنجاح'));
       
-      const updatedUser = { ...user, full_name: profileName };
+      const updatedUser = { ...user, full_name: profileName, avatar_url: avatarUrl };
       localStorage.setItem('diwan_user', JSON.stringify(updatedUser));
       // Dispatch a storage event to alert other components to re-read localStorage
       window.dispatchEvent(new Event('storage'));
@@ -237,12 +272,32 @@ const ProfilePage = () => {
                 <div className="space-y-8">
                   <div className="flex items-center gap-8 pb-8 border-b border-white/5">
                     <div className="relative group">
-                      <div className="w-24 h-24 rounded-full bg-brand-primary/20 flex items-center justify-center text-4xl font-bold border-2 border-dashed border-brand-primary/40">
-                        {user?.full_name?.[0] || 'A'}
-                      </div>
-                      <button className="absolute bottom-0 right-0 w-8 h-8 bg-amber-500 rounded-full flex items-center justify-center text-brand-dark shadow-lg group-hover:scale-110 transition-transform">
+                      {avatarUrl ? (
+                        <img 
+                          src={avatarUrl} 
+                          alt="Avatar" 
+                          className="w-24 h-24 rounded-full object-cover border-2 border-amber-500/30 shadow-lg"
+                        />
+                      ) : (
+                        <div className="w-24 h-24 rounded-full bg-brand-primary/20 flex items-center justify-center text-4xl font-bold border-2 border-dashed border-brand-primary/40 text-brand-secondary">
+                          {user?.full_name?.[0] || 'A'}
+                        </div>
+                      )}
+                      <button 
+                        onClick={() => document.getElementById('profile-avatar-input')?.click()}
+                        disabled={isUploadingAvatar}
+                        className="absolute bottom-0 right-0 w-8 h-8 bg-amber-500 rounded-full flex items-center justify-center text-brand-dark shadow-lg group-hover:scale-110 transition-transform disabled:opacity-50"
+                      >
                         <Camera className="w-4 h-4" />
                       </button>
+                      <input 
+                        type="file"
+                        id="profile-avatar-input"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleAvatarChange}
+                        disabled={isUploadingAvatar}
+                      />
                     </div>
                     <div>
                       <h3 className="text-xl font-bold text-white mb-1">{user?.full_name || t('profile.personal.name_fallback', 'أحمد الإدريسي')}</h3>
