@@ -118,15 +118,21 @@ self.addEventListener('fetch', (event) => {
     );
     return;
   }
-
   // 3. Navigation requests (HTML pages)
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request).catch(() => {
-        // لضمان استقرار تطبيقات الصفحة الواحدة (SPA)، نحاول أولاً إرجاع الهيكل المخزن مؤقتاً index.html
-        // هذا يسمح لـ React Router بعرض الصفحات (مثل تسجيل الدخول) دون إرسال المستخدم لصفحة الطوارئ
-        return caches.match('/index.html') || caches.match('/offline.html');
-      })
+      fetch(request)
+        .catch(() => {
+          // محاولة ثانية للتغلب على قيود المتصفح الصارمة للـ Navigation Requests عبر طلب نظيف للرابط
+          return fetch(request.url);
+        })
+        .catch(() => {
+          // إذا فشل الاتصال تماماً، نحن في وضع عدم الاتصال الحقيقي. نرجع index.html أو offline.html
+          return caches.match('/index.html').then((cachedIndex) => {
+            if (cachedIndex) return cachedIndex;
+            return caches.match('/offline.html');
+          });
+        })
     );
   }
 });

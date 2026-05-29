@@ -117,12 +117,17 @@
       const el = document.getElementById('status');
       el.className = 'status-bar status-checking';
       el.textContent = 'جاري فحص الاتصال...';
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      
       try {
         const res = await fetch('/api/v1/health', {
           method: 'GET',
           cache: 'no-store',
-          signal: AbortSignal.timeout(5000)
+          signal: controller.signal
         });
+        clearTimeout(timeoutId);
         if (res.ok || res.status === 401) {
           // 401 = الخادم يعمل لكن يطلب مصادقة — يعني الاتصال موجود
           el.className = 'status-bar status-online';
@@ -130,7 +135,9 @@
           setTimeout(() => window.location.reload(), 1000);
           return true;
         }
-      } catch (_) { /* offline */ }
+      } catch (_) { 
+        clearTimeout(timeoutId);
+      }
       el.className = 'status-bar status-offline';
       el.textContent = '❌ لا يوجد اتصال بالخادم';
       return false;
