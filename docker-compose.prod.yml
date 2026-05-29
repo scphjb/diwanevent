@@ -119,6 +119,12 @@ services:
       # عدد خلايا العمل: (2 × CPU cores) + 1
       GUNICORN_WORKERS: ${GUNICORN_WORKERS:-5}
       PYTHONUNBUFFERED: "1"
+      # التخزين السحابي Cloudflare R2
+      AWS_ACCESS_KEY: ${AWS_ACCESS_KEY}
+      AWS_SECRET_KEY: ${AWS_SECRET_KEY}
+      S3_ENDPOINT: ${S3_ENDPOINT}
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME}
+      S3_PUBLIC_URL: ${S3_PUBLIC_URL}
     volumes:
       - ./attendance_system/assets:/app/assets:ro
       - ./attendance_system/fonts:/app/fonts:ro
@@ -164,6 +170,12 @@ services:
       SMTP_PASSWORD: ${SMTP_PASSWORD}
       EMAILS_FROM_NAME: ${EMAILS_FROM_NAME:-Diwan Event}
       EMAILS_FROM_EMAIL: ${EMAILS_FROM_EMAIL}
+      # التخزين السحابي Cloudflare R2
+      AWS_ACCESS_KEY: ${AWS_ACCESS_KEY}
+      AWS_SECRET_KEY: ${AWS_SECRET_KEY}
+      S3_ENDPOINT: ${S3_ENDPOINT}
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME}
+      S3_PUBLIC_URL: ${S3_PUBLIC_URL}
     depends_on:
       redis:
         condition: service_healthy
