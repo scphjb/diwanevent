@@ -60,46 +60,79 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 @app.on_event("startup")
 async def startup_db_migration():
-    """التحقق التلقائي وإضافة الأعمدة الناقصة لقاعدة البيانات عند الإقلاع"""
-    try:
-        from sqlalchemy import text
-        from app.core.database import async_engine
-        async with async_engine.begin() as conn:
-            # 1. عمود avatar_url في جدول المستخدمين
-            alter_users = text("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url VARCHAR NULL;")
-            await conn.execute(alter_users)
-            logger.info("✅ Database Migration: Checked 'avatar_url' column in 'users' table.")
-            
-            # 2. عمود verify_email_on_register في جدول إعدادات الفعاليات
-            alter_events = text("ALTER TABLE event_settings ADD COLUMN IF NOT EXISTS verify_email_on_register BOOLEAN DEFAULT FALSE;")
-            await conn.execute(alter_events)
-            logger.info("✅ Database Migration: Checked 'verify_email_on_register' column in 'event_settings' table.")
-            
-            # 2.5 تعديل عمود otp_code في جدول participant_otp ليتسع لـ 64 حرفاً من أجل الرموز المشفرة (SHA-256)
-            alter_otp_code = text("ALTER TABLE participant_otp ALTER COLUMN otp_code TYPE VARCHAR(64);")
-            await conn.execute(alter_otp_code)
-            logger.info("✅ Database Migration: Updated 'otp_code' column size to VARCHAR(64) in 'participant_otp' table.")
-            
-            # 3. إنشاء جدول registration_otp إذا لم يكن موجوداً
-            create_otp_table = text("""
-            CREATE TABLE IF NOT EXISTS registration_otp (
-                id SERIAL PRIMARY KEY,
-                email VARCHAR(255) NOT NULL,
-                event_id INTEGER NOT NULL REFERENCES event_settings(id) ON DELETE CASCADE,
-                otp_code VARCHAR(6) NOT NULL,
-                created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT timezone('utc'::text, now()),
-                expires_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
-                is_used BOOLEAN DEFAULT FALSE
-            );
-            """)
-            await conn.execute(create_otp_table)
-            logger.info("✅ Database Migration: Checked/Created 'registration_otp' table.")
-    except Exception as e:
-        err_msg = str(e)
-        if "already exists" in err_msg or "DuplicateColumn" in err_msg:
-            logger.info("✅ Database Migration: Columns already exist.")
-        else:
-            logger.error(f"❌ Database Startup Migration Failed: {e}")
+    """التحقق التلقائي وإضافة الأعمدة الناقصة لقاعدة البيانات عند الإقلاع بشكل معزول وآمن"""
+    import asyncio
+    from sqlalchemy import text
+    from app.core.database import async_engine
+
+    print("🚀 Starting Database Startup Migration...", flush=True)
+    
+    # 1. محاولة الاتصال بقاعدة البيانات مع آلية إعادة المحاولة (Retry Mechanism)
+    for attempt in range(1, 6):
+        try:
+            async with async_engine.begin() as conn:
+                # اختبار الاتصال
+                await conn.execute(text("SELECT 1;"))
+                print(f"📡 Database connection successful on attempt {attempt}.", flush=True)
+                break
+        except Exception as conn_err:
+            print(f"⚠️ Database connection attempt {attempt} failed: {conn_err}. Retrying in 2 seconds...", flush=True)
+            if attempt == 5:
+                print("❌ Fatal: Could not connect to database for migrations.", flush=True)
+                return
+            await asyncio.sleep(2)
+
+    # 2. تنفيذ التعديلات خطوة بخطوة بشكل معزول تماماً لضمان عدم توقف الخطوات الأخرى
+    async def run_query(query_str, success_msg):
+        try:
+            async with async_engine.begin() as conn:
+                await conn.execute(text(query_str))
+            print(f"✅ {success_msg}", flush=True)
+            logger.info(f"✅ {success_msg}")
+        except Exception as query_err:
+            err_str = str(query_err)
+            if "already exists" in err_str or "DuplicateColumn" in err_str:
+                print(f"ℹ️ {success_msg} (Already exists)", flush=True)
+            else:
+                print(f"❌ Migration Error during [{success_msg}]: {query_err}", flush=True)
+                logger.error(f"❌ Migration Error during [{success_msg}]: {query_err}")
+
+    # الخطوة 1: إضافة عمود avatar_url في جدول المستخدمين
+    await run_query(
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url VARCHAR NULL;",
+        "Checked 'avatar_url' column in 'users' table."
+    )
+    
+    # الخطوة 2: إضافة عمود verify_email_on_register في جدول إعدادات الفعاليات
+    await run_query(
+        "ALTER TABLE event_settings ADD COLUMN IF NOT EXISTS verify_email_on_register BOOLEAN DEFAULT FALSE;",
+        "Checked 'verify_email_on_register' column in 'event_settings' table."
+    )
+    
+    # الخطوة 3: تعديل عمود otp_code في جدول participant_otp ليتسع لـ 64 حرفاً
+    await run_query(
+        "ALTER TABLE participant_otp ALTER COLUMN otp_code TYPE VARCHAR(64);",
+        "Updated 'otp_code' column size to VARCHAR(64) in 'participant_otp' table."
+    )
+    
+    # الخطوة 4: إنشاء جدول registration_otp إذا لم يكن موجوداً
+    create_otp_table_str = """
+    CREATE TABLE IF NOT EXISTS registration_otp (
+        id SERIAL PRIMARY KEY,
+        email VARCHAR(255) NOT NULL,
+        event_id INTEGER NOT NULL REFERENCES event_settings(id) ON DELETE CASCADE,
+        otp_code VARCHAR(6) NOT NULL,
+        created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT timezone('utc'::text, now()),
+        expires_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+        is_used BOOLEAN DEFAULT FALSE
+    );
+    """
+    await run_query(
+        create_otp_table_str,
+        "Checked/Created 'registration_otp' table."
+    )
+
+    print("🏁 Database Startup Migration finished.", flush=True)
 
 # --- React Dashboard Serving (SPA Support) ---
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
