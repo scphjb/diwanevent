@@ -77,12 +77,15 @@ const detectInAppBrowser = () => {
   // Telegram على iOS يُضيف "Telegram" في UA
   const isTelegram = /Telegram/i.test(ua);
 
+  const hasEmailOrigin = window.location.search.includes('origin=email');
+
   const isInApp =
-    matchesKnownApp || isAndroidWebView || isIOSWebView || isTelegram;
+    matchesKnownApp || isAndroidWebView || isIOSWebView || isTelegram || (hasEmailOrigin && (isIOS || isAndroid));
 
   // تحديد نوع التطبيق لتخصيص التعليمات
   let appName = 'التطبيق الحالي';
-  if (/WhatsApp/i.test(ua))    appName = 'واتساب';
+  if (hasEmailOrigin)           appName = 'تطبيق البريد (Gmail/Outlook)';
+  else if (/WhatsApp/i.test(ua))    appName = 'واتساب';
   else if (/Telegram/i.test(ua)) appName = 'تيليغرام';
   else if (/FBAN|FBAV/i.test(ua)) appName = 'فيسبوك';
   else if (/Instagram/i.test(ua)) appName = 'إنستغرام';
@@ -300,6 +303,16 @@ const BrowserGate = () => {
     setDetection(result);
 
     if (result.isInApp) {
+      // إذا كان أندرويد وتم الفتح من بريد إلكتروني، نقوم بتحويل تلقائي إلى Chrome لراحة المستخدم
+      if (result.isAndroid && window.location.search.includes('origin=email')) {
+        const url = window.location.href;
+        // استبدال origin=email بـ origin=chrome لمنع التكرار اللانهائي
+        const cleanUrl = url.replace('origin=email', 'origin=chrome');
+        const intentUrl = `intent://${cleanUrl.replace(/^https?:\/\//, '')}#Intent;scheme=https;package=com.android.chrome;end`;
+        window.location.href = intentUrl;
+        return;
+      }
+
       // تأخير بسيط لضمان تحميل الصفحة قبل الحجب
       setTimeout(() => setVisible(true), 400);
     }

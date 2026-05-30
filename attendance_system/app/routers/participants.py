@@ -531,7 +531,7 @@ async def public_register_participant(
             await db.commit()
 
             frontend_url = _get_frontend_url()
-            magic_link = f"{frontend_url}/p/{existing_by_name.event_id}/{existing_by_name.qr_code}"
+            magic_link = f"{frontend_url}/p/{existing_by_name.event_id}/{existing_by_name.qr_code}?origin=email"
 
             background_tasks.add_task(
                 send_unified_welcome_email,
@@ -601,7 +601,7 @@ async def public_register_participant(
         await db.commit()
 
         frontend_url = _get_frontend_url()
-        magic_link = f"{frontend_url}/p/{participant.event_id}/{participant.qr_code}"
+        magic_link = f"{frontend_url}/p/{participant.event_id}/{participant.qr_code}?origin=email"
 
         background_tasks.add_task(
             send_unified_welcome_email,
@@ -782,7 +782,7 @@ async def bulk_activate_participants(
             db.add(new_otp)
             
             frontend_url = _get_frontend_url()
-            magic_link = f"{frontend_url}/p/{p.event_id}/{p.qr_code}"
+            magic_link = f"{frontend_url}/p/{p.event_id}/{p.qr_code}?origin=email"
 
             event = await db.get(Event, p.event_id)
             
@@ -877,7 +877,7 @@ async def resend_participant_email(
     db.add(new_otp)
     
     frontend_url = _get_frontend_url()
-    magic_link = f"{frontend_url}/p/{participant.event_id}/{participant.qr_code}"
+    magic_link = f"{frontend_url}/p/{participant.event_id}/{participant.qr_code}?origin=email"
     
     # تحميل تفاصيل الفعالية
     from sqlalchemy import select
@@ -1224,7 +1224,7 @@ async def import_participants(
                 })
                 
                 frontend_url = _get_frontend_url()
-                magic_link = f"{frontend_url}/p/{event_obj.id if event_obj else 0}/{p_qr}"
+                magic_link = f"{frontend_url}/p/{event_obj.id if event_obj else 0}/{p_qr}?origin=email"
                 
                 emails_to_notify.append({
                     "email": p_email,
@@ -1382,7 +1382,7 @@ async def register_participant(
         await db.refresh(new_p)
         
         frontend_url = _get_frontend_url()
-        magic_link = f"{frontend_url}/p/{new_p.event_id}/{new_p.qr_code}"
+        magic_link = f"{frontend_url}/p/{new_p.event_id}/{new_p.qr_code}?origin=email"
 
         background_tasks.add_task(
             send_unified_welcome_email,

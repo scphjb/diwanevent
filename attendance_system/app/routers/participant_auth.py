@@ -382,7 +382,7 @@ async def request_otp(body: OTPRequest, db: AsyncSession = Depends(get_db)):
     frontend_url = settings.FRONTEND_URL
     if "localhost" in frontend_url and "localhost" not in settings.APP_DOMAIN:
         frontend_url = settings.APP_DOMAIN
-    magic_link = f"{frontend_url}/p/{participant.event_id}/{participant.qr_code}"
+    magic_link = f"{frontend_url}/p/{participant.event_id}/{participant.qr_code}?origin=email"
 
     # 8. إرسال البريد الموحد
     sent = await send_unified_welcome_email(

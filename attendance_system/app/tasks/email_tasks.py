@@ -69,7 +69,7 @@ def send_welcome_email_task(self, participant_data: Dict[str, Any]) -> Dict:
                 from app.core.config import settings
                 magic_token = create_magic_token(participant_data["id"])
                 frontend_url = settings.FRONTEND_URL
-                magic_link = f"{frontend_url}/participant-login?token={magic_token}"
+                magic_link = f"{frontend_url}/participant-login?token={magic_token}&origin=email"
 
                 # 3. إرسال البريد الموحد غير المتزامن
                 await send_unified_welcome_email(
