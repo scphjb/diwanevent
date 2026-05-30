@@ -886,9 +886,7 @@ async def resend_participant_email(
     event_res = await db.execute(event_stmt)
     event = event_res.scalars().first()
     
-    event_date = event.start_date.strftime("%Y-%m-%d") if event and event.start_date else None
-    event_location = event.venue_name if event else None
-    event_name = event.name if event else "الفعالية"
+    event_name = event.event_name if event else "الفعالية"
     
     # إرسال البريد الإلكتروني
     success = await send_unified_welcome_email(
@@ -899,8 +897,7 @@ async def resend_participant_email(
         otp=otp_code,
         magic_link=magic_link,
         qr_code=participant.qr_code,
-        event_date=event_date,
-        event_location=event_location
+        event_id=participant.event_id
     )
     
     if not success:

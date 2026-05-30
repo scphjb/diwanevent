@@ -81,7 +81,8 @@ def send_welcome_email_task(self, participant_data: Dict[str, Any]) -> Dict:
                     magic_link=magic_link,
                     qr_code=participant_data.get("qr_code"),
                     event_date=participant_data.get("event_date"),
-                    event_location=participant_data.get("event_location")
+                    event_location=participant_data.get("event_location"),
+                    event_id=participant_data.get("event_id")
                 )
 
                 logger.info(
@@ -184,7 +185,8 @@ def send_bulk_welcome_emails_task(self, recipients: List[Dict[str, Any]], event_
                     magic_link=recipient["magic_link"],
                     qr_code=recipient["qr_code"],
                     event_date=recipient.get("event_date"),
-                    event_location=recipient.get("event_location")
+                    event_location=recipient.get("event_location"),
+                    event_id=event_id
                 )
             )
             loop.close()
