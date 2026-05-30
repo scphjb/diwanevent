@@ -8,15 +8,14 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icons/*.png', 'offline.html', '*.png'],
+      includeAssets: ['icons/*.png', '*.png'],
       manifest: false, // نستخدم manifest.json الخارجي في /public
       workbox: {
         offlineGoogleAnalytics: false,
         // للـ SPA: أعد توجيه جميع مسارات React Router إلى index.html
-        // هذا يمنع ظهور offline.html لمسارات مثل /p/:eid/:token وهي متصفح بالتطبيق
         navigateFallback: '/index.html',
-        // استثناء مسارات API والـ WebSocket وصفحة offline من الـ fallback
-        navigateFallbackDenylist: [/^\/api/, /^\/ws/, /\/offline\.html/],
+        // استثناء مسارات API والـ WebSocket من الـ fallback
+        navigateFallbackDenylist: [/^\/api/, /^\/ws/],
         runtimeCaching: [
           {
             // API calls — Network First مع مهلة 4 ثوانٍ للتوافق مع useOfflineStatus ping

@@ -1,12 +1,11 @@
 // service-worker.js - Diwan Event Platform
-const CACHE_VERSION = 'diwan-static-v6';
-const API_CACHE = 'diwan-api-v6';
+const CACHE_VERSION = 'diwan-static-v7';
+const API_CACHE = 'diwan-api-v7';
 
 // Static files cache pool
 const STATIC_ASSETS = [
   '/',
   '/index.html',
-  '/offline.html',
   '/manifest.json'
 ];
 
@@ -139,9 +138,7 @@ self.addEventListener('fetch', (event) => {
                       || await caches.match('/index.html')
                       || await caches.match('/');
           if (cached) return cached;
-
-          // حالة استثنائية جداً: لا كاش ولا شبكة — أعرض offline.html
-          return caches.match('/offline.html');
+          throw new Error('Offline and no cached index available');
         })
     );
     return;
