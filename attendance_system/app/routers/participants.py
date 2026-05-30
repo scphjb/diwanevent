@@ -1100,6 +1100,22 @@ async def undo_check_in_participant(
         logger.error(f"Error undoing check in: {error_details}")
         raise HTTPException(status_code=500, detail="حدث خطأ أثناء التراجع عن تسجيل الحضور")
 
+@router.post("/analyze-import")
+async def analyze_import(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_active_user),
+    _: None = Depends(require_permission("participant:manage"))
+):
+    import io
+    import pandas as pd
+    try:
+        contents = await file.read()
+        df = pd.read_excel(io.BytesIO(contents), engine='openpyxl')
+        columns = [str(col).strip() for col in df.columns]
+        return {"columns": columns}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"فشل تحليل ملف الإكسيل: {str(e)}")
+
 @router.post("/import")
 async def import_participants(
     event_id: int,

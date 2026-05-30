@@ -31,10 +31,17 @@ const useAttendanceSocket = (eventId, onMessage) => {
                 }
             }
 
+            const token = localStorage.getItem('diwan_token');
+            const participantToken = localStorage.getItem('participant_token');
+            const queryParams = [];
+            if (token) queryParams.push(`token=${token}`);
+            if (participantToken) queryParams.push(`participant_token=${participantToken}`);
+            const queryString = queryParams.length > 0 ? `?${queryParams.join('&')}` : '';
+
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
             const defaultWsUrl = `${protocol}//${window.location.host}`;
             const wsBaseUrl = import.meta.env.VITE_WS_URL || defaultWsUrl;
-            const wsUrl = `${wsBaseUrl}/ws/${eventId}`;
+            const wsUrl = `${wsBaseUrl}/ws/${eventId}${queryString}`;
             ws = new WebSocket(wsUrl);
             wsRef.current = ws;
 
