@@ -38,7 +38,15 @@ const LaunchPage = () => {
         return;
       }
 
-      // 3. لا شيء → صفحة الهبوط
+      // 3. هل نحن في تطبيق PWA مستقل (Standalone Mode)؟
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+      if (isStandalone) {
+        // في التطبيق المستقل PWA، المشارك هو المستهدف الرئيسي. نوجهه لصفحة الدخول المخصصة للمشاركين.
+        navigate('/participant-login', { replace: true });
+        return;
+      }
+
+      // 4. لا شيء → صفحة الهبوط
       navigate('/', { replace: true });
     };
 

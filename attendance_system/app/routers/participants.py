@@ -543,7 +543,8 @@ async def public_register_participant(
                 magic_link=magic_link,
                 qr_code=existing_by_name.qr_code,
                 event_date=str(event.event_date) if event.event_date else None,
-                event_location=event.location
+                event_location=event.location,
+                event_id=existing_by_name.event_id
             )
         
         await db.commit()
@@ -613,7 +614,8 @@ async def public_register_participant(
             magic_link=magic_link,
             qr_code=participant.qr_code,
             event_date=str(event.event_date) if event.event_date else None,
-            event_location=event.location
+            event_location=event.location,
+            event_id=participant.event_id
         )
 
     
@@ -796,7 +798,8 @@ async def bulk_activate_participants(
                 magic_link=magic_link,
                 qr_code=p.qr_code,
                 event_date=str(event.event_date) if event and event.event_date else None,
-                event_location=event.location if event else None
+                event_location=event.location if event else None,
+                event_id=p.event_id
             )
 
     await db.commit()
@@ -1235,7 +1238,8 @@ async def import_participants(
                     "magic_link": magic_link,
                     "qr_code": p_qr,
                     "event_date": str(event_obj.event_date) if event_obj and event_obj.event_date else None,
-                    "event_location": event_obj.location if event_obj else None
+                    "event_location": event_obj.location if event_obj else None,
+                    "event_id": event_obj.id if event_obj else None
                 })
                 
         if otps_to_insert:
@@ -1283,7 +1287,8 @@ async def _send_welcome_emails_batch(recipients: list, batch_size: int = 10, del
                     magic_link=recipient["magic_link"],
                     qr_code=recipient["qr_code"],
                     event_date=recipient["event_date"],
-                    event_location=recipient["event_location"]
+                    event_location=recipient["event_location"],
+                    event_id=recipient.get("event_id")
                 )
             except Exception as e:
                 logger.error(f"Fallback Email failed for {recipient.get('email')}: {e}")
@@ -1394,7 +1399,8 @@ async def register_participant(
             magic_link=magic_link,
             qr_code=new_p.qr_code,
             event_date=str(event.event_date) if event and event.event_date else None,
-            event_location=event.location if event else None
+            event_location=event.location if event else None,
+            event_id=new_p.event_id
         )
     
     return new_p

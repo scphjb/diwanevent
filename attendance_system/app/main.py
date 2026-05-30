@@ -75,6 +75,11 @@ async def startup_db_migration():
             await conn.execute(alter_events)
             logger.info("✅ Database Migration: Checked 'verify_email_on_register' column in 'event_settings' table.")
             
+            # 2.5 تعديل عمود otp_code في جدول participant_otp ليتسع لـ 64 حرفاً من أجل الرموز المشفرة (SHA-256)
+            alter_otp_code = text("ALTER TABLE participant_otp ALTER COLUMN otp_code TYPE VARCHAR(64);")
+            await conn.execute(alter_otp_code)
+            logger.info("✅ Database Migration: Updated 'otp_code' column size to VARCHAR(64) in 'participant_otp' table.")
+            
             # 3. إنشاء جدول registration_otp إذا لم يكن موجوداً
             create_otp_table = text("""
             CREATE TABLE IF NOT EXISTS registration_otp (

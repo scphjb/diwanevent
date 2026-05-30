@@ -13,7 +13,7 @@ class ParticipantOTP(Base):
     id = Column(Integer, primary_key=True, index=True)
     participant_id = Column(Integer, ForeignKey("participants.id", ondelete="CASCADE"), nullable=False)
     email = Column(String, nullable=False, index=True)
-    otp_code = Column(String(6), nullable=False)
+    otp_code = Column(String(64), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     expires_at = Column(DateTime, nullable=False)
     is_used = Column(Boolean, default=False)
