@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageSquare, Heart, Share2, Sparkles, Trash2, Edit2, X, Search } from 'lucide-react';
+import { MessageSquare, Heart, Share2, Sparkles, Trash2, Edit2, X, Search, ArrowRight, LayoutDashboard } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import useAttendanceSocket from '../hooks/useAttendanceSocket';
 import api from '../services/api';
 import eventService from '../services/eventService';
@@ -412,8 +413,15 @@ const SocialWallPage = () => {
             <p className="text-brand-secondary/40 font-bold uppercase tracking-widest text-xs mt-1">حائط التواصل • Powered by Diwan Event</p>
           </div>
         </div>
-        <div className="text-right">
-          <span className="px-6 py-2 rounded-full bg-brand-primary/10 text-brand-secondary border border-brand-primary/20 font-bold">
+        <div className="flex items-center gap-4">
+          <Link
+            to="/dashboard"
+            className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-white/5 border border-white/10 text-white font-bold hover:bg-white/10 hover:border-white/20 transition-all text-sm shadow-lg shadow-black/20"
+          >
+            <ArrowRight className="w-4 h-4 rtl:rotate-0 ltr:rotate-180 text-brand-secondary/60" />
+            <span>العودة للوحة التحكم</span>
+          </Link>
+          <span className="px-6 py-3 rounded-2xl bg-brand-primary/10 text-brand-secondary border border-brand-primary/20 font-bold text-sm shadow-lg shadow-brand-primary/5">
             مباشر الآن
           </span>
         </div>
