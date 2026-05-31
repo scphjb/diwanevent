@@ -47,49 +47,53 @@ def send_welcome_email_task(self, participant_data: Dict[str, Any]) -> Dict:
         from sqlalchemy import delete
 
         async def _run():
-            async with AsyncSessionLocal() as db:
-                # 1. توليد الـ OTP للمشارك لحفظ الأمن ودخول البوابة
-                otp_code = generate_otp()
-                
-                # حذف أي OTP سابق لتجنب التكرار
-                await db.execute(
-                    delete(ParticipantOTP).filter(ParticipantOTP.participant_id == participant_data["id"])
-                )
-                
-                new_otp = ParticipantOTP(
-                    participant_id=participant_data["id"],
-                    email=participant_data["email"],
-                    otp_code=hash_otp(otp_code),  # تشفير الرمز لحفظ الأمن وتفادي عدم التطابق
-                    expires_at=datetime.utcnow() + timedelta(minutes=60)
-                )
-                db.add(new_otp)
-                await db.commit()
+            try:
+                async with AsyncSessionLocal() as db:
+                    # 1. توليد الـ OTP للمشارك لحفظ الأمن ودخول البوابة
+                    otp_code = generate_otp()
+                    
+                    # حذف أي OTP سابق لتجنب التكرار
+                    await db.execute(
+                        delete(ParticipantOTP).filter(ParticipantOTP.participant_id == participant_data["id"])
+                    )
+                    
+                    new_otp = ParticipantOTP(
+                        participant_id=participant_data["id"],
+                        email=participant_data["email"],
+                        otp_code=hash_otp(otp_code),  # تشفير الرمز لحفظ الأمن وتفادي عدم التطابق
+                        expires_at=datetime.utcnow() + timedelta(minutes=60)
+                    )
+                    db.add(new_otp)
+                    await db.commit()
 
-                # 2. توليد Magic Link للبوابة الرقمية بنقرة واحدة
-                from app.core.config import settings
-                magic_token = create_magic_token(participant_data["id"])
-                frontend_url = settings.FRONTEND_URL
-                magic_link = f"{frontend_url}/participant-login?token={magic_token}&origin=email"
+                    # 2. توليد Magic Link للبوابة الرقمية بنقرة واحدة
+                    from app.core.config import settings
+                    magic_token = create_magic_token(participant_data["id"])
+                    frontend_url = settings.FRONTEND_URL
+                    magic_link = f"{frontend_url}/participant-login?token={magic_token}&origin=email"
 
-                # 3. إرسال البريد الموحد غير المتزامن
-                await send_unified_welcome_email(
-                    email=participant_data["email"],
-                    participant_name=participant_data["full_name"],
-                    event_name=participant_data.get("event_name", "Diwan Event"),
-                    order_num=participant_data.get("order_num", ""),
-                    otp=otp_code,
-                    magic_link=magic_link,
-                    qr_code=participant_data.get("qr_code"),
-                    event_date=participant_data.get("event_date"),
-                    event_location=participant_data.get("event_location"),
-                    event_id=participant_data.get("event_id")
-                )
+                    # 3. إرسال البريد الموحد غير المتزامن
+                    await send_unified_welcome_email(
+                        email=participant_data["email"],
+                        participant_name=participant_data["full_name"],
+                        event_name=participant_data.get("event_name", "Diwan Event"),
+                        order_num=participant_data.get("order_num", ""),
+                        otp=otp_code,
+                        magic_link=magic_link,
+                        qr_code=participant_data.get("qr_code"),
+                        event_date=participant_data.get("event_date"),
+                        event_location=participant_data.get("event_location"),
+                        event_id=participant_data.get("event_id")
+                    )
 
-                logger.info(
-                    f"[EMAIL OK] {participant_data['email']} — "
-                    f"{participant_data.get('order_num', '')}"
-                )
-                return {"status": "sent", "email": participant_data["email"], "otp": otp_code}
+                    logger.info(
+                        f"[EMAIL OK] {participant_data['email']} — "
+                        f"{participant_data.get('order_num', '')}"
+                    )
+                    return {"status": "sent", "email": participant_data["email"], "otp": otp_code}
+            finally:
+                from app.core.database import async_engine
+                await async_engine.dispose()
 
         return asyncio.run(_run())
 

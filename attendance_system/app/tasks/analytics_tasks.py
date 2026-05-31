@@ -26,49 +26,53 @@ def precompute_analytics_task() -> str:
     logger.info("[ANALYTICS] بدء حساب الإحصائيات الدورية مسبقاً...")
     
     async def _run():
-        async with AsyncSessionLocal() as db:
-            from app.models.others import PollVote
-            from app.models.participant import Participant
-            from sqlalchemy import func, select
-            
-            # 1. حساب إجمالي المشاركين والتصويتات
-            stmt_p = select(func.count(Participant.id))
-            stmt_v = select(func.count(PollVote.id))
-            
-            res_p = await db.execute(stmt_p)
-            res_v = await db.execute(stmt_v)
-            
-            total_participants = res_p.scalar() or 0
-            total_votes = res_v.scalar() or 0
-            
-            # 2. حساب المشاركين لكل بلدية أو منظمة (Organization)
-            stmt_org = select(
-                Participant.organization,
-                func.count(Participant.id).label("count")
-            ).group_by(Participant.organization)
-            
-            res_org = await db.execute(stmt_org)
-            org_stats = res_org.all()
-            
-            org_data = {org: count for org, count in org_stats if org}
-            
-            # 3. حفظ البيانات في Redis
-            import redis
-            import os
-            redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
-            r = redis.from_url(redis_url)
-            
-            analytics_payload = {
-                "total_participants": total_participants,
-                "total_votes": total_votes,
-                "organizations": org_data,
-                "updated_at": time_now_str()
-            }
-            
-            # حفظ Payload التحليلات لمدة ساعة واحدة
-            r.set("diwan_precomputed_analytics", json.dumps(analytics_payload), ex=3600)
-            logger.info(f"[ANALYTICS] تم تحديث الكاش بنجاح. إجمالي المشاركين: {total_participants}، إجمالي الأصوات: {total_votes}")
-            return "Success"
+        try:
+            async with AsyncSessionLocal() as db:
+                from app.models.others import PollVote
+                from app.models.participant import Participant
+                from sqlalchemy import func, select
+                
+                # 1. حساب إجمالي المشاركين والتصويتات
+                stmt_p = select(func.count(Participant.id))
+                stmt_v = select(func.count(PollVote.id))
+                
+                res_p = await db.execute(stmt_p)
+                res_v = await db.execute(stmt_v)
+                
+                total_participants = res_p.scalar() or 0
+                total_votes = res_v.scalar() or 0
+                
+                # 2. حساب المشاركين لكل بلدية أو منظمة (Organization)
+                stmt_org = select(
+                    Participant.organization,
+                    func.count(Participant.id).label("count")
+                ).group_by(Participant.organization)
+                
+                res_org = await db.execute(stmt_org)
+                org_stats = res_org.all()
+                
+                org_data = {org: count for org, count in org_stats if org}
+                
+                # 3. حفظ البيانات في Redis
+                import redis
+                import os
+                redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+                r = redis.from_url(redis_url)
+                
+                analytics_payload = {
+                    "total_participants": total_participants,
+                    "total_votes": total_votes,
+                    "organizations": org_data,
+                    "updated_at": time_now_str()
+                }
+                
+                # حفظ Payload التحليلات لمدة ساعة واحدة
+                r.set("diwan_precomputed_analytics", json.dumps(analytics_payload), ex=3600)
+                logger.info(f"[ANALYTICS] تم تحديث الكاش بنجاح. إجمالي المشاركين: {total_participants}، إجمالي الأصوات: {total_votes}")
+                return "Success"
+        finally:
+            from app.core.database import async_engine
+            await async_engine.dispose()
             
     try:
         return asyncio.run(_run())
