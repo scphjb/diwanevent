@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   X, HelpCircle, Book, MessageCircle, Phone, Mail, 
   ChevronLeft, ChevronRight, Search, Palette, Users, Award, QrCode,
-  Mic, Heart, BarChart2, Cpu, Monitor, Globe, UserCheck, ShieldAlert, FileText, Home, LayoutDashboard
+  Mic, Heart, BarChart2, Cpu, Monitor, Globe, UserCheck, ShieldAlert, FileText, Home, LayoutDashboard, Calendar
 } from 'lucide-react';
 import { Button } from '../ui/Button';
 
