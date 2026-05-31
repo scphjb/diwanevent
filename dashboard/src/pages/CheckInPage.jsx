@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import DashboardLayout from '../layouts/DashboardLayout';
 import { 
   Search, 
@@ -22,9 +22,11 @@ import { cn } from '../utils/cn';
 import { Html5QrcodeScanner } from "html5-qrcode";
 import { useEvent } from '../context/EventContext';
 import { useTranslation } from 'react-i18next';
+import toast from 'react-hot-toast';
 
 const CheckInPage = () => {
   const { t } = useTranslation();
+  const lastScanned = useRef({ code: '', time: 0 });
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -36,6 +38,10 @@ const CheckInPage = () => {
   const [halls, setHalls] = useState([]);
   const [selectedGate, setSelectedGate] = useState('Main Hall');
   const { selectedEventId: eventId } = useEvent();
+  
+  const handleCloseScanner = React.useCallback(() => {
+    setShowScanner(false);
+  }, []);
 
   useEffect(() => {
     const fetchHalls = async () => {
@@ -70,19 +76,59 @@ const CheckInPage = () => {
   }, [showScanner]);
 
   async function onScanSuccess(decodedText) {
+    const now = Date.now();
+    if (lastScanned.current.code === decodedText && now - lastScanned.current.time < 3000) {
+      // Cooldown to prevent duplicate consecutive scans of the same QR code
+      return;
+    }
+    lastScanned.current = { code: decodedText, time: now };
+
     try {
-      setShowScanner(false);
       setLoading(true);
       // Try to find participant by QR
       const data = await participantService.getParticipantByQR(decodedText, eventId);
       if (data) {
-        setResults([data]);
+        setResults(prev => {
+          const filtered = prev.filter(p => p.id !== data.id);
+          return [data, ...filtered];
+        });
         setQuery(data.full_name);
         // Auto check-in if found
-        handleCheckIn(data);
+        await handleCheckIn(data);
+
+        // Visual success audio indicator (optional, elegant)
+        const audio = new Audio('/assets/sounds/notification.mp3');
+        audio.play().catch(() => {});
+
+        // Show premium toast
+        toast.success(t('checkin.walkin_success', '✅ تم تسجيل {{name}} وتأكيد حضوره', { name: data.full_name }), {
+          duration: 3500,
+          position: 'top-center',
+          style: {
+            background: '#0D1527',
+            color: '#38BDF8',
+            border: '1px solid rgba(42, 100, 236, 0.2)',
+            borderRadius: '24px',
+            padding: '16px 24px',
+            fontSize: '15px',
+            fontWeight: 'bold',
+          }
+        });
       }
     } catch (err) {
-      alert(t('checkin.invalid_qr', "رمز غير صالح أو مشارك غير موجود"));
+      toast.error(t('checkin.invalid_qr', "رمز غير صالح أو مشارك غير موجود"), {
+        duration: 3000,
+        position: 'top-center',
+        style: {
+          background: '#0D1527',
+          color: '#ef4444',
+          border: '1px solid rgba(239, 68, 68, 0.2)',
+          borderRadius: '24px',
+          padding: '16px 24px',
+          fontSize: '15px',
+          fontWeight: 'bold',
+        }
+      });
     } finally {
       setLoading(false);
     }
@@ -315,7 +361,7 @@ const CheckInPage = () => {
         </AnimatePresence>
       </div>
 
-      <ScannerModal isOpen={showScanner} onClose={() => setShowScanner(false)} />
+      <ScannerModal isOpen={showScanner} onClose={handleCloseScanner} />
 
       {/* Walk-in Modal — متعدد الأدوار */}
       {showWalkinModal && (
@@ -430,7 +476,7 @@ const CheckInPage = () => {
   );
 };
 
-const ScannerModal = ({ isOpen, onClose }) => {
+const ScannerModal = React.memo(({ isOpen, onClose }) => {
   const { t } = useTranslation();
   if (!isOpen) return null;
   return (
@@ -449,6 +495,6 @@ const ScannerModal = ({ isOpen, onClose }) => {
       </motion.div>
     </div>
   );
-};
+});
 
 export default CheckInPage;

@@ -60,6 +60,7 @@ async def list_public_events(
             "app_subtitle": e.app_subtitle,
             "primary_color": e.primary_color or "#D4AF37",
             "logo_url": e.logo_url,
+            "map_url": getattr(e, "map_url", "") or "",
         }
         for e in events
     ]
@@ -86,7 +87,7 @@ async def get_public_event(
         "location": event.location,
         "registration_enabled": event.registration_enabled,
         "primary_color": event.primary_color or "#D4AF37",
-        "secondary_color": event.secondary_color or "#022C22",
+        "secondary_color": event.secondary_color or "#050B18",
         "logo_url": event.logo_url,
         "app_name": event.app_name or "Diwan Event",
         "app_subtitle": event.app_subtitle,
@@ -98,6 +99,7 @@ async def get_public_event(
         "show_leaderboard": event.show_leaderboard,
         "show_docs": event.show_docs,
         "show_qa": event.show_qa,
+        "map_url": getattr(event, "map_url", "") or "",
     }
 
     # بيانات إضافية للتسجيل — فقط إذا كان مفتوحاً
@@ -294,7 +296,7 @@ async def get_public_event_settings(
     return {
         "welcome_title": event.welcome_title or "بوابة الخدمة الذاتية",
         "welcome_subtitle": event.welcome_subtitle or "ابحث عن بياناتك وحمل بطاقتك",
-        "primary_color": event.primary_color or "#10b981",
+        "primary_color": event.primary_color or "#D4AF37",
         "registration_enabled": event.registration_enabled
     }
 

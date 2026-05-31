@@ -109,6 +109,12 @@ async def startup_db_migration():
         "Checked 'verify_email_on_register' column in 'event_settings' table."
     )
     
+    # الخطوة 2.5: إضافة عمود map_url في جدول إعدادات الفعاليات
+    await run_query(
+        "ALTER TABLE event_settings ADD COLUMN IF NOT EXISTS map_url TEXT DEFAULT '';",
+        "Checked 'map_url' column in 'event_settings' table."
+    )
+    
     # الخطوة 3: تعديل عمود otp_code في جدول participant_otp ليتسع لـ 64 حرفاً
     await run_query(
         "ALTER TABLE participant_otp ALTER COLUMN otp_code TYPE VARCHAR(64);",

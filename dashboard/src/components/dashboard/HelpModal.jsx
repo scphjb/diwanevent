@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, HelpCircle, Book, MessageCircle, Phone, Mail } from 'lucide-react';
@@ -42,7 +42,7 @@ const HelpModal = ({ isOpen, onClose }) => {
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative w-full max-w-lg bg-[#032e24] border border-white/10 rounded-[24px] shadow-2xl p-8 backdrop-blur-2xl overflow-hidden"
+            className="relative w-full max-w-lg bg-[#0D1527] border border-white/10 rounded-[24px] shadow-2xl p-8 backdrop-blur-2xl overflow-hidden"
           >
             <div className="absolute top-0 right-0 w-32 h-32 bg-brand-primary/5 rounded-full blur-3xl" />
             <div className="flex items-center justify-between mb-8">
@@ -81,9 +81,9 @@ const HelpModal = ({ isOpen, onClose }) => {
 
             <div className="mt-10 pt-8 border-t border-white/5 text-center">
               <p className="text-[10px] uppercase tracking-widest text-brand-secondary/30 font-bold mb-4">{t('common.help.email_contact')}</p>
-              <a href="mailto:support@diwan.com" className="text-brand-secondary font-black hover:underline flex items-center justify-center gap-2">
+              <a href="mailto:support@e-diwan.net" className="text-brand-secondary font-black hover:underline flex items-center justify-center gap-2">
                 <Mail className="w-4 h-4" />
-                support@diwan.com
+                support@e-diwan.net
               </a>
             </div>
           </motion.div>

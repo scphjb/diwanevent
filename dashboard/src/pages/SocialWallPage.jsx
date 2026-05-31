@@ -1,6 +1,6 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageSquare, Heart, Share2, Sparkles, Trash2, Edit2, X } from 'lucide-react';
+import { MessageSquare, Heart, Share2, Sparkles, Trash2, Edit2, X, Search } from 'lucide-react';
 import useAttendanceSocket from '../hooks/useAttendanceSocket';
 import api from '../services/api';
 import eventService from '../services/eventService';
@@ -169,7 +169,7 @@ const CommentModal = ({ post, isOpen, onClose }) => {
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative w-full max-w-lg bg-[#032e24] border border-white/10 rounded-[40px] p-8 shadow-2xl flex flex-col max-h-[85vh]"
+            className="relative w-full max-w-lg bg-[#0D1527] border border-white/10 rounded-[40px] p-8 shadow-2xl flex flex-col max-h-[85vh]"
           >
             <div className="mb-6">
               <div className="flex items-center justify-between mb-4">
@@ -310,6 +310,7 @@ const SocialWallPage = () => {
   const [posts, setPosts] = useState([]);
   const [eventName, setEventName] = useState('حائط التواصل');
   const [selectedPost, setSelectedPost] = useState(null);
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
     const fetchWallData = async () => {
@@ -383,6 +384,11 @@ const SocialWallPage = () => {
     }
   });
 
+  const filteredPosts = posts.filter(p => 
+    (p.author || '').toLowerCase().includes(search.toLowerCase()) ||
+    (p.content || '').toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
     <div className="min-h-screen bg-[#050B18] p-12 overflow-hidden relative">
       <Toaster position="top-center" reverseOrder={false} />
@@ -413,9 +419,21 @@ const SocialWallPage = () => {
         </div>
       </header>
 
+      {/* Search Bar */}
+      <div className="mb-12 relative max-w-xl z-10">
+        <Search className="absolute ltr:left-4 rtl:right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-brand-secondary/30" />
+        <input
+          type="text"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="ابحث بالكاتب أو بمحتوى المنشور..."
+          className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl ltr:pl-12 rtl:pr-12 text-white outline-none focus:border-brand-primary/50 transition-all placeholder:text-white/20"
+        />
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 relative z-10">
         <AnimatePresence>
-          {posts.map((post) => (
+          {filteredPosts.map((post) => (
             <PostCard 
               key={post.id} 
               post={post} 

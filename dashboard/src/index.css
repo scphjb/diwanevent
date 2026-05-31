@@ -238,13 +238,13 @@ body {
   background-color: #FFFFFF !important;
 }
 .light-theme .text-emerald-400 {
-  color: #059669 !important;
+  color: #D97706 !important;
 }
 .light-theme .bg-emerald-500\/10 {
-  background-color: rgba(5, 150, 105, 0.08) !important;
+  background-color: rgba(217, 119, 6, 0.08) !important;
 }
 .light-theme .border-emerald-500\/20 {
-  border-color: rgba(5, 150, 105, 0.15) !important;
+  border-color: rgba(217, 119, 6, 0.15) !important;
 }
 .light-theme .placeholder\:text-white\/10::placeholder {
   color: #94A3B8 !important;

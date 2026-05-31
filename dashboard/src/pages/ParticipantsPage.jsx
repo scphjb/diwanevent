@@ -37,12 +37,11 @@ import templateService from '../services/templateService';
 
 const ParticipantsPage = () => {
   const fileInputRef = useRef(null);
-  const { selectedEventId: eventId } = useEvent();
+  const { selectedEventId: eventId, searchQuery: search, setSearchQuery: setSearch } = useEvent();
   const { t, i18n } = useTranslation();
   const [participants, setParticipants] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [activeTemplate, setActiveTemplate] = useState(null);
 

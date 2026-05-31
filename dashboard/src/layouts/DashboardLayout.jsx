@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import Sidebar from '../components/dashboard/Sidebar';
 import EventSelector from '../components/dashboard/EventSelector';
 import AdminNotifications from '../components/dashboard/AdminNotifications';
@@ -17,7 +17,7 @@ import { useEffect } from 'react';
 
 const DashboardLayout = ({ children, activePath }) => {
   const { t } = useTranslation();
-  const { selectedEventId, setSelectedEventId } = useEvent();
+  const { selectedEventId, setSelectedEventId, searchQuery, setSearchQuery } = useEvent();
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
 
@@ -82,6 +82,8 @@ const DashboardLayout = ({ children, activePath }) => {
               <input
                 type="text"
                 placeholder={t('common.search')}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 className="bg-transparent border-none outline-none text-sm w-full placeholder:text-brand-secondary/20"
               />
             </div>
@@ -120,14 +122,14 @@ const DashboardLayout = ({ children, activePath }) => {
                 <div className="text-sm font-bold">{userName}</div>
                 <div className="text-[10px] text-brand-secondary/50 uppercase tracking-widest font-bold">{userRole}</div>
               </div>
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-primary to-brand-primary p-[2px]">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-primary to-brand-secondary p-[2px]">
                 <div className="w-full h-full rounded-[10px] bg-brand-dark flex items-center justify-center overflow-hidden">
-                  <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=022C22&color=10B981`} alt="Avatar" />
+                  <img src={`https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=D97706&color=FFFFFF`} alt="Avatar" />
                 </div>
               </div>
 
               {/* Dropdown Menu on Hover */}
-              <div className="absolute top-full left-0 mt-2 w-48 bg-[#032e24] border border-white/10 rounded-[20px] shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all py-2 z-50 backdrop-blur-xl">
+              <div className="absolute top-full left-0 mt-2 w-48 bg-[#0D1527] border border-white/10 rounded-[20px] shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all py-2 z-50 backdrop-blur-xl">
                 <Link to="/dashboard/profile" className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-white/5 transition-colors">
                   <div className="w-2 h-2 rounded-full bg-brand-primary" />
                   {t('common.profile')}

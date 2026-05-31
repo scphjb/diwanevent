@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '../layouts/DashboardLayout';
 import {
   Calendar,
@@ -156,7 +156,7 @@ const SessionModal = ({ eventId, onClose, onSaved, initialData = null }) => {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.92, y: 30 }}
           transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-          className="w-full max-w-lg bg-[#0d1f1a] border border-brand-primary/20 rounded-[28px] p-8 shadow-2xl"
+          className="w-full max-w-lg bg-[#0D1527] border border-white/10 rounded-[28px] p-8 shadow-2xl"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
@@ -217,7 +217,7 @@ const SessionModal = ({ eventId, onClose, onSaved, initialData = null }) => {
               <button
                 type="submit"
                 disabled={saving}
-                className="flex-1 h-12 rounded-2xl bg-gradient-to-r from-brand-primary to-teal-600 text-white font-bold text-sm hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex-1 h-12 rounded-2xl bg-gradient-to-r from-brand-primary to-brand-secondary text-white font-bold text-sm hover:opacity-90 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {saving ? (
                   <>
@@ -241,12 +241,11 @@ const SessionModal = ({ eventId, onClose, onSaved, initialData = null }) => {
 
 /* ─────────────────────────── Main Page ────────────────────────────── */
 const SessionsPage = () => {
-  const { selectedEventId: eventId } = useEvent();
+  const { selectedEventId: eventId, searchQuery: search, setSearchQuery: setSearch } = useEvent();
   const { t } = useTranslation();
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState('list');
-  const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingSession, setEditingSession] = useState(null);
 

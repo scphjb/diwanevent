@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import DashboardLayout from '../layouts/DashboardLayout';
 import { 
@@ -176,7 +176,7 @@ const PollsPage = () => {
                     </div>
                     <div className="h-2 bg-white/5 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-gradient-to-r from-brand-primary to-teal-400 transition-all duration-700"
+                        className="h-full bg-gradient-to-r from-brand-primary to-brand-secondary transition-all duration-700"
                         style={{ width: `${opt.percent ?? 0}%` }}
                       />
                     </div>

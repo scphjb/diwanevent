@@ -51,6 +51,7 @@ class Event(Base, TimestampMixin):
     secondary_color = Column(String, default='#050B18')
     accent_color = Column(String, default='#2A64EC')
     logo_url = Column(Text)
+    map_url = Column(Text, default='')
     
     # Payments
     require_payment = Column(Boolean, default=False)

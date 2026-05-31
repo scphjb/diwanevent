@@ -1,4 +1,4 @@
-﻿import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Globe, ChevronDown, Check } from 'lucide-react';
 import { cn } from '../../utils/cn';
@@ -56,7 +56,7 @@ const LanguageSwitcher = () => {
             initial={{ opacity: 0, y: 10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
-            className="absolute top-full mt-3 right-0 w-56 bg-[#032e24] border border-white/10 rounded-[24px] shadow-2xl py-3 z-[100] backdrop-blur-xl"
+            className="absolute top-full mt-3 right-0 w-56 bg-[#0D1527] border border-white/10 rounded-[24px] shadow-2xl py-3 z-[100] backdrop-blur-xl"
           >
             <div className="px-4 mb-2">
               <p className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-primary/50">{t('common.lang_switcher.choose_lang', 'اختر اللغة')}</p>

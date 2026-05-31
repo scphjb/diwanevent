@@ -491,7 +491,7 @@ const ProfilePage = () => {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-md bg-[#032e24] border border-white/10 rounded-[32px] p-8 shadow-2xl backdrop-blur-2xl"
+              className="relative w-full max-w-md bg-[#0D1527] border border-white/10 rounded-[32px] p-8 shadow-2xl backdrop-blur-2xl"
             >
               <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-4">
@@ -608,7 +608,7 @@ const ProfilePage = () => {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-md bg-[#032e24] border border-white/10 rounded-[32px] p-8 shadow-2xl backdrop-blur-2xl text-center"
+              className="relative w-full max-w-md bg-[#0D1527] border border-white/10 rounded-[32px] p-8 shadow-2xl backdrop-blur-2xl text-center"
             >
               <div className="mb-6">
                 <div className="w-16 h-16 bg-blue-500/10 rounded-2xl flex items-center justify-center text-blue-400 mx-auto mb-4">

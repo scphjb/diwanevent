@@ -30,7 +30,8 @@ import {
   Sun,
   Moon,
   Trash2,
-  Clock
+  Clock,
+  MapPin
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -1071,6 +1072,20 @@ const ParticipantPortal = () => {
                         <span className="text-[10px] font-black text-white uppercase tracking-widest">Google Wallet</span>
                      </button>
                   </div>
+                  
+                  {eventSettings?.map_url && (
+                    <div className="mt-6 pt-6 border-t border-white/10">
+                      <a 
+                        href={eventSettings.map_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full flex items-center justify-center gap-3 py-4 px-6 rounded-2xl font-black text-xs uppercase tracking-widest transition-all duration-300 shadow-lg border bg-gradient-to-r from-amber-500/20 to-amber-600/10 text-amber-500 border-amber-500/30 hover:border-amber-400 hover:from-amber-500/30 hover:to-amber-600/20"
+                      >
+                        <MapPin size={16} className="text-amber-500 animate-bounce" />
+                        موقع الفعالية على الخريطة 📍
+                      </a>
+                    </div>
+                  )}
                </div>
             </motion.div>
           )}

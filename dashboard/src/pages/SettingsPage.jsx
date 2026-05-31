@@ -302,6 +302,10 @@ const SettingsPage = () => {
                       <label className="text-sm font-bold text-brand-secondary/50">{t('settings.general.location', 'الموقع')}</label>
                       <Input value={settings.location} onChange={(e) => handleChange('location', e.target.value)} />
                     </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-bold text-brand-secondary/50">{t('settings.general.map_url', 'رابط خريطة مكان الفعالية (Google Maps)')}</label>
+                      <Input value={settings.map_url || ''} onChange={(e) => handleChange('map_url', e.target.value)} placeholder="https://maps.google.com/..." />
+                    </div>
                   </div>
                 </SettingsSection>
               )}
@@ -456,12 +460,26 @@ const SettingsPage = () => {
                         </div>
                       </div>
                     </div>
-                    <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       <div className="space-y-2">
                         <label className="text-sm font-bold text-brand-secondary/50">{t('settings.design.primary_color', 'اللون الأساسي')}</label>
                         <div className="flex items-center gap-4">
-                          <input type="color" className="w-12 h-12 rounded-xl bg-transparent border-none cursor-pointer" value={settings.primary_color} onChange={(e) => handleChange('primary_color', e.target.value)} />
-                          <Input value={settings.primary_color} onChange={(e) => handleChange('primary_color', e.target.value)} />
+                          <input type="color" className="w-12 h-12 rounded-xl bg-transparent border-none cursor-pointer" value={settings.primary_color || '#D4AF37'} onChange={(e) => handleChange('primary_color', e.target.value)} />
+                          <Input value={settings.primary_color || '#D4AF37'} onChange={(e) => handleChange('primary_color', e.target.value)} />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-bold text-brand-secondary/50">{t('settings.design.secondary_color', 'اللون الثانوي')}</label>
+                        <div className="flex items-center gap-4">
+                          <input type="color" className="w-12 h-12 rounded-xl bg-transparent border-none cursor-pointer" value={settings.secondary_color || '#050B18'} onChange={(e) => handleChange('secondary_color', e.target.value)} />
+                          <Input value={settings.secondary_color || '#050B18'} onChange={(e) => handleChange('secondary_color', e.target.value)} />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-bold text-brand-secondary/50">{t('settings.design.accent_color', 'اللون الفرعي')}</label>
+                        <div className="flex items-center gap-4">
+                          <input type="color" className="w-12 h-12 rounded-xl bg-transparent border-none cursor-pointer" value={settings.accent_color || '#2A64EC'} onChange={(e) => handleChange('accent_color', e.target.value)} />
+                          <Input value={settings.accent_color || '#2A64EC'} onChange={(e) => handleChange('accent_color', e.target.value)} />
                         </div>
                       </div>
                     </div>

@@ -83,6 +83,7 @@ def _event_to_dict(e) -> dict:
         "location": getattr(e, "location", "") or "",
         "event_date": str(getattr(e, "event_date", "")) if getattr(e, "event_date", None) else "",
         "event_location": getattr(e, "location", "") or "",
+        "event_logo": getattr(e, "logo_url", "") or "",
     }
 
 def _template_to_dict(t: BadgeTemplate) -> dict:

@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, Check, Trash2, Info, AlertCircle, Award } from 'lucide-react';
@@ -27,7 +27,7 @@ const NotificationPanel = ({ isOpen, onClose, notifications = [], onClearAll }) 
             initial={{ opacity: 0, y: 10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
-            className="absolute top-full mt-3 left-0 w-96 bg-[#032e24] border border-white/10 rounded-[24px] shadow-2xl overflow-hidden z-[101] backdrop-blur-2xl"
+            className="absolute top-full mt-3 left-0 w-96 bg-[#0D1527] border border-white/10 rounded-[24px] shadow-2xl overflow-hidden z-[101] backdrop-blur-2xl"
           >
             <div className="p-5 border-b border-white/5 flex items-center justify-between bg-brand-primary/5">
               <div className="flex items-center gap-3">

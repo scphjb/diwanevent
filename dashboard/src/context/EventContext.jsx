@@ -7,13 +7,20 @@ export const EventProvider = ({ children }) => {
     return parseInt(localStorage.getItem('diwan_selected_event_id')) || null;
   });
 
+  const [searchQuery, setSearchQuery] = useState('');
+
   const handleEventSelect = (id) => {
     setSelectedEventId(id);
     localStorage.setItem('diwan_selected_event_id', id.toString());
   };
 
   return (
-    <EventContext.Provider value={{ selectedEventId, setSelectedEventId: handleEventSelect }}>
+    <EventContext.Provider value={{ 
+      selectedEventId, 
+      setSelectedEventId: handleEventSelect,
+      searchQuery,
+      setSearchQuery
+    }}>
       {children}
     </EventContext.Provider>
   );

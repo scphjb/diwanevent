@@ -262,11 +262,19 @@ const AttendeeRegistrationPage = () => {
               <div className="text-xs text-white/40 mb-1 font-bold">التاريخ</div>
               <div className="text-sm font-bold">{safeFormatDate(event.event_date)}</div>
             </div>
-            <div className="bg-white/5 border border-white/10 p-5 rounded-3xl">
-              <MapPin className="text-amber-500 mb-3" size={20} />
-              <div className="text-xs text-white/40 mb-1 font-bold">الموقع</div>
-              <div className="text-sm font-bold">{event.location || 'سيتم التحديد لاحقاً'}</div>
-            </div>
+            {event.map_url ? (
+              <a href={event.map_url} target="_blank" rel="noopener noreferrer" className="bg-white/5 border border-white/10 p-5 rounded-3xl block hover:bg-white/10 hover:border-amber-500/30 transition-all cursor-pointer">
+                <MapPin className="text-amber-500 mb-3 animate-bounce" size={20} />
+                <div className="text-xs text-white/40 mb-1 font-bold">الموقع (اضغط للخريطة) 📍</div>
+                <div className="text-sm font-bold underline decoration-amber-500/40">{event.location || 'سيتم التحديد لاحقاً'}</div>
+              </a>
+            ) : (
+              <div className="bg-white/5 border border-white/10 p-5 rounded-3xl">
+                <MapPin className="text-amber-500 mb-3" size={20} />
+                <div className="text-xs text-white/40 mb-1 font-bold">الموقع</div>
+                <div className="text-sm font-bold">{event.location || 'سيتم التحديد لاحقاً'}</div>
+              </div>
+            )}
           </div>
 
           <div className="p-6 bg-slate-800/60 border border-slate-600/40 rounded-[28px] space-y-3">
@@ -330,11 +338,19 @@ const AttendeeRegistrationPage = () => {
                 <div className="text-xs text-white/40 mb-1 font-bold">التاريخ</div>
                 <div className="text-sm font-bold">{safeFormatDate(event.event_date)}</div>
               </div>
-              <div className="bg-white/5 border border-white/10 p-5 rounded-3xl">
-                <MapPin className="text-amber-500 mb-3" size={20} />
-                <div className="text-xs text-white/40 mb-1 font-bold">الموقع</div>
-                <div className="text-sm font-bold">{event.location || 'سيتم التحديد لاحقاً'}</div>
-              </div>
+              {event.map_url ? (
+                <a href={event.map_url} target="_blank" rel="noopener noreferrer" className="bg-white/5 border border-white/10 p-5 rounded-3xl block hover:bg-white/10 hover:border-amber-500/30 transition-all cursor-pointer">
+                  <MapPin className="text-amber-500 mb-3 animate-bounce" size={20} />
+                  <div className="text-xs text-white/40 mb-1 font-bold">الموقع (اضغط للخريطة) 📍</div>
+                  <div className="text-sm font-bold underline decoration-amber-500/40">{event.location || 'سيتم التحديد لاحقاً'}</div>
+                </a>
+              ) : (
+                <div className="bg-white/5 border border-white/10 p-5 rounded-3xl">
+                  <MapPin className="text-amber-500 mb-3" size={20} />
+                  <div className="text-xs text-white/40 mb-1 font-bold">الموقع</div>
+                  <div className="text-sm font-bold">{event.location || 'سيتم التحديد لاحقاً'}</div>
+                </div>
+              )}
             </div>
 
             <div className="bg-amber-500/10 border border-amber-500/20 p-6 rounded-[28px] flex items-center justify-between">

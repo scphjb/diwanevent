@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -635,22 +635,7 @@ const PublicDisplay = () => {
         </AnimatePresence>
       </main>
 
-      {/* Footer Scroller - Real-time Arrivals - Hidden during Polls/Questions to focus on content */}
-      {(scene !== 'polls' && scene !== 'questions') && (
-        <div className="w-full shrink-0 overflow-hidden pt-4 pb-0 border-y border-white/5 bg-white/[0.02] mt-auto">
-          <div className="flex items-center gap-20 animate-infinite-scroll whitespace-nowrap px-20">
-            {data.stats.recent.concat(data.stats.recent).map((p, i) => (
-              <div key={`${p.id}-${i}`} className="flex items-center gap-6">
-                <div className="w-10 h-10 rounded-full bg-brand-primary/20 flex items-center justify-center border border-brand-primary/20">
-                  <CheckCircle2 className="w-5 h-5 text-brand-secondary" />
-                </div>
-                <span className="text-2xl font-black text-white/90">{t('public_display.welcome_visitor', { name: p.full_name })}</span>
-                <span className="text-white/10 text-xl font-black tracking-[1em] ml-12">///</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+
 
       {/* Footer Branding */}
       <div className="flex justify-center items-center w-full shrink-0 py-1">
