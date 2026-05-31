@@ -97,8 +97,8 @@ const WallCarousel = ({ posts, eventSettings }) => {
 
             <div className="flex flex-col md:flex-row gap-8 2xl:gap-10 items-center overflow-hidden">
               {post.image_url && (
-                <div className="w-full md:w-1/3 rounded-[20px] 2xl:rounded-[30px] overflow-hidden border-4 border-white/5 shadow-2xl shrink-0">
-                  <img src={getImageUrl(post.image_url)} alt="مرفق" className="w-full h-auto max-h-[30vh] 2xl:max-h-[40vh] object-cover" />
+                <div className="w-full md:w-1/3 rounded-[20px] 2xl:rounded-[30px] overflow-hidden border-4 border-white/5 shadow-2xl bg-black/20 flex items-center justify-center shrink-0">
+                  <img src={getImageUrl(post.image_url)} alt="مرفق" className="w-full h-auto max-h-[30vh] 2xl:max-h-[40vh] object-contain" />
                 </div>
               )}
               <div className="flex-1 w-full flex items-center">

@@ -49,8 +49,8 @@ const PostCard = ({ post, onLike, onUnlike, onCommentClick }) => {
       </p>
 
       {post.image_url && (
-        <div className="rounded-2xl overflow-hidden mb-6 border border-white/5 h-48">
-          <img src={post.image_url} alt="Post content" className="w-full h-full object-cover" />
+        <div className="rounded-2xl overflow-hidden mb-6 border border-white/5 h-48 bg-black/20 flex items-center justify-center">
+          <img src={post.image_url} alt="Post content" className="w-full h-full object-contain" />
         </div>
       )}
 

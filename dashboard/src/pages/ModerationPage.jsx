@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import DashboardLayout from '../layouts/DashboardLayout';
 import { 
@@ -104,8 +104,8 @@ const ModerationPage = () => {
                 </p>
 
                 {post.image_url && (
-                  <div className="rounded-2xl overflow-hidden mb-6 border border-white/5 max-h-48">
-                    <img src={post.image_url} alt="Post content" className="w-full h-full object-cover" />
+                  <div className="rounded-2xl overflow-hidden mb-6 border border-white/5 h-48 bg-black/20 flex items-center justify-center">
+                    <img src={post.image_url} alt="Post content" className="w-full h-full object-contain" />
                   </div>
                 )}
               </div>
