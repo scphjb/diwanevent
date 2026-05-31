@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import DashboardLayout from '../layouts/DashboardLayout';
 import { 
   Users, 
+  Trash2,
   User,
   Search, 
   Filter, 
@@ -197,7 +198,8 @@ const ParticipantsPage = () => {
     department: '',
     role: '',
     email: '',
-    phone: ''
+    phone: '',
+    seat_number: ''
   });
   const [isImporting, setIsImporting] = useState(false);
   const [editingParticipant, setEditingParticipant] = useState(null);
@@ -209,6 +211,7 @@ const ParticipantsPage = () => {
     email: '',
     phone_number: '',
     seat_info: '',
+    seat_number: '',
   });
 
   useEffect(() => {
@@ -238,7 +241,8 @@ const ParticipantsPage = () => {
         department: '',
         role: '',
         email: '',
-        phone: ''
+        phone: '',
+        seat_number: ''
       };
       const column_map = {
         full_name: ['الاسم الكامل', 'full_name', 'الاسم', 'name', 'nom'],
@@ -247,6 +251,7 @@ const ParticipantsPage = () => {
         role:      ['الصفة', 'role', 'المنصب', 'الدور', 'poste', 'fonction'],
         email:     ['البريد الإلكتروني', 'email', 'البريد', 'e-mail', 'courriel'],
         phone:     ['الهاتف', 'phone', 'رقم الهاتف', 'phone_number', 'tel'],
+        seat_number: ['رقم المقعد', 'seat_number', 'المقعد', 'seat', 'chaise', 'place']
       };
 
       Object.keys(column_map).forEach(key => {
@@ -325,6 +330,7 @@ const ParticipantsPage = () => {
         email: details.email || '',
         phone_number: details.phone_number || '',
         seat_info: details.seat_info || '',
+        seat_number: details.seat_number || '',
       });
     } catch (err) {
       showError('فشل جلب بيانات المشارك للتعديل');
@@ -362,6 +368,24 @@ const ParticipantsPage = () => {
       showError(t('participants.delete_error', 'فشل حذف المشارك'));
     }
     setActiveMenu(null);
+  };
+
+  const handleDeleteImported = async () => {
+    const result = await showConfirm(
+      t('participants.delete_imported_confirm', 'حذف القائمة المستوردة'),
+      t('participants.delete_imported_desc', 'هل أنت متأكد من حذف كافة المشاركين الذين تم استيرادهم بالإكسيل لهذه الفعالية نهائياً؟ سيتم مسح بياناتهم بالكامل ولا يمكن التراجع عن هذا الإجراء.')
+    );
+    if (!result.isConfirmed) return;
+    try {
+      setLoading(true);
+      await api.delete(`participants/${eventId}/imported`);
+      showToast(t('participants.delete_imported_success', 'تم حذف القائمة المستوردة بنجاح'));
+      fetchParticipants();
+    } catch (err) {
+      showError(err.response?.data?.detail || t('participants.delete_imported_error', 'فشل حذف القائمة المستوردة'));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleResendTicket = async (id) => {
@@ -439,6 +463,14 @@ const ParticipantsPage = () => {
           <Button variant="outline" className="flex items-center gap-2" onClick={handleExport}>
             <FileDown className="w-4 h-4" />
             {t('common.export')}
+          </Button>
+          <Button 
+            variant="outline" 
+            className="flex items-center gap-2 border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+            onClick={handleDeleteImported}
+          >
+            <Trash2 className="w-4 h-4" />
+            {t('participants.delete_imported_btn', 'حذف المستوردين')}
           </Button>
           <div className="relative">
             <input 
@@ -549,7 +581,10 @@ const ParticipantsPage = () => {
                       </td>
                       <td className="px-8 py-6">
                         <div className="text-brand-secondary/70">{p.organization || '—'}</div>
-                        <div className="text-brand-secondary/20 text-xs">{p.department || ''}</div>
+                        <div className="text-brand-secondary/20 text-xs">
+                          {p.department || ''}
+                          {p.seat_number && ` | مقعد: ${p.seat_number}`}
+                        </div>
                       </td>
                       <td className="px-8 py-6">
                         <span className={cn(
@@ -711,7 +746,8 @@ const ParticipantsPage = () => {
                   { id: 'department', label: 'القسم / التخصص',          icon: MoreVertical },
                   { id: 'role',       label: 'الصفة / المنصب',          icon: Award },
                   { id: 'email',      label: 'البريد الإلكتروني',        icon: Send },
-                  { id: 'phone',      label: 'رقم الهاتف',              icon: FileUp }
+                  { id: 'phone',      label: 'رقم الهاتف',              icon: FileUp },
+                  { id: 'seat_number', label: 'رقم المقعد',             icon: Award }
                 ].map(field => (
                   <div key={field.id} className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center p-4 bg-white/5 rounded-2xl border border-white/5">
                     <div className="flex items-center gap-3">
@@ -814,7 +850,7 @@ const ParticipantsPage = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="space-y-2">
                       <label className="text-sm font-bold text-brand-secondary">{t('participants.role_label', 'الصفة / الدور')}</label>
                       <Input 
@@ -825,12 +861,21 @@ const ParticipantsPage = () => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-brand-secondary">{t('participants.seat_info_label', 'رقم المقعد')}</label>
+                      <label className="text-sm font-bold text-brand-secondary">{t('participants.seat_info_label', 'معلومات الجلوس')}</label>
                       <Input 
                         placeholder="رقم القاعة أو الكرسي"
                         className="bg-white/5 border-white/10 h-12"
                         value={editForm.seat_info}
                         onChange={(e) => setEditForm({ ...editForm, seat_info: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-bold text-brand-secondary">{t('participants.seat_number_label', 'رقم المقعد')}</label>
+                      <Input 
+                        placeholder="مثال: A-12"
+                        className="bg-white/5 border-white/10 h-12"
+                        value={editForm.seat_number}
+                        onChange={(e) => setEditForm({ ...editForm, seat_number: e.target.value })}
                       />
                     </div>
                   </div>

@@ -14,6 +14,7 @@ class Participant(Base, TimestampMixin):
     organization = Column(String, nullable=False)
     department = Column(String, nullable=False)  # القسم / التخصص / الوحدة
     seat_info = Column(String)
+    seat_number = Column(String) # رقم المقعد
     id_number = Column(String)
     email = Column(String)
     phone_number = Column(String)

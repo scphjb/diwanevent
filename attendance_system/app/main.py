@@ -121,6 +121,12 @@ async def startup_db_migration():
         "Updated 'otp_code' column size to VARCHAR(64) in 'participant_otp' table."
     )
     
+    # الخطوة 3.5: إضافة عمود seat_number في جدول المشاركين (participants)
+    await run_query(
+        "ALTER TABLE participants ADD COLUMN IF NOT EXISTS seat_number VARCHAR NULL;",
+        "Checked 'seat_number' column in 'participants' table."
+    )
+    
     # الخطوة 4: إنشاء جدول registration_otp إذا لم يكن موجوداً
     create_otp_table_str = """
     CREATE TABLE IF NOT EXISTS registration_otp (

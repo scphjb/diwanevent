@@ -27,11 +27,14 @@ def _participant_to_dict(p):
         "id": p.id,
         "full_name": p.full_name,
         "email": p.email,
+        "phone_number": p.phone_number,
         "order_num": p.order_num,
         "qr_code": p.qr_code,
         "organization": p.organization,
         "department": p.department,
-        "payment_status": p.payment_status
+        "payment_status": p.payment_status,
+        "seat_info": p.seat_info,
+        "seat_number": p.seat_number
     }
 
 def _get_frontend_url():
@@ -141,6 +144,7 @@ async def get_participant_by_token(
         "order_num": participant.order_num,
         "qr_code": participant.qr_code,
         "seat_info": participant.seat_info,
+        "seat_number": participant.seat_number,
         "event_id": participant.event_id,
         "avatar_url": avatar_url,
         "custom_values": participant.custom_values or {}
@@ -182,6 +186,7 @@ async def get_public_participant_info(
         "qr_code": participant.qr_code,
         "payment_status": participant.payment_status,
         "seat_info": participant.seat_info,
+        "seat_number": participant.seat_number,
         "avatar_url": avatar_url,
         "custom_values": participant.custom_values or {},
     }
@@ -690,6 +695,8 @@ async def read_participants(
                 "payment_status": p.payment_status,
                 "badge_printed": p.badge_printed,
                 "is_flagged": p.is_flagged,
+                "seat_info": p.seat_info,
+                "seat_number": p.seat_number,
                 "check_in_time": attendance_map.get(p.id)
             }
             for p in participants
@@ -1195,6 +1202,7 @@ async def import_participants(
             "organization": str(row.get(field_mapping.get('organization'), 'مشارك')).strip(),
             "department": str(row.get(field_mapping.get('department'), 'عام')).strip(),
             "role": str(row.get(field_mapping.get('role'), '')).strip() or None,
+            "seat_number": str(row.get(field_mapping.get('seat_number'), '')).strip() or None,
             "email": raw_email,
             "phone_number": raw_phone,
             "payment_status": payment_status,
@@ -1532,6 +1540,33 @@ async def get_all_badges(
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"فشل توليد الطباعة المجمعة: {str(e)}")
+
+
+@router.delete("/{event_id}/imported")
+async def delete_imported_participants(
+    event_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+    _: None = Depends(require_permission("participant:manage"))
+):
+    """
+    حذف كافة المشتركين الذين تم استيرادهم بالإكسيل لهذه الفعالية دفعة واحدة.
+    """
+    # 1. التحقق من وجود الفعالية
+    from app.models.event import Event
+    event_obj = await db.get(Event, event_id)
+    if not event_obj:
+        raise HTTPException(status_code=404, detail="الفعالية غير موجودة")
+        
+    # 2. تنفيذ الحذف
+    stmt = delete(Participant).filter(
+        Participant.event_id == event_id,
+        Participant.entry_type == "imported"
+    )
+    result = await db.execute(stmt)
+    await db.commit()
+    
+    return {"status": "success", "message": "Successfully deleted all imported participants"}
 
 @router.delete("/{event_id}/participants/{participant_id}")
 async def delete_participant(
