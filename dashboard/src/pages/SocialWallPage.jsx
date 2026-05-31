@@ -29,46 +29,54 @@ const PostCard = ({ post, onLike, onUnlike, onCommentClick }) => {
       layout
       initial={{ opacity: 0, scale: 0.8, y: 20 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
-      whileHover={{ y: -5 }}
-      className="bg-white/5 backdrop-blur-xl border border-white/10 p-6 rounded-[32px] shadow-2xl relative overflow-hidden group hover:border-brand-primary/30 transition-all cursor-pointer"
+      whileHover={{ y: -8 }}
+      transition={{ type: "spring", stiffness: 200, damping: 20 }}
+      className="bg-gradient-to-b from-white/10 to-white/[0.02] backdrop-blur-2xl border border-white/10 p-6 rounded-[32px] shadow-2xl relative overflow-hidden group hover:border-brand-primary/40 hover:shadow-[0_20px_50px_rgba(245,158,11,0.12)] transition-all duration-300 cursor-pointer"
       onClick={() => onCommentClick(post)}
     >
-      <div className="absolute top-0 right-0 p-4 opacity-20 text-4xl">{post.emoji || '👏'}</div>
+      {/* Decorative Glow on Hover */}
+      <div className="absolute -inset-px bg-gradient-to-b from-brand-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-[32px]" />
       
-      <div className="flex items-center gap-4 mb-4">
-        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-brand-secondary to-brand-primary flex items-center justify-center text-white font-bold text-xl">
+      <div className="absolute top-4 right-4 p-2 bg-white/5 rounded-2xl border border-white/5 opacity-40 group-hover:opacity-100 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 text-3xl z-10">
+        {post.emoji || '👏'}
+      </div>
+      
+      <div className="flex items-center gap-4 mb-5 relative z-10">
+        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-brand-primary via-amber-400 to-brand-secondary flex items-center justify-center text-brand-dark font-black text-xl shadow-lg shadow-brand-primary/10">
           {post.author?.[0] || 'U'}
         </div>
         <div>
-          <h4 className="font-bold text-white text-lg">{post.author}</h4>
-          <span className="text-brand-secondary/40 text-xs">منذ قليل</span>
+          <h4 className="font-extrabold text-white text-base tracking-wide group-hover:text-brand-primary transition-colors">{post.author}</h4>
+          <span className="text-brand-secondary/30 text-xs font-semibold">منذ قليل</span>
         </div>
       </div>
 
-      <p className="text-brand-secondary/80 text-xl leading-relaxed mb-6">
+      <p className="text-brand-secondary/80 text-lg leading-relaxed mb-6 font-medium relative z-10">
         {post.content}
       </p>
 
       {post.image_url && (
-        <div className="rounded-2xl overflow-hidden mb-6 border border-white/5 h-48 bg-black/20 flex items-center justify-center">
-          <img src={post.image_url} alt="Post content" className="w-full h-full object-contain" />
+        <div className="rounded-2xl overflow-hidden mb-6 border border-white/5 h-52 bg-black/40 flex items-center justify-center relative z-10">
+          <img src={post.image_url} alt="Post content" className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" />
         </div>
       )}
 
-      <div className="flex items-center gap-6">
+      <div className="flex items-center gap-6 relative z-10">
         <button 
           onClick={handleLikeToggle}
           className={cn(
-            "flex items-center gap-2 px-4 py-2 rounded-full transition-all relative z-10",
-            isLiked ? "bg-brand-primary text-brand-dark font-bold shadow-lg shadow-brand-primary/20" : "bg-white/5 text-brand-secondary/40 hover:bg-white/10"
+            "flex items-center gap-2 px-4 py-2.5 rounded-2xl transition-all relative z-10 font-bold text-sm",
+            isLiked 
+              ? "bg-brand-primary text-brand-dark shadow-lg shadow-brand-primary/30 scale-105" 
+              : "bg-white/5 text-brand-secondary/40 border border-white/5 hover:bg-white/10 hover:text-white"
           )}
         >
-          <Heart className={cn("w-5 h-5", isLiked && "fill-current")} />
-          <span className="text-sm">{post.likes || 0}</span>
+          <Heart className={cn("w-4 h-4 transition-transform duration-300", isLiked && "fill-current scale-110")} />
+          <span>{post.likes || 0}</span>
         </button>
-        <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 text-brand-secondary/40 hover:bg-white/10 transition-colors">
-          <MessageSquare className="w-5 h-5" />
-          <span className="text-sm">{post.comments_count || 0}</span>
+        <div className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white/5 text-brand-secondary/40 border border-white/5 hover:bg-white/10 hover:text-white transition-all font-bold text-sm">
+          <MessageSquare className="w-4 h-4" />
+          <span>{post.comments_count || 0}</span>
         </div>
       </div>
     </motion.div>

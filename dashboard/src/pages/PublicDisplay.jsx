@@ -77,38 +77,52 @@ const WallCarousel = ({ posts, eventSettings }) => {
         <AnimatePresence mode="wait">
           <motion.div
             key={post.id}
-            initial={{ opacity: 0, scale: 0.8, filter: 'blur(20px)' }}
+            initial={{ opacity: 0, scale: 0.9, filter: 'blur(20px)' }}
             animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
-            exit={{ opacity: 0, scale: 1.1, filter: 'blur(20px)' }}
+            exit={{ opacity: 0, scale: 1.05, filter: 'blur(20px)' }}
             transition={{ duration: 0.8, ease: "easeOut" }}
-            className="w-full max-w-[90vw] xl:max-w-[85vw] 2xl:max-w-[75vw] max-h-[70vh] flex flex-col bg-white/5 backdrop-blur-3xl border border-white/10 p-8 md:p-12 2xl:p-20 rounded-[40px] 2xl:rounded-[60px] shadow-[0_30px_60px_rgba(0,0,0,0.3)] relative"
+            className="w-full max-w-[90vw] xl:max-w-[85vw] 2xl:max-w-[75vw] max-h-[70vh] flex flex-col bg-gradient-to-br from-white/10 via-white/[0.03] to-transparent backdrop-blur-3xl border border-white/10 p-8 md:p-12 2xl:p-20 rounded-[40px] 2xl:rounded-[60px] shadow-[0_30px_80px_rgba(0,0,0,0.4)] relative"
           >
-            <div className="absolute -top-6 -right-6 2xl:-top-10 2xl:-right-10 w-16 h-16 2xl:w-28 2xl:h-28 bg-gradient-to-br from-amber-400 to-amber-600 rounded-full flex items-center justify-center text-brand-dark font-black text-4xl 2xl:text-6xl shadow-[0_0_50px_rgba(245,158,11,0.4)]">“</div>
+            {/* Cinematic Progress Line resetting on each slide */}
+            <div className="absolute top-0 left-0 right-0 h-1.5 bg-white/5 overflow-hidden rounded-t-[40px] 2xl:rounded-t-[60px]">
+              <motion.div 
+                key={post.id}
+                initial={{ width: '0%' }}
+                animate={{ width: '100%' }}
+                transition={{ duration: 8, ease: 'linear' }}
+                className="h-full bg-gradient-to-r from-amber-500 via-yellow-400 to-brand-primary shadow-[0_0_15px_rgba(245,158,11,0.5)]"
+              />
+            </div>
 
-            <div className="flex items-center gap-6 2xl:gap-8 mb-6 2xl:mb-10 border-b border-white/10 pb-6 shrink-0">
-              <div className="w-16 h-16 2xl:w-24 2xl:h-24 rounded-full bg-brand-primary/20 border-2 border-brand-primary/30 flex items-center justify-center text-3xl 2xl:text-5xl font-black text-brand-secondary">
+            {/* Giant 3D Quote Bubble */}
+            <div className="absolute -top-6 -right-6 2xl:-top-10 2xl:-right-10 w-16 h-16 2xl:w-28 2xl:h-28 bg-gradient-to-br from-amber-400 via-yellow-300 to-amber-600 rounded-full flex items-center justify-center text-brand-dark font-serif font-black text-4xl 2xl:text-7xl shadow-[0_15px_45px_rgba(245,158,11,0.4)] border-2 border-white/20 select-none">“</div>
+
+            <div className="flex items-center gap-6 2xl:gap-8 mb-6 2xl:mb-10 border-b border-white/10 pb-6 shrink-0 relative">
+              <div className="w-16 h-16 2xl:w-24 2xl:h-24 rounded-2xl bg-gradient-to-br from-brand-primary via-amber-400 to-brand-secondary flex items-center justify-center text-3xl 2xl:text-5xl font-black text-brand-dark shadow-lg shadow-brand-primary/10 border border-white/15">
                 {post.author_name[0]}
               </div>
               <div>
-                <div className="text-2xl 2xl:text-4xl font-black text-white">{post.author_name}</div>
-                <div className="text-brand-secondary/50 font-bold text-sm 2xl:text-xl mt-1 2xl:mt-2 tracking-widest uppercase">{t('public_display.participant', 'مشارك في الفعالية')}</div>
+                <div className="text-2xl 2xl:text-4xl font-extrabold text-white tracking-wide">{post.author_name}</div>
+                <div className="text-brand-secondary/50 font-bold text-sm 2xl:text-xl mt-1 2xl:mt-2 tracking-widest uppercase flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-brand-primary animate-pulse" />
+                  {t('public_display.participant', 'مشارك في الفعالية')}
+                </div>
               </div>
             </div>
 
-            <div className="flex flex-col md:flex-row gap-8 2xl:gap-10 items-center overflow-hidden">
+            <div className="flex flex-col md:flex-row gap-8 2xl:gap-14 items-center overflow-hidden flex-1">
               {post.image_url && (
-                <div className="w-full md:w-1/3 rounded-[20px] 2xl:rounded-[30px] overflow-hidden border-4 border-white/5 shadow-2xl bg-black/20 flex items-center justify-center shrink-0">
-                  <img src={getImageUrl(post.image_url)} alt="مرفق" className="w-full h-auto max-h-[30vh] 2xl:max-h-[40vh] object-contain" />
+                <div className="w-full md:w-2/5 rounded-[24px] 2xl:rounded-[36px] overflow-hidden border border-white/10 shadow-2xl bg-black/40 flex items-center justify-center shrink-0 max-h-[35vh] 2xl:max-h-[42vh] p-2">
+                  <img src={getImageUrl(post.image_url)} alt="مرفق" className="w-full h-auto max-h-[30vh] 2xl:max-h-[38vh] object-contain rounded-2xl" />
                 </div>
               )}
               <div className="flex-1 w-full flex items-center">
                 <p className={cn(
-                  "text-white/90 font-medium italic leading-loose",
-                  // Truncate text after a certain number of lines depending on whether there's an image
-                  post.image_url ? "line-clamp-3 2xl:line-clamp-4" : "line-clamp-5 2xl:line-clamp-6",
-                  post.content.length > 300 ? (post.image_url ? "text-xl 2xl:text-3xl" : "text-2xl 2xl:text-4xl") :
-                    post.content.length > 100 ? (post.image_url ? "text-2xl 2xl:text-4xl" : "text-3xl 2xl:text-5xl") :
-                      (post.image_url ? "text-3xl 2xl:text-5xl" : "text-4xl 2xl:text-6xl text-center")
+                  "text-white/95 font-medium italic leading-relaxed",
+                  post.image_url ? "line-clamp-4 2xl:line-clamp-5 text-right" : "line-clamp-6 2xl:line-clamp-7 text-center w-full",
+                  post.content.length > 300 ? (post.image_url ? "text-xl 2xl:text-2xl" : "text-2xl 2xl:text-3xl") :
+                    post.content.length > 100 ? (post.image_url ? "text-2xl 2xl:text-3.5xl" : "text-3xl 2xl:text-4.5xl") :
+                      (post.image_url ? "text-3.5xl 2xl:text-4.5xl" : "text-4.5xl 2xl:text-6xl text-center")
                 )}>
                   "{post.content}"
                 </p>
