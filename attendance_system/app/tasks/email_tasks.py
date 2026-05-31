@@ -41,7 +41,7 @@ def send_welcome_email_task(self, participant_data: Dict[str, Any]) -> Dict:
         import os
         import asyncio
         from app.core.database import AsyncSessionLocal
-        from app.routers.participant_auth import send_unified_welcome_email, generate_otp, create_magic_token
+        from app.routers.participant_auth import send_unified_welcome_email, generate_otp, create_magic_token, hash_otp
         from app.models.otp import ParticipantOTP
         from datetime import datetime, timedelta
         from sqlalchemy import delete
@@ -59,7 +59,7 @@ def send_welcome_email_task(self, participant_data: Dict[str, Any]) -> Dict:
                 new_otp = ParticipantOTP(
                     participant_id=participant_data["id"],
                     email=participant_data["email"],
-                    otp_code=otp_code,
+                    otp_code=hash_otp(otp_code),  # تشفير الرمز لحفظ الأمن وتفادي عدم التطابق
                     expires_at=datetime.utcnow() + timedelta(minutes=60)
                 )
                 db.add(new_otp)
