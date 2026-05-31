@@ -47,8 +47,15 @@ def send_welcome_email_task(self, participant_data: Dict[str, Any]) -> Dict:
         from sqlalchemy import delete
 
         async def _run():
+            from app.core.database import ASYNC_DATABASE_URL
+            from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+            
+            # إنشاء محرك وقاعدة بيانات محلي خاص بهذه الدورة لتفادي مشكلة تعارض الـ Event Loop المشترك في Celery
+            local_engine = create_async_engine(ASYNC_DATABASE_URL)
+            local_sessionmaker = async_sessionmaker(local_engine, class_=AsyncSession, expire_on_commit=False)
+            
             try:
-                async with AsyncSessionLocal() as db:
+                async with local_sessionmaker() as db:
                     # 1. توليد الـ OTP للمشارك لحفظ الأمن ودخول البوابة
                     otp_code = generate_otp()
                     
@@ -92,8 +99,7 @@ def send_welcome_email_task(self, participant_data: Dict[str, Any]) -> Dict:
                     )
                     return {"status": "sent", "email": participant_data["email"], "otp": otp_code}
             finally:
-                from app.core.database import async_engine
-                await async_engine.dispose()
+                await local_engine.dispose()
 
         return asyncio.run(_run())
 

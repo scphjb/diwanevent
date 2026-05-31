@@ -26,8 +26,15 @@ def precompute_analytics_task() -> str:
     logger.info("[ANALYTICS] بدء حساب الإحصائيات الدورية مسبقاً...")
     
     async def _run():
+        from app.core.database import ASYNC_DATABASE_URL
+        from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+        
+        # إنشاء محرك وقاعدة بيانات محلي خاص بهذه الدورة لتفادي مشكلة تعارض الـ Event Loop المشترك في Celery
+        local_engine = create_async_engine(ASYNC_DATABASE_URL)
+        local_sessionmaker = async_sessionmaker(local_engine, class_=AsyncSession, expire_on_commit=False)
+        
         try:
-            async with AsyncSessionLocal() as db:
+            async with local_sessionmaker() as db:
                 from app.models.others import PollVote
                 from app.models.participant import Participant
                 from sqlalchemy import func, select
@@ -71,8 +78,7 @@ def precompute_analytics_task() -> str:
                 logger.info(f"[ANALYTICS] تم تحديث الكاش بنجاح. إجمالي المشاركين: {total_participants}، إجمالي الأصوات: {total_votes}")
                 return "Success"
         finally:
-            from app.core.database import async_engine
-            await async_engine.dispose()
+            await local_engine.dispose()
             
     try:
         return asyncio.run(_run())
