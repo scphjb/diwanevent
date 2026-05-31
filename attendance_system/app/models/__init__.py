@@ -14,3 +14,4 @@ from .engagement import GamificationEvent, SponsorLead
 from app.core.atomic_ops import AuditTrail
 from app.core.api_key_handler import APIKey
 from .otp import ParticipantOTP
+from .networking import ParticipantProfile, NetworkingConnection, DirectMessage, MeetingRequest, QRConnectScan, MeetingRating, NetworkingOptIn
