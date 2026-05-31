@@ -59,7 +59,14 @@ export const usePushNotifications = () => {
 
       // الحصول على الـ VAPID public key من الـ backend
       const keyRes = await fetch(`${API_BASE}/notifications/vapid-public-key`);
-      const { public_key } = await keyRes.json();
+      if (keyRes.status === 503) {
+        return { success: false, reason: 'not_configured' };
+      }
+      const data = await keyRes.json();
+      const public_key = data.public_key;
+      if (!public_key) {
+        return { success: false, reason: 'not_configured' };
+      }
 
       // إنشاء الاشتراك
       const registration = await navigator.serviceWorker.ready;

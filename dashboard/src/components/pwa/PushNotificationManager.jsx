@@ -26,6 +26,8 @@ const PushNotificationManager = () => {
         showFeedback('success', 'تم تفعيل الإشعارات');
       } else if (result.reason === 'denied') {
         showFeedback('error', 'تم رفض الإذن — يرجى تفعيله من إعدادات المتصفح');
+      } else if (result.reason === 'not_configured') {
+        showFeedback('error', 'الإشعارات غير مهيأة على السيرفر بعد. يرجى ضبط مفاتيح VAPID في ملف .env');
       } else {
         showFeedback('error', 'حدث خطأ أثناء الاشتراك');
       }
