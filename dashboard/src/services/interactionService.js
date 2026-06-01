@@ -161,6 +161,16 @@ const interactionService = {
       dietary_preference: dietaryPreference
     });
     return res.data;
+  },
+
+  createMeal: async (mealData) => {
+    const res = await api.post('interaction/meals/create', mealData);
+    return res.data;
+  },
+
+  createActivity: async (activityData) => {
+    const res = await api.post('interaction/activities/create', activityData);
+    return res.data;
   }
 };
 

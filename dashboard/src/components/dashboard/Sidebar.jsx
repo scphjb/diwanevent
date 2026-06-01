@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../hooks/useAuth';
 import {
@@ -22,7 +22,8 @@ import {
   HelpCircle,
   TrendingUp,
   CreditCard,
-  FileText
+  FileText,
+  Shield
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { useTranslation } from 'react-i18next';
@@ -34,6 +35,7 @@ const menuItems = [
   { icon: Home, path: '/dashboard' },
   { icon: Users, path: '/dashboard/participants' },
   { icon: UserCheck, path: '/dashboard/check-in' },
+  { icon: Shield, path: '/dashboard/operations' },
   { icon: Calendar, path: '/dashboard/sessions' },
   { icon: Mic, path: '/dashboard/speakers' },
   { icon: Heart, path: '/dashboard/sponsors' },

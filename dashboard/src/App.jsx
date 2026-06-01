@@ -26,6 +26,7 @@ import PollsPage from './pages/PollsPage';
 import QuestionsPage from './pages/QuestionsPage';
 import EventsPage from './pages/EventsPage';
 import ProfilePage from './pages/ProfilePage';
+import OperationsPage from './pages/OperationsPage';
 import LandingPage from './pages/LandingPage';
 import RegisterPage from './pages/RegisterPage';
 import AttendeeRegistrationPage from './pages/AttendeeRegistrationPage';
@@ -146,6 +147,7 @@ function App() {
       <Route path="/dashboard/questions" element={<ProtectedRoute><QuestionsPage /></ProtectedRoute>} />
       <Route path="/dashboard/events" element={<ProtectedRoute><EventsPage /></ProtectedRoute>} />
       <Route path="/dashboard/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+      <Route path="/dashboard/operations" element={<ProtectedRoute><OperationsPage /></ProtectedRoute>} />
       
       <Route path="/dashboard/moderation" element={
         <ProtectedRoute><ModerationPage /></ProtectedRoute>
