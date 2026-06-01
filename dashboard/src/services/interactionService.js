@@ -43,6 +43,11 @@ const interactionService = {
     return res.data;
   },
 
+  upvoteQuestion: async (qId) => {
+    const res = await api.post(`interaction/questions/${qId}/upvote`);
+    return res.data;
+  },
+
   getPinnedQuestion: async (eventId) => {
     const res = await api.get(`interaction/questions/${eventId}/pinned`);
     return res.data;
@@ -86,6 +91,74 @@ const interactionService = {
   submitVote: async (pollId, optionId, participantId) => {
     const res = await api.post('polls/vote', null, {
       params: { poll_id: pollId, option_id: optionId, participant_id: participantId }
+    });
+    return res.data;
+  },
+
+  // Logistics & Accommodations
+  getLogistics: async (participantId) => {
+    const res = await api.get(`interaction/logistics/${participantId}`);
+    return res.data;
+  },
+  
+  saveLogistics: async (logisticsData) => {
+    const res = await api.post('interaction/logistics', logisticsData);
+    return res.data;
+  },
+  
+  dispatchLogistics: async (participantId, dispatchData) => {
+    const res = await api.patch(`interaction/logistics/dispatch/${participantId}`, dispatchData);
+    return res.data;
+  },
+  
+  listEventLogistics: async (eventId) => {
+    const res = await api.get(`interaction/logistics/event/${eventId}`);
+    return res.data;
+  },
+
+  // Sideline Activities & Excursions
+  listActivities: async (eventId, participantId) => {
+    const params = participantId ? { participant_id: participantId } : {};
+    const res = await api.get(`interaction/activities/${eventId}`, { params });
+    return res.data;
+  },
+
+  registerActivity: async (activityId, participantId) => {
+    const res = await api.post('interaction/activities/register', {
+      activity_id: activityId,
+      participant_id: participantId
+    });
+    return res.data;
+  },
+
+  unregisterActivity: async (activityId, participantId) => {
+    const res = await api.delete(`interaction/activities/unregister/${activityId}/${participantId}`);
+    return res.data;
+  },
+
+  // Smart Catering & Dietary Planner
+  getCateringProfile: async (participantId) => {
+    const res = await api.get(`interaction/catering/${participantId}`);
+    return res.data;
+  },
+
+  saveCateringProfile: async (cateringData) => {
+    const res = await api.post('interaction/catering', cateringData);
+    return res.data;
+  },
+
+  listEventMeals: async (eventId, participantId) => {
+    const params = participantId ? { participant_id: participantId } : {};
+    const res = await api.get(`interaction/meals/${eventId}`, { params });
+    return res.data;
+  },
+
+  toggleMealRsvp: async (mealId, participantId, attending, dietaryPreference = null) => {
+    const res = await api.post('interaction/meals/rsvp', {
+      meal_id: mealId,
+      participant_id: participantId,
+      attending: attending,
+      dietary_preference: dietaryPreference
     });
     return res.data;
   }

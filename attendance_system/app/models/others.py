@@ -53,6 +53,7 @@ class Question(Base, TimestampMixin):
     pinned = Column(Boolean, default=False)
     is_approved = Column(Boolean, default=False)
     timestamp = Column(DateTime, default=func.now())
+    votes_count = Column(Integer, default=0)
 
 class Poll(Base, TimestampMixin):
     __tablename__ = "polls"
@@ -143,3 +144,77 @@ class Document(Base, TimestampMixin):
     file_size = Column(String) # e.g. "2.4 MB"
     is_active = Column(Boolean, default=True)
     sort_order = Column(Integer, default=0)
+
+class LogisticsRegistry(Base, TimestampMixin):
+    __tablename__ = "logistics_registry"
+    id = Column(Integer, primary_key=True, index=True)
+    participant_id = Column(Integer, ForeignKey("participants.id", ondelete="CASCADE"), unique=True, index=True)
+    event_id = Column(Integer, ForeignKey("event_settings.id"), index=True)
+    
+    # Transport details
+    transport_type = Column(String) # plane, train, private_car, none
+    flight_number = Column(String)
+    arrival_time = Column(DateTime)
+    departure_time = Column(DateTime)
+    arrival_location = Column(String)
+    
+    # Accommodation details
+    hotel_name = Column(String)
+    room_number = Column(String)
+    check_in_date = Column(DateTime)
+    check_out_date = Column(DateTime)
+    
+    # Custom dispatch details (assigned by organizer)
+    driver_name = Column(String)
+    driver_phone = Column(String)
+    vehicle_details = Column(String)
+    shuttle_time = Column(DateTime)
+    status = Column(String, default='pending') # pending, dispatched, arrived, completed
+
+class EventActivity(Base, TimestampMixin):
+    __tablename__ = "event_activities"
+    id = Column(Integer, primary_key=True, index=True)
+    event_id = Column(Integer, ForeignKey("event_settings.id"), index=True)
+    title = Column(String, nullable=False)
+    description = Column(Text)
+    date_time = Column(DateTime, nullable=False)
+    duration = Column(String)
+    price = Column(Float, default=0.0)
+    currency = Column(String, default="DZD")
+    max_capacity = Column(Integer, nullable=True)
+    location = Column(String)
+    is_active = Column(Boolean, default=True)
+
+class ActivityRegistration(Base, TimestampMixin):
+    __tablename__ = "activity_registrations"
+    id = Column(Integer, primary_key=True, index=True)
+    activity_id = Column(Integer, ForeignKey("event_activities.id", ondelete="CASCADE"), index=True)
+    participant_id = Column(Integer, ForeignKey("participants.id", ondelete="CASCADE"), index=True)
+    payment_status = Column(String, default="free") # free, pending, paid
+
+class CateringProfile(Base, TimestampMixin):
+    __tablename__ = "catering_profiles"
+    id = Column(Integer, primary_key=True, index=True)
+    participant_id = Column(Integer, ForeignKey("participants.id", ondelete="CASCADE"), unique=True, index=True)
+    event_id = Column(Integer, ForeignKey("event_settings.id"), index=True)
+    dietary_type = Column(String, default="none") # none, vegetarian, vegan, gluten_free, diabetic, lactose_free, custom
+    allergies = Column(Text, nullable=True)
+    notes = Column(Text, nullable=True)
+
+class EventMeal(Base, TimestampMixin):
+    __tablename__ = "event_meals"
+    id = Column(Integer, primary_key=True, index=True)
+    event_id = Column(Integer, ForeignKey("event_settings.id"), index=True)
+    title = Column(String, nullable=False)
+    description = Column(Text, nullable=True)
+    date_time = Column(DateTime, nullable=False)
+    meal_type = Column(String) # breakfast, lunch, dinner, coffee_break
+    is_active = Column(Boolean, default=True)
+
+class MealAttendance(Base, TimestampMixin):
+    __tablename__ = "meal_attendances"
+    id = Column(Integer, primary_key=True, index=True)
+    meal_id = Column(Integer, ForeignKey("event_meals.id", ondelete="CASCADE"), index=True)
+    participant_id = Column(Integer, ForeignKey("participants.id", ondelete="CASCADE"), index=True)
+    attending = Column(Boolean, default=True) # True = will consume, False = opt-out (no waste)
+    dietary_preference = Column(String, nullable=True)

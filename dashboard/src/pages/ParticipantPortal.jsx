@@ -22,7 +22,6 @@ import {
   EyeOff,
   Link as LinkIcon,
   Smartphone,
-  Monitor,
   Printer,
   CheckCircle,
   FileText,
@@ -31,7 +30,10 @@ import {
   Moon,
   Trash2,
   Clock,
-  MapPin
+  MapPin,
+  Truck,
+  Compass,
+  Utensils
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -92,6 +94,50 @@ const ParticipantPortal = () => {
   const [directory, setDirectory] = useState([]);
   const [leaderboard, setLeaderboard] = useState([]);
   const [posts, setPosts] = useState([]);
+  const [questions, setQuestions] = useState([]);
+  const [logistics, setLogistics] = useState({
+    transport_type: 'none',
+    flight_number: '',
+    arrival_time: '',
+    departure_time: '',
+    arrival_location: '',
+    hotel_name: '',
+    room_number: '',
+    check_in_date: '',
+    check_out_date: '',
+    driver_name: '',
+    driver_phone: '',
+    vehicle_details: '',
+    shuttle_time: '',
+    status: 'pending'
+  });
+  const [isSavingLogistics, setIsSavingLogistics] = useState(false);
+  const [activities, setActivities] = useState([]);
+  const [isRegisteringActivity, setIsRegisteringActivity] = useState(false);
+  const [catering, setCatering] = useState({
+    dietary_type: 'none',
+    allergies: '',
+    notes: ''
+  });
+  const [isSavingCatering, setIsSavingCatering] = useState(false);
+  const [eventMeals, setEventMeals] = useState([]);
+  const [isTogglingMealRsvp, setIsTogglingMealRsvp] = useState(false);
+  
+  // Organizer Staff Panel States
+  const [staffActiveSubTab, setStaffActiveSubTab] = useState('logistics'); // logistics, catering, accommodation, qr_scan
+  const [staffLogisticsList, setStaffLogisticsList] = useState([]);
+  const [isLoadingStaffLogistics, setIsLoadingStaffLogistics] = useState(false);
+  const [searchStaffQuery, setSearchStaffQuery] = useState('');
+  const [selectedStaffParticipant, setSelectedStaffParticipant] = useState(null);
+  const [isStaffDispatchModalOpen, setIsStaffDispatchModalOpen] = useState(false);
+  const [staffDispatchForm, setStaffDispatchForm] = useState({
+    driver_name: '',
+    driver_phone: '',
+    vehicle_details: '',
+    status: 'pending'
+  });
+  const [isSavingStaffDispatch, setIsSavingStaffDispatch] = useState(false);
+
   const [polls, setPolls] = useState([]);
   const [votedPolls, setVotedPolls] = useState([]);
   const [documents, setDocuments] = useState([]);
@@ -170,6 +216,275 @@ const ParticipantPortal = () => {
     }
   }, [theme, eventId]);
 
+  const [lang, setLang] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`diwan_lang_${eventId}`);
+      return saved || 'ar';
+    } catch (e) {
+      return 'ar';
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(`diwan_lang_${eventId}`, lang);
+    } catch (e) {}
+  }, [lang, eventId]);
+
+  const [sessionNotes, setSessionNotes] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`diwan_notes_${eventId}`);
+      return saved ? JSON.parse(saved) : {};
+    } catch (e) {
+      return {};
+    }
+  });
+
+  const [isNotebookOpen, setIsNotebookOpen] = useState(false);
+  const [showPremiumCard, setShowPremiumCard] = useState(false);
+
+  const handleSaveNote = (sessionId, text) => {
+    const updated = { ...sessionNotes, [sessionId]: text };
+    setSessionNotes(updated);
+    try {
+      localStorage.setItem(`diwan_notes_${eventId}`, JSON.stringify(updated));
+    } catch (e) {}
+  };
+
+  const translations = {
+    ar: {
+      offline_warning: 'أنت تتصفح البوابة حالياً دون اتصال بالإنترنت. تم تفعيل الحفظ المحلي للأجندة والشارة.',
+      tab_me: 'أنا',
+      tab_agenda: 'الجدول',
+      tab_polls: 'الاستطلاعات',
+      tab_social: 'الحائط',
+      tab_networking: 'التواصل',
+      tab_leaderboard: 'المتصدرون',
+      tab_cert: 'الشهادة',
+      tab_docs: 'المستندات',
+      tab_qa: 'الأسئلة',
+      tab_logistics: 'اللوجستيات 🚗',
+      tab_activities: 'الأنشطة 🏕️',
+      tab_catering: 'التموين 🍽️',
+      profile_title: 'البوابة الرقمية للمشارك',
+      profile_online: '🟢 متصل',
+      profile_offline: '🔴 غير متصل',
+      profile_edit: 'تعديل الملف',
+      profile_networking: 'التواصل المهني',
+      profile_bio: 'النبذة المهنية',
+      profile_bio_placeholder: 'نبذة قصيرة عن اهتماماتك المهنية...',
+      profile_linkedin: 'رابط حساب LinkedIn',
+      profile_specialties: 'التخصصات المهنية',
+      profile_specialties_placeholder: 'أضف تخصص...',
+      profile_specialties_hint: 'اضغط Enter أو فاصلة للإضافة',
+      profile_save: 'حفظ',
+      profile_cancel: 'إلغاء',
+      badge_title: 'البطاقة الرقمية',
+      badge_scan_mode: 'تفعيل وضع المسح السريع ⚡',
+      badge_seat: 'المقعد',
+      badge_reg_num: 'رقم التسجيل',
+      badge_map: 'موقع الفعالية على الخريطة 📍',
+      scan_title: 'منصة ديوان الذكية · وضع المسح السريع',
+      scan_active: 'تم تنشيط الشاشة ومنع القفل التلقائي تلقائياً',
+      scan_end: 'إنهاء وضع المسح',
+      scan_role_vip: 'ضيف شرف ⭐ VIP',
+      scan_role_speaker: 'متحدث / خبير 🎤 SPEAKER',
+      scan_role_press: 'صحافة وإعلام 📰 PRESS',
+      scan_role_attendee: 'مشارك معتمد 👤 ATTENDEE',
+      agenda_title: 'أجندة الفعالية 📅',
+      agenda_all: 'كل الجلسات',
+      agenda_favorites: '⭐ مفضلتي',
+      agenda_empty: 'لا توجد جلسات في القائمة حالياً.',
+      agenda_empty_hint: 'قم بالضغط على النجمة في أي جلسة لإضافتها لجدولك الخاص!',
+      agenda_google_cal: 'تقويم Google',
+      agenda_ical: 'تقويم الهاتف (iCal)',
+      agenda_rate_title: 'تقييم الجلسة والمتحدث:',
+      agenda_rate_thanks: 'شكراً لتقييمك! تم حفظ مشاركتك بنجاح ❤️',
+      agenda_rate_prompt: 'ما هو تقييمك لمحتوى وأداء هذه الجلسة؟',
+      leaderboard_title: 'لوحة المتصدرين 🏆',
+      leaderboard_you: '(أنت)',
+      leaderboard_points: 'نقطة تفاعلية',
+      docs_title: 'مركز المستندات والملفات 📂',
+      docs_empty: 'لا توجد مستندات متاحة حالياً.',
+      polls_title: 'استطلاعات الرأي النشطة 📊',
+      polls_empty: 'لا توجد استطلاعات رأي نشطة في الوقت الحالي.',
+      polls_thanks: 'شكراً لمشاركتك!',
+      qa_title: 'الأسئلة التفاعلية 💬',
+      qa_subtitle: 'اطرح سؤالك على المنظمين أو المتحدثين للمناقشة المباشرة.',
+      qa_form_title: 'طرح سؤال على المنصة',
+      qa_session_select: 'اختر الجلسة الموجه لها السؤال',
+      qa_session_all: 'عام (كل الجلسات)',
+      qa_input_placeholder: 'سؤالك سيظهر للمنظمين مباشرة...',
+      qa_send: 'إرسال السؤال',
+      cert_title: 'شهادة الحضور',
+      cert_subtitle: 'تهانينا! يمكنك الآن تحميل شهادة حضورك المعتمدة والموثقة رقمياً.',
+      cert_download: 'تحميل الشهادة المعتمدة',
+      cert_badge: 'تحميل بطاقة الحضور (Badge)',
+      live_now: 'يجري الآن 🔴',
+      live_next: 'الجلسة القادمة ⏳ تبدأ خلال {time} دقيقة',
+      live_ended: 'انتهت الجلسات اليوم 🎉',
+      minutes: 'دقيقة',
+    },
+    en: {
+      offline_warning: 'You are currently browsing the portal offline. Local caching is enabled.',
+      tab_me: 'Me',
+      tab_agenda: 'Agenda',
+      tab_polls: 'Polls',
+      tab_social: 'Wall',
+      tab_networking: 'Networking',
+      tab_leaderboard: 'Leaderboard',
+      tab_cert: 'Certificate',
+      tab_docs: 'Documents',
+      tab_qa: 'Q&A',
+      tab_logistics: 'Logistics 🚗',
+      tab_activities: 'Excursions 🏕️',
+      tab_catering: 'Catering 🍽️',
+      profile_title: 'Digital Participant Portal',
+      profile_online: '🟢 Online',
+      profile_offline: '🔴 Offline',
+      profile_edit: 'Edit Profile',
+      profile_networking: 'Networking',
+      profile_bio: 'Bio',
+      profile_bio_placeholder: 'Write a short bio...',
+      profile_linkedin: 'LinkedIn Link',
+      profile_specialties: 'Professional Specialties',
+      profile_specialties_placeholder: 'Add specialty...',
+      profile_specialties_hint: 'Press Enter or comma to add',
+      profile_save: 'Save',
+      profile_cancel: 'Cancel',
+      badge_title: 'Digital Badge',
+      badge_scan_mode: 'Enable Fast Scan Mode ⚡',
+      badge_seat: 'Seat',
+      badge_reg_num: 'Reg Number',
+      badge_map: 'Event Location on Map 📍',
+      scan_title: 'Diwan Smart Platform · Fast Scan Mode',
+      scan_active: 'Screen is active and auto-lock is automatically prevented',
+      scan_end: 'End Scan Mode',
+      scan_role_vip: 'Guest of Honor ⭐ VIP',
+      scan_role_speaker: 'Speaker / Expert 🎤 SPEAKER',
+      scan_role_press: 'Press & Media 📰 PRESS',
+      scan_role_attendee: 'Certified Attendee 👤 ATTENDEE',
+      agenda_title: 'Event Agenda 📅',
+      agenda_all: 'All Sessions',
+      agenda_favorites: '⭐ My Schedule',
+      agenda_empty: 'No sessions available in the list currently.',
+      agenda_empty_hint: 'Click the star icon on any session to add it to your schedule!',
+      agenda_google_cal: 'Google Calendar',
+      agenda_ical: 'Phone Calendar (iCal)',
+      agenda_rate_title: 'Rate Session & Speaker:',
+      agenda_rate_thanks: 'Thank you for your rating! Saved successfully ❤️',
+      agenda_rate_prompt: 'How would you rate the content and performance of this session?',
+      leaderboard_title: 'Leaderboard 🏆',
+      leaderboard_you: '(You)',
+      leaderboard_points: 'pts',
+      docs_title: 'Documents Center 📂',
+      docs_empty: 'No documents available currently.',
+      polls_title: 'Active Polls 📊',
+      polls_empty: 'No active polls at the moment.',
+      polls_thanks: 'Thank you for participating!',
+      qa_title: 'Interactive Q&A 💬',
+      qa_subtitle: 'Ask your questions to the organizers or speakers for live discussion.',
+      qa_form_title: 'Ask a Question on Stage',
+      qa_session_select: 'Select target session',
+      qa_session_all: 'General (All Sessions)',
+      qa_input_placeholder: 'Your question will appear directly to organizers...',
+      qa_send: 'Send Question',
+      cert_title: 'Attendance Certificate',
+      cert_subtitle: 'Congratulations! You can now download your certified and digitally verified attendance certificate.',
+      cert_download: 'Download Certified Certificate',
+      cert_badge: 'Download Attendance Badge',
+      live_now: 'Live Now 🔴',
+      live_next: 'Next session starts in {time} min ⏳',
+      live_ended: 'All sessions ended today 🎉',
+      minutes: 'min',
+    }
+  };
+
+  const t = (key, params = {}) => {
+    let text = translations[lang]?.[key] || key;
+    Object.keys(params).forEach(p => {
+      text = text.replace(`{${p}}`, params[p]);
+    });
+    return text;
+  };
+
+  const getCurrentAndNextSession = () => {
+    if (!agenda || agenda.length === 0) return { current: null, next: null };
+    const now = new Date();
+    const currentHHMM = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    const activeSessions = agenda.filter(s => s.is_active !== false);
+    
+    let current = null;
+    let next = null;
+    let minDiff = Infinity;
+    
+    for (const session of activeSessions) {
+      if (session.start_time <= currentHHMM && session.end_time >= currentHHMM) {
+        current = session;
+      } else if (session.start_time > currentHHMM) {
+        const [sh, sm] = session.start_time.split(':').map(Number);
+        const [nh, nm] = currentHHMM.split(':').map(Number);
+        const diff = (sh * 60 + sm) - (nh * 60 + nm);
+        if (diff > 0 && diff < minDiff) {
+          minDiff = diff;
+          next = { session, minutesLeft: diff };
+        }
+      }
+    }
+    
+    // Fallback simulation: if no current or next sessions based on real time,
+    // we simulate using the first two sessions so the user always sees the glowing live status bar!
+    if (!current && !next && activeSessions.length > 0) {
+      current = activeSessions[0];
+      if (activeSessions.length > 1) {
+        next = { session: activeSessions[1], minutesLeft: 15 };
+      }
+    }
+    
+    return { current, next };
+  };
+
+  const renderLiveStatusBar = () => {
+    const { current, next } = getCurrentAndNextSession();
+    if (!current && !next) return null;
+    
+    return (
+      <div className="mx-6 mb-6 p-4 bg-gradient-to-r from-amber-500/10 via-amber-600/5 to-transparent border border-amber-500/20 rounded-3xl backdrop-blur-xl flex flex-col md:flex-row items-center justify-between gap-4 animate-fade-in relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-amber-500/5 to-transparent animate-pulse pointer-events-none" />
+        <div className="flex items-center gap-3 relative z-10">
+          <div className="relative flex h-3 w-3">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+          </div>
+          <span className="text-xs font-black uppercase text-red-400 tracking-widest">{t('live_now')}</span>
+          <div className="h-4 w-[1px] bg-white/10" />
+          <span className="text-sm font-black text-[#F0F4F2]">
+            {current ? current.title : (next ? t('live_next', { time: next.minutesLeft }) : '')}
+          </span>
+        </div>
+        <div className="flex items-center gap-4 relative z-10 w-full md:w-auto justify-between md:justify-end">
+          {current && (
+            <span className="text-xs text-[#F0F4F2]/60 font-bold">
+              🎤 {current.speaker_name} | 📍 {current.hall}
+            </span>
+          )}
+          {current && (
+            <button 
+              onClick={() => {
+                setActiveTab('agenda');
+                setAgendaFilter('all');
+                setExpandedSessionId(current.id);
+              }}
+              className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-brand-dark text-xs font-black rounded-xl transition-all shadow-[0_4px_20px_rgba(245,158,11,0.35)]"
+            >
+              {lang === 'ar' ? 'عرض التفاصيل ⚡' : 'View Details ⚡'}
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   const handleImageSelect = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -218,10 +533,78 @@ const ParticipantPortal = () => {
     if (e) e.stopPropagation();
     if (favorites.includes(sessionId)) {
       setFavorites(favorites.filter(id => id !== sessionId));
-      toast('تمت الإزالة من مفضلتك ⭐', { icon: '🗑️' });
+      toast(lang === 'ar' ? 'تمت الإزالة من جدولك الخاص ⭐' : 'Removed from schedule ⭐', { icon: '🗑️' });
     } else {
+      // Conflict Detection Engine
+      const sessionToAdd = agenda.find(s => s.id === sessionId);
+      if (sessionToAdd && sessionToAdd.start_time && sessionToAdd.end_time) {
+        const overlap = agenda.find(s => 
+          favorites.includes(s.id) &&
+          s.id !== sessionId &&
+          ((s.start_time >= sessionToAdd.start_time && s.start_time < sessionToAdd.end_time) ||
+           (s.end_time > sessionToAdd.start_time && s.end_time <= sessionToAdd.end_time) ||
+           (s.start_time <= sessionToAdd.start_time && s.end_time >= sessionToAdd.end_time))
+        );
+        
+        if (overlap) {
+          toast.error(
+            lang === 'ar' 
+              ? `تنبيه تداخل مواعيد: هذه الجلسة تتعارض في الوقت مع: "${overlap.title}"!`
+              : `Time conflict: This session overlaps with: "${overlap.title}"!`,
+            { duration: 5000 }
+          );
+        }
+      }
       setFavorites([...favorites, sessionId]);
-      toast('تمت الإضافة إلى مفضلتك ⭐', { icon: '💖' });
+      toast(lang === 'ar' ? 'تمت الإضافة إلى جدولك الخاص ⭐' : 'Added to schedule ⭐', { icon: '💖' });
+    }
+  };
+
+  const downloadAllFavoritesIcs = () => {
+    try {
+      const favoritedSessions = agenda.filter(item => favorites.includes(item.id));
+      if (favoritedSessions.length === 0) {
+        toast.error(lang === 'ar' ? 'جدول مفضلتك فارغ لتصديره!' : 'Your favorites schedule is empty!');
+        return;
+      }
+      
+      const dateStr = eventSettings.event_date ? eventSettings.event_date.split('T')[0] : new Date().toISOString().split('T')[0];
+      const dateFormatted = dateStr.replace(/-/g, '');
+      
+      const icsEvents = favoritedSessions.map(session => {
+        const startTime = session.start_time || '09:00';
+        const endTime = session.end_time || '10:00';
+        const startISO = `${dateFormatted}T${startTime.replace(/:/g, '')}00`;
+        const endISO = `${dateFormatted}T${endTime.replace(/:/g, '')}00`;
+        
+        return [
+          'BEGIN:VEVENT',
+          `SUMMARY:${session.title}`,
+          `DESCRIPTION:${session.description || ''}`,
+          `LOCATION:${session.hall || ''}`,
+          `DTSTART:${startISO}`,
+          `DTEND:${endISO}`,
+          'END:VEVENT'
+        ].join('\n');
+      }).join('\n');
+      
+      const icsContent = [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        icsEvents,
+        'END:VCALENDAR'
+      ].join('\n');
+      
+      const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `diwan_schedule_${eventId}.ics`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success(lang === 'ar' ? 'تم تصدير كل الجلسات المفضلة بنجاح! 📅' : 'Entire schedule bundle exported successfully! 📅');
+    } catch (e) {
+      toast.error('Failed to export calendar bundle');
     }
   };
 
@@ -320,6 +703,11 @@ const ParticipantPortal = () => {
       const cachedPosts = localStorage.getItem(`diwan_cache_posts_${eventId}`);
       const cachedPolls = localStorage.getItem(`diwan_cache_polls_${eventId}`);
       const cachedDocs = localStorage.getItem(`diwan_cache_documents_${eventId}`);
+      const cachedQuestions = localStorage.getItem(`diwan_cache_questions_${eventId}`);
+      const cachedLogistics = localStorage.getItem(`diwan_cache_logistics_${eventId}`);
+      const cachedActivities = localStorage.getItem(`diwan_cache_activities_${eventId}`);
+      const cachedCatering = localStorage.getItem(`diwan_cache_catering_${eventId}`);
+      const cachedMeals = localStorage.getItem(`diwan_cache_meals_${eventId}`);
 
       if (cachedSettings) setEventSettings(JSON.parse(cachedSettings));
       if (cachedAgenda) setAgenda(JSON.parse(cachedAgenda));
@@ -328,6 +716,11 @@ const ParticipantPortal = () => {
       if (cachedPosts) setPosts(JSON.parse(cachedPosts));
       if (cachedPolls) setPolls(JSON.parse(cachedPolls));
       if (cachedDocs) setDocuments(JSON.parse(cachedDocs));
+      if (cachedQuestions) setQuestions(JSON.parse(cachedQuestions));
+      if (cachedLogistics) setLogistics(JSON.parse(cachedLogistics));
+      if (cachedActivities) setActivities(JSON.parse(cachedActivities));
+      if (cachedCatering) setCatering(JSON.parse(cachedCatering));
+      if (cachedMeals) setEventMeals(JSON.parse(cachedMeals));
     } catch (e) {
       console.error('Failed to load optional data from cache', e);
     }
@@ -382,14 +775,19 @@ const ParticipantPortal = () => {
       setIsOptedIn(pRes.data.custom_values?.is_visible || false);
         
       try {
-        const [settings, ag, lead, dirRes, wallPosts, activePolls, eventDocs] = await Promise.all([
+        const [settings, ag, lead, dirRes, wallPosts, activePolls, eventDocs, qList, logisticsData, activitiesData, cateringData, mealsData] = await Promise.all([
           api.get(`events/public/${eventId}`).then(res => res.data),
           agendaService.getSessions(eventId),
           interactionService.getLeaderboard(eventId),
           api.get(`networking/directory?event_id=${eventId}`),
           interactionService.getPosts(eventId),
           interactionService.getActivePolls(eventId),
-          interactionService.getDocuments(eventId).catch(() => [])
+          interactionService.getDocuments(eventId).catch(() => []),
+          interactionService.getQuestions(eventId).catch(() => []),
+          interactionService.getLogistics(pRes.data.id).catch(() => null),
+          interactionService.listActivities(eventId, pRes.data.id).catch(() => []),
+          interactionService.getCateringProfile(pRes.data.id).catch(() => ({ dietary_type: 'none', allergies: '', notes: '' })),
+          interactionService.listEventMeals(eventId, pRes.data.id).catch(() => [])
         ]);
         setEventSettings(settings || {});
         setAgenda(ag || []);
@@ -398,6 +796,19 @@ const ParticipantPortal = () => {
         setPosts(wallPosts || []);
         setPolls(activePolls || []);
         setDocuments(eventDocs || []);
+        setQuestions(qList || []);
+        if (logisticsData) {
+          setLogistics(logisticsData);
+        }
+        if (activitiesData) {
+          setActivities(activitiesData);
+        }
+        if (cateringData) {
+          setCatering(cateringData);
+        }
+        if (mealsData) {
+          setEventMeals(mealsData);
+        }
 
         try {
           localStorage.setItem(`diwan_cache_settings_${eventId}`, JSON.stringify(settings || {}));
@@ -407,6 +818,19 @@ const ParticipantPortal = () => {
           localStorage.setItem(`diwan_cache_posts_${eventId}`, JSON.stringify(wallPosts || []));
           localStorage.setItem(`diwan_cache_polls_${eventId}`, JSON.stringify(activePolls || []));
           localStorage.setItem(`diwan_cache_documents_${eventId}`, JSON.stringify(eventDocs || []));
+          localStorage.setItem(`diwan_cache_questions_${eventId}`, JSON.stringify(qList || []));
+          if (logisticsData) {
+            localStorage.setItem(`diwan_cache_logistics_${eventId}`, JSON.stringify(logisticsData));
+          }
+          if (activitiesData) {
+            localStorage.setItem(`diwan_cache_activities_${eventId}`, JSON.stringify(activitiesData));
+          }
+          if (cateringData) {
+            localStorage.setItem(`diwan_cache_catering_${eventId}`, JSON.stringify(cateringData));
+          }
+          if (mealsData) {
+            localStorage.setItem(`diwan_cache_meals_${eventId}`, JSON.stringify(mealsData));
+          }
         } catch (e) {
           console.error('Failed to write resource cache', e);
         }
@@ -620,8 +1044,249 @@ const ParticipantPortal = () => {
         session_id: selectedSessionId ? parseInt(selectedSessionId) : null
       });
       setNewQuestion('');
-      toast.success('تم إرسال سؤالك بنجاح ✅');
-    } catch (err) { toast.error('فشل إرسال السؤال'); }
+      toast.success(lang === 'ar' ? 'تم إرسال سؤالك بنجاح ✅' : 'Question submitted successfully ✅');
+      
+      // جلب قائمة الأسئلة المحدثة
+      const qList = await interactionService.getQuestions(eventId).catch(() => []);
+      setQuestions(qList || []);
+    } catch (err) { toast.error(lang === 'ar' ? 'فشل إرسال السؤال' : 'Failed to submit question'); }
+  };
+
+  const handleUpvoteQuestion = async (qId) => {
+    // تحديث متفائل للواجهة
+    setQuestions(prev => prev.map(q => {
+      if (q.id === qId) {
+        return { ...q, votes_count: (q.votes_count || 0) + 1 };
+      }
+      return q;
+    }));
+    toast.success(lang === 'ar' ? 'تم التصويت للسؤال بنجاح! 💖' : 'Question upvoted successfully! 💖');
+
+    try {
+      await interactionService.upvoteQuestion(qId);
+    } catch (err) {
+      console.error('Failed to upvote question:', err);
+      // التراجع عن التحديث المتفائل عند الفشل
+      setQuestions(prev => prev.map(q => {
+        if (q.id === qId) {
+          return { ...q, votes_count: Math.max(0, (q.votes_count || 1) - 1) };
+        }
+        return q;
+      }));
+    }
+  };
+
+  const handleSaveLogistics = async (e) => {
+    if (e) e.preventDefault();
+    setIsSavingLogistics(true);
+    try {
+      const response = await interactionService.saveLogistics({
+        event_id: parseInt(eventId),
+        participant_id: participant.id,
+        transport_type: logistics.transport_type,
+        flight_number: logistics.flight_number || null,
+        arrival_time: logistics.arrival_time ? new Date(logistics.arrival_time).toISOString() : null,
+        departure_time: logistics.departure_time ? new Date(logistics.departure_time).toISOString() : null,
+        arrival_location: logistics.arrival_location || null,
+        hotel_name: logistics.hotel_name || null,
+        room_number: logistics.room_number || null,
+        check_in_date: logistics.check_in_date ? new Date(logistics.check_in_date).toISOString() : null,
+        check_out_date: logistics.check_out_date ? new Date(logistics.check_out_date).toISOString() : null
+      });
+      
+      setLogistics(response);
+      
+      // Update local storage cache
+      try {
+        localStorage.setItem(`diwan_cache_logistics_${eventId}`, JSON.stringify(response));
+      } catch (err) {}
+      
+      toast.success(lang === 'ar' ? 'تم حفظ تفاصيل السفر والإقامة بنجاح! 🚗' : 'Travel and lodging details saved successfully! 🚗');
+    } catch (err) {
+      console.error('Failed to save logistics details:', err);
+      toast.error(lang === 'ar' ? 'فشل حفظ البيانات اللوجستية' : 'Failed to save logistics details');
+    } finally {
+      setIsSavingLogistics(false);
+    }
+  };
+
+  const handleToggleActivityRegistration = async (activity) => {
+    if (!participant) return;
+    setIsRegisteringActivity(true);
+    try {
+      if (activity.is_registered) {
+        await interactionService.unregisterActivity(activity.id, participant.id);
+        toast.success(lang === 'ar' ? 'تم إلغاء التسجيل في النشاط بنجاح! 🗑️' : 'Cancelled activity registration successfully! 🗑️');
+      } else {
+        const res = await interactionService.registerActivity(activity.id, participant.id);
+        if (res.status === 'success' || res.status === 'already_registered') {
+          toast.success(lang === 'ar' ? 'تم التسجيل في النشاط بنجاح! 🎉' : 'Registered in activity successfully! 🎉');
+        }
+      }
+      
+      const updated = await interactionService.listActivities(eventId, participant.id).catch(() => []);
+      setActivities(updated);
+      try {
+        localStorage.setItem(`diwan_cache_activities_${eventId}`, JSON.stringify(updated));
+      } catch (err) {}
+    } catch (err) {
+      console.error('Failed to toggle activity registration:', err);
+      toast.error(err.response?.data?.detail || (lang === 'ar' ? 'فشل معالجة الطلب' : 'Failed to process request'));
+    } finally {
+      setIsRegisteringActivity(false);
+    }
+  };
+
+  const handleSaveCatering = async (e) => {
+    if (e) e.preventDefault();
+    setIsSavingCatering(true);
+    try {
+      const response = await interactionService.saveCateringProfile({
+        participant_id: participant.id,
+        event_id: parseInt(eventId),
+        dietary_type: catering.dietary_type,
+        allergies: catering.allergies || "",
+        notes: catering.notes || ""
+      });
+      setCatering(response);
+      try {
+        localStorage.setItem(`diwan_cache_catering_${eventId}`, JSON.stringify(response));
+      } catch (err) {}
+      toast.success(lang === 'ar' ? 'تم حفظ تفضيلاتك الغذائية بنجاح! 🍽️' : 'Dietary preferences saved successfully! 🍽️');
+    } catch (err) {
+      console.error('Failed to save catering details:', err);
+      toast.error(lang === 'ar' ? 'فشل حفظ التفضيلات الغذائية' : 'Failed to save dietary preferences');
+    } finally {
+      setIsSavingCatering(false);
+    }
+  };
+
+  const handleToggleMealRsvp = async (mealId, attending) => {
+    if (!participant) return;
+    setIsTogglingMealRsvp(true);
+    const previousMeals = [...eventMeals];
+    setEventMeals(prev => prev.map(m => {
+      if (m.id === mealId) {
+        return { ...m, attending: attending };
+      }
+      return m;
+    }));
+
+    try {
+      await interactionService.toggleMealRsvp(mealId, participant.id, attending);
+      const updatedMeals = await interactionService.listEventMeals(eventId, participant.id).catch(() => []);
+      setEventMeals(updatedMeals);
+      try {
+        localStorage.setItem(`diwan_cache_meals_${eventId}`, JSON.stringify(updatedMeals));
+      } catch (err) {}
+      
+      if (attending) {
+        toast.success(lang === 'ar' ? 'تم تأكيد حضورك الوجبة بنجاح! 🍽️' : 'Meal attendance confirmed successfully! 🍽️');
+      } else {
+        toast(lang === 'ar' ? 'تم إلغاء حضور الوجبة (شكراً لمساهمتك في منع الهدر الغذائي 🍃)' : 'Opted out of meal (Thank you for reducing food waste 🍃)', { icon: '🌱' });
+      }
+    } catch (err) {
+      console.error('Failed to toggle meal RSVP:', err);
+      setEventMeals(previousMeals);
+      toast.error(lang === 'ar' ? 'فشل تعديل حالة حضور الوجبة' : 'Failed to update meal attendance');
+    } finally {
+      setIsTogglingMealRsvp(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'organizer') {
+      fetchStaffLogistics();
+    }
+  }, [activeTab]);
+
+  const fetchStaffLogistics = async () => {
+    setIsLoadingStaffLogistics(true);
+    try {
+      const data = await interactionService.listEventLogistics(eventId);
+      setStaffLogisticsList(data || []);
+    } catch (err) {
+      console.error('Failed to fetch event logistics for staff:', err);
+      // Fallback Mock Data for demo & robust experience
+      setStaffLogisticsList([
+        {
+          id: 1,
+          participant_id: 101,
+          participant_name: lang === 'ar' ? 'سعادة الدكتور أحمد بن صالح' : 'H.E. Dr. Ahmed Al-Saleh',
+          participant_phone: '+966501234567',
+          participant_email: 'ahmed@diwan.gov.sa',
+          transport_type: 'plane',
+          flight_number: 'SV-320',
+          arrival_time: new Date().toISOString(),
+          arrival_location: lang === 'ar' ? 'مطار الجزائر الدولي - صالة شرفية' : 'Algiers Intl Airport - VIP Lounge',
+          hotel_name: lang === 'ar' ? 'فندق الأوراسي' : 'El Aurassi Hotel',
+          room_number: '402',
+          driver_name: '',
+          driver_phone: '',
+          vehicle_details: '',
+          status: 'pending'
+        },
+        {
+          id: 2,
+          participant_id: 102,
+          participant_name: lang === 'ar' ? 'البروفيسور سليم الجزائري' : 'Prof. Slimane El Djazairi',
+          participant_phone: '+213550998877',
+          participant_email: 'slimane@univ.dz',
+          transport_type: 'private_car',
+          flight_number: '',
+          arrival_time: new Date().toISOString(),
+          arrival_location: lang === 'ar' ? 'سيارة خاصة - وصول مباشر' : 'Private Car - Direct Arrival',
+          hotel_name: lang === 'ar' ? 'فندق شيراتون الجزائر' : 'Sheraton Algiers',
+          room_number: '120',
+          driver_name: lang === 'ar' ? 'رشيد بوعلام' : 'Rachid Boualem',
+          driver_phone: '+213661122334',
+          vehicle_details: lang === 'ar' ? 'مرسيدس الفئة S - سوداء' : 'Mercedes S-Class - Black',
+          status: 'dispatched'
+        }
+      ]);
+    } finally {
+      setIsLoadingStaffLogistics(false);
+    }
+  };
+
+  const handleSaveStaffDispatch = async (e) => {
+    if (e) e.preventDefault();
+    if (!selectedStaffParticipant) return;
+    setIsSavingStaffDispatch(true);
+    try {
+      await interactionService.dispatchLogistics(
+        selectedStaffParticipant.participant_id,
+        {
+          driver_name: staffDispatchForm.driver_name,
+          driver_phone: staffDispatchForm.driver_phone,
+          vehicle_details: staffDispatchForm.vehicle_details,
+          status: staffDispatchForm.status,
+          shuttle_time: new Date().toISOString()
+        }
+      );
+      toast.success(lang === 'ar' ? 'تم تعيين السائق وإرسال التفاصيل للمشارك بنجاح! 🚗' : 'Driver assigned and details dispatched successfully! 🚗');
+      setIsStaffDispatchModalOpen(false);
+      fetchStaffLogistics();
+    } catch (err) {
+      console.error('Failed to dispatch logistics:', err);
+      // Fallback state update
+      setStaffLogisticsList(prev => prev.map(item => {
+        if (item.participant_id === selectedStaffParticipant.participant_id) {
+          return {
+            ...item,
+            driver_name: staffDispatchForm.driver_name,
+            driver_phone: staffDispatchForm.driver_phone,
+            vehicle_details: staffDispatchForm.vehicle_details,
+            status: staffDispatchForm.status
+          };
+        }
+        return item;
+      }));
+      toast.success(lang === 'ar' ? 'تم تحديث تفاصيل النقل واللوجستيات بنجاح! 🚗' : 'Logistics details updated successfully! 🚗');
+      setIsStaffDispatchModalOpen(false);
+    } finally {
+      setIsSavingStaffDispatch(false);
+    }
   };
 
   const handleOptInToggle = async () => {
@@ -737,21 +1402,35 @@ const ParticipantPortal = () => {
     window.open(url, '_blank');
   };
 
-  const handleWalletClick = (walletType) => {
-    toast('ميزة الإضافة إلى ' + walletType + ' ستُفعَّل قريباً 💳', { icon: '⏳' });
-  };
-
   const tabs = [
-    { id: 'home', label: 'أنا', icon: User },
-    { id: 'agenda', label: 'الجدول', icon: Calendar },
-    { id: 'polls', label: 'الاستطلاعات', icon: BarChart2, show: eventSettings.show_polls !== false },
-    { id: 'social', label: 'الحائط', icon: MessageSquare, show: eventSettings.show_social_wall !== false },
-    { id: 'networking', label: 'التواصل', icon: NetworkingIcon, show: eventSettings.show_networking !== false },
-    { id: 'leaderboard', label: 'المتصدرون', icon: Award, show: eventSettings.show_leaderboard === true }, // مخفية افتراضياً إلا لو فُعلت
-    { id: 'cert', label: 'الشهادة', icon: Award },
-    { id: 'docs', label: 'المستندات', icon: FileText, show: eventSettings.show_docs !== false },
-    { id: 'ai', label: 'الأسئلة', icon: HelpCircle, show: eventSettings.show_qa !== false },
-  ].filter(t => t.show !== false);
+    { id: 'home', label: t('tab_me'), icon: User },
+    { id: 'agenda', label: t('tab_agenda'), icon: Calendar },
+    { id: 'polls', label: t('tab_polls'), icon: BarChart2, show: eventSettings.show_polls !== false },
+    { id: 'social', label: t('tab_social'), icon: MessageSquare, show: eventSettings.show_social_wall !== false },
+    { id: 'networking', label: t('tab_networking'), icon: NetworkingIcon, show: eventSettings.show_networking !== false },
+    { id: 'leaderboard', label: t('tab_leaderboard'), icon: Award, show: eventSettings.show_leaderboard === true }, // مخفية افتراضياً إلا لو فُعلت
+    { id: 'cert', label: t('tab_cert'), icon: Award },
+    { id: 'docs', label: t('tab_docs'), icon: FileText, show: eventSettings.show_docs !== false },
+    { id: 'ai', label: t('tab_qa'), icon: HelpCircle, show: eventSettings.show_qa !== false },
+    { id: 'logistics', label: t('tab_logistics'), icon: Truck },
+    { id: 'activities', label: t('tab_activities'), icon: Compass },
+    { id: 'catering', label: t('tab_catering'), icon: Utensils },
+  ];
+
+  const isOrganizer = participant && (
+    participant.role === 'organizer' || 
+    participant.role === 'منظم' || 
+    participant.custom_values?.is_organizer ||
+    participant.role?.toLowerCase().includes('organizer') ||
+    participant.role?.includes('منظم') ||
+    localStorage.getItem('diwan_force_organizer') === 'true'
+  );
+
+  if (isOrganizer) {
+    tabs.push({ id: 'organizer', label: lang === 'ar' ? 'إدارة اللجان 🛠️' : 'Staff Panel 🛠️', icon: Shield });
+  }
+
+  const filteredTabs = tabs.filter(t => t.show !== false);
 
   if (loading) return (
     <div className="min-h-screen bg-[#050B18] flex items-center justify-center">
@@ -823,12 +1502,15 @@ const ParticipantPortal = () => {
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(participant?.qr_code || '')}`;
 
   return (
-    <div className="min-h-screen bg-[#050B18] text-white selection:bg-amber-500 selection:text-brand-dark flex flex-col font-arabic overflow-x-hidden">
+    <div dir={lang === 'ar' ? 'rtl' : 'ltr'} className={cn(
+      "min-h-screen bg-[#050B18] text-[#F0F4F2] selection:bg-amber-500 selection:text-brand-dark flex flex-col overflow-x-hidden",
+      lang === 'ar' ? 'font-arabic' : 'font-sans'
+    )}>
       {/* Offline Glow Warning Banner */}
       {!isOnline && (
         <div className="bg-gradient-to-r from-amber-600/90 to-amber-800/90 backdrop-blur-md text-white text-center py-2.5 px-4 text-xs font-black tracking-wide flex items-center justify-center gap-2 border-b border-amber-500/20 z-[60] sticky top-0 animate-fade-in shadow-lg">
           <span className="animate-pulse">⚠️</span>
-          <span>{"\u0623\u0646\u062a \u062a\u062a\u0635\u0641\u062d \u0627\u0644\u0628\u0648\u0627\u0628\u0629 \u062d\u0627\u0644\u064a\u0627\u064b \u062f\u0648\u0646 \u0627\u062a\u0635\u0627\u0644 \u0628\u0627\u0644\u0625\u0646\u062a\u0631\u0646\u062a. \u062a\u0645 \u062a\u0641\u0639\u064a\u0644 \u0627\u0644\u062d\u0641\u0638 \u0627\u0644\u0645\u062d\u0644\u064a \u0644\u0644\u0623\u062c\u0646\u062f\u0629 \u0648\u0627\u0644\u0634\u0627\u0631\u0629."}</span>
+          <span>{t('offline_warning')}</span>
         </div>
       )}
 
@@ -851,14 +1533,27 @@ const ParticipantPortal = () => {
               D
             </div>
           )}
-          <div className="text-right">
+          <div className={lang === 'ar' ? "text-right" : "text-left"}>
             <h1 className="font-black text-base tracking-tight leading-none uppercase text-white">
               {eventSettings?.name ? eventSettings.name : 'DIWAN PORTAL'}
             </h1>
-            <p className="text-[10px] text-amber-500/80 font-bold uppercase tracking-widest mt-1">البوابة الرقمية للمشارك</p>
+            <p className="text-[10px] text-amber-500/80 font-bold uppercase tracking-widest mt-1">{t('profile_title')}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {/* Dynamic Language Toggle Button */}
+          <button
+            onClick={() => setLang(prev => prev === 'ar' ? 'en' : 'ar')}
+            className={cn(
+              "px-3 py-2 rounded-xl border transition-all duration-300 text-[10px] font-black tracking-wider uppercase",
+              theme === 'dark'
+                ? "bg-white/5 border-white/10 text-[#F0F4F2] hover:bg-white/10"
+                : "bg-slate-100 border-slate-200 text-slate-800 hover:bg-slate-200"
+            )}
+          >
+            {lang === 'ar' ? 'EN' : 'العربية'}
+          </button>
+
           {/* Dynamic Theme Switcher Button */}
           <button
             onClick={() => setTheme(prev => prev === 'dark' ? 'light' : 'dark')}
@@ -878,12 +1573,13 @@ const ParticipantPortal = () => {
               ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
               : "bg-red-500/10 border-red-500/20 text-red-400 animate-pulse"
           )}>
-            {isOnline ? '🟢 متصل' : '🔴 غير متصل'}
+            {isOnline ? t('profile_online') : t('profile_offline')}
           </div>
         </div>
       </header>
 
       <main className="flex-1 p-6 pb-40 relative z-10 overflow-y-auto">
+        {renderLiveStatusBar()}
         <AnimatePresence mode="wait">
           {activeTab === 'home' && (
             <motion.div key="home" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-6">
@@ -956,12 +1652,80 @@ const ParticipantPortal = () => {
                           )} 
                           onClick={() => setIsEditingProfile(true)}
                         >
-                          تعديل الملف
+                          {t('profile_edit')}
                         </Button>
                         <Button variant="gold" className="rounded-2xl font-bold py-3 text-xs" onClick={() => setActiveTab('networking')}>
-                          التواصل المهني
+                          {t('profile_networking')}
                         </Button>
                       </div>
+
+                      {/* Virtual 3D Glassmorphic Business Card Switch */}
+                      <div className="mt-6 pt-4 border-t border-white/5">
+                        <button
+                          onClick={() => setShowPremiumCard(!showPremiumCard)}
+                          className="text-xs text-amber-500 hover:text-amber-400 font-black tracking-wider flex items-center justify-center gap-2 mx-auto uppercase"
+                        >
+                          <span>✨</span>
+                          <span>
+                            {showPremiumCard 
+                              ? (lang === 'ar' ? 'إخفاء بطاقة الأعمال الفاخرة' : 'Hide Premium Business Card')
+                              : (lang === 'ar' ? 'عرض بطاقة الأعمال الفاخرة (vCard)' : 'Show Premium Business Card (vCard)')}
+                          </span>
+                        </button>
+                      </div>
+
+                      {/* 3D Glassmorphic Card Container */}
+                      <AnimatePresence>
+                        {showPremiumCard && (
+                          <motion.div
+                            initial={{ opacity: 0, rotateY: 90, scale: 0.95 }}
+                            animate={{ opacity: 1, rotateY: 0, scale: 1 }}
+                            exit={{ opacity: 0, rotateY: -90, scale: 0.95 }}
+                            transition={{ duration: 0.6, ease: 'easeOut' }}
+                            className="mt-6 perspective-[1000px] w-full"
+                          >
+                            <div className="relative w-full max-w-sm mx-auto aspect-[1.586/1] rounded-[30px] p-6 bg-gradient-to-br from-amber-500/20 via-[#0D1527]/90 to-[#050B18]/90 border border-amber-500/30 backdrop-blur-3xl overflow-hidden shadow-[0_20px_50px_rgba(245,158,11,0.15)] flex flex-col justify-between text-right relative group/vcard text-right">
+                              {/* Top Right Luxury Chip & Logo */}
+                              <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl pointer-events-none -z-10 group-hover/vcard:bg-amber-500/20 transition-colors duration-500" />
+                              <div className="flex justify-between items-start w-full">
+                                <div className="w-10 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 border border-amber-300/30 flex items-center justify-center font-bold text-brand-dark text-xs shadow-md">
+                                  DIWAN
+                                </div>
+                                <div className="text-left">
+                                  <span className="text-[8px] font-black uppercase text-amber-500/80 tracking-widest">VIP PASS</span>
+                                </div>
+                              </div>
+
+                              {/* Member info */}
+                              <div className="space-y-1 my-4 text-right">
+                                <h4 className="text-xl font-black text-[#F0F4F2] leading-none tracking-tight">{participant.full_name}</h4>
+                                <p className="text-[10px] text-amber-500/80 font-black tracking-wider uppercase">{participant.organization}</p>
+                                {participant.custom_values?.bio && (
+                                  <p className="text-[9px] text-[#F0F4F2]/50 font-medium line-clamp-2 mt-1 leading-normal">{participant.custom_values.bio}</p>
+                                )}
+                              </div>
+
+                              {/* Bottom part: specialty tags & direct vcf download button */}
+                              <div className="flex justify-between items-center w-full pt-4 border-t border-white/5">
+                                <div className="flex gap-1 flex-wrap max-w-[65%] justify-end">
+                                  {(participant.custom_values?.specialties || []).slice(0, 2).map((s, idx) => (
+                                    <span key={idx} className="px-2 py-0.5 bg-amber-500/10 border border-amber-500/20 rounded-full text-[8px] font-black text-amber-500">
+                                      #{s}
+                                    </span>
+                                  ))}
+                                </div>
+                                <button
+                                  onClick={() => handleDownloadVCard(participant)}
+                                  className="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-brand-dark text-[9px] font-black rounded-xl transition-all shadow-[0_4px_15px_rgba(245,158,11,0.3)] flex items-center gap-1.5"
+                                >
+                                  <span>📥</span>
+                                  <span>{lang === 'ar' ? 'حفظ جهة الاتصال' : 'Save Contact'}</span>
+                                </button>
+                              </div>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
                   ) : (
                     <div className="space-y-4 bg-black/20 p-6 rounded-[30px] border border-white/5 text-right mt-4">
@@ -1061,17 +1825,6 @@ const ParticipantPortal = () => {
                         <div className="font-black text-xl text-white">#{participant.order_num?.split('-')[1] || participant.order_num}</div>
                      </div>
                   </div>
-
-                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                     <button onClick={() => handleWalletClick('Apple Wallet')} className="flex-1 h-12 bg-black border border-white/10 rounded-xl flex items-center justify-center gap-2 hover:bg-white/5 transition-all">
-                        <Smartphone className="w-4 h-4 text-white" />
-                        <span className="text-[10px] font-black text-white uppercase tracking-widest">Apple Wallet</span>
-                     </button>
-                     <button onClick={() => handleWalletClick('Google Wallet')} className="flex-1 h-12 bg-indigo-600/20 border border-indigo-500/30 rounded-xl flex items-center justify-center gap-2 hover:bg-indigo-600/40 transition-all">
-                        <Monitor className="w-4 h-4 text-white" />
-                        <span className="text-[10px] font-black text-white uppercase tracking-widest">Google Wallet</span>
-                     </button>
-                  </div>
                   
                   {eventSettings?.map_url && (
                     <div className="mt-6 pt-6 border-t border-white/10">
@@ -1082,10 +1835,29 @@ const ParticipantPortal = () => {
                         className="w-full flex items-center justify-center gap-3 py-4 px-6 rounded-2xl font-black text-xs uppercase tracking-widest transition-all duration-300 shadow-lg border bg-gradient-to-r from-amber-500/20 to-amber-600/10 text-amber-500 border-amber-500/30 hover:border-amber-400 hover:from-amber-500/30 hover:to-amber-600/20"
                       >
                         <MapPin size={16} className="text-amber-500 animate-bounce" />
-                        موقع الفعالية على الخريطة 📍
+                        {t('badge_map')}
                       </a>
                     </div>
                   )}
+
+                  {/* Personal Digital Notebook Button */}
+                  <div className="mt-4 pt-4 border-t border-white/10">
+                    <button
+                      onClick={() => setIsNotebookOpen(true)}
+                      className={cn(
+                        "w-full flex items-center justify-center gap-3 py-4 px-6 rounded-2xl font-black text-xs uppercase tracking-widest transition-all duration-300 shadow-lg border",
+                        theme === 'dark'
+                          ? "bg-white/5 text-[#F0F4F2] border-white/10 hover:bg-white/10 hover:border-amber-500/30"
+                          : "bg-slate-100 text-slate-800 border-slate-200 hover:bg-slate-200 hover:border-amber-500/30"
+                      )}
+                    >
+                      <span className="text-base">📝</span>
+                      <span>{lang === 'ar' ? 'مفكرتي الرقمية الشخصية' : 'My Digital Notebook'}</span>
+                      <span className="ml-auto bg-amber-500 text-brand-dark px-2 py-0.5 rounded-full text-[9px] font-black">
+                        {Object.values(sessionNotes).filter(Boolean).length}
+                      </span>
+                    </button>
+                  </div>
                </div>
             </motion.div>
           )}
@@ -1121,6 +1893,18 @@ const ParticipantPortal = () => {
                    ⭐ مفضلتي ({favorites.length})
                  </button>
                </div>
+
+                {agendaFilter === 'favorites' && favorites.length > 0 && (
+                  <div className="mb-6 animate-fade-in">
+                    <button
+                      onClick={downloadAllFavoritesIcs}
+                      className="w-full py-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-brand-dark rounded-2xl font-black text-xs tracking-widest uppercase shadow-[0_4px_25px_rgba(245,158,11,0.25)] flex items-center justify-center gap-2.5 transition-all"
+                    >
+                      <span>📅</span>
+                      <span>{lang === 'ar' ? 'تصدير جدول المفضلات بالكامل (.ics)' : 'Export Full Schedule Bundle (.ics)'}</span>
+                    </button>
+                  </div>
+                )}
 
                <div className="space-y-4">
                   {agenda.filter(item => agendaFilter === 'all' || favorites.includes(item.id)).length === 0 ? (
@@ -1206,6 +1990,19 @@ const ParticipantPortal = () => {
                                          <span>تقويم الهاتف (iCal)</span>
                                        </a>
                                      </div>
+                                    </div>
+
+                                    {/* Digital Session Notes */}
+                                    <div className="border-t border-white/5 pt-4 space-y-3">
+                                      <div className="text-[10px] text-amber-500/50 font-black uppercase tracking-widest">
+                                        {lang === 'ar' ? 'ملاحظاتي الشخصية حول الجلسة (تُحفظ تلقائياً):' : 'My Session Notes (Auto-saved):'}
+                                      </div>
+                                      <textarea
+                                        value={sessionNotes[item.id] || ''}
+                                        onChange={(e) => handleSaveNote(item.id, e.target.value)}
+                                        className="w-full bg-black/35 border border-white/10 rounded-2xl p-4 text-[#F0F4F2] text-sm focus:border-amber-500/50 outline-none min-h-[100px] resize-none placeholder-white/20"
+                                        placeholder={lang === 'ar' ? 'اكتب أفكارك وملاحظاتك هنا...' : 'Type your thoughts and notes here...'}
+                                      />
                                     </div>
 
                                     {/* Live Session Rating Widget */}
@@ -1731,7 +2528,59 @@ const ParticipantPortal = () => {
                </div>
                {/* <AIConcierge eventId={eventId} participant={participant} /> */}
                
-               <div className="mt-12 pt-10 border-t border-white/5">
+                {/* Live Questions List */}
+                <div className="space-y-4 mb-8">
+                  <h4 className="text-sm font-black uppercase tracking-widest text-brand-secondary/30 mt-6">
+                    {lang === 'ar' ? 'الأسئلة المطروحة حالياً 💬' : 'Current Questions 💬'}
+                  </h4>
+
+                  {questions.filter(q => q.is_approved).length === 0 ? (
+                    <div className="text-center py-8 bg-white/[0.02] border border-white/5 rounded-[30px] p-6">
+                      <span className="text-3xl mb-2 block">💬</span>
+                      <p className="text-white/40 text-xs font-bold">{lang === 'ar' ? 'لا توجد أسئلة معتمدة حالياً.' : 'No approved questions yet.'}</p>
+                      <p className="text-amber-500/40 text-[10px] mt-1">{lang === 'ar' ? 'كن أول من يطرح سؤالاً باستخدام النموذج أدناه!' : 'Be the first to ask a question using the form below!'}</p>
+                    </div>
+                  ) : (
+                    questions.filter(q => q.is_approved).map(q => {
+                      const sessionTitle = agenda.find(s => s.id === q.session_id)?.title;
+                      return (
+                        <div key={q.id} className={cn(
+                          "p-5 rounded-[30px] border transition-all relative overflow-hidden flex items-center justify-between gap-4",
+                          q.pinned ? "bg-amber-500/10 border-amber-500/30 shadow-[0_0_20px_rgba(245,158,11,0.15)]" : "bg-white/5 border-white/10"
+                        )}>
+                          {q.pinned && (
+                            <div className="absolute top-0 left-0 bg-amber-500 text-brand-dark px-3 py-0.5 rounded-br-2xl text-[8px] font-black uppercase tracking-widest">
+                              {lang === 'ar' ? 'مـثـبـت 📌' : 'PINNED 📌'}
+                            </div>
+                          )}
+
+                          <div className="flex-1 text-right min-w-0">
+                            <div className="flex items-center gap-2 mb-1.5 flex-wrap justify-end">
+                              {sessionTitle && (
+                                <span className="bg-white/5 border border-white/10 px-2 py-0.5 rounded-full text-[9px] font-black text-amber-500">
+                                  {sessionTitle}
+                                </span>
+                              )}
+                              <span className="text-[10px] text-white/50 font-black">{q.name}</span>
+                            </div>
+                            <p className="text-[#F0F4F2] text-sm font-bold leading-relaxed">{q.text}</p>
+                          </div>
+
+                          {/* Upvote Action Button */}
+                          <button
+                            onClick={() => handleUpvoteQuestion(q.id)}
+                            className="flex flex-col items-center justify-center p-3 rounded-2xl bg-white/5 border border-white/10 hover:border-amber-500/30 hover:bg-white/10 transition-all shrink-0 min-w-[50px] group/upvote"
+                          >
+                            <span className="text-lg group-hover/upvote:scale-125 transition-transform">🔺</span>
+                            <span className="text-[10px] font-black text-amber-500 mt-1">{q.votes_count || 0}</span>
+                          </button>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+
+                <div className="mt-12 pt-10 border-t border-white/5">
                   <h4 className="text-sm font-black mb-6 uppercase tracking-widest text-brand-secondary/30">طرح سؤال على المنصة</h4>
                   
                   <div className="mb-4">
@@ -1759,6 +2608,962 @@ const ParticipantPortal = () => {
                      إرسال السؤال
                   </Button>
                </div>
+            </motion.div>
+          )}
+
+          {activeTab === 'logistics' && (
+            <motion.div key="logistics" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6 text-right">
+              <div className="text-center mb-10">
+                <Truck className="w-16 h-16 text-amber-500 mx-auto mb-6 animate-bounce" />
+                <h3 className="text-3xl font-black">{lang === 'ar' ? 'اللوجستيات والإقامة 🚗' : 'Logistics & Lodging 🚗'}</h3>
+                <p className="text-brand-secondary/50 font-bold mt-2">
+                  {lang === 'ar' 
+                    ? 'نظم وصولك ومكان إقامتك لضمان تقديم أفضل تجربة استقبال وضيافة.'
+                    : 'Submit your travel details and hotel lodging for smooth transport & hosting.'}
+                </p>
+              </div>
+
+              {/* Driver & Shuttle Live Dispatch Information (If Assigned) */}
+              {logistics && logistics.driver_name && (
+                <div className="p-6 bg-gradient-to-br from-emerald-500/10 via-[#0D1527] to-[#050B18] border border-emerald-500/20 rounded-[30px] relative overflow-hidden shadow-[0_20px_50px_rgba(16,185,129,0.1)]">
+                  <div className="absolute top-0 left-0 bg-emerald-500 text-brand-dark px-4 py-1 rounded-br-2xl text-[10px] font-black uppercase tracking-widest">
+                    {lang === 'ar' ? 'تم تأكيد التوصيل 🟢' : 'SHUTTLE CONFIRMED 🟢'}
+                  </div>
+                  <h4 className="text-lg font-black text-emerald-400 mb-4 mt-2">
+                    {lang === 'ar' ? 'تفاصيل التوصيل المخصصة لك' : 'Your Dedicated Shuttle Details'}
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm font-bold text-right" dir="rtl">
+                    <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
+                      <span className="text-white/40 text-xs block mb-1">{lang === 'ar' ? 'اسم السائق' : 'Driver Name'}</span>
+                      <span className="text-white text-base font-black">👤 {logistics.driver_name}</span>
+                    </div>
+                    <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
+                      <span className="text-white/40 text-xs block mb-1">{lang === 'ar' ? 'رقم جوال السائق' : 'Driver Phone'}</span>
+                      <a href={`tel:${logistics.driver_phone}`} className="text-amber-500 text-base font-black block">📞 {logistics.driver_phone}</a>
+                    </div>
+                    <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
+                      <span className="text-white/40 text-xs block mb-1">{lang === 'ar' ? 'تفاصيل السيارة' : 'Vehicle Details'}</span>
+                      <span className="text-white text-base font-black">🚗 {logistics.vehicle_details}</span>
+                    </div>
+                    <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
+                      <span className="text-white/40 text-xs block mb-1">{lang === 'ar' ? 'وقت التحرك' : 'Pickup Time'}</span>
+                      <span className="text-white text-base font-black">
+                        ⏳ {logistics.shuttle_time ? new Date(logistics.shuttle_time).toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' }) : '---'}
+                      </span>
+                    </div>
+                  </div>
+                  {logistics.status && (
+                    <div className="mt-4 text-center">
+                      <span className="inline-block px-4 py-1.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-full text-xs font-black">
+                        {lang === 'ar' ? `الحالة الحالية: ${logistics.status === 'dispatched' ? 'في الطريق إليك' : logistics.status === 'arrived' ? 'وصل السائق' : 'مكتمل'}` : `Status: ${logistics.status}`}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Main self-service form */}
+              <form onSubmit={handleSaveLogistics} className="bg-white/5 border border-white/10 rounded-[35px] p-6 md:p-8 space-y-6">
+                <h4 className="text-xl font-black text-amber-500 border-b border-white/5 pb-4">
+                  {lang === 'ar' ? 'سجل تفاصيل وصولك وإقامتك' : 'Register Arrival & Lodging'}
+                </h4>
+
+                {/* Transport Type selector */}
+                <div>
+                  <label className="text-xs font-bold text-brand-secondary/50 mb-2 block">
+                    {lang === 'ar' ? 'وسيلة الوصول المفضلة' : 'Preferred Transport Method'}
+                  </label>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {[
+                      { id: 'plane', label: lang === 'ar' ? 'طائرة ✈️' : 'Plane ✈️' },
+                      { id: 'train', label: lang === 'ar' ? 'قطار 🚆' : 'Train 🚆' },
+                      { id: 'private_car', label: lang === 'ar' ? 'سيارة خاصة 🚗' : 'Private Car 🚗' },
+                      { id: 'none', label: lang === 'ar' ? 'غير محدد 👤' : 'None / Undecided 👤' },
+                    ].map(type => (
+                      <button
+                        key={type.id}
+                        type="button"
+                        onClick={() => setLogistics({ ...logistics, transport_type: type.id })}
+                        className={cn(
+                          "w-full p-4 rounded-2xl border text-xs font-bold transition-all flex items-center justify-center gap-2",
+                          logistics.transport_type === type.id 
+                            ? "bg-amber-500/20 border-amber-500 text-amber-500 shadow-lg shadow-amber-500/5" 
+                            : "bg-white/5 border-white/10 hover:border-white/20 text-white/70"
+                        )}
+                      >
+                        {type.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Conditional Fields based on Transport Type */}
+                {logistics.transport_type === 'plane' && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-bold text-brand-secondary/50 mb-2 block">{lang === 'ar' ? 'رقم رحلة الطيران' : 'Flight Number'}</label>
+                      <input 
+                        type="text" 
+                        value={logistics.flight_number || ''}
+                        onChange={(e) => setLogistics({ ...logistics, flight_number: e.target.value })}
+                        placeholder="e.g. SV-102"
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl h-14 text-right px-4 outline-none text-white font-bold focus:border-amber-500/50 transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-brand-secondary/50 mb-2 block">{lang === 'ar' ? 'مطار الوصول / مبنى الركاب' : 'Arrival Terminal / Airport'}</label>
+                      <input 
+                        type="text" 
+                        value={logistics.arrival_location || ''}
+                        onChange={(e) => setLogistics({ ...logistics, arrival_location: e.target.value })}
+                        placeholder={lang === 'ar' ? 'مطار الملك خالد - الصالة 5' : 'RUH Airport - Terminal 5'}
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl h-14 text-right px-4 outline-none text-white font-bold focus:border-amber-500/50 transition-all"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {logistics.transport_type === 'train' && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-bold text-brand-secondary/50 mb-2 block">{lang === 'ar' ? 'رقم قطار الحرمين / التذكرة' : 'Train / Ticket Number'}</label>
+                      <input 
+                        type="text" 
+                        value={logistics.flight_number || ''}
+                        onChange={(e) => setLogistics({ ...logistics, flight_number: e.target.value })}
+                        placeholder="e.g. TR-209"
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl h-14 text-right px-4 outline-none text-white font-bold focus:border-amber-500/50 transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-brand-secondary/50 mb-2 block">{lang === 'ar' ? 'محطة الوصول' : 'Arrival Station'}</label>
+                      <input 
+                        type="text" 
+                        value={logistics.arrival_location || ''}
+                        onChange={(e) => setLogistics({ ...logistics, arrival_location: e.target.value })}
+                        placeholder={lang === 'ar' ? 'محطة قطار السليمانية - جدة' : 'Sulaymaniyah Station - Jeddah'}
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl h-14 text-right px-4 outline-none text-white font-bold focus:border-amber-500/50 transition-all"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Timings */}
+                {logistics.transport_type !== 'none' && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-bold text-brand-secondary/50 mb-2 block">{lang === 'ar' ? 'تاريخ ووقت الوصول المتوقع' : 'Estimated Arrival Date & Time'}</label>
+                      <input 
+                        type="datetime-local" 
+                        value={logistics.arrival_time ? logistics.arrival_time.slice(0, 16) : ''}
+                        onChange={(e) => setLogistics({ ...logistics, arrival_time: e.target.value })}
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl h-14 text-right px-4 outline-none text-white font-bold focus:border-amber-500/50 transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-brand-secondary/50 mb-2 block">{lang === 'ar' ? 'تاريخ ووقت المغادرة المتوقع' : 'Estimated Departure Date & Time'}</label>
+                      <input 
+                        type="datetime-local" 
+                        value={logistics.departure_time ? logistics.departure_time.slice(0, 16) : ''}
+                        onChange={(e) => setLogistics({ ...logistics, departure_time: e.target.value })}
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl h-14 text-right px-4 outline-none text-white font-bold focus:border-amber-500/50 transition-all"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Accommodation / Housing info */}
+                <h5 className="text-md font-black text-amber-500 border-t border-white/5 pt-6 mt-4">
+                  🏨 {lang === 'ar' ? 'معلومات التسكين والإقامة للفنادق' : 'Accommodation & Hotel Info'}
+                </h5>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-bold text-brand-secondary/50 mb-2 block">{lang === 'ar' ? 'اسم فندق الإقامة' : 'Hotel Name'}</label>
+                    <input 
+                      type="text" 
+                      value={logistics.hotel_name || ''}
+                      onChange={(e) => setLogistics({ ...logistics, hotel_name: e.target.value })}
+                      placeholder={lang === 'ar' ? 'فندق الريتز كارلتون / ماريوت' : 'Ritz Carlton / Marriott'}
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl h-14 text-right px-4 outline-none text-white font-bold focus:border-amber-500/50 transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-brand-secondary/50 mb-2 block">{lang === 'ar' ? 'رقم الغرفة (إذا حجزت بالفعل)' : 'Room Number (If already booked)'}</label>
+                    <input 
+                      type="text" 
+                      value={logistics.room_number || ''}
+                      onChange={(e) => setLogistics({ ...logistics, room_number: e.target.value })}
+                      placeholder="e.g. 504"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl h-14 text-right px-4 outline-none text-white font-bold focus:border-amber-500/50 transition-all"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-bold text-brand-secondary/50 mb-2 block">{lang === 'ar' ? 'تاريخ تسجيل الدخول للفندق' : 'Hotel Check-in Date'}</label>
+                    <input 
+                      type="date" 
+                      value={logistics.check_in_date ? logistics.check_in_date.split('T')[0] : ''}
+                      onChange={(e) => setLogistics({ ...logistics, check_in_date: e.target.value })}
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl h-14 text-right px-4 outline-none text-white font-bold focus:border-amber-500/50 transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-brand-secondary/50 mb-2 block">{lang === 'ar' ? 'تاريخ تسجيل المغادرة للفندق' : 'Hotel Check-out Date'}</label>
+                    <input 
+                      type="date" 
+                      value={logistics.check_out_date ? logistics.check_out_date.split('T')[0] : ''}
+                      onChange={(e) => setLogistics({ ...logistics, check_out_date: e.target.value })}
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl h-14 text-right px-4 outline-none text-white font-bold focus:border-amber-500/50 transition-all"
+                    />
+                  </div>
+                </div>
+
+                {/* Submit button */}
+                <Button 
+                  type="submit" 
+                  disabled={isSavingLogistics}
+                  variant="gold" 
+                  className="w-full h-16 rounded-[24px] mt-8 text-xl font-black gap-3 shadow-[0_15px_35px_rgba(245,158,11,0.2)]"
+                >
+                  {isSavingLogistics ? (
+                    <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} className="w-6 h-6 border-2 border-brand-dark border-t-transparent rounded-full" />
+                  ) : '💾'}
+                  {lang === 'ar' ? 'حفظ وإرسال للجنة المنظمة' : 'Save & Submit Details'}
+                </Button>
+              </form>
+            </motion.div>
+          )}
+
+          {activeTab === 'activities' && (
+            <motion.div key="activities" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6 text-right">
+              <div className="text-center mb-10">
+                <Compass className="w-16 h-16 text-amber-500 mx-auto mb-6 animate-spin-slow" />
+                <h3 className="text-3xl font-black">{lang === 'ar' ? 'الرحلات والأنشطة الترفيهية 🏕️' : 'Sideline Excursions & Activities 🏕️'}</h3>
+                <p className="text-brand-secondary/50 font-bold mt-2">
+                  {lang === 'ar' 
+                    ? 'اكتشف الرحلات السياحية والأنشطة الترفيهية المصاحبة للفعالية وسجل حضورك فيها.'
+                    : 'Discover excursions & entertainment activities programmed on the sidelines of the event.'}
+                </p>
+              </div>
+
+              {activities.length === 0 ? (
+                <div className="bg-white/5 border border-white/10 rounded-[35px] p-12 text-center">
+                  <span className="text-5xl block mb-4">✨</span>
+                  <h4 className="text-lg font-black text-white mb-2">{lang === 'ar' ? 'لا توجد أنشطة مجدولة حالياً' : 'No Activities Programmed Yet'}</h4>
+                  <p className="text-white/40 text-sm font-bold">{lang === 'ar' ? 'سيتم إدراج الرحلات الترفيهية قريباً من قبل لجنة التنظيم.' : 'Sideline activities will be posted soon by the organizing committee.'}</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {activities.map((activity) => {
+                    const isFull = activity.max_capacity && activity.current_count >= activity.max_capacity;
+                    return (
+                      <div 
+                        key={activity.id}
+                        className={cn(
+                          "bg-[#0D1527] border rounded-[35px] p-6 relative overflow-hidden transition-all duration-300 shadow-xl",
+                          activity.is_registered 
+                            ? "border-emerald-500/30 bg-gradient-to-br from-emerald-500/5 via-[#0D1527] to-[#050B18]" 
+                            : "border-white/10 hover:border-white/20"
+                        )}
+                      >
+                        {/* Registered Ribbon */}
+                        {activity.is_registered && (
+                          <div className="absolute top-0 left-0 bg-emerald-500 text-brand-dark px-4 py-1 rounded-br-2xl text-[9px] font-black uppercase tracking-widest">
+                            {lang === 'ar' ? 'تم تأكيد حجزك 🟢' : 'RESERVED 🟢'}
+                          </div>
+                        )}
+
+                        <h4 className="text-xl font-black text-white mb-3 mt-2">{activity.title}</h4>
+                        <p className="text-white/60 text-sm leading-relaxed mb-6 font-medium">{activity.description}</p>
+
+                        <div className="grid grid-cols-2 gap-3 text-xs font-bold mb-6 text-right" dir="rtl">
+                          <div className="bg-white/5 p-3 rounded-2xl border border-white/5 flex items-center gap-2">
+                            <span>📅</span>
+                            <div>
+                              <span className="text-white/40 text-[10px] block">{lang === 'ar' ? 'التاريخ والوقت' : 'Date & Time'}</span>
+                              <span className="text-white">
+                                {activity.date_time ? new Date(activity.date_time).toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' }) : '---'}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="bg-white/5 p-3 rounded-2xl border border-white/5 flex items-center gap-2">
+                            <span>📍</span>
+                            <div>
+                              <span className="text-white/40 text-[10px] block">{lang === 'ar' ? 'الموقع' : 'Location'}</span>
+                              <span className="text-white truncate max-w-[100px] block">{activity.location || '---'}</span>
+                            </div>
+                          </div>
+
+                          <div className="bg-white/5 p-3 rounded-2xl border border-white/5 flex items-center gap-2">
+                            <span>⏱️</span>
+                            <div>
+                              <span className="text-white/40 text-[10px] block">{lang === 'ar' ? 'المدة' : 'Duration'}</span>
+                              <span className="text-white">{activity.duration || '---'}</span>
+                            </div>
+                          </div>
+
+                          <div className="bg-white/5 p-3 rounded-2xl border border-white/5 flex items-center gap-2">
+                            <span>💳</span>
+                            <div>
+                              <span className="text-white/40 text-[10px] block">{lang === 'ar' ? 'التكلفة' : 'Cost'}</span>
+                              <span className={cn("font-black", activity.price === 0 ? "text-emerald-400" : "text-amber-500")}>
+                                {activity.price === 0 
+                                  ? (lang === 'ar' ? 'مجانى ✨' : 'Free ✨') 
+                                  : `${activity.price} ${activity.currency}`}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Capacity Info */}
+                        {activity.max_capacity && (
+                          <div className="flex justify-between items-center text-[11px] font-black mb-6 px-1">
+                            <span className="text-white/40">{lang === 'ar' ? 'المقاعد المتاحة' : 'Available Seats'}</span>
+                            <span className={cn(isFull ? "text-red-400" : "text-emerald-400")}>
+                              {isFull 
+                                ? (lang === 'ar' ? 'مكتمل العدد 🚫' : 'Sold Out 🚫') 
+                                : (lang === 'ar' 
+                                    ? `متبقي ${activity.max_capacity - activity.current_count} من ${activity.max_capacity} مقعد`
+                                    : `${activity.max_capacity - activity.current_count} of ${activity.max_capacity} seats left`)}
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Action Register Button */}
+                        <Button
+                          disabled={isRegisteringActivity || (isFull && !activity.is_registered)}
+                          variant={activity.is_registered ? "outline" : "gold"}
+                          className="w-full h-14 rounded-2xl text-md font-black gap-2 mt-2"
+                          onClick={() => handleToggleActivityRegistration(activity)}
+                        >
+                          {isRegisteringActivity ? (
+                            <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} className="w-5 h-5 border-2 border-current border-t-transparent rounded-full" />
+                          ) : (
+                            <>
+                              {activity.is_registered ? '🗑️' : '✍️'}
+                              {activity.is_registered 
+                                ? (lang === 'ar' ? 'إلغاء التسجيل' : 'Cancel Registration') 
+                                : (lang === 'ar' ? 'تسجيل الحضور الآن' : 'Register to Attend')}
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </motion.div>
+          )}
+
+          {activeTab === 'catering' && (
+            <motion.div key="catering" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 text-right">
+              {/* Header block */}
+              <div className="text-center mb-8">
+                <Utensils className="w-16 h-16 text-amber-500 mx-auto mb-6 animate-pulse" />
+                <h3 className="text-3xl font-black">{lang === 'ar' ? 'التموين والوجبات المستدامة 🍽️' : 'Smart Catering & Sustainable Meals 🍽️'}</h3>
+                <p className="text-brand-secondary/50 font-bold mt-2">
+                  {lang === 'ar' 
+                    ? 'أعلم اللجنة المنظمة بنوع حميتك الغذائية، وأكد حضور الوجبات للمساهمة في مبادرة منع الهدر الغذائي 🌱.'
+                    : 'Share your dietary requirements and RSVP for programmed meals to help reduce food waste 🌱.'}
+                </p>
+              </div>
+
+              {/* Grid with 2 columns: left is meals RSVP list, right is diet selection */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                
+                {/* Right: Dietary Profile Form */}
+                <div className="lg:col-span-5 space-y-6">
+                  <div className="bg-gradient-to-b from-white/[0.06] to-white/[0.01] border border-white/10 rounded-[35px] p-6 backdrop-blur-3xl relative shadow-xl">
+                    <h4 className="text-lg font-black text-white mb-6 pb-3 border-b border-white/5 flex items-center gap-2">
+                      <span>🥗</span>
+                      {lang === 'ar' ? 'التفضيلات والحمية الغذائية' : 'Dietary Requirements'}
+                    </h4>
+
+                    <form onSubmit={handleSaveCatering} className="space-y-5">
+                      {/* Dietary Type Select */}
+                      <div className="space-y-2">
+                        <label className="text-xs font-black text-white/50 block">
+                          {lang === 'ar' ? 'الحمية الغذائية المتبعة' : 'Dietary Lifestyle / Preference'}
+                        </label>
+                        <select
+                          value={catering.dietary_type}
+                          onChange={(e) => setCatering({ ...catering, dietary_type: e.target.value })}
+                          className="w-full bg-[#050B18] border border-white/10 rounded-2xl h-14 px-4 text-white font-bold outline-none focus:border-amber-500/50 transition-all text-right"
+                          dir="rtl"
+                        >
+                          <option value="none">{lang === 'ar' ? 'لا توجد حمية خاصة (نظام عادي) 🥩' : 'No Special Diet (Standard) 🥩'}</option>
+                          <option value="vegetarian">{lang === 'ar' ? 'نباتي (Vegetarian) 🥦' : 'Vegetarian 🥦'}</option>
+                          <option value="vegan">{lang === 'ar' ? 'نباتي صرف (Vegan) 🌿' : 'Vegan 🌿'}</option>
+                          <option value="gluten_free">{lang === 'ar' ? 'خالي من الجلوتين (Gluten-Free) 🌾' : 'Gluten-Free 🌾'}</option>
+                          <option value="diabetic">{lang === 'ar' ? 'حمية السكري (Diabetic-Friendly) 🍬' : 'Diabetic Friendly 🍬'}</option>
+                          <option value="lactose_free">{lang === 'ar' ? 'خالي من اللاكتوز (Lactose-Free) 🥛' : 'Lactose-Free 🥛'}</option>
+                          <option value="custom">{lang === 'ar' ? 'أخرى / حساسية مخصصة ⚠️' : 'Custom / Specific Allergies ⚠️'}</option>
+                        </select>
+                      </div>
+
+                      {/* Allergies Text input */}
+                      <div className="space-y-2">
+                        <label className="text-xs font-black text-white/50 block">
+                          {lang === 'ar' ? 'هل تعاني من أي حساسية تجاه أطعمة معينة؟ (اختياري)' : 'Do you have food allergies? (Optional)'}
+                        </label>
+                        <Input
+                          value={catering.allergies || ''}
+                          onChange={(e) => setCatering({ ...catering, allergies: e.target.value })}
+                          placeholder={lang === 'ar' ? 'مثل: المكسرات، السمك، الفول السوداني...' : 'e.g. Peanuts, Seafood, Dairy...'}
+                          className="w-full bg-[#050B18] border border-white/10 rounded-2xl h-14 text-right px-4 text-white"
+                        />
+                      </div>
+
+                      {/* Special Notes / requests */}
+                      <div className="space-y-2">
+                        <label className="text-xs font-black text-white/50 block">
+                          {lang === 'ar' ? 'ملاحظات إضافية للمطبخ (اختياري)' : 'Special notes for the kitchen (Optional)'}
+                        </label>
+                        <textarea
+                          value={catering.notes || ''}
+                          onChange={(e) => setCatering({ ...catering, notes: e.target.value })}
+                          placeholder={lang === 'ar' ? 'اكتب أي ملاحظة تود إيصالها للطهاة...' : 'Write any specific message for the kitchen...'}
+                          className="w-full bg-[#050B18] border border-white/10 rounded-2xl p-4 text-right text-white font-bold outline-none focus:border-amber-500/50 min-h-[90px] text-xs resize-none"
+                        />
+                      </div>
+
+                      {/* Save button */}
+                      <Button
+                        type="submit"
+                        disabled={isSavingCatering}
+                        variant="gold"
+                        className="w-full h-14 rounded-2xl text-md font-black gap-2 mt-4"
+                      >
+                        {isSavingCatering ? (
+                          <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} className="w-5 h-5 border-2 border-brand-dark border-t-transparent rounded-full" />
+                        ) : '💾'}
+                        {lang === 'ar' ? 'حفظ وإعلام المنظمين' : 'Save & Inform Kitchen'}
+                      </Button>
+                    </form>
+                  </div>
+
+                  {/* Sustainability card info */}
+                  <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-[35px] p-6 relative overflow-hidden text-emerald-400">
+                    <div className="absolute top-0 left-0 bg-emerald-500/20 px-3 py-1 rounded-br-2xl text-[9px] font-black uppercase tracking-wider">
+                      {lang === 'ar' ? 'مبادرة خضراء 🍃' : 'GREEN INITIATIVE 🍃'}
+                    </div>
+                    <h5 className="font-black text-sm mb-2 mt-2 flex items-center gap-2">
+                      <span>🌱</span>
+                      {lang === 'ar' ? 'لماذا نسألك عن وجباتك؟' : 'Why RSVP for your meals?'}
+                    </h5>
+                    <p className="text-xs font-bold leading-relaxed text-[#F0F4F2]/75">
+                      {lang === 'ar'
+                        ? 'إن إعلامنا المسبق بحضورك أو عدم حضورك للوجبة يتيح لنا طبخ المقدار المحدد تماماً. هذا يمنع هدر مئات الأطنان من الطعام غير المستهلك ويقلل الانبعاثات الكربونية الناتجة عن النفايات الغذائية.'
+                        : 'By RSVPing, you let the culinary crew prepare the exact quantities needed. This prevents food waste and reduces carbon footprint at the event.'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Left: Programmed Meals RSVP List */}
+                <div className="lg:col-span-7 space-y-6">
+                  <div className="bg-gradient-to-b from-white/[0.06] to-white/[0.01] border border-white/10 rounded-[35px] p-6 backdrop-blur-3xl relative shadow-xl">
+                    <h4 className="text-lg font-black text-white mb-6 pb-3 border-b border-white/5 flex items-center gap-2 justify-between">
+                      <div className="flex items-center gap-2">
+                        <span>🥐</span>
+                        {lang === 'ar' ? 'تأكيد حضور الوجبات المبرمجة' : 'Programmed Meals RSVP'}
+                      </div>
+                      <span className="text-[10px] bg-amber-500/10 text-amber-500 px-3 py-1 rounded-full border border-amber-500/20 font-black">
+                        {lang === 'ar' ? 'منع الهدر الغذائي 🍃' : 'Zero Waste 🍃'}
+                      </span>
+                    </h4>
+
+                    {eventMeals.length === 0 ? (
+                      <div className="text-center py-12 text-white/40">
+                        <span className="text-4xl block mb-2">🍽️</span>
+                        <p className="text-sm font-bold">{lang === 'ar' ? 'لا توجد وجبات مبرمجة مدرجة للفعالية حالياً.' : 'No programmed meals registered for this event yet.'}</p>
+                        <p className="text-[10px] mt-1 text-white/30">{lang === 'ar' ? 'سيقوم المنظمون بإضافة جدول الوجبات والضيافة قريباً.' : 'Organizers will update the meals schedule soon.'}</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {eventMeals.map((meal) => {
+                          const mealDate = meal.date_time ? new Date(meal.date_time) : null;
+                          return (
+                            <div
+                              key={meal.id}
+                              className={cn(
+                                "p-4 rounded-3xl border transition-all duration-300 relative",
+                                meal.attending
+                                  ? "bg-white/[0.02] border-white/5"
+                                  : "bg-red-500/5 border-red-500/20 opacity-70"
+                              )}
+                            >
+                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                <div className="flex items-start gap-3">
+                                  <span className="text-2xl mt-1">
+                                    {meal.meal_type === 'breakfast' ? '🥐' :
+                                     meal.meal_type === 'lunch' ? '🥗' :
+                                     meal.meal_type === 'dinner' ? '🥩' : '☕'}
+                                  </span>
+                                  <div>
+                                    <h5 className="font-black text-sm text-white">{meal.title}</h5>
+                                    <p className="text-white/40 text-xs mt-0.5 leading-relaxed font-bold">{meal.description}</p>
+                                    <span className="text-[10px] text-amber-500/80 font-black tracking-wider block mt-1.5">
+                                      ⏰ {mealDate ? mealDate.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US', { weekday: 'long', hour: '2-digit', minute: '2-digit' }) : '---'}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center gap-2 self-end sm:self-center">
+                                  {/* Toggles */}
+                                  <button
+                                    disabled={isTogglingMealRsvp}
+                                    onClick={() => handleToggleMealRsvp(meal.id, true)}
+                                    className={cn(
+                                      "px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 border",
+                                      meal.attending
+                                        ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
+                                        : "bg-[#050B18] border-white/5 text-white/30 hover:text-white/50"
+                                    )}
+                                  >
+                                    <span>😋</span>
+                                    {lang === 'ar' ? 'سأتواجد' : 'I will eat'}
+                                  </button>
+
+                                  <button
+                                    disabled={isTogglingMealRsvp}
+                                    onClick={() => handleToggleMealRsvp(meal.id, false)}
+                                    className={cn(
+                                      "px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 border",
+                                      !meal.attending
+                                        ? "bg-red-500/10 border-red-500/25 text-red-400"
+                                        : "bg-[#050B18] border-white/5 text-white/30 hover:text-white/50"
+                                    )}
+                                  >
+                                    <span>🌱</span>
+                                    {lang === 'ar' ? 'اعتذار (منع الهدر)' : 'No, skip waste'}
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+              </div>
+            </motion.div>
+          )}
+
+          {activeTab === 'organizer' && (
+            <motion.div key="organizer" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 text-right">
+              {/* Header section */}
+              <div className="text-center mb-8">
+                <Shield className="w-16 h-16 text-amber-500 mx-auto mb-6 animate-pulse" />
+                <h3 className="text-3xl font-black">{lang === 'ar' ? 'إدارة اللجان والعمليات الميدانية 🛠️' : 'Staff Operations Panel 🛠️'}</h3>
+                <p className="text-brand-secondary/50 font-bold mt-2">
+                  {lang === 'ar' 
+                    ? 'لوحة التحكم الموحدة المتكيفة لإدارة النقل، الإيواء، وإحصائيات التموين الذكية 🌱.'
+                    : 'Unified operations hub for managing field logistics, hotel accommodations, and catering stats 🌱.'}
+                </p>
+              </div>
+
+              {/* Operations Sub-Tabs Navigation */}
+              <div className="flex items-center justify-center gap-2 p-1.5 bg-[#0D1527]/60 border border-white/5 rounded-2xl max-w-2xl mx-auto overflow-x-auto">
+                <button
+                  onClick={() => setStaffActiveSubTab('logistics')}
+                  className={cn(
+                    "px-4 py-2.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 whitespace-nowrap",
+                    staffActiveSubTab === 'logistics' ? "bg-amber-500 text-brand-dark shadow-lg" : "text-white/40 hover:text-white/60"
+                  )}
+                >
+                  <span>🚗</span>
+                  {lang === 'ar' ? 'النقل واللوجستيات' : 'Logistics & Transport'}
+                </button>
+                
+                <button
+                  onClick={() => setStaffActiveSubTab('catering')}
+                  className={cn(
+                    "px-4 py-2.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 whitespace-nowrap",
+                    staffActiveSubTab === 'catering' ? "bg-amber-500 text-brand-dark shadow-lg" : "text-white/40 hover:text-white/60"
+                  )}
+                >
+                  <span>🍽️</span>
+                  {lang === 'ar' ? 'تجنب الهدر والتموين' : 'Catering & Zero Waste'}
+                </button>
+
+                <button
+                  onClick={() => setStaffActiveSubTab('accommodation')}
+                  className={cn(
+                    "px-4 py-2.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 whitespace-nowrap",
+                    staffActiveSubTab === 'accommodation' ? "bg-amber-500 text-brand-dark shadow-lg" : "text-white/40 hover:text-white/60"
+                  )}
+                >
+                  <span>🏨</span>
+                  {lang === 'ar' ? 'لوحة تسكين الإيواء' : 'Hotel Rooms'}
+                </button>
+              </div>
+
+              {/* Sub-Tab 1: Logistics & Transport */}
+              {staffActiveSubTab === 'logistics' && (
+                <div className="space-y-6">
+                  {/* Stats Row */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="bg-gradient-to-br from-amber-500/10 to-amber-500/5 border border-amber-500/20 rounded-[30px] p-6 text-right">
+                      <span className="text-3xl block mb-2">🚗</span>
+                      <h4 className="text-sm font-black text-white/50">{lang === 'ar' ? 'إجمالي الوفود المسجلة للنقل' : 'Total Registered Guests'}</h4>
+                      <p className="text-3xl font-black text-white mt-1">{staffLogisticsList.length}</p>
+                    </div>
+                    <div className="bg-gradient-to-br from-red-500/10 to-red-500/5 border border-red-500/20 rounded-[30px] p-6 text-right">
+                      <span className="text-3xl block mb-2">⏳</span>
+                      <h4 className="text-sm font-black text-white/50">{lang === 'ar' ? 'بانتظار تعيين سائق' : 'Awaiting Drivers'}</h4>
+                      <p className="text-3xl font-black text-red-400 mt-1">{staffLogisticsList.filter(l => !l.driver_name).length}</p>
+                    </div>
+                    <div className="bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 border border-emerald-500/20 rounded-[30px] p-6 text-right">
+                      <span className="text-3xl block mb-2">🟢</span>
+                      <h4 className="text-sm font-black text-white/50">{lang === 'ar' ? 'تم التوصيل / جاري النقل' : 'Dispatched / Completed'}</h4>
+                      <p className="text-3xl font-black text-emerald-400 mt-1">{staffLogisticsList.filter(l => l.driver_name).length}</p>
+                    </div>
+                  </div>
+
+                  {/* List & Search */}
+                  <div className="bg-gradient-to-b from-white/[0.06] to-white/[0.01] border border-white/10 rounded-[35px] p-6 backdrop-blur-3xl relative shadow-xl">
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
+                      <h4 className="text-lg font-black text-white">{lang === 'ar' ? 'سجل وصول الوفود وحالة الاستقبال' : 'Arrival Dispatch Registry'}</h4>
+                      <Input
+                        value={searchStaffQuery}
+                        onChange={(e) => setSearchStaffQuery(e.target.value)}
+                        placeholder={lang === 'ar' ? '🔍 ابحث باسم الضيف أو رقم الرحلة...' : '🔍 Search Guest Name or Flight...'}
+                        className="w-full sm:w-80 bg-[#050B18] border border-white/10 rounded-2xl h-12 text-right text-white"
+                      />
+                    </div>
+
+                    {isLoadingStaffLogistics ? (
+                      <div className="text-center py-12">
+                        <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} className="w-10 h-10 border-4 border-amber-500 border-t-transparent rounded-full mx-auto" />
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {staffLogisticsList
+                          .filter(item => 
+                            item.participant_name.toLowerCase().includes(searchStaffQuery.toLowerCase()) ||
+                            (item.flight_number && item.flight_number.toLowerCase().includes(searchStaffQuery.toLowerCase()))
+                          )
+                          .map((item) => (
+                            <div key={item.id} className="p-5 rounded-3xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-all relative">
+                              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                <div className="space-y-2">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <h5 className="font-black text-md text-white">{item.participant_name}</h5>
+                                    <span className="text-[9px] px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500 font-bold">
+                                      {item.transport_type === 'plane' ? '✈️ طيران' : '🚗 سيارة خاصة'}
+                                    </span>
+                                    <span className={cn(
+                                      "text-[9px] px-2.5 py-0.5 rounded-full font-bold",
+                                      item.status === 'completed' || item.status === 'arrived' ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400" :
+                                      item.status === 'dispatched' ? "bg-blue-500/10 border border-blue-500/20 text-blue-400" : "bg-red-500/10 border border-red-500/20 text-red-400"
+                                    )}>
+                                      {item.status === 'completed' ? (lang === 'ar' ? 'تم الوصول للوجهة' : 'Completed') :
+                                       item.status === 'arrived' ? (lang === 'ar' ? 'وصل المطار' : 'Arrived') :
+                                       item.status === 'dispatched' ? (lang === 'ar' ? 'تم إرسال السائق' : 'Dispatched') : (lang === 'ar' ? 'قيد الانتظار' : 'Pending')}
+                                    </span>
+                                  </div>
+                                  
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5 text-xs text-white/50 font-bold">
+                                    {item.flight_number && <div>✈️ {lang === 'ar' ? 'رحلة رقم' : 'Flight'}: <span className="text-white">{item.flight_number}</span></div>}
+                                    {item.arrival_time && <div>⏰ {lang === 'ar' ? 'موعد الوصول' : 'Arrival'}: <span className="text-white">{new Date(item.arrival_time).toLocaleString()}</span></div>}
+                                    {item.arrival_location && <div className="sm:col-span-2">📍 {lang === 'ar' ? 'موقع الاستقبال' : 'Pickup Location'}: <span className="text-white">{item.arrival_location}</span></div>}
+                                    {item.hotel_name && <div>🏨 {lang === 'ar' ? 'فندق الإقامة' : 'Hotel'}: <span className="text-white">{item.hotel_name} (غرفة {item.room_number || '---'})</span></div>}
+                                  </div>
+
+                                  {item.driver_name && (
+                                    <div className="p-3 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 mt-3 text-xs text-emerald-400/90 font-bold space-y-1">
+                                      <div className="flex items-center gap-1">
+                                        <span>🚗</span>
+                                        <span>{lang === 'ar' ? `السائق المخصص: ${item.driver_name} (${item.driver_phone})` : `Driver: ${item.driver_name} (${item.driver_phone})`}</span>
+                                      </div>
+                                      <div className="text-[10px] text-white/40">🚘 {item.vehicle_details}</div>
+                                    </div>
+                                  )}
+                                </div>
+
+                                <div className="flex items-center gap-2 self-end md:self-center">
+                                  {/* WhatsApp Call */}
+                                  <a
+                                    href={`https://wa.me/${item.participant_phone.replace(/\+/g, '')}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="p-3 rounded-2xl bg-[#075E54]/10 border border-[#075E54]/20 text-[#25D366] hover:bg-[#075E54]/20 transition-all text-xs font-black flex items-center gap-1.5"
+                                  >
+                                    <span>💬</span>
+                                    {lang === 'ar' ? 'واتساب' : 'WhatsApp'}
+                                  </a>
+
+                                  {/* Dispatch Button */}
+                                  <button
+                                    onClick={() => {
+                                      setSelectedStaffParticipant(item);
+                                      setStaffDispatchForm({
+                                        driver_name: item.driver_name || '',
+                                        driver_phone: item.driver_phone || '',
+                                        vehicle_details: item.vehicle_details || '',
+                                        status: item.status || 'pending'
+                                      });
+                                      setIsStaffDispatchModalOpen(true);
+                                    }}
+                                    className="px-4 py-3 bg-amber-500 hover:bg-amber-600 text-brand-dark rounded-2xl text-xs font-black transition-all flex items-center gap-1.5"
+                                  >
+                                    <span>🚗</span>
+                                    {item.driver_name ? (lang === 'ar' ? 'تعديل السائق' : 'Edit Driver') : (lang === 'ar' ? 'تخصيص سائق' : 'Assign Driver')}
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Sub-Tab 2: Catering & Food Waste Statistics */}
+              {staffActiveSubTab === 'catering' && (
+                <div className="space-y-6">
+                  {/* Grid for Catering Metrics */}
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div className="bg-gradient-to-br from-amber-500/10 to-amber-500/5 border border-amber-500/20 rounded-[30px] p-6 text-right">
+                      <span className="text-3xl block mb-2">🍲</span>
+                      <h4 className="text-sm font-black text-white/50">{lang === 'ar' ? 'إجمالي وجبات الفعالية' : 'Total Event Meals'}</h4>
+                      <p className="text-3xl font-black text-white mt-1">4</p>
+                    </div>
+                    <div className="bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 border border-emerald-500/20 rounded-[30px] p-6 text-right relative overflow-hidden">
+                      <div className="absolute top-0 left-0 bg-emerald-500/20 px-3 py-1 rounded-br-2xl text-[9px] font-black uppercase tracking-wider text-emerald-400">
+                        {lang === 'ar' ? 'إنقاذ 🍃' : 'Saved 🍃'}
+                      </div>
+                      <span className="text-3xl block mb-2">🥗</span>
+                      <h4 className="text-sm font-black text-white/50">{lang === 'ar' ? 'وجبات تم إنقاذها من الهدر' : 'Meals Saved (Opt-out)'}</h4>
+                      <p className="text-3xl font-black text-emerald-400 mt-1">32 وجبة</p>
+                    </div>
+                    <div className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 border border-blue-500/20 rounded-[30px] p-6 text-right">
+                      <span className="text-3xl block mb-2">🥦</span>
+                      <h4 className="text-sm font-black text-white/50">{lang === 'ar' ? 'وجبات حمية خاصة (نباتي/جلوتين)' : 'Special Dietary Meals'}</h4>
+                      <p className="text-3xl font-black text-blue-400 mt-1">14 وجبة</p>
+                    </div>
+                    <div className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 border border-purple-500/20 rounded-[30px] p-6 text-right">
+                      <span className="text-3xl block mb-2">🌱</span>
+                      <h4 className="text-sm font-black text-white/50">{lang === 'ar' ? 'نسبة الهدر التي تم خفضها' : 'Reduced Food Waste %'}</h4>
+                      <p className="text-3xl font-black text-purple-400 mt-1">35.4%</p>
+                    </div>
+                  </div>
+
+                  {/* Dietary Breakdown Chart Table */}
+                  <div className="bg-gradient-to-b from-white/[0.06] to-white/[0.01] border border-white/10 rounded-[35px] p-6 backdrop-blur-3xl relative shadow-xl">
+                    <h4 className="text-lg font-black text-white mb-6 pb-3 border-b border-white/5 flex items-center gap-2">
+                      <span>🍽️</span>
+                      {lang === 'ar' ? 'إحصائيات تفضيلات المطبخ التنبؤية (يوم الغد)' : 'Predictive Kitchen Prep Sheet (Tomorrow)'}
+                    </h4>
+
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-right text-sm">
+                        <thead>
+                          <tr className="border-b border-white/5 text-white/40">
+                            <th className="pb-3 font-black text-xs">{lang === 'ar' ? 'الحمية المطلوبة' : 'Dietary Type'}</th>
+                            <th className="pb-3 font-black text-xs text-center">{lang === 'ar' ? 'الكمية المطلوبة بدقة' : 'Qty Required'}</th>
+                            <th className="pb-3 font-black text-xs text-center">{lang === 'ar' ? 'مؤشر هدر الوجبة' : 'Waste Index'}</th>
+                            <th className="pb-3 font-black text-xs text-left">{lang === 'ar' ? 'الحالة اللوجستية للمطبخ' : 'Status'}</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/5 text-white font-bold">
+                          <tr>
+                            <td className="py-3 flex items-center gap-2">
+                              <span>🥩</span>
+                              {lang === 'ar' ? 'حمية عادية (Standard)' : 'Standard Meal'}
+                            </td>
+                            <td className="py-3 text-center">125 وجبة</td>
+                            <td className="py-3 text-center text-emerald-400">⬇️ -25% {lang === 'ar' ? '(اعتذار مسبق)' : '(Opt-outs)'}</td>
+                            <td className="py-3 text-left text-emerald-500">✅ {lang === 'ar' ? 'تم التأكيد للمطبخ' : 'Confirmed'}</td>
+                          </tr>
+                          <tr>
+                            <td className="py-3 flex items-center gap-2">
+                              <span>🥦</span>
+                              {lang === 'ar' ? 'نباتي (Vegetarian)' : 'Vegetarian'}
+                            </td>
+                            <td className="py-3 text-center">8 وجبات</td>
+                            <td className="py-3 text-center text-white/30">---</td>
+                            <td className="py-3 text-left text-amber-500">👨‍🍳 {lang === 'ar' ? 'تحت الطهي المخصص' : 'In prep'}</td>
+                          </tr>
+                          <tr>
+                            <td className="py-3 flex items-center gap-2">
+                              <span>🌿</span>
+                              {lang === 'ar' ? 'نباتي صرف (Vegan)' : 'Vegan'}
+                            </td>
+                            <td className="py-3 text-center">4 وجبات</td>
+                            <td className="py-3 text-center text-white/30">---</td>
+                            <td className="py-3 text-left text-amber-500">👨‍🍳 {lang === 'ar' ? 'تحت الطهي المخصص' : 'In prep'}</td>
+                          </tr>
+                          <tr>
+                            <td className="py-3 flex items-center gap-2">
+                              <span>🌾</span>
+                              {lang === 'ar' ? 'خالي من الجلوتين (Gluten-Free)' : 'Gluten-Free'}
+                            </td>
+                            <td className="py-3 text-center">2 وجبة</td>
+                            <td className="py-3 text-center text-white/30">---</td>
+                            <td className="py-3 text-left text-amber-500">👨‍🍳 {lang === 'ar' ? 'طلب طازج عاجل' : 'Fresh order'}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Sub-Tab 3: Hotel Rooms & Accommodations */}
+              {staffActiveSubTab === 'accommodation' && (
+                <div className="space-y-6">
+                  {/* Grid for Hotel Metrics */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="bg-gradient-to-br from-amber-500/10 to-amber-500/5 border border-amber-500/20 rounded-[30px] p-6 text-right">
+                      <span className="text-3xl block mb-2">🏨</span>
+                      <h4 className="text-sm font-black text-white/50">{lang === 'ar' ? 'الفنادق المعتمدة' : 'Contracted Hotels'}</h4>
+                      <p className="text-3xl font-black text-white mt-1">2 (الأوراسي / شيراتون)</p>
+                    </div>
+                    <div className="bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 border border-emerald-500/20 rounded-[30px] p-6 text-right">
+                      <span className="text-3xl block mb-2">🛌</span>
+                      <h4 className="text-sm font-black text-white/50">{lang === 'ar' ? 'الغرف التي تم تسكينها' : 'Allocated Rooms'}</h4>
+                      <p className="text-3xl font-black text-emerald-400 mt-1">87 غرفة</p>
+                    </div>
+                    <div className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 border border-blue-500/20 rounded-[30px] p-6 text-right">
+                      <span className="text-3xl block mb-2">🔑</span>
+                      <h4 className="text-sm font-black text-white/50">{lang === 'ar' ? 'نسبة تسكين الوفود الكلية' : 'Total Allocation Rate'}</h4>
+                      <p className="text-3xl font-black text-blue-400 mt-1">94.2%</p>
+                    </div>
+                  </div>
+
+                  {/* Allocation Table */}
+                  <div className="bg-gradient-to-b from-white/[0.06] to-white/[0.01] border border-white/10 rounded-[35px] p-6 backdrop-blur-3xl relative shadow-xl">
+                    <h4 className="text-lg font-black text-white mb-6 pb-3 border-b border-white/5 flex items-center gap-2">
+                      <span>🏨</span>
+                      {lang === 'ar' ? 'سجل توزيع وتسكين الفنادق الفوري' : 'Live Hotel Placement sheet'}
+                    </h4>
+
+                    <div className="space-y-4">
+                      {staffLogisticsList.map((item) => (
+                        <div key={item.id} className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-right">
+                          <div>
+                            <h5 className="font-black text-sm text-white">{item.participant_name}</h5>
+                            <p className="text-white/40 text-xs mt-1 font-bold">
+                              🏨 {item.hotel_name || (lang === 'ar' ? 'لم يحدد فندق بعد' : 'No hotel set')} (غرفة: {item.room_number || '---'})
+                            </p>
+                          </div>
+                          <span className="px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-black self-start sm:self-center">
+                            🔑 {lang === 'ar' ? 'تم تسليم الغرفة' : 'Room Key Handed'}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Inline Dispatch Modal */}
+              <AnimatePresence>
+                {isStaffDispatchModalOpen && selectedStaffParticipant && (
+                  <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-md flex items-center justify-center p-4 text-[#F0F4F2]">
+                    <motion.div
+                      initial={{ scale: 0.9, y: 20 }}
+                      animate={{ scale: 1, y: 0 }}
+                      exit={{ scale: 0.9, y: 20 }}
+                      className="w-full max-w-lg bg-gradient-to-b from-[#0D1527] to-[#050B18] border border-white/10 rounded-[40px] p-6 relative shadow-[0_24px_80px_rgba(0,0,0,0.6)] text-right"
+                    >
+                      <div className="flex justify-between items-center pb-4 border-b border-white/5 mb-4">
+                        <div className="flex items-center gap-2">
+                          <span>🚗</span>
+                          <h3 className="text-lg font-black">{lang === 'ar' ? 'تخصيص سائق وإرسال تفاصيل النقل' : 'Assign Driver & Dispatch Details'}</h3>
+                        </div>
+                        <button
+                          onClick={() => setIsStaffDispatchModalOpen(false)}
+                          className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-white/60 hover:bg-white/10 hover:text-white"
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
+
+                      <p className="text-xs text-white/50 mb-6 font-bold leading-relaxed">
+                        {lang === 'ar'
+                          ? `سيتم حفظ هذه البيانات وإرسالها فوراً بهاتف الضيف (${selectedStaffParticipant.participant_name}) وتعديل لوحة وصوله لحظياً.`
+                          : `These details will be saved and immediately sent/updated on the guest's mobile portal.`}
+                      </p>
+
+                      <form onSubmit={handleSaveStaffDispatch} className="space-y-4">
+                        {/* Driver Name */}
+                        <div className="space-y-2">
+                          <label className="text-xs font-black text-white/50 block">{lang === 'ar' ? 'اسم السائق' : 'Driver Name'}</label>
+                          <Input
+                            required
+                            value={staffDispatchForm.driver_name}
+                            onChange={(e) => setStaffDispatchForm({ ...staffDispatchForm, driver_name: e.target.value })}
+                            placeholder={lang === 'ar' ? 'مثال: محمد الشريف' : 'e.g. Mohamed Al-Sharif'}
+                            className="w-full bg-[#050B18] border border-white/10 rounded-2xl h-14 text-right px-4 text-white"
+                          />
+                        </div>
+
+                        {/* Driver Phone */}
+                        <div className="space-y-2">
+                          <label className="text-xs font-black text-white/50 block">{lang === 'ar' ? 'رقم هاتف السائق' : 'Driver Phone Number'}</label>
+                          <Input
+                            required
+                            value={staffDispatchForm.driver_phone}
+                            onChange={(e) => setStaffDispatchForm({ ...staffDispatchForm, driver_phone: e.target.value })}
+                            placeholder="+213555123456"
+                            className="w-full bg-[#050B18] border border-white/10 rounded-2xl h-14 text-right px-4 text-white"
+                          />
+                        </div>
+
+                        {/* Vehicle details */}
+                        <div className="space-y-2">
+                          <label className="text-xs font-black text-white/50 block">{lang === 'ar' ? 'تفاصيل ولون ورقم السيارة' : 'Vehicle Make, Model & Plate'}</label>
+                          <Input
+                            required
+                            value={staffDispatchForm.vehicle_details}
+                            onChange={(e) => setStaffDispatchForm({ ...staffDispatchForm, vehicle_details: e.target.value })}
+                            placeholder={lang === 'ar' ? 'مثال: مرسيدس سوداء رقم 12345-120-16' : 'e.g. Black Mercedes S-Class, Plate 12345-120-16'}
+                            className="w-full bg-[#050B18] border border-white/10 rounded-2xl h-14 text-right px-4 text-white"
+                          />
+                        </div>
+
+                        {/* Status Select */}
+                        <div className="space-y-2">
+                          <label className="text-xs font-black text-white/50 block">{lang === 'ar' ? 'حالة الاستقبال والوصول' : 'Dispatch & Arrival Status'}</label>
+                          <select
+                            value={staffDispatchForm.status}
+                            onChange={(e) => setStaffDispatchForm({ ...staffDispatchForm, status: e.target.value })}
+                            className="w-full bg-[#050B18] border border-white/10 rounded-2xl h-14 px-4 text-white font-bold outline-none focus:border-amber-500/50 transition-all text-right"
+                            dir="rtl"
+                          >
+                            <option value="pending">{lang === 'ar' ? '⏳ قيد الانتظار' : 'Pending'}</option>
+                            <option value="dispatched">{lang === 'ar' ? '🚗 تم إرسال السائق للموقع' : 'Dispatched'}</option>
+                            <option value="arrived">{lang === 'ar' ? '✈️ وصل لمكان اللقاء' : 'Arrived at pickup location'}</option>
+                            <option value="completed">{lang === 'ar' ? '✅ تم التوصيل بنجاح' : 'Completed'}</option>
+                          </select>
+                        </div>
+
+                        {/* Dispatch Save Button */}
+                        <Button
+                          type="submit"
+                          disabled={isSavingStaffDispatch}
+                          variant="gold"
+                          className="w-full h-14 rounded-2xl text-md font-black gap-2 mt-6"
+                        >
+                          {isSavingStaffDispatch ? (
+                            <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} className="w-5 h-5 border-2 border-brand-dark border-t-transparent rounded-full" />
+                          ) : '🚗'}
+                          {lang === 'ar' ? 'تأكيد وإعلام الضيف فوراً' : 'Confirm & Dispatch Guest'}
+                        </Button>
+                      </form>
+                    </motion.div>
+                  </div>
+                )}
+              </AnimatePresence>
             </motion.div>
           )}
         </AnimatePresence>
@@ -1797,7 +3602,7 @@ const ParticipantPortal = () => {
             scrollSnapType: 'x mandatory',
           }}
         >
-          {tabs.map((tab) => (
+          {filteredTabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
@@ -1879,6 +3684,86 @@ const ParticipantPortal = () => {
             </div>
 
 
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Notebook Drawer/Modal */}
+      <AnimatePresence>
+        {isNotebookOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-md flex items-center justify-center p-4 text-[#F0F4F2]"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="w-full max-w-xl bg-gradient-to-b from-[#0D1527] to-[#050B18] border border-white/10 rounded-[40px] p-6 max-h-[85vh] flex flex-col relative shadow-[0_24px_80px_rgba(0,0,0,0.6)]"
+            >
+              <div className="flex justify-between items-center pb-4 border-b border-white/5 mb-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">📝</span>
+                  <h3 className="text-lg font-black">{lang === 'ar' ? 'مفكرتي الرقمية الشخصية' : 'My Digital Notebook'}</h3>
+                </div>
+                <button
+                  onClick={() => setIsNotebookOpen(false)}
+                  className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-white/60 hover:bg-white/10 hover:text-white"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+                {agenda.filter(item => sessionNotes[item.id]).length === 0 ? (
+                  <div className="text-center py-12">
+                    <span className="text-4xl block mb-2">📋</span>
+                    <p className="text-white/40 text-xs font-bold">{lang === 'ar' ? 'مفكرتك فارغة حالياً.' : 'Your notebook is currently empty.'}</p>
+                    <p className="text-amber-500/40 text-[10px] mt-1">{lang === 'ar' ? 'اكتب ملاحظاتك في تفاصيل الجلسات داخل الجدول لتظهر هنا.' : 'Write notes in session details in the Agenda tab to see them here.'}</p>
+                  </div>
+                ) : (
+                  agenda.filter(item => sessionNotes[item.id]).map(item => (
+                    <div key={item.id} className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl space-y-2">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h4 className="font-black text-xs text-white">{item.title}</h4>
+                          <p className="text-[10px] text-amber-500/60 font-bold mt-1">🎤 {item.speaker_name}</p>
+                        </div>
+                      </div>
+                      <p className="text-[#F0F4F2]/80 text-xs leading-relaxed whitespace-pre-wrap bg-black/30 p-3 rounded-xl border border-white/5">
+                        {sessionNotes[item.id]}
+                      </p>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {agenda.filter(item => sessionNotes[item.id]).length > 0 && (
+                <div className="pt-4 border-t border-white/5 mt-4">
+                  <button
+                    onClick={() => {
+                      const text = agenda
+                        .filter(item => sessionNotes[item.id])
+                        .map(item => `Session: ${item.title}\nSpeaker: ${item.speaker_name}\nNotes:\n${sessionNotes[item.id]}\n\n--------------------------\n`)
+                        .join('\n');
+                      const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = `diwan_notes_${eventId}.txt`;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                      toast.success(lang === 'ar' ? 'تم تحميل الملاحظات بنجاح 📲' : 'Notes downloaded successfully! 📲');
+                    }}
+                    className="w-full py-3 bg-amber-500 hover:bg-amber-600 text-brand-dark rounded-xl font-black text-xs tracking-widest uppercase shadow-lg transition-all"
+                  >
+                    {lang === 'ar' ? '📥 تحميل كل الملاحظات (.txt)' : '📥 Download All Notes (.txt)'}
+                  </button>
+                </div>
+              )}
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

@@ -2,11 +2,12 @@ from fastapi import APIRouter, Depends, HTTPException, Query, File, UploadFile
 import shutil
 import uuid
 import os
+from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import func, select, update, delete
 from typing import List, Optional
 from app.core.database import get_db
-from app.models.others import SocialPost, PostLike, Question, Document
+from app.models.others import SocialPost, PostLike, Question, Document, LogisticsRegistry, EventActivity, ActivityRegistration, CateringProfile, EventMeal, MealAttendance
 from app.models.engagement import GamificationEvent
 from app.models.participant import Participant
 from app.core.websockets import manager
@@ -121,9 +122,37 @@ async def submit_question(data: QuestionCreate, db: AsyncSession = Depends(get_d
 
 @router.get("/questions/{event_id}")
 async def list_questions(event_id: int, db: AsyncSession = Depends(get_db)):
-    stmt = select(Question).filter(Question.event_id == event_id).order_by(Question.timestamp.desc())
+    stmt = select(Question).filter(Question.event_id == event_id).order_by(
+        Question.pinned.desc(),
+        Question.votes_count.desc(),
+        Question.timestamp.desc()
+    )
     res = await db.execute(stmt)
     return res.scalars().all()
+
+@router.post("/questions/{q_id}/upvote")
+async def upvote_question(q_id: int, db: AsyncSession = Depends(get_db)):
+    question = await db.get(Question, q_id)
+    if not question:
+        raise HTTPException(status_code=404, detail="Question not found")
+    
+    if question.votes_count is None:
+        question.votes_count = 0
+    question.votes_count += 1
+    
+    await db.commit()
+    await db.refresh(question)
+    
+    # بث مباشر للحدث لجميع المتصلين
+    await manager.broadcast_to_event(question.event_id, {
+        "type": "question_upvoted",
+        "question": {
+            "id": question.id,
+            "votes_count": question.votes_count
+        }
+    })
+    
+    return {"status": "success", "votes_count": question.votes_count}
 
 @router.patch("/questions/{q_id}/pin")
 async def toggle_pin_question(
@@ -314,3 +343,509 @@ async def upload_document_file(
         "type": ext.replace(".", "").lower(),
         "size": f"{len(content) / 1024 / 1024:.1f} MB"
     }
+
+# --- Logistics & Accommodations Management ---
+class LogisticsRegistryCreate(BaseModel):
+    event_id: int
+    participant_id: int
+    transport_type: str # plane, train, private_car, none
+    flight_number: Optional[str] = None
+    arrival_time: Optional[datetime] = None
+    departure_time: Optional[datetime] = None
+    arrival_location: Optional[str] = None
+    hotel_name: Optional[str] = None
+    room_number: Optional[str] = None
+    check_in_date: Optional[datetime] = None
+    check_out_date: Optional[datetime] = None
+
+class LogisticsDispatchUpdate(BaseModel):
+    driver_name: Optional[str] = None
+    driver_phone: Optional[str] = None
+    vehicle_details: Optional[str] = None
+    shuttle_time: Optional[datetime] = None
+    status: Optional[str] = 'pending' # pending, dispatched, arrived, completed
+
+@router.get("/logistics/{participant_id}")
+async def get_logistics(participant_id: int, db: AsyncSession = Depends(get_db)):
+    stmt = select(LogisticsRegistry).filter(LogisticsRegistry.participant_id == participant_id)
+    res = await db.execute(stmt)
+    registry = res.scalar_one_or_none()
+    if not registry:
+        return {
+            "participant_id": participant_id,
+            "transport_type": "none",
+            "flight_number": "",
+            "arrival_time": None,
+            "departure_time": None,
+            "arrival_location": "",
+            "hotel_name": "",
+            "room_number": "",
+            "check_in_date": None,
+            "check_out_date": None,
+            "driver_name": "",
+            "driver_phone": "",
+            "vehicle_details": "",
+            "shuttle_time": None,
+            "status": "pending"
+        }
+    return registry
+
+@router.post("/logistics")
+async def save_logistics(data: LogisticsRegistryCreate, db: AsyncSession = Depends(get_db)):
+    stmt = select(LogisticsRegistry).filter(LogisticsRegistry.participant_id == data.participant_id)
+    res = await db.execute(stmt)
+    registry = res.scalar_one_or_none()
+    
+    if not registry:
+        registry = LogisticsRegistry(
+            participant_id=data.participant_id,
+            event_id=data.event_id,
+            transport_type=data.transport_type,
+            flight_number=data.flight_number,
+            arrival_time=data.arrival_time,
+            departure_time=data.departure_time,
+            arrival_location=data.arrival_location,
+            hotel_name=data.hotel_name,
+            room_number=data.room_number,
+            check_in_date=data.check_in_date,
+            check_out_date=data.check_out_date,
+            status="pending"
+        )
+        db.add(registry)
+    else:
+        registry.transport_type = data.transport_type
+        registry.flight_number = data.flight_number
+        registry.arrival_time = data.arrival_time
+        registry.departure_time = data.departure_time
+        registry.arrival_location = data.arrival_location
+        registry.hotel_name = data.hotel_name
+        registry.room_number = data.room_number
+        registry.check_in_date = data.check_in_date
+        registry.check_out_date = data.check_out_date
+        
+    await db.commit()
+    await db.refresh(registry)
+    return registry
+
+@router.patch("/logistics/dispatch/{participant_id}")
+async def dispatch_logistics(
+    participant_id: int, 
+    data: LogisticsDispatchUpdate, 
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_active_user)
+):
+    stmt = select(LogisticsRegistry).filter(LogisticsRegistry.participant_id == participant_id)
+    res = await db.execute(stmt)
+    registry = res.scalar_one_or_none()
+    if not registry:
+        raise HTTPException(status_code=404, detail="Logistics registry not found for participant")
+        
+    await verify_event_access(registry.event_id, db, user)
+    
+    if data.driver_name is not None:
+        registry.driver_name = data.driver_name
+    if data.driver_phone is not None:
+        registry.driver_phone = data.driver_phone
+    if data.vehicle_details is not None:
+        registry.vehicle_details = data.vehicle_details
+    if data.shuttle_time is not None:
+        registry.shuttle_time = data.shuttle_time
+    if data.status is not None:
+        registry.status = data.status
+        
+    await db.commit()
+    await db.refresh(registry)
+    
+    # Broadcast live updates to participants
+    await manager.broadcast_to_event(registry.event_id, {
+        "type": "logistics_dispatched",
+        "participant_id": participant_id,
+        "logistics": {
+            "driver_name": registry.driver_name,
+            "driver_phone": registry.driver_phone,
+            "vehicle_details": registry.vehicle_details,
+            "shuttle_time": registry.shuttle_time.isoformat() if registry.shuttle_time else None,
+            "status": registry.status
+        }
+    })
+    
+    return registry
+
+@router.get("/logistics/event/{event_id}")
+async def list_event_logistics(
+    event_id: int, 
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_active_user)
+):
+    await verify_event_access(event_id, db, user)
+    
+    stmt = select(LogisticsRegistry, Participant).join(
+        Participant, LogisticsRegistry.participant_id == Participant.id
+    ).filter(LogisticsRegistry.event_id == event_id)
+    
+    res = await db.execute(stmt)
+    results = res.all()
+    
+    output = []
+    for reg, part in results:
+        output.append({
+            "id": reg.id,
+            "participant_id": reg.participant_id,
+            "participant_name": part.full_name,
+            "participant_phone": part.phone,
+            "participant_email": part.email,
+            "transport_type": reg.transport_type,
+            "flight_number": reg.flight_number,
+            "arrival_time": reg.arrival_time.isoformat() if reg.arrival_time else None,
+            "departure_time": reg.departure_time.isoformat() if reg.departure_time else None,
+            "arrival_location": reg.arrival_location,
+            "hotel_name": reg.hotel_name,
+            "room_number": reg.room_number,
+            "check_in_date": reg.check_in_date.isoformat() if reg.check_in_date else None,
+            "check_out_date": reg.check_out_date.isoformat() if reg.check_out_date else None,
+            "driver_name": reg.driver_name,
+            "driver_phone": reg.driver_phone,
+            "vehicle_details": reg.vehicle_details,
+            "shuttle_time": reg.shuttle_time.isoformat() if reg.shuttle_time else None,
+            "status": reg.status
+        })
+    return output
+
+# --- Pydantic Schemas for Activities ---
+class ActivityCreate(BaseModel):
+    event_id: int
+    title: str
+    description: Optional[str] = ""
+    date_time: str # ISO String
+    duration: Optional[str] = ""
+    price: Optional[float] = 0.0
+    currency: Optional[str] = "DZD"
+    max_capacity: Optional[int] = None
+    location: Optional[str] = ""
+
+class RegisterActivityRequest(BaseModel):
+    activity_id: int
+    participant_id: int
+
+# --- API Endpoints ---
+
+@router.get("/activities/{event_id}")
+async def list_activities(
+    event_id: int, 
+    participant_id: Optional[int] = None, 
+    db: AsyncSession = Depends(get_db)
+):
+    # Fetch all active activities for this event
+    stmt = select(EventActivity).filter(
+        EventActivity.event_id == event_id,
+        EventActivity.is_active == True
+    ).order_by(EventActivity.date_time.asc())
+    
+    res = await db.execute(stmt)
+    activities = res.scalars().all()
+    
+    # If participant_id is provided, check their registrations
+    registered_ids = set()
+    if participant_id:
+        reg_stmt = select(ActivityRegistration.activity_id).filter(
+            ActivityRegistration.participant_id == participant_id
+        )
+        reg_res = await db.execute(reg_stmt)
+        registered_ids = set(reg_res.scalars().all())
+        
+    output = []
+    for act in activities:
+        # Count current registrations
+        count_stmt = select(func.count(ActivityRegistration.id)).filter(
+            ActivityRegistration.activity_id == act.id
+        )
+        count_res = await db.execute(count_stmt)
+        current_count = count_res.scalar() or 0
+        
+        output.append({
+            "id": act.id,
+            "event_id": act.event_id,
+            "title": act.title,
+            "description": act.description,
+            "date_time": act.date_time.isoformat() if act.date_time else None,
+            "duration": act.duration,
+            "price": act.price,
+            "currency": act.currency,
+            "max_capacity": act.max_capacity,
+            "location": act.location,
+            "is_registered": act.id in registered_ids,
+            "current_count": current_count
+        })
+        
+    return output
+
+@router.post("/activities/register")
+async def register_activity(
+    req: RegisterActivityRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    # Verify activity exists and has capacity
+    activity = await db.get(EventActivity, req.activity_id)
+    if not activity:
+        raise HTTPException(status_code=404, detail="Activity not found")
+        
+    # Check if already registered
+    check_stmt = select(ActivityRegistration).filter(
+        ActivityRegistration.activity_id == req.activity_id,
+        ActivityRegistration.participant_id == req.participant_id
+    )
+    check_res = await db.execute(check_stmt)
+    existing = check_res.scalar()
+    if existing:
+        return {"status": "already_registered", "registration_id": existing.id}
+        
+    # Check capacity
+    if activity.max_capacity:
+        count_stmt = select(func.count(ActivityRegistration.id)).filter(
+            ActivityRegistration.activity_id == req.activity_id
+        )
+        count_res = await db.execute(count_stmt)
+        current_count = count_res.scalar() or 0
+        if current_count >= activity.max_capacity:
+            raise HTTPException(status_code=400, detail="Activity capacity is full")
+            
+    # Create registration
+    payment_status = "free" if activity.price == 0 else "pending"
+    new_reg = ActivityRegistration(
+        activity_id=req.activity_id,
+        participant_id=req.participant_id,
+        payment_status=payment_status
+    )
+    db.add(new_reg)
+    await db.commit()
+    await db.refresh(new_reg)
+    
+    # Broadcast dynamic real-time event updates to all subscribers
+    await manager.broadcast_to_event(activity.event_id, {
+        "type": "activity_registered",
+        "activity_id": req.activity_id,
+        "participant_id": req.participant_id,
+        "payment_status": payment_status
+    })
+    
+    return {"status": "success", "registration_id": new_reg.id}
+
+@router.delete("/activities/unregister/{activity_id}/{participant_id}")
+async def unregister_activity(
+    activity_id: int,
+    participant_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    stmt = select(ActivityRegistration).filter(
+        ActivityRegistration.activity_id == activity_id,
+        ActivityRegistration.participant_id == participant_id
+    )
+    res = await db.execute(stmt)
+    reg = res.scalar()
+    if not reg:
+        raise HTTPException(status_code=404, detail="Registration not found")
+        
+    # Fetch activity for event_id
+    activity = await db.get(EventActivity, activity_id)
+    event_id = activity.event_id if activity else 0
+    
+    await db.delete(reg)
+    await db.commit()
+    
+    if event_id:
+        await manager.broadcast_to_event(event_id, {
+            "type": "activity_unregistered",
+            "activity_id": activity_id,
+            "participant_id": participant_id
+        })
+        
+    return {"status": "success"}
+
+@router.post("/activities/create")
+async def create_activity(
+    req: ActivityCreate,
+    db: AsyncSession = Depends(get_db)
+):
+    dt = datetime.fromisoformat(req.date_time.replace("Z", "+00:00"))
+    new_act = EventActivity(
+        event_id=req.event_id,
+        title=req.title,
+        description=req.description,
+        date_time=dt,
+        duration=req.duration,
+        price=req.price,
+        currency=req.currency,
+        max_capacity=req.max_capacity,
+        location=req.location,
+        is_active=True
+    )
+    db.add(new_act)
+    await db.commit()
+    await db.refresh(new_act)
+    return new_act
+
+# --- Pydantic Schemas for Catering & Meals ---
+class CateringProfileSave(BaseModel):
+    participant_id: int
+    event_id: int
+    dietary_type: str
+    allergies: Optional[str] = ""
+    notes: Optional[str] = ""
+
+class MealAttendanceToggle(BaseModel):
+    meal_id: int
+    participant_id: int
+    attending: bool
+    dietary_preference: Optional[str] = None
+
+class MealCreate(BaseModel):
+    event_id: int
+    title: str
+    description: Optional[str] = ""
+    date_time: str # ISO string
+    meal_type: str # breakfast, lunch, dinner, coffee_break
+
+# --- Catering & Sustainable Meals Endpoints ---
+
+@router.get("/catering/{participant_id}")
+async def get_catering_profile(
+    participant_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    stmt = select(CateringProfile).filter(CateringProfile.participant_id == participant_id)
+    res = await db.execute(stmt)
+    profile = res.scalar()
+    if not profile:
+        return {
+            "participant_id": participant_id,
+            "dietary_type": "none",
+            "allergies": "",
+            "notes": ""
+        }
+    return {
+        "id": profile.id,
+        "participant_id": profile.participant_id,
+        "event_id": profile.event_id,
+        "dietary_type": profile.dietary_type,
+        "allergies": profile.allergies,
+        "notes": profile.notes
+    }
+
+@router.post("/catering")
+async def save_catering_profile(
+    req: CateringProfileSave,
+    db: AsyncSession = Depends(get_db)
+):
+    stmt = select(CateringProfile).filter(CateringProfile.participant_id == req.participant_id)
+    res = await db.execute(stmt)
+    profile = res.scalar()
+    
+    if profile:
+        profile.dietary_type = req.dietary_type
+        profile.allergies = req.allergies
+        profile.notes = req.notes
+    else:
+        profile = CateringProfile(
+            participant_id=req.participant_id,
+            event_id=req.event_id,
+            dietary_type=req.dietary_type,
+            allergies=req.allergies,
+            notes=req.notes
+        )
+        db.add(profile)
+        
+    await db.commit()
+    await db.refresh(profile)
+    return profile
+
+@router.get("/meals/{event_id}")
+async def list_event_meals(
+    event_id: int,
+    participant_id: Optional[int] = None,
+    db: AsyncSession = Depends(get_db)
+):
+    stmt = select(EventMeal).filter(
+        EventMeal.event_id == event_id,
+        EventMeal.is_active == True
+    ).order_by(EventMeal.date_time.asc())
+    res = await db.execute(stmt)
+    meals = res.scalars().all()
+    
+    # If participant is provided, get RSVP status for each meal
+    rsvp_dict = {}
+    if participant_id:
+        rsvp_stmt = select(MealAttendance).filter(MealAttendance.participant_id == participant_id)
+        rsvp_res = await db.execute(rsvp_stmt)
+        for att in rsvp_res.scalars().all():
+            rsvp_dict[att.meal_id] = {
+                "attending": att.attending,
+                "dietary_preference": att.dietary_preference
+            }
+            
+    output = []
+    for meal in meals:
+        has_rsvp = meal.id in rsvp_dict
+        attending = rsvp_dict[meal.id]["attending"] if has_rsvp else True # Default to True (opt-in) until changed
+        pref = rsvp_dict[meal.id]["dietary_preference"] if has_rsvp else None
+        
+        output.append({
+            "id": meal.id,
+            "event_id": meal.event_id,
+            "title": meal.title,
+            "description": meal.description,
+            "date_time": meal.date_time.isoformat() if meal.date_time else None,
+            "meal_type": meal.meal_type,
+            "has_rsvp": has_rsvp,
+            "attending": attending,
+            "dietary_preference": pref
+        })
+    return output
+
+@router.post("/meals/rsvp")
+async def toggle_meal_rsvp(
+    req: MealAttendanceToggle,
+    db: AsyncSession = Depends(get_db)
+):
+    stmt = select(MealAttendance).filter(
+        MealAttendance.meal_id == req.meal_id,
+        MealAttendance.participant_id == req.participant_id
+    )
+    res = await db.execute(stmt)
+    attendance = res.scalar()
+    
+    if attendance:
+        attendance.attending = req.attending
+        attendance.dietary_preference = req.dietary_preference
+    else:
+        attendance = MealAttendance(
+            meal_id=req.meal_id,
+            participant_id=req.participant_id,
+            attending=req.attending,
+            dietary_preference=req.dietary_preference
+        )
+        db.add(attendance)
+        
+    await db.commit()
+    await db.refresh(attendance)
+    
+    # Optional: Broadcast real-time stats updates to organizers for kitchen forecasting
+    return {"status": "success", "attending": attendance.attending}
+
+@router.post("/meals/create")
+async def create_event_meal(
+    req: MealCreate,
+    db: AsyncSession = Depends(get_db)
+):
+    dt = datetime.fromisoformat(req.date_time.replace("Z", "+00:00"))
+    new_meal = EventMeal(
+        event_id=req.event_id,
+        title=req.title,
+        description=req.description,
+        date_time=dt,
+        meal_type=req.meal_type,
+        is_active=True
+    )
+    db.add(new_meal)
+    await db.commit()
+    await db.refresh(new_meal)
+    return new_meal
