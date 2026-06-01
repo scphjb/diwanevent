@@ -40,6 +40,7 @@ def upgrade() -> None:
     )
     op.create_index(op.f('ix_event_activities_event_id'), 'event_activities', ['event_id'], unique=False)
     op.create_index(op.f('ix_event_activities_id'), 'event_activities', ['id'], unique=False)
+    
     op.create_table('event_meals',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('event_id', sa.Integer(), nullable=True),
@@ -55,19 +56,7 @@ def upgrade() -> None:
     )
     op.create_index(op.f('ix_event_meals_event_id'), 'event_meals', ['event_id'], unique=False)
     op.create_index(op.f('ix_event_meals_id'), 'event_meals', ['id'], unique=False)
-    op.create_table('registration_otp',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('email', sa.String(), nullable=False),
-    sa.Column('event_id', sa.Integer(), nullable=False),
-    sa.Column('otp_code', sa.String(length=6), nullable=False),
-    sa.Column('created_at', sa.DateTime(), nullable=True),
-    sa.Column('expires_at', sa.DateTime(), nullable=False),
-    sa.Column('is_used', sa.Boolean(), nullable=True),
-    sa.ForeignKeyConstraint(['event_id'], ['event_settings.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index(op.f('ix_registration_otp_email'), 'registration_otp', ['email'], unique=False)
-    op.create_index(op.f('ix_registration_otp_id'), 'registration_otp', ['id'], unique=False)
+    
     op.create_table('activity_registrations',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('activity_id', sa.Integer(), nullable=True),
@@ -82,6 +71,7 @@ def upgrade() -> None:
     op.create_index(op.f('ix_activity_registrations_activity_id'), 'activity_registrations', ['activity_id'], unique=False)
     op.create_index(op.f('ix_activity_registrations_id'), 'activity_registrations', ['id'], unique=False)
     op.create_index(op.f('ix_activity_registrations_participant_id'), 'activity_registrations', ['participant_id'], unique=False)
+    
     op.create_table('catering_profiles',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('participant_id', sa.Integer(), nullable=True),
@@ -98,6 +88,7 @@ def upgrade() -> None:
     op.create_index(op.f('ix_catering_profiles_event_id'), 'catering_profiles', ['event_id'], unique=False)
     op.create_index(op.f('ix_catering_profiles_id'), 'catering_profiles', ['id'], unique=False)
     op.create_index(op.f('ix_catering_profiles_participant_id'), 'catering_profiles', ['participant_id'], unique=True)
+    
     op.create_table('logistics_registry',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('participant_id', sa.Integer(), nullable=True),
@@ -125,6 +116,7 @@ def upgrade() -> None:
     op.create_index(op.f('ix_logistics_registry_event_id'), 'logistics_registry', ['event_id'], unique=False)
     op.create_index(op.f('ix_logistics_registry_id'), 'logistics_registry', ['id'], unique=False)
     op.create_index(op.f('ix_logistics_registry_participant_id'), 'logistics_registry', ['participant_id'], unique=True)
+    
     op.create_table('meal_attendances',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('meal_id', sa.Integer(), nullable=True),
@@ -140,64 +132,22 @@ def upgrade() -> None:
     op.create_index(op.f('ix_meal_attendances_id'), 'meal_attendances', ['id'], unique=False)
     op.create_index(op.f('ix_meal_attendances_meal_id'), 'meal_attendances', ['meal_id'], unique=False)
     op.create_index(op.f('ix_meal_attendances_participant_id'), 'meal_attendances', ['participant_id'], unique=False)
-    op.drop_index(op.f('idx_attendance_event_checkin'), table_name='attendance', postgresql_where="((event_type)::text = 'check_in'::text)")
-    op.drop_index(op.f('idx_attendance_participant_event'), table_name='attendance')
-    op.drop_constraint(op.f('direct_messages_connection_id_fkey'), 'direct_messages', type_='foreignkey')
-    op.create_foreign_key(None, 'direct_messages', 'networking_connections', ['connection_id'], ['id'])
-    op.add_column('event_settings', sa.Column('map_url', sa.Text(), nullable=True))
-    op.add_column('event_settings', sa.Column('verify_email_on_register', sa.Boolean(), nullable=True))
-    op.alter_column('event_settings', 'is_public',
-               existing_type=sa.BOOLEAN(),
-               nullable=True,
-               existing_server_default=sa.text('true'))
-    op.drop_constraint(op.f('meeting_ratings_meeting_id_fkey'), 'meeting_ratings', type_='foreignkey')
-    op.create_foreign_key(None, 'meeting_ratings', 'meeting_requests', ['meeting_id'], ['id'])
-    op.drop_constraint(op.f('meeting_requests_connection_id_fkey'), 'meeting_requests', type_='foreignkey')
-    op.create_foreign_key(None, 'meeting_requests', 'networking_connections', ['connection_id'], ['id'])
-    op.alter_column('participant_otp', 'otp_code',
-               existing_type=sa.VARCHAR(length=6),
-               type_=sa.String(length=64),
-               existing_nullable=False)
-    op.add_column('participants', sa.Column('seat_number', sa.String(), nullable=True))
-    op.drop_index(op.f('idx_participants_event_email'), table_name='participants')
-    op.drop_index(op.f('idx_participants_event_id'), table_name='participants')
-    op.drop_index(op.f('idx_poll_votes_poll_id'), table_name='poll_votes')
-    op.drop_index(op.f('ix_poll_votes_poll_participant'), table_name='poll_votes')
-    op.add_column('questions', sa.Column('votes_count', sa.Integer(), nullable=True))
-    op.add_column('users', sa.Column('avatar_url', sa.String(), nullable=True))
-    op.drop_index(op.f('idx_users_email'), table_name='users')
+    
+    # Check if votes_count column exists first to be extra safe, or add it directly
+    try:
+        op.add_column('questions', sa.Column('votes_count', sa.Integer(), nullable=True))
+    except Exception:
+        pass
     # ### end Alembic commands ###
 
 
 def downgrade() -> None:
     """Downgrade schema."""
     # ### commands auto generated by Alembic - please adjust! ###
-    op.create_index(op.f('idx_users_email'), 'users', ['email'], unique=False)
-    op.drop_column('users', 'avatar_url')
-    op.drop_column('questions', 'votes_count')
-    op.create_index(op.f('ix_poll_votes_poll_participant'), 'poll_votes', ['poll_id', 'participant_id'], unique=False)
-    op.create_index(op.f('idx_poll_votes_poll_id'), 'poll_votes', ['poll_id'], unique=False)
-    op.create_index(op.f('idx_participants_event_id'), 'participants', ['event_id'], unique=False)
-    op.create_index(op.f('idx_participants_event_email'), 'participants', ['event_id', 'email'], unique=False)
-    op.drop_column('participants', 'seat_number')
-    op.alter_column('participant_otp', 'otp_code',
-               existing_type=sa.String(length=64),
-               type_=sa.VARCHAR(length=6),
-               existing_nullable=False)
-    op.drop_constraint(None, 'meeting_requests', type_='foreignkey')
-    op.create_foreign_key(op.f('meeting_requests_connection_id_fkey'), 'meeting_requests', 'networking_connections', ['connection_id'], ['id'], ondelete='CASCADE')
-    op.drop_constraint(None, 'meeting_ratings', type_='foreignkey')
-    op.create_foreign_key(op.f('meeting_ratings_meeting_id_fkey'), 'meeting_ratings', 'meeting_requests', ['meeting_id'], ['id'], ondelete='CASCADE')
-    op.alter_column('event_settings', 'is_public',
-               existing_type=sa.BOOLEAN(),
-               nullable=False,
-               existing_server_default=sa.text('true'))
-    op.drop_column('event_settings', 'verify_email_on_register')
-    op.drop_column('event_settings', 'map_url')
-    op.drop_constraint(None, 'direct_messages', type_='foreignkey')
-    op.create_foreign_key(op.f('direct_messages_connection_id_fkey'), 'direct_messages', 'networking_connections', ['connection_id'], ['id'], ondelete='CASCADE')
-    op.create_index(op.f('idx_attendance_participant_event'), 'attendance', ['participant_id', 'event_type'], unique=False)
-    op.create_index(op.f('idx_attendance_event_checkin'), 'attendance', ['event_type'], unique=False, postgresql_where="((event_type)::text = 'check_in'::text)")
+    try:
+        op.drop_column('questions', 'votes_count')
+    except Exception:
+        pass
     op.drop_index(op.f('ix_meal_attendances_participant_id'), table_name='meal_attendances')
     op.drop_index(op.f('ix_meal_attendances_meal_id'), table_name='meal_attendances')
     op.drop_index(op.f('ix_meal_attendances_id'), table_name='meal_attendances')
@@ -214,9 +164,6 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_activity_registrations_id'), table_name='activity_registrations')
     op.drop_index(op.f('ix_activity_registrations_activity_id'), table_name='activity_registrations')
     op.drop_table('activity_registrations')
-    op.drop_index(op.f('ix_registration_otp_id'), table_name='registration_otp')
-    op.drop_index(op.f('ix_registration_otp_email'), table_name='registration_otp')
-    op.drop_table('registration_otp')
     op.drop_index(op.f('ix_event_meals_id'), table_name='event_meals')
     op.drop_index(op.f('ix_event_meals_event_id'), table_name='event_meals')
     op.drop_table('event_meals')
