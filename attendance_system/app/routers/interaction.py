@@ -782,6 +782,32 @@ async def save_catering_profile(
     await db.refresh(profile)
     return profile
 
+@router.get("/catering/event/{event_id}")
+async def list_event_catering_profiles(
+    event_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    """List all participants' dietary profiles for a given event."""
+    stmt = (
+        select(CateringProfile, Participant)
+        .join(Participant, CateringProfile.participant_id == Participant.id)
+        .filter(CateringProfile.event_id == event_id)
+    )
+    res = await db.execute(stmt)
+    rows = res.all()
+    output = []
+    for profile, participant in rows:
+        output.append({
+            "id": profile.id,
+            "participant_id": participant.id,
+            "participant_name": participant.full_name,
+            "participant_phone": participant.phone,
+            "dietary_type": profile.dietary_type,
+            "allergies": profile.allergies or "",
+            "notes": profile.notes or ""
+        })
+    return output
+
 @router.get("/meals/{event_id}")
 async def list_event_meals(
     event_id: int,

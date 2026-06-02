@@ -173,6 +173,11 @@ const interactionService = {
     return res.data;
   },
 
+  listEventCateringProfiles: async (eventId) => {
+    const res = await api.get(`interaction/catering/event/${eventId}`);
+    return res.data;
+  },
+
   getActivityRegistrations: async (activityId) => {
     const res = await api.get(`interaction/activities/registrations/${activityId}`);
     return res.data;

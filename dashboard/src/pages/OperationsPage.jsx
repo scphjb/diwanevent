@@ -35,7 +35,7 @@ const OperationsPage = () => {
   const { i18n } = useTranslation();
   const lang = i18n.language === 'en' ? 'en' : 'ar';
 
-  const [activeTab, setActiveTab] = useState('logistics'); // logistics, catering, activities
+  const [activeTab, setActiveTab] = useState('logistics'); // logistics, catering, activities, committees
   const [loading, setLoading] = useState(true);
 
   // --- Logistics States ---
@@ -54,6 +54,8 @@ const OperationsPage = () => {
 
   // --- Catering States ---
   const [eventMeals, setEventMeals] = useState([]);
+  const [cateringProfiles, setCateringProfiles] = useState([]);
+  const [cateringSearch, setCateringSearch] = useState('');
   const [showMealModal, setShowMealModal] = useState(false);
   const [mealForm, setMealForm] = useState({
     title: '',
@@ -78,6 +80,15 @@ const OperationsPage = () => {
   });
   const [isSavingActivity, setIsSavingActivity] = useState(false);
 
+  // --- Committees States ---
+  const COMMITTEES = [
+    { key: 'reception',      icon: '🎫', nameAr: 'لجنة الاستقبال والتوجيه',  nameEn: 'Reception & Guidance' },
+    { key: 'catering_com',  icon: '🍽️', nameAr: 'لجنة الإطعام',             nameEn: 'Catering Committee' },
+    { key: 'accommodation', icon: '🏨', nameAr: 'لجنة الإيواء',              nameEn: 'Accommodation' },
+    { key: 'transport',     icon: '🚗', nameAr: 'لجنة النقل',               nameEn: 'Transport' },
+    { key: 'entertainment', icon: '🎭', nameAr: 'لجنة الترفيه والأنشطة',    nameEn: 'Entertainment' },
+  ];
+
   // --- Effect Hooks ---
   useEffect(() => {
     if (eventId) {
@@ -92,15 +103,20 @@ const OperationsPage = () => {
         const data = await interactionService.listEventLogistics(eventId);
         setLogisticsList(data || []);
       } else if (activeTab === 'catering') {
-        const meals = await interactionService.listEventMeals(eventId);
+        const [meals, profiles] = await Promise.all([
+          interactionService.listEventMeals(eventId),
+          interactionService.listEventCateringProfiles(eventId).catch(() => [])
+        ]);
         setEventMeals(meals || []);
+        setCateringProfiles(profiles || []);
       } else if (activeTab === 'activities') {
         const activities = await interactionService.listActivities(eventId);
         setActivitiesList(activities || []);
+      } else if (activeTab === 'committees') {
+        // committees tab uses tasks from ParticipantPortal — no extra fetch needed here
       }
     } catch (err) {
       console.error('Failed to fetch operations data:', err);
-      // Inject comprehensive mock data to prevent empty/broken page and ensure premium experience
       injectMockData();
     } finally {
       setLoading(false);
@@ -415,15 +431,18 @@ const OperationsPage = () => {
               {lang === 'ar' ? 'إضافة نشاط/رحلة ترفيهية' : 'Add Excursion Trip'}
             </Button>
           )}
+          <Button variant="outline" className="flex items-center gap-2 h-12 px-4 rounded-2xl border-white/10 text-white/50 hover:text-white hover:border-white/20" onClick={fetchData}>
+            <span>🔄</span>
+          </Button>
         </div>
       </div>
 
       {/* Navigation Sub-Tabs */}
-      <div className="flex items-center gap-2 p-1.5 bg-white/5 border border-white/10 rounded-2xl max-w-lg mb-10 overflow-x-auto">
+      <div className="flex items-center gap-2 p-1.5 bg-white/5 border border-white/10 rounded-2xl mb-10 overflow-x-auto">
         <button
           onClick={() => setActiveTab('logistics')}
           className={cn(
-            "px-6 py-3 rounded-xl text-xs font-black transition-all flex items-center gap-2 whitespace-nowrap",
+            "px-5 py-3 rounded-xl text-xs font-black transition-all flex items-center gap-2 whitespace-nowrap",
             activeTab === 'logistics' ? "bg-amber-500 text-brand-dark shadow-lg font-black" : "text-white/40 hover:text-white/60"
           )}
         >
@@ -434,7 +453,7 @@ const OperationsPage = () => {
         <button
           onClick={() => setActiveTab('catering')}
           className={cn(
-            "px-6 py-3 rounded-xl text-xs font-black transition-all flex items-center gap-2 whitespace-nowrap",
+            "px-5 py-3 rounded-xl text-xs font-black transition-all flex items-center gap-2 whitespace-nowrap",
             activeTab === 'catering' ? "bg-amber-500 text-brand-dark shadow-lg font-black" : "text-white/40 hover:text-white/60"
           )}
         >
@@ -445,12 +464,23 @@ const OperationsPage = () => {
         <button
           onClick={() => setActiveTab('activities')}
           className={cn(
-            "px-6 py-3 rounded-xl text-xs font-black transition-all flex items-center gap-2 whitespace-nowrap",
+            "px-5 py-3 rounded-xl text-xs font-black transition-all flex items-center gap-2 whitespace-nowrap",
             activeTab === 'activities' ? "bg-amber-500 text-brand-dark shadow-lg font-black" : "text-white/40 hover:text-white/60"
           )}
         >
-          <span>Compass</span>
+          <span>🏕️</span>
           {lang === 'ar' ? 'الأنشطة والرحلات' : 'Activities & Trips'}
+        </button>
+
+        <button
+          onClick={() => setActiveTab('committees')}
+          className={cn(
+            "px-5 py-3 rounded-xl text-xs font-black transition-all flex items-center gap-2 whitespace-nowrap",
+            activeTab === 'committees' ? "bg-amber-500 text-brand-dark shadow-lg font-black" : "text-white/40 hover:text-white/60"
+          )}
+        >
+          <span>🏛️</span>
+          {lang === 'ar' ? 'إدارة اللجان' : 'Committees'}
         </button>
       </div>
 
@@ -666,6 +696,85 @@ const OperationsPage = () => {
                   )}
                 </div>
               </div>
+
+              {/* --- Dietary / Catering Profiles Section --- */}
+              <div className="bg-gradient-to-b from-white/[0.06] to-white/[0.01] border border-white/10 rounded-[35px] p-8 shadow-xl">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-white/5">
+                  <h3 className="text-lg font-black text-white flex items-center gap-2">
+                    <span>🥦</span>
+                    {lang === 'ar' ? 'سجل الحميات الغذائية الخاصة بالمشاركين' : 'Participants Special Dietary Profiles'}
+                  </h3>
+                  <div className="flex items-center gap-3 bg-white/5 border border-white/10 px-4 py-2 rounded-2xl">
+                    <Search className="w-4 h-4 text-amber-500/60" />
+                    <input
+                      type="text"
+                      value={cateringSearch}
+                      onChange={e => setCateringSearch(e.target.value)}
+                      placeholder={lang === 'ar' ? 'ابحث باسم المشارك...' : 'Search by participant...'}
+                      className="bg-transparent outline-none text-white text-sm font-bold w-48 placeholder:text-white/20"
+                    />
+                  </div>
+                </div>
+
+                {cateringProfiles.length === 0 ? (
+                  <div className="text-center py-16 text-white/30">
+                    <span className="text-4xl block mb-2">🥗</span>
+                    <p className="font-bold text-sm">{lang === 'ar' ? 'لا يوجد مشاركون سجّلوا حمية خاصة بعد.' : 'No participants have registered dietary preferences yet.'}</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-white/30 text-xs font-black border-b border-white/5">
+                          <th className="pb-3 text-right">{lang === 'ar' ? 'المشارك' : 'Participant'}</th>
+                          <th className="pb-3 text-right">{lang === 'ar' ? 'نوع الحمية' : 'Diet Type'}</th>
+                          <th className="pb-3 text-right">{lang === 'ar' ? 'حساسيات' : 'Allergies'}</th>
+                          <th className="pb-3 text-right">{lang === 'ar' ? 'ملاحظات إضافية' : 'Notes'}</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/5">
+                        {cateringProfiles
+                          .filter(p => !cateringSearch || p.participant_name?.toLowerCase().includes(cateringSearch.toLowerCase()))
+                          .map(profile => {
+                            const dietLabels = {
+                              none: { ar: 'عادية', en: 'Standard', color: 'text-white/40' },
+                              vegetarian: { ar: 'نباتية', en: 'Vegetarian', color: 'text-emerald-400' },
+                              vegan: { ar: 'نباتية صرفة', en: 'Vegan', color: 'text-emerald-400' },
+                              gluten_free: { ar: 'خالية من الغلوتين', en: 'Gluten-Free', color: 'text-amber-400' },
+                              diabetic: { ar: 'حمية السكري', en: 'Diabetic', color: 'text-blue-400' },
+                              lactose_free: { ar: 'خالية من اللاكتوز', en: 'Lactose-Free', color: 'text-purple-400' },
+                              custom: { ar: 'مخصصة', en: 'Custom', color: 'text-rose-400' },
+                            };
+                            const diet = dietLabels[profile.dietary_type] || dietLabels['none'];
+                            return (
+                              <tr key={profile.id} className="hover:bg-white/[0.02] transition-all">
+                                <td className="py-3 pr-2">
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 font-black text-xs">
+                                      {profile.participant_name?.charAt(0) || '?'}
+                                    </div>
+                                    <div>
+                                      <p className="font-black text-white text-xs">{profile.participant_name}</p>
+                                      <p className="text-white/30 text-[10px]">{profile.participant_phone}</p>
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="py-3 pr-2">
+                                  <span className={`font-black text-xs ${diet.color}`}>
+                                    {lang === 'ar' ? diet.ar : diet.en}
+                                  </span>
+                                </td>
+                                <td className="py-3 pr-2 text-white/50 text-xs max-w-[150px] truncate">{profile.allergies || '—'}</td>
+                                <td className="py-3 pr-2 text-white/50 text-xs max-w-[200px] truncate">{profile.notes || '—'}</td>
+                              </tr>
+                            );
+                          })
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
             </motion.div>
           )}
 
@@ -721,6 +830,104 @@ const OperationsPage = () => {
                     <p className="font-bold text-sm">{lang === 'ar' ? 'لا توجد أنشطة ترفيهية مبرمجة حالياً.' : 'No active excursion activities.'}</p>
                   </div>
                 )}
+              </div>
+            </motion.div>
+          )}
+
+          {/* 🏗️ SUB-TAB 4: COMMITTEES MANAGEMENT */}
+          {activeTab === 'committees' && (
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-6">
+              <p className="text-white/40 text-sm font-bold text-right">
+                {lang === 'ar'
+                  ? '💡 هذه اللوحة تعرض ملخص كل لجنة. لإسناد المهام، استخدم بوابة المنظمين ← التبويب الخاص بكل لجنة.'
+                  : '💡 This panel shows each committee overview. To delegate tasks use the Staff Portal ← the committee tab.'}
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {COMMITTEES.map(com => (
+                  <div key={com.key} className="bg-gradient-to-b from-white/[0.07] to-white/[0.01] border border-white/10 rounded-[35px] p-8 shadow-xl flex flex-col gap-4 hover:border-amber-500/20 transition-all">
+                    <div className="flex items-center gap-4">
+                      <span className="text-4xl">{com.icon}</span>
+                      <div>
+                        <h3 className="font-black text-white text-base">{lang === 'ar' ? com.nameAr : com.nameEn}</h3>
+                        <p className="text-white/30 text-xs font-bold mt-0.5">
+                          {lang === 'ar' ? 'لجنة تنظيمية' : 'Organizing Committee'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="border-t border-white/5 pt-4 space-y-2">
+                      {com.key === 'reception' && (
+                        <p className="text-white/40 text-xs font-bold leading-relaxed">
+                          {lang === 'ar'
+                            ? '• استقبال وتسجيل المشاركين • مسح شارات الدخول • إدارة بوابة الدخول'
+                            : '• Register participants • Badge scanning • Gate entry management'}
+                        </p>
+                      )}
+                      {com.key === 'catering_com' && (
+                        <p className="text-white/40 text-xs font-bold leading-relaxed">
+                          {lang === 'ar'
+                            ? '• متابعة تسجيل الوجبات • إدارة الحميات الخاصة • التنسيق مع المطبخ'
+                            : '• Meal RSVP tracking • Dietary management • Kitchen coordination'}
+                        </p>
+                      )}
+                      {com.key === 'accommodation' && (
+                        <p className="text-white/40 text-xs font-bold leading-relaxed">
+                          {lang === 'ar'
+                            ? '• إدارة حجوزات الفنادق • توزيع الغرف • متابعة أماكن إقامة المشاركين'
+                            : '• Hotel booking management • Room allocation • Accommodation tracking'}
+                        </p>
+                      )}
+                      {com.key === 'transport' && (
+                        <p className="text-white/40 text-xs font-bold leading-relaxed">
+                          {lang === 'ar'
+                            ? '• نقل المشاركين من المطارات • التوصيل عند المغادرة • تنظيم المركبات'
+                            : '• Airport pickups • Departure drop-offs • Vehicle coordination'}
+                        </p>
+                      )}
+                      {com.key === 'entertainment' && (
+                        <p className="text-white/40 text-xs font-bold leading-relaxed">
+                          {lang === 'ar'
+                            ? '• تسيير البرامج الترفيهية • متابعة المسجلين في الأنشطة • تنظيم الرحلات'
+                            : '• Manage excursion programs • Activity registrations • Trip organization'}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="border-t border-white/5 pt-4 flex items-center justify-between">
+                      <span className="text-xs text-amber-500/60 font-black">
+                        {lang === 'ar' ? '📋 إدارة المهام عبر بوابة المنظمين' : '📋 Manage tasks via Staff Portal'}
+                      </span>
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Quick Stats */}
+              <div className="bg-gradient-to-b from-white/[0.06] to-white/[0.01] border border-white/10 rounded-[35px] p-8">
+                <h3 className="text-base font-black text-white mb-6 flex items-center gap-2">
+                  <span>📊</span>
+                  {lang === 'ar' ? 'كيفية إسناد المهام للجان' : 'How to Delegate Tasks to Committees'}
+                </h3>
+                <ol className="space-y-3 text-sm text-white/50 font-bold list-none">
+                  <li className="flex items-start gap-3">
+                    <span className="w-6 h-6 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-500 text-xs font-black flex items-center justify-center flex-shrink-0">1</span>
+                    <span>{lang === 'ar' ? 'سجّل الدخول عبر بوابة المنظمين بحساب رئيس اللجنة أو المنظم العام.' : 'Login to the Staff Portal with a committee president or general organizer account.'}</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="w-6 h-6 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-500 text-xs font-black flex items-center justify-center flex-shrink-0">2</span>
+                    <span>{lang === 'ar' ? 'انتقل إلى تبويب اللجنة المعنية (مثال: لجنة النقل).' : 'Navigate to the relevant committee tab (e.g. Transport).'}</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="w-6 h-6 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-500 text-xs font-black flex items-center justify-center flex-shrink-0">3</span>
+                    <span>{lang === 'ar' ? 'اضغط على زر \u201cإسناد مهمة جديدة\u201d لتحديد المشارك والمهمة والتاريخ والمسؤول.' : 'Click \'Assign New Task\' to select participant, task, deadline and responsible staff.'}</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="w-6 h-6 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-500 text-xs font-black flex items-center justify-center flex-shrink-0">4</span>
+                    <span>{lang === 'ar' ? 'يتلقى أعضاء اللجنة إشعاراً فورياً بالمهام المسندة إليهم.' : 'Committee members receive instant notification of tasks assigned to them.'}</span>
+                  </li>
+                </ol>
               </div>
             </motion.div>
           )}
