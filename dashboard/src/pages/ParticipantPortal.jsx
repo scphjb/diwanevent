@@ -1096,19 +1096,27 @@ const ParticipantPortal = () => {
   const handleSaveLogistics = async (e) => {
     if (e) e.preventDefault();
     setIsSavingLogistics(true);
+    
+    const parseSafeDate = (val) => {
+      if (!val) return null;
+      const d = new Date(val);
+      if (isNaN(d.getTime())) return null;
+      return d.toISOString();
+    };
+
     try {
       const response = await interactionService.saveLogistics({
         event_id: parseInt(eventId),
         participant_id: participant.id,
-        transport_type: logistics.transport_type,
+        transport_type: logistics.transport_type || 'none',
         flight_number: logistics.flight_number || null,
-        arrival_time: logistics.arrival_time ? new Date(logistics.arrival_time).toISOString() : null,
-        departure_time: logistics.departure_time ? new Date(logistics.departure_time).toISOString() : null,
+        arrival_time: parseSafeDate(logistics.arrival_time),
+        departure_time: parseSafeDate(logistics.departure_time),
         arrival_location: logistics.arrival_location || null,
         hotel_name: logistics.hotel_name || null,
         room_number: logistics.room_number || null,
-        check_in_date: logistics.check_in_date ? new Date(logistics.check_in_date).toISOString() : null,
-        check_out_date: logistics.check_out_date ? new Date(logistics.check_out_date).toISOString() : null
+        check_in_date: parseSafeDate(logistics.check_in_date),
+        check_out_date: parseSafeDate(logistics.check_out_date)
       });
       
       setLogistics(response);
