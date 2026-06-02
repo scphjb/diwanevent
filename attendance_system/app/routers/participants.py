@@ -147,7 +147,9 @@ async def get_participant_by_token(
         "seat_number": participant.seat_number,
         "event_id": participant.event_id,
         "avatar_url": avatar_url,
-        "custom_values": participant.custom_values or {}
+        "custom_values": participant.custom_values or {},
+        "role": participant.role or "",
+        "phone": participant.phone_number or ""
     }
 
 class PublicRegistrationRequest(BaseModel):
