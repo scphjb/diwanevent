@@ -218,3 +218,18 @@ class MealAttendance(Base, TimestampMixin):
     participant_id = Column(Integer, ForeignKey("participants.id", ondelete="CASCADE"), index=True)
     attending = Column(Boolean, default=True) # True = will consume, False = opt-out (no waste)
     dietary_preference = Column(String, nullable=True)
+
+class CommitteeTask(Base, TimestampMixin):
+    __tablename__ = "committee_tasks"
+    id = Column(Integer, primary_key=True, index=True)
+    event_id = Column(Integer, ForeignKey("event_settings.id"), index=True)
+    committee = Column(String) # transport, catering, accommodation, reception, entertainment
+    title = Column(String, nullable=False)
+    description = Column(Text, nullable=True)
+    
+    participant_id = Column(Integer, ForeignKey("participants.id", ondelete="CASCADE"), nullable=True, index=True)
+    assigned_to_id = Column(Integer, ForeignKey("participants.id", ondelete="CASCADE"), nullable=True, index=True)
+    assigned_to_name = Column(String, nullable=True)
+    
+    status = Column(String, default="pending") # pending, in_progress, completed, cancelled
+    due_time = Column(DateTime, nullable=True)

@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import func, select, update, delete
 from typing import List, Optional
 from app.core.database import get_db
-from app.models.others import SocialPost, PostLike, Question, Document, LogisticsRegistry, EventActivity, ActivityRegistration, CateringProfile, EventMeal, MealAttendance
+from app.models.others import SocialPost, PostLike, Question, Document, LogisticsRegistry, EventActivity, ActivityRegistration, CateringProfile, EventMeal, MealAttendance, CommitteeTask
 from app.models.engagement import GamificationEvent
 from app.models.participant import Participant
 from app.core.websockets import manager
@@ -579,6 +579,30 @@ async def list_activities(
         
     return output
 
+@router.get("/activities/registrations/{activity_id}")
+async def list_activity_registrations(
+    activity_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    from app.models.participant import Participant
+    stmt = select(Participant).join(
+        ActivityRegistration,
+        ActivityRegistration.participant_id == Participant.id
+    ).filter(
+        ActivityRegistration.activity_id == activity_id
+    )
+    res = await db.execute(stmt)
+    participants = res.scalars().all()
+    
+    return [{
+        "id": p.id,
+        "full_name": p.full_name,
+        "organization": p.organization,
+        "phone_number": p.phone_number,
+        "email": p.email,
+        "qr_code": p.qr_code
+    } for p in participants]
+
 @router.post("/activities/register")
 async def register_activity(
     req: RegisterActivityRequest,
@@ -849,3 +873,106 @@ async def create_event_meal(
     await db.commit()
     await db.refresh(new_meal)
     return new_meal
+
+# --- Committee Task Delegation Schemas & Routes ---
+class TaskCreate(BaseModel):
+    event_id: int
+    committee: str
+    title: str
+    description: Optional[str] = ""
+    participant_id: Optional[int] = None
+    assigned_to_id: Optional[int] = None
+    assigned_to_name: Optional[str] = ""
+    due_time: Optional[str] = None
+
+class TaskStatusUpdate(BaseModel):
+    status: str
+
+@router.get("/tasks/{event_id}")
+async def list_committee_tasks(
+    event_id: int,
+    committee: Optional[str] = Query(None),
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_active_user)
+):
+    stmt = select(CommitteeTask).filter(CommitteeTask.event_id == event_id)
+    if committee:
+        stmt = stmt.filter(CommitteeTask.committee == committee)
+    
+    res = await db.execute(stmt)
+    tasks = res.scalars().all()
+    
+    output = []
+    for task in tasks:
+        output.append({
+            "id": task.id,
+            "event_id": task.event_id,
+            "committee": task.committee,
+            "title": task.title,
+            "description": task.description,
+            "participant_id": task.participant_id,
+            "assigned_to_id": task.assigned_to_id,
+            "assigned_to_name": task.assigned_to_name,
+            "status": task.status,
+            "due_time": task.due_time.isoformat() if task.due_time else None
+        })
+    return output
+
+@router.post("/tasks/create")
+async def create_committee_task(
+    req: TaskCreate,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_active_user)
+):
+    dt = None
+    if req.due_time:
+        try:
+            dt = datetime.fromisoformat(req.due_time.replace("Z", "+00:00"))
+        except:
+            dt = None
+        
+    new_task = CommitteeTask(
+        event_id=req.event_id,
+        committee=req.committee,
+        title=req.title,
+        description=req.description,
+        participant_id=req.participant_id,
+        assigned_to_id=req.assigned_to_id,
+        assigned_to_name=req.assigned_to_name,
+        status="pending",
+        due_time=dt
+    )
+    db.add(new_task)
+    await db.commit()
+    await db.refresh(new_task)
+    return new_task
+
+@router.patch("/tasks/{task_id}/status")
+async def update_committee_task_status(
+    task_id: int,
+    req: TaskStatusUpdate,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_active_user)
+):
+    task = await db.get(CommitteeTask, task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+        
+    task.status = req.status
+    await db.commit()
+    await db.refresh(task)
+    return task
+
+@router.delete("/tasks/{task_id}")
+async def delete_committee_task(
+    task_id: int,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_active_user)
+):
+    task = await db.get(CommitteeTask, task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+        
+    await db.delete(task)
+    await db.commit()
+    return {"status": "success", "message": "Task deleted"}

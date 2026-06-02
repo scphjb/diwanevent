@@ -171,6 +171,33 @@ const interactionService = {
   createActivity: async (activityData) => {
     const res = await api.post('interaction/activities/create', activityData);
     return res.data;
+  },
+
+  getActivityRegistrations: async (activityId) => {
+    const res = await api.get(`interaction/activities/registrations/${activityId}`);
+    return res.data;
+  },
+
+  // Committee Task Delegation
+  listTasks: async (eventId, committee = null) => {
+    const params = committee ? { committee } : {};
+    const res = await api.get(`interaction/tasks/${eventId}`, { params });
+    return res.data;
+  },
+
+  createTask: async (taskData) => {
+    const res = await api.post('interaction/tasks/create', taskData);
+    return res.data;
+  },
+
+  updateTaskStatus: async (taskId, status) => {
+    const res = await api.patch(`interaction/tasks/${taskId}/status`, { status });
+    return res.data;
+  },
+
+  deleteTask: async (taskId) => {
+    const res = await api.delete(`interaction/tasks/${taskId}`);
+    return res.data;
   }
 };
 

@@ -137,6 +137,23 @@ const ParticipantPortal = () => {
     status: 'pending'
   });
   const [isSavingStaffDispatch, setIsSavingStaffDispatch] = useState(false);
+  const [selectedActivityForList, setSelectedActivityForList] = useState(null);
+  const [activityRegistrationsList, setActivityRegistrationsList] = useState([]);
+  const [isActivityRegistrationsOpen, setIsActivityRegistrationsOpen] = useState(false);
+  const [receptionList, setReceptionList] = useState([]);
+  const [isLoadingReception, setIsLoadingReception] = useState(false);
+  const [searchReceptionQuery, setSearchReceptionQuery] = useState('');
+  const [tasksList, setTasksList] = useState([]);
+  const [isLoadingTasks, setIsLoadingTasks] = useState(false);
+  const [isCreateTaskModalOpen, setIsCreateTaskModalOpen] = useState(false);
+  const [newTaskForm, setNewTaskForm] = useState({
+    title: '',
+    description: '',
+    participant_id: '',
+    assigned_to_id: '',
+    due_time: ''
+  });
+  const [selectedTaskCommittee, setSelectedTaskCommittee] = useState('transport');
 
   const [polls, setPolls] = useState([]);
   const [votedPolls, setVotedPolls] = useState([]);
@@ -1197,8 +1214,34 @@ const ParticipantPortal = () => {
   useEffect(() => {
     if (activeTab === 'organizer') {
       fetchStaffLogistics();
+      fetchReceptionParticipants();
+      fetchCommitteeTasks();
     }
   }, [activeTab]);
+
+  useEffect(() => {
+    if (participant) {
+      const roleLower = (participant.role || '').toLowerCase();
+      const isGeneral = !participant.role || 
+        roleLower === 'organizer' || 
+        roleLower === 'منظم' || 
+        roleLower.includes('عام') || 
+        roleLower.includes('general') ||
+        localStorage.getItem('diwan_force_organizer') === 'true';
+
+      if (isGeneral || roleLower.includes('نقل') || roleLower.includes('لوجست') || roleLower.includes('transport') || roleLower.includes('logistics')) {
+        setStaffActiveSubTab('logistics');
+      } else if (roleLower.includes('إطعام') || roleLower.includes('تموين') || roleLower.includes('catering') || roleLower.includes('food')) {
+        setStaffActiveSubTab('catering');
+      } else if (roleLower.includes('إيواء') || roleLower.includes('فندق') || roleLower.includes('hotel') || roleLower.includes('accommodation') || roleLower.includes('lodging')) {
+        setStaffActiveSubTab('accommodation');
+      } else if (roleLower.includes('ترفيه') || roleLower.includes('نشاط') || roleLower.includes('entertainment') || roleLower.includes('excursion') || roleLower.includes('activity')) {
+        setStaffActiveSubTab('entertainment');
+      } else if (roleLower.includes('استقبال') || roleLower.includes('تسجيل') || roleLower.includes('reception') || roleLower.includes('checkin') || roleLower.includes('gate') || roleLower.includes('scanner')) {
+        setStaffActiveSubTab('reception');
+      }
+    }
+  }, [participant]);
 
   const fetchStaffLogistics = async () => {
     setIsLoadingStaffLogistics(true);
@@ -1246,6 +1289,91 @@ const ParticipantPortal = () => {
       ]);
     } finally {
       setIsLoadingStaffLogistics(false);
+    }
+  };
+
+  const fetchReceptionParticipants = async () => {
+    setIsLoadingReception(true);
+    try {
+      const data = await participantService.getParticipants(eventId, { limit: 1000 });
+      setReceptionList(data?.items || []);
+    } catch (err) {
+      console.error('Failed to fetch reception participants:', err);
+    } finally {
+      setIsLoadingReception(false);
+    }
+  };
+
+  const fetchCommitteeTasks = async () => {
+    setIsLoadingTasks(true);
+    try {
+      const data = await interactionService.listTasks(eventId);
+      setTasksList(data || []);
+    } catch (err) {
+      console.error('Failed to fetch committee tasks:', err);
+    } finally {
+      setIsLoadingTasks(false);
+    }
+  };
+
+  const handleCreateTask = async (e) => {
+    if (e) e.preventDefault();
+    if (!newTaskForm.title) return;
+    
+    let assignedName = '';
+    if (newTaskForm.assigned_to_id) {
+      const helper = receptionList.find(p => p.id === parseInt(newTaskForm.assigned_to_id));
+      if (helper) assignedName = helper.full_name;
+    }
+    
+    try {
+      await interactionService.createTask({
+        event_id: eventId,
+        committee: selectedTaskCommittee,
+        title: newTaskForm.title,
+        description: newTaskForm.description,
+        participant_id: newTaskForm.participant_id ? parseInt(newTaskForm.participant_id) : null,
+        assigned_to_id: newTaskForm.assigned_to_id ? parseInt(newTaskForm.assigned_to_id) : null,
+        assigned_to_name: assignedName || null,
+        due_time: newTaskForm.due_time || null
+      });
+      toast.success(lang === 'ar' ? 'تم إسناد المهمة بنجاح!' : 'Task assigned successfully!');
+      setIsCreateTaskModalOpen(false);
+      setNewTaskForm({
+        title: '',
+        description: '',
+        participant_id: '',
+        assigned_to_id: '',
+        due_time: ''
+      });
+      fetchCommitteeTasks();
+    } catch (err) {
+      console.error('Failed to create task:', err);
+      toast.error(lang === 'ar' ? 'فشل إسناد المهمة' : 'Failed to assign task');
+    }
+  };
+
+  const handleUpdateTaskStatus = async (taskId, newStatus) => {
+    try {
+      await interactionService.updateTaskStatus(taskId, newStatus);
+      toast.success(lang === 'ar' ? 'تم تحديث حالة المهمة' : 'Task status updated');
+      fetchCommitteeTasks();
+    } catch (err) {
+      console.error('Failed to update task status:', err);
+      toast.error(lang === 'ar' ? 'فشل تحديث حالة المهمة' : 'Failed to update task status');
+    }
+  };
+
+  const handleDeleteTask = async (taskId) => {
+    if (window.confirm(lang === 'ar' ? 'هل أنت متأكد من حذف هذه المهمة؟' : 'Are you sure you want to delete this task?')) {
+      try {
+        await interactionService.deleteTask(taskId);
+        toast.success(lang === 'ar' ? 'تم حذف المهمة بنجاح' : 'Task deleted successfully');
+        fetchCommitteeTasks();
+      } catch (err) {
+        console.error('Failed to delete task:', err);
+        toast.error(lang === 'ar' ? 'فشل حذف المهمة' : 'Failed to delete task');
+      }
     }
   };
 
@@ -1426,6 +1554,49 @@ const ParticipantPortal = () => {
     localStorage.getItem('diwan_force_organizer') === 'true'
   );
 
+  const roleLower = (participant?.role || '').toLowerCase();
+  
+  const isGeneralOrganizer = !participant?.role || 
+    roleLower === 'organizer' || 
+    roleLower === 'منظم' || 
+    roleLower.includes('عام') || 
+    roleLower.includes('general') ||
+    localStorage.getItem('diwan_force_organizer') === 'true';
+
+  const hasLogisticsStaffAccess = isOrganizer && (isGeneralOrganizer || 
+    roleLower.includes('نقل') || 
+    roleLower.includes('لوجست') || 
+    roleLower.includes('transport') || 
+    roleLower.includes('logistics'));
+
+  const hasCateringStaffAccess = isOrganizer && (isGeneralOrganizer || 
+    roleLower.includes('إطعام') || 
+    roleLower.includes('تموين') || 
+    roleLower.includes('catering') || 
+    roleLower.includes('food'));
+
+  const hasAccommodationStaffAccess = isOrganizer && (isGeneralOrganizer || 
+    roleLower.includes('إيواء') || 
+    roleLower.includes('فندق') || 
+    roleLower.includes('hotel') || 
+    roleLower.includes('accommodation') || 
+    roleLower.includes('lodging'));
+
+  const hasEntertainmentStaffAccess = isOrganizer && (isGeneralOrganizer || 
+    roleLower.includes('ترفيه') || 
+    roleLower.includes('نشاط') || 
+    roleLower.includes('entertainment') || 
+    roleLower.includes('excursion') || 
+    roleLower.includes('activity'));
+
+  const hasReceptionStaffAccess = isOrganizer && (isGeneralOrganizer || 
+    roleLower.includes('استقبال') || 
+    roleLower.includes('تسجيل') || 
+    roleLower.includes('reception') || 
+    roleLower.includes('checkin') || 
+    roleLower.includes('gate') || 
+    roleLower.includes('scanner'));
+
   if (isOrganizer) {
     tabs.push({ id: 'organizer', label: lang === 'ar' ? 'إدارة اللجان 🛠️' : 'Staff Panel 🛠️', icon: Shield });
   }
@@ -1495,6 +1666,144 @@ const ParticipantPortal = () => {
       <Button variant="outline" onClick={() => window.location.href = '/'}>العودة للرئيسية</Button>
     </div>
   );
+
+  const renderCommitteeTasks = (committeeKey) => {
+    const roleLower = (participant.role || '').toLowerCase();
+    const isGeneral = !participant.role || 
+      roleLower === 'organizer' || 
+      roleLower === 'منظم' || 
+      roleLower.includes('عام') || 
+      roleLower.includes('general') ||
+      localStorage.getItem('diwan_force_organizer') === 'true';
+
+    const isPresident = roleLower.includes('رئيس') || roleLower.includes('president') || isGeneral;
+    
+    const filteredTasks = tasksList.filter(t => t.committee === committeeKey);
+    
+    const availableHelpers = receptionList.filter(p => {
+      const r = (p.role || '').toLowerCase();
+      return r.includes('منظم') || r.includes('organizer') || r.includes('سائق') || r.includes('driver') || r.includes('helper') || r.includes('مساعد') || r.includes('رئيس');
+    });
+
+    return (
+      <div className="mt-8 pt-8 border-t border-white/5 text-right">
+        <div className="flex items-center justify-between gap-4 mb-6">
+          {isPresident && (
+            <button
+              onClick={() => {
+                setSelectedTaskCommittee(committeeKey);
+                setIsCreateTaskModalOpen(true);
+              }}
+              className="px-4 py-2 rounded-2xl bg-amber-500 hover:bg-amber-400 text-brand-dark text-xs font-black shadow-lg shadow-amber-500/10 flex items-center gap-1.5 transition-all"
+            >
+              <span>➕</span>
+              {lang === 'ar' ? 'إسناد مهمة جديدة' : 'Assign New Task'}
+            </button>
+          )}
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] px-2 py-0.5 rounded bg-white/5 text-white/60 font-bold border border-white/10">
+              {isPresident ? (lang === 'ar' ? 'صلاحيات رئيس اللجنة 👑' : 'Committee President 👑') : (lang === 'ar' ? 'عضو اللجنة 🛡️' : 'Committee Member 🛡️')}
+            </span>
+            <h4 className="text-sm font-black text-white">{lang === 'ar' ? 'المهام الميدانية والتفويض' : 'Field Tasks & Delegation'}</h4>
+          </div>
+        </div>
+
+        {isLoadingTasks ? (
+          <div className="flex justify-center py-6">
+            <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} className="w-6 h-6 border-2 border-amber-500 border-t-transparent rounded-full" />
+          </div>
+        ) : filteredTasks.length === 0 ? (
+          <p className="text-white/40 text-xs py-4 text-center font-bold">
+            {lang === 'ar' ? 'لا توجد أي مهام مسندة لهذه اللجنة حالياً' : 'No tasks assigned to this committee yet'}
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {filteredTasks.map(task => {
+              const guest = receptionList.find(p => p.id === task.participant_id);
+              return (
+                <div key={task.id} className="p-4 bg-white/[0.01] border border-white/5 hover:border-white/10 rounded-2xl transition-all">
+                  <div className="flex items-center justify-between gap-3 mb-2">
+                    <div className="flex items-center gap-2">
+                      {isPresident && (
+                        <button
+                          onClick={() => handleDeleteTask(task.id)}
+                          className="text-red-400/60 hover:text-red-400 transition-colors p-1"
+                          title={lang === 'ar' ? 'حذف المهمة' : 'Delete Task'}
+                        >
+                          🗑️
+                        </button>
+                      )}
+                      
+                      <span className={cn(
+                        "text-[10px] px-2 py-0.5 rounded font-black",
+                        task.status === 'completed' ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" :
+                        task.status === 'in_progress' ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" :
+                        task.status === 'cancelled' ? "bg-red-500/10 text-red-400 border border-red-500/20" :
+                        "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                      )}>
+                        {task.status === 'completed' ? (lang === 'ar' ? '✅ اكتملت' : 'Completed') :
+                         task.status === 'in_progress' ? (lang === 'ar' ? '⚙️ جاري العمل' : 'In Progress') :
+                         task.status === 'cancelled' ? (lang === 'ar' ? '❌ ملغاة' : 'Cancelled') :
+                         (lang === 'ar' ? '⏳ قيد الانتظار' : 'Pending')}
+                      </span>
+                    </div>
+
+                    <h5 className="font-black text-sm text-white">{task.title}</h5>
+                  </div>
+
+                  {task.description && (
+                    <p className="text-white/60 text-xs mt-1.5 font-bold mb-2 leading-relaxed">{task.description}</p>
+                  )}
+
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-white/[0.03] text-[11px] font-bold text-white/40">
+                    <div className="flex items-center gap-2">
+                      {task.status !== 'completed' && task.status !== 'cancelled' && (
+                        <div className="flex items-center gap-1">
+                          {task.status === 'pending' ? (
+                            <button
+                              onClick={() => handleUpdateTaskStatus(task.id, 'in_progress')}
+                              className="px-2 py-0.5 rounded bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 transition-all"
+                            >
+                              {lang === 'ar' ? 'بدء التنفيذ' : 'Start'}
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleUpdateTaskStatus(task.id, 'completed')}
+                              className="px-2 py-0.5 rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 transition-all"
+                            >
+                              {lang === 'ar' ? 'إكمال المهمة' : 'Complete'}
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleUpdateTaskStatus(task.id, 'cancelled')}
+                            className="px-2 py-0.5 rounded bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 transition-all"
+                          >
+                            {lang === 'ar' ? 'إلغاء' : 'Cancel'}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-3 justify-end">
+                      {task.due_time && (
+                        <span>⏰ {new Date(task.due_time).toLocaleTimeString(lang === 'ar' ? 'ar-DZ' : 'en-US', {hour:'2-digit', minute:'2-digit'})}</span>
+                      )}
+                      {guest && (
+                        <span className="text-amber-500">👤 {lang === 'ar' ? `الضيف: ${guest.full_name}` : `Guest: ${guest.full_name}`}</span>
+                      )}
+                      {task.assigned_to_name && (
+                        <span className="text-emerald-400">🛡️ {lang === 'ar' ? `المنفذ: ${task.assigned_to_name}` : `Assignee: ${task.assigned_to_name}`}</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   const myLeaderboardEntry = (leaderboard || []).find(entry => entry.id === participant.id);
   const myPoints = myLeaderboardEntry ? myLeaderboardEntry.points : 0;
@@ -3170,42 +3479,74 @@ const ParticipantPortal = () => {
 
               {/* Operations Sub-Tabs Navigation */}
               <div className="flex items-center justify-center gap-2 p-1.5 bg-[#0D1527]/60 border border-white/5 rounded-2xl max-w-2xl mx-auto overflow-x-auto">
-                <button
-                  onClick={() => setStaffActiveSubTab('logistics')}
-                  className={cn(
-                    "px-4 py-2.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 whitespace-nowrap",
-                    staffActiveSubTab === 'logistics' ? "bg-amber-500 text-brand-dark shadow-lg" : "text-white/40 hover:text-white/60"
-                  )}
-                >
-                  <span>🚗</span>
-                  {lang === 'ar' ? 'النقل واللوجستيات' : 'Logistics & Transport'}
-                </button>
+                {hasLogisticsStaffAccess && (
+                  <button
+                    onClick={() => setStaffActiveSubTab('logistics')}
+                    className={cn(
+                      "px-4 py-2.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 whitespace-nowrap",
+                      staffActiveSubTab === 'logistics' ? "bg-amber-500 text-brand-dark shadow-lg" : "text-white/40 hover:text-white/60"
+                    )}
+                  >
+                    <span>🚗</span>
+                    {lang === 'ar' ? 'النقل واللوجستيات' : 'Logistics & Transport'}
+                  </button>
+                )}
                 
-                <button
-                  onClick={() => setStaffActiveSubTab('catering')}
-                  className={cn(
-                    "px-4 py-2.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 whitespace-nowrap",
-                    staffActiveSubTab === 'catering' ? "bg-amber-500 text-brand-dark shadow-lg" : "text-white/40 hover:text-white/60"
-                  )}
-                >
-                  <span>🍽️</span>
-                  {lang === 'ar' ? 'تجنب الهدر والتموين' : 'Catering & Zero Waste'}
-                </button>
+                {hasCateringStaffAccess && (
+                  <button
+                    onClick={() => setStaffActiveSubTab('catering')}
+                    className={cn(
+                      "px-4 py-2.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 whitespace-nowrap",
+                      staffActiveSubTab === 'catering' ? "bg-amber-500 text-brand-dark shadow-lg" : "text-white/40 hover:text-white/60"
+                    )}
+                  >
+                    <span>🍽️</span>
+                    {lang === 'ar' ? 'تجنب الهدر والتموين' : 'Catering & Zero Waste'}
+                  </button>
+                )}
 
-                <button
-                  onClick={() => setStaffActiveSubTab('accommodation')}
-                  className={cn(
-                    "px-4 py-2.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 whitespace-nowrap",
-                    staffActiveSubTab === 'accommodation' ? "bg-amber-500 text-brand-dark shadow-lg" : "text-white/40 hover:text-white/60"
-                  )}
-                >
-                  <span>🏨</span>
-                  {lang === 'ar' ? 'لوحة تسكين الإيواء' : 'Hotel Rooms'}
-                </button>
+                {hasAccommodationStaffAccess && (
+                  <button
+                    onClick={() => setStaffActiveSubTab('accommodation')}
+                    className={cn(
+                      "px-4 py-2.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 whitespace-nowrap",
+                      staffActiveSubTab === 'accommodation' ? "bg-amber-500 text-brand-dark shadow-lg" : "text-white/40 hover:text-white/60"
+                    )}
+                  >
+                    <span>🏨</span>
+                    {lang === 'ar' ? 'لوحة تسكين الإيواء' : 'Hotel Rooms'}
+                  </button>
+                )}
+
+                {hasEntertainmentStaffAccess && (
+                  <button
+                    onClick={() => setStaffActiveSubTab('entertainment')}
+                    className={cn(
+                      "px-4 py-2.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 whitespace-nowrap",
+                      staffActiveSubTab === 'entertainment' ? "bg-amber-500 text-brand-dark shadow-lg" : "text-white/40 hover:text-white/60"
+                    )}
+                  >
+                    <span>🏕️</span>
+                    {lang === 'ar' ? 'الأنشطة والترفيه' : 'Entertainment & Excursions'}
+                  </button>
+                )}
+
+                {hasReceptionStaffAccess && (
+                  <button
+                    onClick={() => setStaffActiveSubTab('reception')}
+                    className={cn(
+                      "px-4 py-2.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 whitespace-nowrap",
+                      staffActiveSubTab === 'reception' ? "bg-amber-500 text-brand-dark shadow-lg" : "text-white/40 hover:text-white/60"
+                    )}
+                  >
+                    <span>🎟️</span>
+                    {lang === 'ar' ? 'الاستقبال والتسجيل' : 'Reception & Check-in'}
+                  </button>
+                )}
               </div>
 
               {/* Sub-Tab 1: Logistics & Transport */}
-              {staffActiveSubTab === 'logistics' && (
+              {staffActiveSubTab === 'logistics' && hasLogisticsStaffAccess && (
                 <div className="space-y-6">
                   {/* Stats Row */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -3323,11 +3664,12 @@ const ParticipantPortal = () => {
                       </div>
                     )}
                   </div>
+                  {renderCommitteeTasks('transport')}
                 </div>
               )}
 
               {/* Sub-Tab 2: Catering & Food Waste Statistics */}
-              {staffActiveSubTab === 'catering' && (
+              {staffActiveSubTab === 'catering' && hasCateringStaffAccess && (
                 <div className="space-y-6">
                   {/* Grid for Catering Metrics */}
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -3414,11 +3756,12 @@ const ParticipantPortal = () => {
                       </table>
                     </div>
                   </div>
+                  {renderCommitteeTasks('catering')}
                 </div>
               )}
 
               {/* Sub-Tab 3: Hotel Rooms & Accommodations */}
-              {staffActiveSubTab === 'accommodation' && (
+              {staffActiveSubTab === 'accommodation' && hasAccommodationStaffAccess && (
                 <div className="space-y-6">
                   {/* Grid for Hotel Metrics */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -3462,6 +3805,218 @@ const ParticipantPortal = () => {
                       ))}
                     </div>
                   </div>
+                  {renderCommitteeTasks('accommodation')}
+                </div>
+              )}
+
+              {/* Sub-Tab 4: Entertainment & Excursions */}
+              {staffActiveSubTab === 'entertainment' && hasEntertainmentStaffAccess && (
+                <div className="space-y-6">
+                  {/* Grid for Entertainment Metrics */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="bg-gradient-to-br from-amber-500/10 to-amber-500/5 border border-amber-500/20 rounded-[30px] p-6 text-right">
+                      <span className="text-3xl block mb-2">🏕️</span>
+                      <h4 className="text-sm font-black text-white/50">{lang === 'ar' ? 'الأنشطة والرحلات النشطة' : 'Active Excursions'}</h4>
+                      <p className="text-3xl font-black text-white mt-1">{activities.length}</p>
+                    </div>
+                    <div className="bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 border border-emerald-500/20 rounded-[30px] p-6 text-right">
+                      <span className="text-3xl block mb-2">👥</span>
+                      <h4 className="text-sm font-black text-white/50">{lang === 'ar' ? 'إجمالي المقاعد المحجوزة' : 'Total Seats Reserved'}</h4>
+                      <p className="text-3xl font-black text-emerald-400 mt-1 font-mono">
+                        {activities.reduce((acc, curr) => acc + (curr.current_count || 0), 0)}
+                      </p>
+                    </div>
+                    <div className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 border border-blue-500/20 rounded-[30px] p-6 text-right">
+                      <span className="text-3xl block mb-2">✨</span>
+                      <h4 className="text-sm font-black text-white/50">{lang === 'ar' ? 'النسبة الكلية للامتلاء' : 'Average Booking Rate'}</h4>
+                      <p className="text-3xl font-black text-blue-400 mt-1 font-mono">
+                        {activities.length > 0 
+                          ? `${Math.round((activities.reduce((acc, curr) => acc + (curr.current_count || 0), 0) / (activities.reduce((acc, curr) => acc + (curr.max_capacity || 999), 0) || 1)) * 100)}%` 
+                          : '0%'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Excursions Management List */}
+                  <div className="bg-gradient-to-b from-white/[0.06] to-white/[0.01] border border-white/10 rounded-[35px] p-6 backdrop-blur-3xl relative shadow-xl">
+                    <h4 className="text-lg font-black text-white mb-6 pb-3 border-b border-white/5 flex items-center gap-2">
+                      <span>🏕️</span>
+                      {lang === 'ar' ? 'سجل متابعة وتأكيد حجوزات الأنشطة' : 'Sideline Activities & Placement tracking'}
+                    </h4>
+
+                    {activities.length === 0 ? (
+                      <p className="text-white/40 text-center py-12 font-bold">
+                        {lang === 'ar' ? 'لا توجد أنشطة ترفيهية مسجلة حالياً' : 'No side excursions set yet'}
+                      </p>
+                    ) : (
+                      <div className="space-y-4">
+                        {activities.map((act) => (
+                          <div key={act.id} className="p-5 bg-[#0D1527]/40 border border-white/5 rounded-3xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-right">
+                            <div className="space-y-1">
+                              <h5 className="font-black text-md text-white">{act.title}</h5>
+                              <p className="text-white/40 text-xs font-bold">
+                                📍 {act.location} | 📅 {new Date(act.date_time).toLocaleDateString(lang === 'ar' ? 'ar-DZ' : 'en-US')}
+                              </p>
+                              <div className="w-48 bg-white/5 h-2 rounded-full overflow-hidden mt-2">
+                                <div 
+                                  className="bg-amber-500 h-full rounded-full transition-all"
+                                  style={{ width: `${Math.min(100, ((act.current_count || 0) / (act.max_capacity || 100)) * 100)}%` }}
+                                />
+                              </div>
+                              <span className="text-[10px] text-white/50 block font-bold">
+                                {lang === 'ar' 
+                                  ? `تم حجز ${act.current_count} من أصل ${act.max_capacity || '∞'}`
+                                  : `${act.current_count} / ${act.max_capacity || 'unlimited'} reserved`}
+                              </span>
+                            </div>
+                            
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={async () => {
+                                  try {
+                                    const res = await interactionService.getActivityRegistrations(act.id);
+                                    setSelectedActivityForList(act);
+                                    setActivityRegistrationsList(res || []);
+                                    setIsActivityRegistrationsOpen(true);
+                                  } catch (err) {
+                                    console.error('Failed to fetch activity registrations:', err);
+                                  }
+                                }}
+                                className="px-4 py-2 rounded-2xl bg-white/5 hover:bg-white/10 text-white font-bold text-xs transition-all border border-white/10"
+                              >
+                                👥 {lang === 'ar' ? 'عرض قائمة المسجلين' : 'View Registrations'}
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  {renderCommitteeTasks('entertainment')}
+                </div>
+              )}
+
+              {/* Sub-Tab 5: Reception & Check-in */}
+              {staffActiveSubTab === 'reception' && hasReceptionStaffAccess && (
+                <div className="space-y-6">
+                  {/* Grid for Reception Metrics */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="bg-gradient-to-br from-amber-500/10 to-amber-500/5 border border-amber-500/20 rounded-[30px] p-6 text-right">
+                      <span className="text-3xl block mb-2">👤</span>
+                      <h4 className="text-sm font-black text-white/50">{lang === 'ar' ? 'إجمالي الحضور الفعلي' : 'Checked In'}</h4>
+                      <p className="text-3xl font-black text-white mt-1 font-mono">
+                        {receptionList.filter(p => p.check_in_time).length}
+                      </p>
+                    </div>
+                    <div className="bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 border border-emerald-500/20 rounded-[30px] p-6 text-right">
+                      <span className="text-3xl block mb-2">👥</span>
+                      <h4 className="text-sm font-black text-white/50">{lang === 'ar' ? 'إجمالي المدعوين المسجلين' : 'Total Guests'}</h4>
+                      <p className="text-3xl font-black text-emerald-400 mt-1 font-mono">
+                        {receptionList.length}
+                      </p>
+                    </div>
+                    <div className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 border border-blue-500/20 rounded-[30px] p-6 text-right">
+                      <span className="text-3xl block mb-2">📈</span>
+                      <h4 className="text-sm font-black text-white/50">{lang === 'ar' ? 'نسبة الحضور الحالية' : 'Attendance Rate'}</h4>
+                      <p className="text-3xl font-black text-blue-400 mt-1 font-mono">
+                        {receptionList.length > 0 
+                          ? `${Math.round((receptionList.filter(p => p.check_in_time).length / receptionList.length) * 100)}%` 
+                          : '0%'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Search and Guest List */}
+                  <div className="bg-gradient-to-b from-white/[0.06] to-white/[0.01] border border-white/10 rounded-[35px] p-6 backdrop-blur-3xl relative shadow-xl">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-3 border-b border-white/5">
+                      <h4 className="text-lg font-black text-white flex items-center gap-2">
+                        <span>🎟️</span>
+                        {lang === 'ar' ? 'سجل الحضور والتحقق السريع البوابي' : 'Live Gate Check-in sheet'}
+                      </h4>
+                      
+                      {/* Search Input */}
+                      <div className="relative w-full sm:w-64">
+                        <input
+                          type="text"
+                          placeholder={lang === 'ar' ? 'ابحث باسم الضيف أو الجهة...' : 'Search guest name...'}
+                          value={searchReceptionQuery}
+                          onChange={(e) => setSearchReceptionQuery(e.target.value)}
+                          className="w-full bg-white/5 border border-white/10 rounded-2xl h-10 px-4 text-xs text-white font-bold outline-none focus:border-amber-500/50 transition-all text-right"
+                          dir="rtl"
+                        />
+                      </div>
+                    </div>
+
+                    {isLoadingReception ? (
+                      <div className="flex justify-center py-12">
+                        <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full" />
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {receptionList
+                          .filter(p => !searchReceptionQuery || p.full_name?.toLowerCase().includes(searchReceptionQuery.toLowerCase()) || p.organization?.toLowerCase().includes(searchReceptionQuery.toLowerCase()))
+                          .map((p) => (
+                            <div key={p.id} className="p-4 bg-[#0D1527]/40 border border-white/5 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-right">
+                              <div>
+                                <div className="flex items-center gap-2 justify-end">
+                                  <span className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-500 text-[10px] font-black uppercase">
+                                    {p.role === 'vip' ? (lang === 'ar' ? 'VIP 👑' : 'VIP') : p.role}
+                                  </span>
+                                  <h5 className="font-black text-sm text-white">{p.full_name}</h5>
+                                </div>
+                                <p className="text-white/40 text-xs font-bold mt-1">
+                                  🏢 {p.organization || '---'} {p.phone_number ? `| 📞 ${p.phone_number}` : ''}
+                                </p>
+                                {p.check_in_time && (
+                                  <p className="text-emerald-400 text-[10px] font-bold mt-1">
+                                    ✅ {lang === 'ar' ? 'حاضر منذ:' : 'Arrived at:'} {new Date(p.check_in_time).toLocaleTimeString(lang === 'ar' ? 'ar-DZ' : 'en-US')}
+                                  </p>
+                                )}
+                              </div>
+
+                              <div className="flex items-center gap-2 self-start sm:self-center">
+                                {p.check_in_time ? (
+                                  <button
+                                    onClick={async () => {
+                                      if (window.confirm(lang === 'ar' ? 'هل أنت متأكد من إلغاء تحضير هذا الضيف؟' : 'Are you sure you want to undo check-in for this guest?')) {
+                                        try {
+                                          await participantService.undoCheckIn(p.id);
+                                          toast.success(lang === 'ar' ? 'تم إلغاء الحضور بنجاح' : 'Check-in cancelled successfully');
+                                          fetchReceptionParticipants();
+                                        } catch (err) {
+                                          console.error('Failed to undo check-in:', err);
+                                          toast.error(lang === 'ar' ? 'فشل إلغاء الحضور' : 'Failed to undo check-in');
+                                        }
+                                      }
+                                    }}
+                                    className="px-3 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 text-xs font-black transition-all"
+                                  >
+                                    ❌ {lang === 'ar' ? 'إلغاء التحضير' : 'Undo Check-in'}
+                                  </button>
+                                ) : (
+                                  <button
+                                    onClick={async () => {
+                                      try {
+                                        await participantService.checkIn(p.id);
+                                        toast.success(lang === 'ar' ? 'تم تحضير الضيف بنجاح! 🎟️' : 'Guest checked in successfully! 🎟️');
+                                        fetchReceptionParticipants();
+                                      } catch (err) {
+                                        console.error('Failed to check in:', err);
+                                        toast.error(lang === 'ar' ? 'فشل تسجيل حضور الضيف' : 'Failed to check in guest');
+                                      }
+                                    }}
+                                    className="px-3 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 text-xs font-black transition-all"
+                                  >
+                                    ⚡ {lang === 'ar' ? 'تسجيل حضور' : 'Check-in'}
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                      </div>
+                    )}
+                  </div>
+                  {renderCommitteeTasks('reception')}
                 </div>
               )}
 
@@ -3558,6 +4113,175 @@ const ParticipantPortal = () => {
                             <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} className="w-5 h-5 border-2 border-brand-dark border-t-transparent rounded-full" />
                           ) : '🚗'}
                           {lang === 'ar' ? 'تأكيد وإعلام الضيف فوراً' : 'Confirm & Dispatch Guest'}
+                        </Button>
+                      </form>
+                    </motion.div>
+                  </div>
+                )}
+
+                {isActivityRegistrationsOpen && selectedActivityForList && (
+                  <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-md flex items-center justify-center p-4 text-[#F0F4F2]">
+                    <motion.div
+                      initial={{ scale: 0.9, y: 20 }}
+                      animate={{ scale: 1, y: 0 }}
+                      exit={{ scale: 0.9, y: 20 }}
+                      className="w-full max-w-lg bg-gradient-to-b from-[#0D1527] to-[#050B18] border border-white/10 rounded-[40px] p-6 relative shadow-[0_24px_80px_rgba(0,0,0,0.6)] text-right"
+                    >
+                      <div className="flex justify-between items-center pb-4 border-b border-white/5 mb-4">
+                        <div className="flex items-center gap-2">
+                          <span>🏕️</span>
+                          <h3 className="text-lg font-black">{lang === 'ar' ? 'قائمة المسجلين في النشاط' : 'Activity Registrations'}</h3>
+                        </div>
+                        <button
+                          onClick={() => setIsActivityRegistrationsOpen(false)}
+                          className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-white/60 hover:bg-white/10 hover:text-white"
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
+
+                      <div className="mb-4">
+                        <h4 className="font-black text-md text-amber-500">{selectedActivityForList.title}</h4>
+                        <p className="text-white/40 text-xs mt-1 font-bold">
+                          📍 {selectedActivityForList.location} | {selectedActivityForList.current_count} {lang === 'ar' ? 'مسجلين' : 'registered'}
+                        </p>
+                      </div>
+
+                      <div className="max-h-72 overflow-y-auto space-y-3 pr-1" dir="rtl">
+                        {activityRegistrationsList.length === 0 ? (
+                          <p className="text-white/40 text-center py-6 font-bold">
+                            {lang === 'ar' ? 'لا يوجد أي مسجل في هذا النشاط بعد' : 'No one registered for this activity yet'}
+                          </p>
+                        ) : (
+                          activityRegistrationsList.map((p) => (
+                            <div key={p.id} className="p-3 bg-white/[0.02] border border-white/5 rounded-2xl flex items-center justify-between gap-3 text-right">
+                              <div>
+                                <h5 className="font-black text-sm text-white">{p.full_name}</h5>
+                                <p className="text-white/40 text-[11px] font-bold mt-0.5">
+                                  🏢 {p.organization || '---'} {p.phone_number ? `| 📞 ${p.phone_number}` : ''}
+                                </p>
+                              </div>
+                              <button
+                                onClick={async () => {
+                                  if (window.confirm(lang === 'ar' ? 'هل أنت متأكد من إلغاء تسجيل هذا العضو؟' : 'Are you sure you want to cancel this registration?')) {
+                                    try {
+                                      await interactionService.unregisterActivity(selectedActivityForList.id, p.id);
+                                      toast.success(lang === 'ar' ? 'تم إلغاء التسجيل بنجاح' : 'Registration cancelled successfully');
+                                      const res = await interactionService.getActivityRegistrations(selectedActivityForList.id);
+                                      setActivityRegistrationsList(res || []);
+                                      const updatedActivities = await interactionService.listActivities(eventId, participant.id);
+                                      setActivities(updatedActivities);
+                                    } catch (err) {
+                                      console.error('Failed to unregister:', err);
+                                      toast.error(lang === 'ar' ? 'فشل إلغاء التسجيل' : 'Failed to unregister');
+                                    }
+                                  }
+                                }}
+                                className="px-2.5 py-1.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 text-[10px] font-black transition-all"
+                              >
+                                {lang === 'ar' ? 'إلغاء الحجز' : 'Cancel'}
+                              </button>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </motion.div>
+                  </div>
+                )}
+
+                {isCreateTaskModalOpen && (
+                  <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-md flex items-center justify-center p-4 text-[#F0F4F2]">
+                    <motion.div
+                      initial={{ scale: 0.9, y: 20 }}
+                      animate={{ scale: 1, y: 0 }}
+                      exit={{ scale: 0.9, y: 20 }}
+                      className="w-full max-w-lg bg-gradient-to-b from-[#0D1527] to-[#050B18] border border-white/10 rounded-[40px] p-6 relative shadow-[0_24px_80px_rgba(0,0,0,0.6)] text-right"
+                    >
+                      <div className="flex justify-between items-center pb-4 border-b border-white/5 mb-4">
+                        <div className="flex items-center gap-2">
+                          <span>📋</span>
+                          <h3 className="text-lg font-black">{lang === 'ar' ? 'إسناد مهمة جديدة للجنة' : 'Assign Committee Task'}</h3>
+                        </div>
+                        <button
+                          onClick={() => setIsCreateTaskModalOpen(false)}
+                          className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-white/60 hover:bg-white/10 hover:text-white"
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
+
+                      <form onSubmit={handleCreateTask} className="space-y-4" dir="rtl">
+                        <div className="space-y-1">
+                          <label className="text-xs font-black text-white/50 block">{lang === 'ar' ? 'عنوان المهمة' : 'Task Title'}</label>
+                          <input
+                            type="text"
+                            required
+                            placeholder={lang === 'ar' ? 'مثال: نقل ضيف من المطار' : 'e.g. Airport Transfer'}
+                            value={newTaskForm.title}
+                            onChange={(e) => setNewTaskForm({ ...newTaskForm, title: e.target.value })}
+                            className="w-full bg-white/5 border border-white/10 rounded-2xl h-12 px-4 text-xs text-white font-bold outline-none focus:border-amber-500/50 transition-all text-right"
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-xs font-black text-white/50 block">{lang === 'ar' ? 'وصف وتفاصيل المهمة' : 'Description'}</label>
+                          <textarea
+                            placeholder={lang === 'ar' ? 'تفاصيل المواعيد واللوائح الإضافية...' : 'Write extra details...'}
+                            value={newTaskForm.description}
+                            onChange={(e) => setNewTaskForm({ ...newTaskForm, description: e.target.value })}
+                            className="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-xs text-white font-bold outline-none focus:border-amber-500/50 transition-all text-right h-20 resize-none"
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-xs font-black text-white/50 block">{lang === 'ar' ? 'الضيف المستهدف (اختياري)' : 'Target Guest (Optional)'}</label>
+                          <select
+                            value={newTaskForm.participant_id}
+                            onChange={(e) => setNewTaskForm({ ...newTaskForm, participant_id: e.target.value })}
+                            className="w-full bg-[#050B18] border border-white/10 rounded-2xl h-12 px-4 text-xs text-white font-bold outline-none focus:border-amber-500/50 transition-all text-right"
+                          >
+                            <option value="">{lang === 'ar' ? '--- بدون ربط مع ضيف معين ---' : '--- Not linked to a guest ---'}</option>
+                            {receptionList.map(p => (
+                              <option key={p.id} value={p.id}>{p.full_name} ({p.organization})</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-xs font-black text-white/50 block">{lang === 'ar' ? 'عضو اللجنة المنفذ' : 'Assignee'}</label>
+                          <select
+                            value={newTaskForm.assigned_to_id}
+                            onChange={(e) => setNewTaskForm({ ...newTaskForm, assigned_to_id: e.target.value })}
+                            className="w-full bg-[#050B18] border border-white/10 rounded-2xl h-12 px-4 text-xs text-white font-bold outline-none focus:border-amber-500/50 transition-all text-right"
+                          >
+                            <option value="">{lang === 'ar' ? '--- حدد العضو المساعد المنفذ ---' : '--- Choose assistant/driver ---'}</option>
+                            {receptionList
+                              .filter(p => {
+                                const role = (p.role || '').toLowerCase();
+                                return role.includes('منظم') || role.includes('organizer') || role.includes('سائق') || role.includes('driver') || role.includes('helper') || role.includes('مساعد') || role.includes('رئيس');
+                              })
+                              .map(p => (
+                                <option key={p.id} value={p.id}>{p.full_name} ({p.role})</option>
+                              ))}
+                          </select>
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-xs font-black text-white/50 block">{lang === 'ar' ? 'توقيت التنفيذ المطلوب' : 'Due Time'}</label>
+                          <input
+                            type="datetime-local"
+                            value={newTaskForm.due_time}
+                            onChange={(e) => setNewTaskForm({ ...newTaskForm, due_time: e.target.value })}
+                            className="w-full bg-[#050B18] border border-white/10 rounded-2xl h-12 px-4 text-xs text-white font-bold outline-none focus:border-amber-500/50 transition-all text-right"
+                          />
+                        </div>
+
+                        <Button
+                          type="submit"
+                          variant="gold"
+                          className="w-full h-12 rounded-2xl text-sm font-black mt-2"
+                        >
+                          {lang === 'ar' ? 'تأكيد وإسناد المهمة' : 'Assign Task Now'}
                         </Button>
                       </form>
                     </motion.div>
