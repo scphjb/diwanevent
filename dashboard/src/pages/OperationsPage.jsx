@@ -291,13 +291,22 @@ const OperationsPage = () => {
   const handleCreateMeal = async (e) => {
     e.preventDefault();
     if (!mealForm.title.trim()) return;
+    if (!mealForm.date_time) {
+      showError(lang === 'ar' ? 'يجب اختيار تاريخ ووقت الوجبة' : 'Please select a meal date and time');
+      return;
+    }
+    const parsedDate = new Date(mealForm.date_time);
+    if (isNaN(parsedDate.getTime())) {
+      showError(lang === 'ar' ? 'تاريخ الوجبة غير صالح' : 'Invalid meal date');
+      return;
+    }
     setIsSavingMeal(true);
     try {
       await interactionService.createMeal({
         event_id: eventId,
         title: mealForm.title,
         description: mealForm.description,
-        date_time: new Date(mealForm.date_time).toISOString(),
+        date_time: parsedDate.toISOString(),
         meal_type: mealForm.meal_type
       });
       showSuccess(lang === 'ar' ? 'تمت إضافة الوجبة المبرمجة بنجاح! 🍽️' : 'Programmed meal added successfully! 🍽️');
@@ -305,22 +314,10 @@ const OperationsPage = () => {
       setMealForm({ title: '', description: '', date_time: '', meal_type: 'breakfast' });
       fetchData();
     } catch (err) {
-      console.error(err);
-      // Fallback state update
-      setEventMeals(prev => [
-        ...prev,
-        {
-          id: Date.now(),
-          title: mealForm.title,
-          description: mealForm.description,
-          date_time: new Date(mealForm.date_time).toISOString(),
-          meal_type: mealForm.meal_type,
-          attending: true
-        }
-      ]);
-      showSuccess(lang === 'ar' ? 'تمت إضافة الوجبة بنجاح! 🍽️' : 'Meal added successfully! 🍽️');
-      setShowMealModal(false);
-      setMealForm({ title: '', description: '', date_time: '', meal_type: 'breakfast' });
+      console.error('Create meal failed:', err);
+      showError(lang === 'ar'
+        ? `فشل حفظ الوجبة: ${err?.response?.data?.detail || err.message || 'خطأ غير معروف'}`
+        : `Failed to save meal: ${err?.response?.data?.detail || err.message || 'Unknown error'}`);
     } finally {
       setIsSavingMeal(false);
     }
@@ -330,13 +327,22 @@ const OperationsPage = () => {
   const handleCreateActivity = async (e) => {
     e.preventDefault();
     if (!activityForm.title.trim()) return;
+    if (!activityForm.date_time) {
+      showError(lang === 'ar' ? 'يجب اختيار تاريخ ووقت النشاط' : 'Please select an activity date and time');
+      return;
+    }
+    const parsedDate = new Date(activityForm.date_time);
+    if (isNaN(parsedDate.getTime())) {
+      showError(lang === 'ar' ? 'تاريخ النشاط غير صالح' : 'Invalid activity date');
+      return;
+    }
     setIsSavingActivity(true);
     try {
       await interactionService.createActivity({
         event_id: eventId,
         title: activityForm.title,
         description: activityForm.description,
-        date_time: new Date(activityForm.date_time).toISOString(),
+        date_time: parsedDate.toISOString(),
         duration: activityForm.duration,
         price: parseFloat(activityForm.price) || 0.0,
         currency: activityForm.currency,
@@ -351,29 +357,10 @@ const OperationsPage = () => {
       });
       fetchData();
     } catch (err) {
-      console.error(err);
-      // Fallback state update
-      setActivitiesList(prev => [
-        ...prev,
-        {
-          id: Date.now(),
-          title: activityForm.title,
-          description: activityForm.description,
-          date_time: new Date(activityForm.date_time).toISOString(),
-          location: activityForm.location,
-          duration: activityForm.duration,
-          price: activityForm.price,
-          currency: activityForm.currency,
-          max_capacity: activityForm.max_capacity,
-          registered_count: 0
-        }
-      ]);
-      showSuccess(lang === 'ar' ? 'تمت برمجة النشاط بنجاح 🏕️' : 'Activity programmed successfully 🏕️');
-      setShowActivityModal(false);
-      setActivityForm({
-        title: '', description: '', date_time: '', duration: '2 hours',
-        price: 0, currency: 'DZD', max_capacity: 50, location: ''
-      });
+      console.error('Create activity failed:', err);
+      showError(lang === 'ar'
+        ? `فشل حفظ النشاط: ${err?.response?.data?.detail || err.message || 'خطأ غير معروف'}`
+        : `Failed to save activity: ${err?.response?.data?.detail || err.message || 'Unknown error'}`);
     } finally {
       setIsSavingActivity(false);
     }
