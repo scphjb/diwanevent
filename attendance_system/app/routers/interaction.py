@@ -492,7 +492,7 @@ async def list_event_logistics(
             "id": reg.id,
             "participant_id": reg.participant_id,
             "participant_name": part.full_name,
-            "participant_phone": part.phone,
+            "participant_phone": part.phone_number,
             "participant_email": part.email,
             "transport_type": reg.transport_type,
             "flight_number": reg.flight_number,
@@ -801,7 +801,7 @@ async def list_event_catering_profiles(
             "id": profile.id,
             "participant_id": participant.id,
             "participant_name": participant.full_name,
-            "participant_phone": participant.phone,
+            "participant_phone": participant.phone_number,
             "dietary_type": profile.dietary_type,
             "allergies": profile.allergies or "",
             "notes": profile.notes or ""
