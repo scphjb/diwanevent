@@ -165,7 +165,7 @@ async def update_event(
         # تحويل string → datetime لحقول التوقيت
         elif col_type is DateTime and isinstance(value, str) and value:
             try:
-                value = datetime.fromisoformat(value)
+                value = datetime.fromisoformat(value.replace("Z", "+00:00")).replace(tzinfo=None)
             except ValueError:
                 raise HTTPException(status_code=422, detail=f"تنسيق التوقيت غير صحيح لـ '{key}': {value}")
         setattr(event, key, value)

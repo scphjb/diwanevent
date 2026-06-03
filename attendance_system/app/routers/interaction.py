@@ -344,6 +344,11 @@ async def upload_document_file(
         "size": f"{len(content) / 1024 / 1024:.1f} MB"
     }
 
+def make_naive(dt: Optional[datetime]) -> Optional[datetime]:
+    if dt is not None and dt.tzinfo is not None:
+        return dt.replace(tzinfo=None)
+    return dt
+
 # --- Logistics & Accommodations Management ---
 class LogisticsRegistryCreate(BaseModel):
     event_id: int
@@ -396,32 +401,37 @@ async def save_logistics(data: LogisticsRegistryCreate, db: AsyncSession = Depen
     res = await db.execute(stmt)
     registry = res.scalar_one_or_none()
     
+    arrival_time = make_naive(data.arrival_time)
+    departure_time = make_naive(data.departure_time)
+    check_in_date = make_naive(data.check_in_date)
+    check_out_date = make_naive(data.check_out_date)
+    
     if not registry:
         registry = LogisticsRegistry(
             participant_id=data.participant_id,
             event_id=data.event_id,
             transport_type=data.transport_type,
             flight_number=data.flight_number,
-            arrival_time=data.arrival_time,
-            departure_time=data.departure_time,
+            arrival_time=arrival_time,
+            departure_time=departure_time,
             arrival_location=data.arrival_location,
             hotel_name=data.hotel_name,
             room_number=data.room_number,
-            check_in_date=data.check_in_date,
-            check_out_date=data.check_out_date,
+            check_in_date=check_in_date,
+            check_out_date=check_out_date,
             status="pending"
         )
         db.add(registry)
     else:
         registry.transport_type = data.transport_type
         registry.flight_number = data.flight_number
-        registry.arrival_time = data.arrival_time
-        registry.departure_time = data.departure_time
+        registry.arrival_time = arrival_time
+        registry.departure_time = departure_time
         registry.arrival_location = data.arrival_location
         registry.hotel_name = data.hotel_name
         registry.room_number = data.room_number
-        registry.check_in_date = data.check_in_date
-        registry.check_out_date = data.check_out_date
+        registry.check_in_date = check_in_date
+        registry.check_out_date = check_out_date
         
     await db.commit()
     await db.refresh(registry)
@@ -449,7 +459,7 @@ async def dispatch_logistics(
     if data.vehicle_details is not None:
         registry.vehicle_details = data.vehicle_details
     if data.shuttle_time is not None:
-        registry.shuttle_time = data.shuttle_time
+        registry.shuttle_time = make_naive(data.shuttle_time)
     if data.status is not None:
         registry.status = data.status
         
@@ -690,7 +700,7 @@ async def create_activity(
     req: ActivityCreate,
     db: AsyncSession = Depends(get_db)
 ):
-    dt = datetime.fromisoformat(req.date_time.replace("Z", "+00:00"))
+    dt = datetime.fromisoformat(req.date_time.replace("Z", "+00:00")).replace(tzinfo=None)
     new_act = EventActivity(
         event_id=req.event_id,
         title=req.title,
@@ -887,7 +897,7 @@ async def create_event_meal(
     req: MealCreate,
     db: AsyncSession = Depends(get_db)
 ):
-    dt = datetime.fromisoformat(req.date_time.replace("Z", "+00:00"))
+    dt = datetime.fromisoformat(req.date_time.replace("Z", "+00:00")).replace(tzinfo=None)
     new_meal = EventMeal(
         event_id=req.event_id,
         title=req.title,
@@ -954,7 +964,7 @@ async def create_committee_task(
     dt = None
     if req.due_time:
         try:
-            dt = datetime.fromisoformat(req.due_time.replace("Z", "+00:00"))
+            dt = datetime.fromisoformat(req.due_time.replace("Z", "+00:00")).replace(tzinfo=None)
         except:
             dt = None
         

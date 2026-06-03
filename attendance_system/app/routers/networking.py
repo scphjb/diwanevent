@@ -714,7 +714,7 @@ async def propose_meeting(
     other_id = conn.requested_id if conn.requester_id == me.id else conn.requester_id
     
     try:
-        meeting_time = datetime.fromisoformat(proposed_time)
+        meeting_time = datetime.fromisoformat(proposed_time.replace("Z", "+00:00")).replace(tzinfo=None)
     except ValueError:
         raise HTTPException(400, "صيغة الوقت غير صحيحة — استخدم: YYYY-MM-DDTHH:MM:SS")
     
@@ -784,7 +784,7 @@ async def respond_to_meeting(
         meeting.status = "declined"
     elif action == "reschedule" and counter_time:
         try:
-            new_time = datetime.fromisoformat(counter_time)
+            new_time = datetime.fromisoformat(counter_time.replace("Z", "+00:00")).replace(tzinfo=None)
             meeting.proposed_time = new_time
             meeting.status = "proposed"
             meeting.proposer_id, meeting.recipient_id = meeting.recipient_id, meeting.proposer_id
