@@ -117,6 +117,11 @@ const OperationsPage = () => {
       }
     } catch (err) {
       console.error('Failed to fetch operations data:', err);
+      showError(
+        lang === 'ar' 
+          ? 'عذراً، فشل الاتصال بالسيرفر لجلب البيانات الحقيقية. تم تشغيل الوضع الاحتياطي والبيانات المعروضة حالياً تجريبية فقط.' 
+          : 'Server connection failed. Switched to fallback mode (displaying mock data).'
+      );
       injectMockData();
     } finally {
       setLoading(false);

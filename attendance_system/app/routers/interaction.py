@@ -768,6 +768,7 @@ async def save_catering_profile(
         profile.dietary_type = req.dietary_type
         profile.allergies = req.allergies
         profile.notes = req.notes
+        profile.event_id = req.event_id
     else:
         profile = CateringProfile(
             participant_id=req.participant_id,
@@ -789,22 +790,22 @@ async def list_event_catering_profiles(
 ):
     """List all participants' dietary profiles for a given event."""
     stmt = (
-        select(CateringProfile, Participant)
-        .join(Participant, CateringProfile.participant_id == Participant.id)
-        .filter(CateringProfile.event_id == event_id)
+        select(Participant, CateringProfile)
+        .outerjoin(CateringProfile, Participant.id == CateringProfile.participant_id)
+        .filter(Participant.event_id == event_id)
     )
     res = await db.execute(stmt)
     rows = res.all()
     output = []
-    for profile, participant in rows:
+    for participant, profile in rows:
         output.append({
-            "id": profile.id,
+            "id": profile.id if profile else f"none_{participant.id}",
             "participant_id": participant.id,
             "participant_name": participant.full_name,
             "participant_phone": participant.phone_number,
-            "dietary_type": profile.dietary_type,
-            "allergies": profile.allergies or "",
-            "notes": profile.notes or ""
+            "dietary_type": profile.dietary_type if profile else "none",
+            "allergies": (profile.allergies or "") if profile else "",
+            "notes": (profile.notes or "") if profile else ""
         })
     return output
 
