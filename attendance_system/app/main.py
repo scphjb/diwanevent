@@ -144,6 +144,46 @@ async def startup_db_migration():
         "Checked/Created 'registration_otp' table."
     )
 
+    # الخطوة 5: تعديل جدول push_subscriptions لجعل user_id اختيارياً وإضافة participant_id
+    await run_query(
+        "ALTER TABLE push_subscriptions ALTER COLUMN user_id DROP NOT NULL;",
+        "Updated 'user_id' column to be NULLable in 'push_subscriptions' table."
+    )
+    await run_query(
+        "ALTER TABLE push_subscriptions ADD COLUMN IF NOT EXISTS participant_id INTEGER REFERENCES participants(id) ON DELETE CASCADE;",
+        "Checked/Added 'participant_id' column to 'push_subscriptions' table."
+    )
+    
+    # الخطوة 6: تعديل جدول user_notifications لإضافة participant_id
+    await run_query(
+        "ALTER TABLE user_notifications ADD COLUMN IF NOT EXISTS participant_id INTEGER REFERENCES participants(id) ON DELETE SET NULL;",
+        "Checked/Added 'participant_id' column to 'user_notifications' table."
+    )
+
+    # الخطوة 7: إضافة حقول نقاط التجمع في جدول event_activities
+    await run_query(
+        "ALTER TABLE event_activities ADD COLUMN IF NOT EXISTS gathering_point TEXT DEFAULT '';",
+        "Checked/Added 'gathering_point' column to 'event_activities' table."
+    )
+    await run_query(
+        "ALTER TABLE event_activities ADD COLUMN IF NOT EXISTS gathering_point_map_url TEXT DEFAULT '';",
+        "Checked/Added 'gathering_point_map_url' column to 'event_activities' table."
+    )
+
+    # الخطوة 8: إضافة حقول طلب النقل في جدول activity_registrations
+    await run_query(
+        "ALTER TABLE activity_registrations ADD COLUMN IF NOT EXISTS pickup_requested BOOLEAN DEFAULT FALSE;",
+        "Checked/Added 'pickup_requested' column to 'activity_registrations' table."
+    )
+    await run_query(
+        "ALTER TABLE activity_registrations ADD COLUMN IF NOT EXISTS pickup_notes TEXT DEFAULT '';",
+        "Checked/Added 'pickup_notes' column to 'activity_registrations' table."
+    )
+    await run_query(
+        "ALTER TABLE activity_registrations ADD COLUMN IF NOT EXISTS pickup_status VARCHAR(50) DEFAULT 'none';",
+        "Checked/Added 'pickup_status' column to 'activity_registrations' table."
+    )
+
     print("🏁 Database Startup Migration finished.", flush=True)
 
 # --- React Dashboard Serving (SPA Support) ---

@@ -106,6 +106,7 @@ class UserNotification(Base, TimestampMixin):
     __tablename__ = "user_notifications"
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
+    participant_id = Column(Integer, ForeignKey("participants.id"), nullable=True)
     event_id = Column(Integer, ForeignKey("event_settings.id"), nullable=True)
     title = Column(String, nullable=False)
     message = Column(Text, nullable=False)
@@ -183,6 +184,8 @@ class EventActivity(Base, TimestampMixin):
     currency = Column(String, default="DZD")
     max_capacity = Column(Integer, nullable=True)
     location = Column(String)
+    gathering_point = Column(String, nullable=True)
+    gathering_point_map_url = Column(String, nullable=True)
     is_active = Column(Boolean, default=True)
 
 class ActivityRegistration(Base, TimestampMixin):
@@ -191,6 +194,9 @@ class ActivityRegistration(Base, TimestampMixin):
     activity_id = Column(Integer, ForeignKey("event_activities.id", ondelete="CASCADE"), index=True)
     participant_id = Column(Integer, ForeignKey("participants.id", ondelete="CASCADE"), index=True)
     payment_status = Column(String, default="free") # free, pending, paid
+    pickup_requested = Column(Boolean, default=False)
+    pickup_status = Column(String, default="none") # none, pending, assigned, completed
+    pickup_notes = Column(Text, nullable=True)
 
 class CateringProfile(Base, TimestampMixin):
     __tablename__ = "catering_profiles"

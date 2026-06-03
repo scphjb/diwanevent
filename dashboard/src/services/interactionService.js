@@ -136,6 +136,16 @@ const interactionService = {
     return res.data;
   },
 
+  updateActivityRegistration: async (activityId, participantId, pickupRequested, pickupNotes = "") => {
+    const res = await api.patch('interaction/activities/update-registration', {
+      activity_id: activityId,
+      participant_id: participantId,
+      pickup_requested: pickupRequested,
+      pickup_notes: pickupNotes
+    });
+    return res.data;
+  },
+
   // Smart Catering & Dietary Planner
   getCateringProfile: async (participantId) => {
     const res = await api.get(`interaction/catering/${participantId}`);

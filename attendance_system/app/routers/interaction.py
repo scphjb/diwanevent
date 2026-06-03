@@ -532,6 +532,8 @@ class ActivityCreate(BaseModel):
     currency: Optional[str] = "DZD"
     max_capacity: Optional[int] = None
     location: Optional[str] = ""
+    gathering_point: Optional[str] = ""
+    gathering_point_map_url: Optional[str] = ""
 
 class ActivityUpdate(BaseModel):
     title: Optional[str] = None
@@ -542,10 +544,14 @@ class ActivityUpdate(BaseModel):
     currency: Optional[str] = None
     max_capacity: Optional[int] = None
     location: Optional[str] = None
+    gathering_point: Optional[str] = None
+    gathering_point_map_url: Optional[str] = None
 
 class RegisterActivityRequest(BaseModel):
     activity_id: int
     participant_id: int
+    pickup_requested: Optional[bool] = False
+    pickup_notes: Optional[str] = ""
 
 # --- API Endpoints ---
 
@@ -566,12 +572,20 @@ async def list_activities(
     
     # If participant_id is provided, check their registrations
     registered_ids = set()
+    registration_map = {}
     if participant_id:
-        reg_stmt = select(ActivityRegistration.activity_id).filter(
+        reg_stmt = select(ActivityRegistration).filter(
             ActivityRegistration.participant_id == participant_id
         )
         reg_res = await db.execute(reg_stmt)
-        registered_ids = set(reg_res.scalars().all())
+        regs = reg_res.scalars().all()
+        for r in regs:
+            registered_ids.add(r.activity_id)
+            registration_map[r.activity_id] = {
+                "pickup_requested": r.pickup_requested,
+                "pickup_status": r.pickup_status,
+                "pickup_notes": r.pickup_notes
+            }
         
     output = []
     for act in activities:
@@ -581,6 +595,8 @@ async def list_activities(
         )
         count_res = await db.execute(count_stmt)
         current_count = count_res.scalar() or 0
+        
+        reg_details = registration_map.get(act.id, {"pickup_requested": False, "pickup_status": "none", "pickup_notes": ""})
         
         output.append({
             "id": act.id,
@@ -593,8 +609,13 @@ async def list_activities(
             "currency": act.currency,
             "max_capacity": act.max_capacity,
             "location": act.location,
+            "gathering_point": act.gathering_point,
+            "gathering_point_map_url": act.gathering_point_map_url,
             "is_registered": act.id in registered_ids,
-            "current_count": current_count
+            "current_count": current_count,
+            "pickup_requested": reg_details["pickup_requested"],
+            "pickup_status": reg_details["pickup_status"],
+            "pickup_notes": reg_details["pickup_notes"]
         })
         
     return output
@@ -605,14 +626,14 @@ async def list_activity_registrations(
     db: AsyncSession = Depends(get_db)
 ):
     from app.models.participant import Participant
-    stmt = select(Participant).join(
+    stmt = select(Participant, ActivityRegistration).join(
         ActivityRegistration,
         ActivityRegistration.participant_id == Participant.id
     ).filter(
         ActivityRegistration.activity_id == activity_id
     )
     res = await db.execute(stmt)
-    participants = res.scalars().all()
+    results = res.all()
     
     return [{
         "id": p.id,
@@ -620,8 +641,11 @@ async def list_activity_registrations(
         "organization": p.organization,
         "phone_number": p.phone_number,
         "email": p.email,
-        "qr_code": p.qr_code
-    } for p in participants]
+        "qr_code": p.qr_code,
+        "pickup_requested": reg.pickup_requested,
+        "pickup_status": reg.pickup_status,
+        "pickup_notes": reg.pickup_notes
+    } for p, reg in results]
 
 @router.post("/activities/register")
 async def register_activity(
@@ -658,7 +682,9 @@ async def register_activity(
     new_reg = ActivityRegistration(
         activity_id=req.activity_id,
         participant_id=req.participant_id,
-        payment_status=payment_status
+        payment_status=payment_status,
+        pickup_requested=req.pickup_requested,
+        pickup_notes=req.pickup_notes
     )
     db.add(new_reg)
     await db.commit()
@@ -703,7 +729,33 @@ async def unregister_activity(
             "participant_id": participant_id
         })
         
-    return {"status": "success"}
+class RegistrationUpdateRequest(BaseModel):
+    activity_id: int
+    participant_id: int
+    pickup_requested: bool
+    pickup_notes: Optional[str] = ""
+
+@router.patch("/activities/update-registration")
+async def update_activity_registration(
+    req: RegistrationUpdateRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    stmt = select(ActivityRegistration).filter(
+        ActivityRegistration.activity_id == req.activity_id,
+        ActivityRegistration.participant_id == req.participant_id
+    )
+    res = await db.execute(stmt)
+    reg = res.scalar()
+    if not reg:
+        raise HTTPException(status_code=404, detail="Registration not found")
+        
+    reg.pickup_requested = req.pickup_requested
+    if req.pickup_notes is not None:
+        reg.pickup_notes = req.pickup_notes
+        
+    await db.commit()
+    await db.refresh(reg)
+    return {"status": "success", "pickup_requested": reg.pickup_requested, "pickup_notes": reg.pickup_notes}
 
 @router.post("/activities/create")
 async def create_activity(
@@ -721,11 +773,26 @@ async def create_activity(
         currency=req.currency,
         max_capacity=req.max_capacity,
         location=req.location,
+        gathering_point=req.gathering_point,
+        gathering_point_map_url=req.gathering_point_map_url,
         is_active=True
     )
     db.add(new_act)
     await db.commit()
     await db.refresh(new_act)
+    
+    try:
+        from app.routers.notifications import send_web_push_notification_to_target
+        await send_web_push_notification_to_target(
+            db=db,
+            title="نشاط ترفيهي جديد! 🏕️",
+            body=f"تمت إضافة نشاط ترفيهي جديد: {new_act.title} في {new_act.location or ''}.",
+            url="/dashboard/activities",
+            event_id=new_act.event_id
+        )
+    except Exception as e:
+        logger.error(f"Failed to send push notifications for new activity: {e}")
+
     return {
         "id": new_act.id,
         "event_id": new_act.event_id,
@@ -737,6 +804,8 @@ async def create_activity(
         "currency": new_act.currency,
         "max_capacity": new_act.max_capacity,
         "location": new_act.location,
+        "gathering_point": new_act.gathering_point,
+        "gathering_point_map_url": new_act.gathering_point_map_url,
     }
 
 @router.patch("/activities/{activity_id}")
@@ -767,9 +836,42 @@ async def update_activity(
         act.max_capacity = req.max_capacity
     if req.location is not None:
         act.location = req.location
+    if req.gathering_point is not None:
+        act.gathering_point = req.gathering_point
+    if req.gathering_point_map_url is not None:
+        act.gathering_point_map_url = req.gathering_point_map_url
         
     await db.commit()
     await db.refresh(act)
+
+    try:
+        from app.routers.notifications import send_web_push_notification_to_target
+        # 1. Fetch registered participants for this activity
+        reg_stmt = select(ActivityRegistration.participant_id).filter(ActivityRegistration.activity_id == act.id)
+        reg_res = await db.execute(reg_stmt)
+        registered_pids = list(reg_res.scalars().all())
+
+        if registered_pids:
+            # Send targeted notification to registered participants
+            await send_web_push_notification_to_target(
+                db=db,
+                title="تعديل في النشاط المسجل فيه 🔄",
+                body=f"تم تحديث تفاصيل النشاط: {act.title}. يرجى مراجعة التحديثات.",
+                url="/dashboard/activities",
+                participant_ids=registered_pids
+            )
+        
+        # 2. Send general push to all event subscribers
+        await send_web_push_notification_to_target(
+            db=db,
+            title=f"تحديث في النشاط الترفيهي: {act.title} 🏕️",
+            body=f"تم تعديل تفاصيل النشاط الترفيهي: {act.title}. تفقد البوابة للمزيد.",
+            url="/dashboard/activities",
+            event_id=act.event_id
+        )
+    except Exception as e:
+        logger.error(f"Failed to send push notifications for updated activity: {e}")
+
     return {
         "id": act.id,
         "event_id": act.event_id,
@@ -781,6 +883,8 @@ async def update_activity(
         "currency": act.currency,
         "max_capacity": act.max_capacity,
         "location": act.location,
+        "gathering_point": act.gathering_point,
+        "gathering_point_map_url": act.gathering_point_map_url,
     }
 
 @router.delete("/activities/{activity_id}")

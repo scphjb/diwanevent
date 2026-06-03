@@ -35,6 +35,58 @@ const OperationsPage = () => {
   const { i18n } = useTranslation();
   const lang = i18n.language === 'en' ? 'en' : 'ar';
 
+  const formatDateTime = (dateObj, options = {}) => {
+    if (!dateObj) return '---';
+    const d = typeof dateObj === 'string' ? new Date(dateObj) : dateObj;
+    if (isNaN(d.getTime())) return '---';
+    if (lang === 'ar') {
+      let formatted = d.toLocaleString('ar-EG', { numberingSystem: 'latn', ...options });
+      const monthMap = {
+        'يناير': 'جانفي',
+        'فبراير': 'فيفري',
+        'أبريل': 'أفريل',
+        'ابريل': 'أفريل',
+        'مايو': 'ماي',
+        'يونيو': 'جوان',
+        'يونية': 'جوان',
+        'يوليو': 'جويلية',
+        'يولية': 'جويلية',
+        'أغسطس': 'أوت',
+      };
+      Object.keys(monthMap).forEach(key => {
+        formatted = formatted.replace(new RegExp(key, 'g'), monthMap[key]);
+      });
+      return formatted;
+    }
+    return d.toLocaleString('en-US', options);
+  };
+
+  const formatDuration = (durationStr) => {
+    if (!durationStr) return '';
+    if (lang === 'en') return durationStr;
+    const cleaned = durationStr.toLowerCase().trim();
+    if (cleaned === '2 hours') return 'ساعتان';
+    if (cleaned === '1 hour') return 'ساعة واحدة';
+    if (cleaned === '30 minutes') return '30 دقيقة';
+    if (cleaned === '1.5 hours' || cleaned === '1 hour 30 minutes' || cleaned === '1 hour and 30 minutes') return 'ساعة ونصف';
+    
+    const hoursMatch = cleaned.match(/^(\d+)\s*hours?$/);
+    if (hoursMatch) {
+      const num = parseInt(hoursMatch[1]);
+      if (num === 1) return 'ساعة';
+      if (num === 2) return 'ساعتان';
+      if (num >= 3 && num <= 10) return `${num} ساعات`;
+      return `${num} ساعة`;
+    }
+    
+    const minutesMatch = cleaned.match(/^(\d+)\s*minutes?$/);
+    if (minutesMatch) {
+      const num = parseInt(minutesMatch[1]);
+      return `${num} دقيقة`;
+    }
+    return durationStr;
+  };
+
   const [activeTab, setActiveTab] = useState('logistics'); // logistics, catering, activities, committees
   const [loading, setLoading] = useState(true);
 
@@ -76,11 +128,17 @@ const OperationsPage = () => {
     price: 0,
     currency: 'DZD',
     max_capacity: 50,
-    location: ''
+    location: '',
+    gathering_point: '',
+    gathering_point_map_url: ''
   });
   const [isSavingActivity, setIsSavingActivity] = useState(false);
   const [editingMealId, setEditingMealId] = useState(null);
   const [editingActivityId, setEditingActivityId] = useState(null);
+  const [showRegistrationsModal, setShowRegistrationsModal] = useState(false);
+  const [selectedActivityRegistrations, setSelectedActivityRegistrations] = useState([]);
+  const [loadingRegistrations, setLoadingRegistrations] = useState(false);
+  const [selectedActivityTitle, setSelectedActivityTitle] = useState('');
 
   // --- Committees States ---
   const COMMITTEES = [
@@ -382,7 +440,9 @@ const OperationsPage = () => {
         price: parseFloat(activityForm.price) || 0.0,
         currency: activityForm.currency,
         max_capacity: parseInt(activityForm.max_capacity) || 50,
-        location: activityForm.location
+        location: activityForm.location,
+        gathering_point: activityForm.gathering_point || '',
+        gathering_point_map_url: activityForm.gathering_point_map_url || ''
       };
 
       if (editingActivityId) {
@@ -399,7 +459,8 @@ const OperationsPage = () => {
       setEditingActivityId(null);
       setActivityForm({
         title: '', description: '', date_time: '', duration: '2 hours',
-        price: 0, currency: 'DZD', max_capacity: 50, location: ''
+        price: 0, currency: 'DZD', max_capacity: 50, location: '',
+        gathering_point: '', gathering_point_map_url: ''
       });
       fetchData();
     } catch (err) {
@@ -427,6 +488,21 @@ const OperationsPage = () => {
         console.error('Delete activity failed:', err);
         showError(lang === 'ar' ? 'حدث خطأ أثناء حذف النشاط' : 'An error occurred while deleting the activity');
       }
+    }
+  };
+
+  const handleViewRegistrations = async (activity) => {
+    setSelectedActivityTitle(activity.title);
+    setShowRegistrationsModal(true);
+    setLoadingRegistrations(true);
+    try {
+      const data = await interactionService.getActivityRegistrations(activity.id);
+      setSelectedActivityRegistrations(data || []);
+    } catch (err) {
+      console.error('Failed to load activity registrations:', err);
+      showError(lang === 'ar' ? 'فشل تحميل قائمة المسجلين' : 'Failed to load registrations');
+    } finally {
+      setLoadingRegistrations(false);
     }
   };
 
@@ -485,7 +561,8 @@ const OperationsPage = () => {
               setEditingActivityId(null);
               setActivityForm({
                 title: '', description: '', date_time: '', duration: '2 hours',
-                price: 0, currency: 'DZD', max_capacity: 50, location: ''
+                price: 0, currency: 'DZD', max_capacity: 50, location: '',
+                gathering_point: '', gathering_point_map_url: ''
               });
               setShowActivityModal(true);
             }}>
@@ -624,7 +701,7 @@ const OperationsPage = () => {
                               <span className="text-xs uppercase font-black">{item.flight_number || (lang === 'ar' ? 'سيارة خاصة' : 'Private')}</span>
                             </div>
                             <div className="text-[10px] text-[#D4AF37] mt-1">
-                              ⏰ {item.arrival_time ? new Date(item.arrival_time).toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US', { numberingSystem: 'latn' }) : '---'}
+                              ⏰ {item.arrival_time ? formatDateTime(item.arrival_time) : '---'}
                             </div>
                             <div className="text-[10px] text-white/40 mt-0.5">{item.arrival_location}</div>
                           </td>
@@ -735,7 +812,7 @@ const OperationsPage = () => {
                               <h4 className="font-black text-base text-white">{meal.title}</h4>
                               <p className="text-xs text-white/50 mt-1 leading-relaxed">{meal.description}</p>
                               <span className="inline-block text-[10px] text-amber-500 mt-2 font-black">
-                                ⏰ {mealDate ? mealDate.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US', { numberingSystem: 'latn' }) : '---'}
+                                ⏰ {mealDate ? formatDateTime(mealDate) : '---'}
                               </span>
                             </div>
                           </div>
@@ -896,7 +973,7 @@ const OperationsPage = () => {
                         </div>
                         <div className="flex items-center gap-2 text-xs font-bold text-white/70">
                           <Clock className="w-4 h-4 text-amber-500/60" />
-                          <span>⏰ {actDate ? actDate.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US', { numberingSystem: 'latn' }) : '---'} ({activity.duration})</span>
+                          <span>⏰ {actDate ? formatDateTime(actDate) : '---'} ({formatDuration(activity.duration)})</span>
                         </div>
                       </div>
 
@@ -904,10 +981,17 @@ const OperationsPage = () => {
                         <div className="flex items-center gap-2 text-white/40 text-xs font-bold">
                           <Users className="w-4 h-4" />
                           <span>
-                            {activity.registered_count || 0} / {activity.max_capacity} {lang === 'ar' ? 'مسجل' : 'Registered'}
+                            {activity.current_count || 0} / {activity.max_capacity} {lang === 'ar' ? 'مسجل' : 'Registered'}
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleViewRegistrations(activity)}
+                            className="p-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 rounded-xl text-xs font-black transition-all"
+                            title={lang === 'ar' ? 'عرض المسجلين' : 'View Registrations'}
+                          >
+                            👥
+                          </button>
                           <button
                             onClick={() => {
                               setEditingActivityId(activity.id);
@@ -922,7 +1006,9 @@ const OperationsPage = () => {
                                 price: activity.price || 0,
                                 currency: activity.currency || 'DZD',
                                 max_capacity: activity.max_capacity || 50,
-                                location: activity.location || ''
+                                location: activity.location || '',
+                                gathering_point: activity.gathering_point || '',
+                                gathering_point_map_url: activity.gathering_point_map_url || ''
                               });
                               setShowActivityModal(true);
                             }}
@@ -1231,6 +1317,25 @@ const OperationsPage = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
+                  <label className="text-xs text-white/50">{lang === 'ar' ? 'نقطة التجمع والانطلاق' : 'Gathering Point'}</label>
+                  <Input
+                    placeholder={lang === 'ar' ? 'مثال: بهو الفندق الرئيسي' : 'e.g. Main Hotel Lobby'}
+                    value={activityForm.gathering_point || ''}
+                    onChange={(e) => setActivityForm(prev => ({ ...prev, gathering_point: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs text-white/50">{lang === 'ar' ? 'رابط خريطة نقطة التجمع' : 'Gathering Point Map Link'}</label>
+                  <Input
+                    placeholder={lang === 'ar' ? 'رابط خرائط جوجل' : 'Google Maps URL'}
+                    value={activityForm.gathering_point_map_url || ''}
+                    onChange={(e) => setActivityForm(prev => ({ ...prev, gathering_point_map_url: e.target.value }))}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
                   <label className="text-xs text-white/50">{lang === 'ar' ? 'السعر (0 للمجاني)' : 'Price (0 if free)'}</label>
                   <Input
                     type="number"
@@ -1268,6 +1373,83 @@ const OperationsPage = () => {
                 </Button>
               </div>
             </form>
+          </motion.div>
+        </div>
+      )}
+      {/* Excursion Registrations Modal */}
+      {showRegistrationsModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <motion.div 
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-[#0D1527] border border-white/10 rounded-[35px] max-w-3xl w-full max-h-[85vh] overflow-hidden flex flex-col shadow-2xl"
+          >
+            <div className="p-6 border-b border-white/10 flex justify-between items-center bg-white/[0.02]">
+              <h3 className="text-xl font-black text-white flex items-center gap-2">
+                <span>👥</span>
+                {lang === 'ar' ? `المسجلون في: ${selectedActivityTitle}` : `Registered in: ${selectedActivityTitle}`}
+              </h3>
+              <button 
+                onClick={() => setShowRegistrationsModal(false)}
+                className="text-white/40 hover:text-white transition-all text-xl font-bold p-1"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto flex-1 space-y-4">
+              {loadingRegistrations ? (
+                <div className="flex items-center justify-center py-20">
+                  <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} className="w-8 h-8 border-3 border-amber-500 border-t-transparent rounded-full" />
+                </div>
+              ) : selectedActivityRegistrations.length === 0 ? (
+                <div className="text-center py-20 text-white/30">
+                  <span className="text-4xl block mb-2">🤷‍♂️</span>
+                  <p className="font-bold text-sm">{lang === 'ar' ? 'لا يوجد مسجلون في هذا النشاط حالياً.' : 'No participants registered yet.'}</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-right text-sm border-collapse" dir="rtl">
+                    <thead>
+                      <tr className="border-b border-white/10 text-white/50 font-black">
+                        <th className="pb-3 text-right">{lang === 'ar' ? 'الاسم الكامل' : 'Full Name'}</th>
+                        <th className="pb-3 text-right">{lang === 'ar' ? 'المؤسسة' : 'Organization'}</th>
+                        <th className="pb-3 text-right">{lang === 'ar' ? 'الهاتف' : 'Phone'}</th>
+                        <th className="pb-3 text-right">{lang === 'ar' ? 'طلب النقل' : 'Shuttle'}</th>
+                        <th className="pb-3 text-right">{lang === 'ar' ? 'ملاحظات النقل' : 'Shuttle Notes'}</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {selectedActivityRegistrations.map((reg) => (
+                        <tr key={reg.id} className="text-white hover:bg-white/[0.02] transition-all">
+                          <td className="py-3 font-bold">{reg.full_name}</td>
+                          <td className="py-3 text-white/60">{reg.organization}</td>
+                          <td className="py-3 text-white/60" dir="ltr">{reg.phone_number || '---'}</td>
+                          <td className="py-3">
+                            {reg.pickup_requested ? (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500/10 border border-amber-500/20 text-amber-500">
+                                {lang === 'ar' ? 'طلب نقل 🚍' : 'Requested 🚍'}
+                              </span>
+                            ) : (
+                              <span className="text-white/30 text-xs">{lang === 'ar' ? 'لا' : 'No'}</span>
+                            )}
+                          </td>
+                          <td className="py-3 text-white/50 text-xs italic max-w-[200px] truncate" title={reg.pickup_notes}>
+                            {reg.pickup_notes || '---'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            <div className="p-6 border-t border-white/10 flex justify-end bg-white/[0.01]">
+              <Button className="rounded-2xl h-12 px-6" variant="outline" onClick={() => setShowRegistrationsModal(false)}>
+                {lang === 'ar' ? 'إغلاق' : 'Close'}
+              </Button>
+            </div>
           </motion.div>
         </div>
       )}

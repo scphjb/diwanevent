@@ -33,7 +33,8 @@ import {
   MapPin,
   Truck,
   Compass,
-  Utensils
+  Utensils,
+  Bell
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -47,6 +48,7 @@ import AIConcierge from '../components/ai/AIConcierge';
 import { cn } from '../utils/cn';
 import NetworkingHub from './portal/NetworkingHub';
 import toast, { Toaster } from 'react-hot-toast';
+import PushNotificationManager from '../components/pwa/PushNotificationManager';
 
 const getFullUrl = (url) => {
   if (!url) return '#';
@@ -122,6 +124,10 @@ const ParticipantPortal = () => {
   const [isSavingCatering, setIsSavingCatering] = useState(false);
   const [eventMeals, setEventMeals] = useState([]);
   const [isTogglingMealRsvp, setIsTogglingMealRsvp] = useState(false);
+  
+  const [notifications, setNotifications] = useState([]);
+  const [loadingNotifications, setLoadingNotifications] = useState(false);
+  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
   
   // Organizer Staff Panel States
   const [staffActiveSubTab, setStaffActiveSubTab] = useState('logistics'); // logistics, catering, accommodation, qr_scan
@@ -250,6 +256,58 @@ const ParticipantPortal = () => {
       localStorage.setItem(`diwan_lang_${eventId}`, lang);
     } catch (e) {}
   }, [lang, eventId]);
+
+  const formatDateTime = (dateObj, options = {}) => {
+    if (!dateObj) return '---';
+    const d = typeof dateObj === 'string' ? new Date(dateObj) : dateObj;
+    if (isNaN(d.getTime())) return '---';
+    if (lang === 'ar') {
+      let formatted = d.toLocaleString('ar-EG', { numberingSystem: 'latn', ...options });
+      const monthMap = {
+        'يناير': 'جانفي',
+        'فبراير': 'فيفري',
+        'أبريل': 'أفريل',
+        'ابريل': 'أفريل',
+        'مايو': 'ماي',
+        'يونيو': 'جوان',
+        'يونية': 'جوان',
+        'يوليو': 'جويلية',
+        'يولية': 'جويلية',
+        'أغسطس': 'أوت',
+      };
+      Object.keys(monthMap).forEach(key => {
+        formatted = formatted.replace(new RegExp(key, 'g'), monthMap[key]);
+      });
+      return formatted;
+    }
+    return d.toLocaleString('en-US', options);
+  };
+
+  const formatDuration = (durationStr) => {
+    if (!durationStr) return '';
+    if (lang === 'en') return durationStr;
+    const cleaned = durationStr.toLowerCase().trim();
+    if (cleaned === '2 hours') return 'ساعتان';
+    if (cleaned === '1 hour') return 'ساعة واحدة';
+    if (cleaned === '30 minutes') return '30 دقيقة';
+    if (cleaned === '1.5 hours' || cleaned === '1 hour 30 minutes' || cleaned === '1 hour and 30 minutes') return 'ساعة ونصف';
+    
+    const hoursMatch = cleaned.match(/^(\d+)\s*hours?$/);
+    if (hoursMatch) {
+      const num = parseInt(hoursMatch[1]);
+      if (num === 1) return 'ساعة';
+      if (num === 2) return 'ساعتان';
+      if (num >= 3 && num <= 10) return `${num} ساعات`;
+      return `${num} ساعة`;
+    }
+    
+    const minutesMatch = cleaned.match(/^(\d+)\s*minutes?$/);
+    if (minutesMatch) {
+      const num = parseInt(minutesMatch[1]);
+      return `${num} دقيقة`;
+    }
+    return durationStr;
+  };
 
   const [sessionNotes, setSessionNotes] = useState(() => {
     try {
@@ -795,7 +853,7 @@ const ParticipantPortal = () => {
       setIsOptedIn(pRes.data.custom_values?.is_visible || false);
         
       try {
-        const [settings, ag, lead, dirRes, wallPosts, activePolls, eventDocs, qList, logisticsData, activitiesData, cateringData, mealsData] = await Promise.all([
+        const [settings, ag, lead, dirRes, wallPosts, activePolls, eventDocs, qList, logisticsData, activitiesData, cateringData, mealsData, notificationsData] = await Promise.all([
           api.get(`events/public/${eventId}`).then(res => res.data),
           agendaService.getSessions(eventId),
           interactionService.getLeaderboard(eventId),
@@ -807,7 +865,8 @@ const ParticipantPortal = () => {
           interactionService.getLogistics(pRes.data.id).catch(() => null),
           interactionService.listActivities(eventId, pRes.data.id).catch(() => []),
           interactionService.getCateringProfile(pRes.data.id).catch(() => ({ dietary_type: 'none', allergies: '', notes: '' })),
-          interactionService.listEventMeals(eventId, pRes.data.id).catch(() => [])
+          interactionService.listEventMeals(eventId, pRes.data.id).catch(() => []),
+          api.get('notifications').then(res => res.data).catch(() => [])
         ]);
         setEventSettings(settings || {});
         setAgenda(ag || []);
@@ -829,6 +888,8 @@ const ParticipantPortal = () => {
         if (mealsData) {
           setEventMeals(mealsData);
         }
+        setNotifications(notificationsData || []);
+        setUnreadNotificationsCount((notificationsData || []).filter(n => !n.is_read).length);
 
         try {
           localStorage.setItem(`diwan_cache_settings_${eventId}`, JSON.stringify(settings || {}));
@@ -1165,6 +1226,23 @@ const ParticipantPortal = () => {
     }
   };
 
+  const handleToggleActivityPickup = async (activityId, requested, notes = "") => {
+    if (!participant) return;
+    try {
+      await interactionService.updateActivityRegistration(activityId, participant.id, requested, notes);
+      toast.success(lang === 'ar' ? 'تم تحديث طلب النقل بنجاح! 🚗' : 'Shuttle request updated successfully! 🚗');
+      
+      const updated = await interactionService.listActivities(eventId, participant.id).catch(() => []);
+      setActivities(updated);
+      try {
+        localStorage.setItem(`diwan_cache_activities_${eventId}`, JSON.stringify(updated));
+      } catch (err) {}
+    } catch (err) {
+      console.error('Failed to update activity pickup request:', err);
+      toast.error(err.response?.data?.detail || (lang === 'ar' ? 'فشل تحديث طلب النقل' : 'Failed to update shuttle request'));
+    }
+  };
+
   const handleSaveCatering = async (e) => {
     if (e) e.preventDefault();
     setIsSavingCatering(true);
@@ -1337,6 +1415,39 @@ const ParticipantPortal = () => {
       console.error('Failed to fetch committee tasks:', err);
     } finally {
       setIsLoadingTasks(false);
+    }
+  };
+
+  const fetchNotifications = async () => {
+    setLoadingNotifications(true);
+    try {
+      const res = await api.get('notifications');
+      setNotifications(res.data || []);
+      setUnreadNotificationsCount((res.data || []).filter(n => !n.is_read).length);
+    } catch (err) {
+      console.error('Failed to fetch notifications:', err);
+    } finally {
+      setLoadingNotifications(false);
+    }
+  };
+
+  const handleMarkNotificationsAsRead = async () => {
+    try {
+      await api.post('notifications/read-all');
+      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+      setUnreadNotificationsCount(0);
+    } catch (err) {
+      console.error('Failed to mark notifications as read:', err);
+    }
+  };
+
+  const handleClearNotifications = async () => {
+    try {
+      await api.delete('notifications/clear');
+      setNotifications([]);
+      setUnreadNotificationsCount(0);
+    } catch (err) {
+      console.error('Failed to clear notifications:', err);
     }
   };
 
@@ -1556,6 +1667,7 @@ const ParticipantPortal = () => {
 
   const tabs = [
     { id: 'home', label: t('tab_me'), icon: User },
+    { id: 'notifications', label: lang === 'ar' ? 'التنبيهات' : 'Notifications', icon: Bell },
     { id: 'agenda', label: t('tab_agenda'), icon: Calendar },
     { id: 'polls', label: t('tab_polls'), icon: BarChart2, show: eventSettings.show_polls !== false },
     { id: 'social', label: t('tab_social'), icon: MessageSquare, show: eventSettings.show_social_wall !== false },
@@ -2059,6 +2171,11 @@ const ParticipantPortal = () => {
                           </motion.div>
                         )}
                       </AnimatePresence>
+
+                      {/* Push Notification Manager for PWA */}
+                      <div className="mt-6 pt-6 border-t border-white/5 text-right">
+                        <PushNotificationManager />
+                      </div>
                     </div>
                   ) : (
                     <div className="space-y-4 bg-black/20 p-6 rounded-[30px] border border-white/5 text-right mt-4">
@@ -2192,6 +2309,107 @@ const ParticipantPortal = () => {
                     </button>
                   </div>
                </div>
+            </motion.div>
+          )}
+
+          {activeTab === 'notifications' && (
+            <motion.div key="notifications" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white/[0.03] border border-white/5 rounded-[24px] p-4.5">
+                <div>
+                  <h3 className="text-2xl font-black tracking-tight text-white flex items-center gap-2">
+                    <span>🔔</span>
+                    {lang === 'ar' ? 'مركز التنبيهات' : 'Notifications Center'}
+                  </h3>
+                  <p className="text-xs text-white/50 mt-1">
+                    {lang === 'ar' ? 'تابع أهم المستجدات والأنشطة الخاصة بالفعالية' : 'Stay updated with important announcements and activities'}
+                  </p>
+                </div>
+                <div className="flex gap-2 w-full sm:w-auto">
+                  <button
+                    onClick={handleMarkNotificationsAsRead}
+                    disabled={notifications.length === 0 || unreadNotificationsCount === 0}
+                    className="flex-1 sm:flex-initial px-4 py-2 text-xs font-bold rounded-xl border border-white/10 hover:bg-white/5 disabled:opacity-30 disabled:pointer-events-none text-white transition-all"
+                  >
+                    {lang === 'ar' ? 'قراءة الكل' : 'Mark all read'}
+                  </button>
+                  <button
+                    onClick={handleClearNotifications}
+                    disabled={notifications.length === 0}
+                    className="flex-1 sm:flex-initial px-4 py-2 text-xs font-bold rounded-xl border border-red-500/20 text-red-400 hover:bg-red-500/10 disabled:opacity-30 disabled:pointer-events-none transition-all"
+                  >
+                    {lang === 'ar' ? 'مسح الكل' : 'Clear all'}
+                  </button>
+                </div>
+              </div>
+
+              {loadingNotifications ? (
+                <div className="flex items-center justify-center py-20">
+                  <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} className="w-8 h-8 border-3 border-amber-500 border-t-transparent rounded-full" />
+                </div>
+              ) : notifications.length === 0 ? (
+                <div className="bg-gradient-to-b from-white/[0.04] to-white/[0.01] border border-white/5 rounded-[35px] text-center py-24 text-white/30">
+                  <span className="text-5xl block mb-3">🔔</span>
+                  <p className="font-bold text-base text-white/70">{lang === 'ar' ? 'لا توجد تنبيهات جديدة' : 'No new notifications'}</p>
+                  <p className="text-xs text-white/40 mt-1">{lang === 'ar' ? 'عند إرسال تنبيهات جديدة ستظهر هنا فوراً.' : 'Announcements will appear here when sent.'}</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {notifications.map((notif) => {
+                    const levelColors = {
+                      info: 'from-blue-500/10 to-transparent border-blue-500/20 text-blue-400',
+                      success: 'from-emerald-500/10 to-transparent border-emerald-500/20 text-emerald-400',
+                      warning: 'from-amber-500/10 to-transparent border-amber-500/20 text-amber-500',
+                      error: 'from-red-500/10 to-transparent border-red-500/20 text-red-400',
+                    };
+                    const colorClass = levelColors[notif.level] || levelColors.info;
+                    return (
+                      <motion.div
+                        key={notif.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className={cn(
+                          "bg-gradient-to-b border rounded-[28px] p-5.5 transition-all shadow-lg flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center relative overflow-hidden",
+                          notif.is_read ? 'from-white/[0.03] to-white/[0.01] border-white/5' : 'from-amber-500/[0.08] to-white/[0.02] border-amber-500/20 shadow-amber-500/[0.02]'
+                        )}
+                      >
+                        {!notif.is_read && (
+                          <span className="absolute top-3.5 right-3.5 w-2 h-2 rounded-full bg-amber-500 animate-ping" />
+                        )}
+                        <div className="space-y-2 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className={cn("px-2.5 py-0.5 rounded-full text-[10px] font-black border uppercase tracking-wider", colorClass)}>
+                              {notif.level}
+                            </span>
+                            <span className="text-[10px] text-white/40 font-bold">
+                              {formatPostTime(notif.created_at)}
+                            </span>
+                          </div>
+                          <h4 className={cn("text-base font-black text-white", !notif.is_read && "text-amber-100")}>
+                            {notif.title}
+                          </h4>
+                          <p className="text-sm text-white/70 leading-relaxed font-medium">
+                            {notif.message}
+                          </p>
+                        </div>
+                        {notif.link && (
+                          <button
+                            onClick={() => {
+                              if (notif.link.includes('/p/')) {
+                                window.location.href = notif.link;
+                              } else {
+                                window.open(notif.link, '_blank');
+                              }
+                            }}
+                            className="w-full sm:w-auto px-5 py-2.5 rounded-2xl bg-white/5 hover:bg-white/10 text-xs font-black text-white border border-white/10 transition-all text-center"
+                          >
+                            {lang === 'ar' ? 'تفاصيل 🔗' : 'Details 🔗'}
+                          </button>
+                        )}
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              )}
             </motion.div>
           )}
 
@@ -2333,7 +2551,7 @@ const ParticipantPortal = () => {
                                       <textarea
                                         value={sessionNotes[item.id] || ''}
                                         onChange={(e) => handleSaveNote(item.id, e.target.value)}
-                                        className="w-full bg-black/35 border border-white/10 rounded-2xl p-4 text-[#F0F4F2] text-sm focus:border-amber-500/50 outline-none min-h-[100px] resize-none placeholder-white/20"
+                                        className="w-full bg-black/40 border-2 border-white/20 rounded-2xl p-4 text-slate-100 text-sm focus:border-amber-500/50 outline-none min-h-[100px] resize-none placeholder-white/40"
                                         placeholder={lang === 'ar' ? 'اكتب أفكارك وملاحظاتك هنا...' : 'Type your thoughts and notes here...'}
                                       />
                                     </div>
@@ -2981,7 +3199,7 @@ const ParticipantPortal = () => {
                     <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
                       <span className="text-white/40 text-xs block mb-1">{lang === 'ar' ? 'وقت التحرك' : 'Pickup Time'}</span>
                       <span className="text-white text-base font-black">
-                        ⏳ {logistics.shuttle_time ? new Date(logistics.shuttle_time).toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US', { numberingSystem: 'latn', hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' }) : '---'}
+                        ⏳ {logistics.shuttle_time ? formatDateTime(logistics.shuttle_time, { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' }) : '---'}
                       </span>
                     </div>
                   </div>
@@ -3218,7 +3436,7 @@ const ParticipantPortal = () => {
                             <div>
                               <span className="text-white/40 text-[10px] block">{lang === 'ar' ? 'التاريخ والوقت' : 'Date & Time'}</span>
                               <span className="text-white">
-                                {activity.date_time ? new Date(activity.date_time).toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US', { numberingSystem: 'latn', hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' }) : '---'}
+                                {activity.date_time ? formatDateTime(activity.date_time, { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' }) : '---'}
                               </span>
                             </div>
                           </div>
@@ -3235,7 +3453,7 @@ const ParticipantPortal = () => {
                             <span>⏱️</span>
                             <div>
                               <span className="text-white/40 text-[10px] block">{lang === 'ar' ? 'المدة' : 'Duration'}</span>
-                              <span className="text-white">{activity.duration || '---'}</span>
+                              <span className="text-white">{formatDuration(activity.duration) || '---'}</span>
                             </div>
                           </div>
 
@@ -3252,16 +3470,79 @@ const ParticipantPortal = () => {
                           </div>
                         </div>
 
+                        {/* Gathering point details */}
+                        {(activity.gathering_point || activity.gathering_point_map_url) && (
+                          <div className="bg-white/[0.03] p-4 rounded-2xl border border-white/5 mb-4 text-right" dir="rtl">
+                            <span className="text-amber-500 text-xs font-black block mb-1">📍 {lang === 'ar' ? 'نقطة التجمع والانطلاق:' : 'Gathering Point:'}</span>
+                            <span className="text-white text-xs font-bold block">{activity.gathering_point || (lang === 'ar' ? 'محددة في الخريطة' : 'Specified on Map')}</span>
+                            {activity.gathering_point_map_url && (
+                              <a 
+                                href={activity.gathering_point_map_url} 
+                                target="_blank" 
+                                rel="noopener noreferrer" 
+                                className="text-[10px] text-blue-400 hover:text-blue-300 font-black underline mt-1 inline-flex items-center gap-1"
+                              >
+                                🗺️ {lang === 'ar' ? 'عرض على خرائط Google' : 'View on Google Maps'}
+                              </a>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Hotel Shuttle Request Section */}
+                        {activity.is_registered && (
+                          <div className="bg-white/[0.02] p-4 rounded-2xl border border-white/5 mb-4 text-right space-y-3" dir="rtl">
+                            <div className="flex items-center justify-between">
+                              <div className="flex flex-col">
+                                <span className="text-xs font-black text-white">{lang === 'ar' ? 'طلب نقل من فندق الإقامة' : 'Shuttle from hotel'}</span>
+                                <span className="text-[9px] text-white/40 mt-0.5">
+                                  {logistics.hotel_name 
+                                    ? `🏨 ${logistics.hotel_name}`
+                                    : (lang === 'ar' ? '🏨 لم تحدد فندق إقامة بعد' : '🏨 No hotel set yet')}
+                                </span>
+                              </div>
+                              <input 
+                                type="checkbox"
+                                checked={activity.pickup_requested || false}
+                                onChange={(e) => handleToggleActivityPickup(activity.id, e.target.checked, activity.pickup_notes)}
+                                className="w-5 h-5 rounded border-white/10 bg-white/5 accent-amber-500 cursor-pointer"
+                              />
+                            </div>
+                            
+                            {activity.pickup_requested && (
+                              <div className="space-y-1.5">
+                                <label className="text-[9px] text-white/50 block font-bold">{lang === 'ar' ? 'ملاحظات النقل (انقر خارج الحقل للحفظ):' : 'Transport notes (blur to save):'}</label>
+                                <input 
+                                  type="text"
+                                  defaultValue={activity.pickup_notes || ''}
+                                  onBlur={(e) => handleToggleActivityPickup(activity.id, true, e.target.value)}
+                                  placeholder={lang === 'ar' ? 'أضف ملاحظاتك (مثال: رقم الغرفة أو الموعد)...' : 'Add shuttle notes...'}
+                                  className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-1.5 text-white text-[11px] focus:border-amber-500 outline-none"
+                                />
+                              </div>
+                            )}
+                            
+                            {activity.pickup_status && activity.pickup_status !== 'none' && (
+                              <div className="text-[10px] font-black text-emerald-400">
+                                🚍 {lang === 'ar' ? 'حالة النقل:' : 'Transport Status:'} {
+                                  activity.pickup_status === 'pending' ? (lang === 'ar' ? 'قيد الانتظار' : 'Pending') :
+                                  activity.pickup_status === 'assigned' ? (lang === 'ar' ? 'تم تعيين السائق' : 'Driver Assigned') :
+                                  (lang === 'ar' ? 'اكتمل' : 'Completed')
+                                }
+                              </div>
+                            )}
+                          </div>
+                        )}
+
                         {/* Capacity Info */}
                         {activity.max_capacity && (
                           <div className="flex justify-between items-center text-[11px] font-black mb-6 px-1">
-                            <span className="text-white/40">{lang === 'ar' ? 'المقاعد المتاحة' : 'Available Seats'}</span>
+                            <span className="text-white/40">{lang === 'ar' ? 'الأماكن المتوفرة' : 'Available Places'}</span>
                             <span className={cn(isFull ? "text-red-400" : "text-emerald-400")}>
                               {isFull 
                                 ? (lang === 'ar' ? 'مكتمل العدد 🚫' : 'Sold Out 🚫') 
                                 : (lang === 'ar' 
-                                    ? `متبقي ${activity.max_capacity - activity.current_count} من ${activity.max_capacity} مقعد`
-                                    : `${activity.max_capacity - activity.current_count} of ${activity.max_capacity} seats left`)}
+                                    ? `متبقي ${activity.max_capacity - activity.current_count} من ${activity.max_capacity} مكان متوفر`
+                                    : `${activity.max_capacity - activity.current_count} of ${activity.max_capacity} places left`)}
                             </span>
                           </div>
                         )}
@@ -3380,15 +3661,15 @@ const ParticipantPortal = () => {
                   </div>
 
                   {/* Sustainability card info */}
-                  <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-[35px] p-6 relative overflow-hidden text-emerald-400">
-                    <div className="absolute top-0 left-0 bg-emerald-500/20 px-3 py-1 rounded-br-2xl text-[9px] font-black uppercase tracking-wider">
+                  <div className="bg-emerald-500/10 border-2 border-emerald-500/40 rounded-[35px] p-6 relative overflow-hidden text-emerald-300 shadow-[0_8px_32px_rgba(16,185,129,0.05)]">
+                    <div className="absolute top-0 left-0 bg-emerald-500/30 px-3 py-1 rounded-br-2xl text-[9px] font-black uppercase tracking-wider text-emerald-200">
                       {lang === 'ar' ? 'مبادرة خضراء 🍃' : 'GREEN INITIATIVE 🍃'}
                     </div>
-                    <h5 className="font-black text-sm mb-2 mt-2 flex items-center gap-2">
+                    <h5 className="font-black text-sm mb-2 mt-2 flex items-center gap-2 text-emerald-400">
                       <span>🌱</span>
                       {lang === 'ar' ? 'لماذا نسألك عن وجباتك؟' : 'Why RSVP for your meals?'}
                     </h5>
-                    <p className="text-xs font-bold leading-relaxed text-[#F0F4F2]/75">
+                    <p className="text-xs font-bold leading-relaxed text-white/90">
                       {lang === 'ar'
                         ? 'إن إعلامنا المسبق بحضورك أو عدم حضورك للوجبة يتيح لنا طبخ المقدار المحدد تماماً. هذا يمنع هدر مئات الأطنان من الطعام غير المستهلك ويقلل الانبعاثات الكربونية الناتجة عن النفايات الغذائية.'
                         : 'By RSVPing, you let the culinary crew prepare the exact quantities needed. This prevents food waste and reduces carbon footprint at the event.'}
@@ -3440,7 +3721,7 @@ const ParticipantPortal = () => {
                                     <h5 className="font-black text-sm text-white">{meal.title}</h5>
                                     <p className="text-white/40 text-xs mt-0.5 leading-relaxed font-bold">{meal.description}</p>
                                     <span className="text-[10px] text-amber-500/80 font-black tracking-wider block mt-1.5">
-                                      ⏰ {mealDate ? mealDate.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US', { numberingSystem: 'latn', weekday: 'long', hour: '2-digit', minute: '2-digit' }) : '---'}
+                                      ⏰ {mealDate ? formatDateTime(mealDate, { weekday: 'long', hour: '2-digit', minute: '2-digit' }) : '---'}
                                     </span>
                                   </div>
                                 </div>
@@ -3918,7 +4199,7 @@ const ParticipantPortal = () => {
                     </div>
                     <div className="bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 border border-emerald-500/20 rounded-[30px] p-6 text-right">
                       <span className="text-3xl block mb-2">👥</span>
-                      <h4 className="text-sm font-black text-white/50">{lang === 'ar' ? 'إجمالي المقاعد المحجوزة' : 'Total Seats Reserved'}</h4>
+                      <h4 className="text-sm font-black text-white/50">{lang === 'ar' ? 'إجمالي الأماكن المحجوزة' : 'Total Places Reserved'}</h4>
                       <p className="text-3xl font-black text-emerald-400 mt-1 font-mono">
                         {activities.reduce((acc, curr) => acc + (curr.current_count || 0), 0)}
                       </p>
@@ -4426,7 +4707,13 @@ const ParticipantPortal = () => {
           {filteredTabs.map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => {
+                setActiveTab(tab.id);
+                if (tab.id === 'notifications') {
+                  fetchNotifications();
+                  handleMarkNotificationsAsRead();
+                }
+              }}
               style={{ scrollSnapAlign: 'start', flexShrink: 0 }}
               className={cn(
                 "flex flex-col items-center gap-1 px-4 py-2 rounded-2xl relative transition-all min-w-[60px]",
@@ -4435,7 +4722,14 @@ const ParticipantPortal = () => {
                   : "text-white/30 hover:text-white/60"
               )}
             >
-              <tab.icon className="w-6 h-6" />
+              <div className="relative">
+                <tab.icon className="w-6 h-6" />
+                {tab.id === 'notifications' && unreadNotificationsCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-amber-500 text-[#050B18] text-[8px] font-black w-4.5 h-4.5 px-1 rounded-full flex items-center justify-center border border-[#050B18] shadow-lg animate-pulse min-w-[14px]">
+                    {unreadNotificationsCount}
+                  </span>
+                )}
+              </div>
               <span className="text-[9px] font-black uppercase tracking-wide whitespace-nowrap">{tab.label}</span>
               {activeTab === tab.id && (
                 <motion.div
@@ -4546,14 +4840,14 @@ const ParticipantPortal = () => {
                   </div>
                 ) : (
                   agenda.filter(item => sessionNotes[item.id]).map(item => (
-                    <div key={item.id} className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl space-y-2">
+                    <div key={item.id} className="p-4 bg-white/[0.04] border-2 border-white/15 rounded-2xl space-y-2">
                       <div className="flex justify-between items-start">
                         <div>
                           <h4 className="font-black text-xs text-white">{item.title}</h4>
-                          <p className="text-[10px] text-amber-500/60 font-bold mt-1">🎤 {item.speaker_name}</p>
+                          <p className="text-[10px] text-amber-500/80 font-bold mt-1">🎤 {item.speaker_name}</p>
                         </div>
                       </div>
-                      <p className="text-[#F0F4F2]/80 text-xs leading-relaxed whitespace-pre-wrap bg-black/30 p-3 rounded-xl border border-white/5">
+                      <p className="text-slate-100 text-xs leading-relaxed whitespace-pre-wrap bg-black/40 p-3 rounded-xl border-2 border-white/20">
                         {sessionNotes[item.id]}
                       </p>
                     </div>

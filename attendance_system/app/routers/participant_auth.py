@@ -513,13 +513,12 @@ async def get_current_participant(
                     return participant
             except: pass
     
-    # 2. محاولة البحث بواسطة رقم الطلب مباشرة (إذا كان التوكن ليس JWT)
-    if token.startswith("DWN-") or token.startswith("REG-"):
-        stmt = select(Participant).filter(Participant.order_num == token)
-        res = await db.execute(stmt)
-        participant = res.scalars().first()
-        if participant:
-            return participant
+    # 2. محاولة البحث بواسطة رقم الطلب أو رمز QR مباشرة
+    stmt = select(Participant).filter((Participant.order_num == token) | (Participant.qr_code == token))
+    res = await db.execute(stmt)
+    participant = res.scalars().first()
+    if participant:
+        return participant
 
     raise HTTPException(status_code=401, detail="الجلسة غير صالحة أو منتهية")
 
