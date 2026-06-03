@@ -79,6 +79,8 @@ const OperationsPage = () => {
     location: ''
   });
   const [isSavingActivity, setIsSavingActivity] = useState(false);
+  const [editingMealId, setEditingMealId] = useState(null);
+  const [editingActivityId, setEditingActivityId] = useState(null);
 
   // --- Committees States ---
   const COMMITTEES = [
@@ -292,7 +294,7 @@ const OperationsPage = () => {
     }
   };
 
-  // --- Create Meal ---
+  // --- Create/Edit Meal ---
   const handleCreateMeal = async (e) => {
     e.preventDefault();
     if (!mealForm.title.trim()) return;
@@ -307,19 +309,30 @@ const OperationsPage = () => {
     }
     setIsSavingMeal(true);
     try {
-      await interactionService.createMeal({
-        event_id: eventId,
-        title: mealForm.title,
-        description: mealForm.description,
-        date_time: parsedDate.toISOString(),
-        meal_type: mealForm.meal_type
-      });
-      showSuccess(lang === 'ar' ? 'تمت إضافة الوجبة المبرمجة بنجاح! 🍽️' : 'Programmed meal added successfully! 🍽️');
+      if (editingMealId) {
+        await interactionService.updateMeal(editingMealId, {
+          title: mealForm.title,
+          description: mealForm.description,
+          date_time: parsedDate.toISOString(),
+          meal_type: mealForm.meal_type
+        });
+        showSuccess(lang === 'ar' ? 'تم تحديث الوجبة بنجاح! 🍽️' : 'Meal updated successfully! 🍽️');
+      } else {
+        await interactionService.createMeal({
+          event_id: eventId,
+          title: mealForm.title,
+          description: mealForm.description,
+          date_time: parsedDate.toISOString(),
+          meal_type: mealForm.meal_type
+        });
+        showSuccess(lang === 'ar' ? 'تمت إضافة الوجبة المبرمجة بنجاح! 🍽️' : 'Programmed meal added successfully! 🍽️');
+      }
       setShowMealModal(false);
+      setEditingMealId(null);
       setMealForm({ title: '', description: '', date_time: '', meal_type: 'breakfast' });
       fetchData();
     } catch (err) {
-      console.error('Create meal failed:', err);
+      console.error('Save meal failed:', err);
       showError(lang === 'ar'
         ? `فشل حفظ الوجبة: ${err?.response?.data?.detail || err.message || 'خطأ غير معروف'}`
         : `Failed to save meal: ${err?.response?.data?.detail || err.message || 'Unknown error'}`);
@@ -328,7 +341,25 @@ const OperationsPage = () => {
     }
   };
 
-  // --- Create Activity ---
+  const handleDeleteMeal = async (mealId) => {
+    const confirmResult = await showConfirm(
+      lang === 'ar' ? 'هل أنت متأكد؟' : 'Are you sure?',
+      lang === 'ar' ? 'سيتم حذف هذه الوجبة نهائياً!' : 'This meal will be permanently deleted!',
+      lang === 'ar' ? 'نعم، احذف' : 'Yes, delete'
+    );
+    if (confirmResult.isConfirmed) {
+      try {
+        await interactionService.deleteMeal(mealId);
+        showSuccess(lang === 'ar' ? 'تم حذف الوجبة بنجاح!' : 'Meal deleted successfully!');
+        fetchData();
+      } catch (err) {
+        console.error('Delete meal failed:', err);
+        showError(lang === 'ar' ? 'حدث خطأ أثناء حذف الوجبة' : 'An error occurred while deleting the meal');
+      }
+    }
+  };
+
+  // --- Create/Edit Activity ---
   const handleCreateActivity = async (e) => {
     e.preventDefault();
     if (!activityForm.title.trim()) return;
@@ -343,8 +374,7 @@ const OperationsPage = () => {
     }
     setIsSavingActivity(true);
     try {
-      await interactionService.createActivity({
-        event_id: eventId,
+      const payload = {
         title: activityForm.title,
         description: activityForm.description,
         date_time: parsedDate.toISOString(),
@@ -353,21 +383,50 @@ const OperationsPage = () => {
         currency: activityForm.currency,
         max_capacity: parseInt(activityForm.max_capacity) || 50,
         location: activityForm.location
-      });
-      showSuccess(lang === 'ar' ? 'تمت برمجة النشاط الترفيهي بنجاح! 🏕️' : 'Excursion activity programmed successfully! 🏕️');
+      };
+
+      if (editingActivityId) {
+        await interactionService.updateActivity(editingActivityId, payload);
+        showSuccess(lang === 'ar' ? 'تم تحديث النشاط الترفيهي بنجاح! 🏕️' : 'Activity updated successfully! 🏕️');
+      } else {
+        await interactionService.createActivity({
+          event_id: eventId,
+          ...payload
+        });
+        showSuccess(lang === 'ar' ? 'تمت برمجة النشاط الترفيهي بنجاح! 🏕️' : 'Excursion activity programmed successfully! 🏕️');
+      }
       setShowActivityModal(false);
+      setEditingActivityId(null);
       setActivityForm({
         title: '', description: '', date_time: '', duration: '2 hours',
         price: 0, currency: 'DZD', max_capacity: 50, location: ''
       });
       fetchData();
     } catch (err) {
-      console.error('Create activity failed:', err);
+      console.error('Save activity failed:', err);
       showError(lang === 'ar'
         ? `فشل حفظ النشاط: ${err?.response?.data?.detail || err.message || 'خطأ غير معروف'}`
         : `Failed to save activity: ${err?.response?.data?.detail || err.message || 'Unknown error'}`);
     } finally {
       setIsSavingActivity(false);
+    }
+  };
+
+  const handleDeleteActivity = async (activityId) => {
+    const confirmResult = await showConfirm(
+      lang === 'ar' ? 'هل أنت متأكد؟' : 'Are you sure?',
+      lang === 'ar' ? 'سيتم حذف هذا النشاط نهائياً!' : 'This activity will be permanently deleted!',
+      lang === 'ar' ? 'نعم، احذف' : 'Yes, delete'
+    );
+    if (confirmResult.isConfirmed) {
+      try {
+        await interactionService.deleteActivity(activityId);
+        showSuccess(lang === 'ar' ? 'تم حذف النشاط بنجاح!' : 'Activity deleted successfully!');
+        fetchData();
+      } catch (err) {
+        console.error('Delete activity failed:', err);
+        showError(lang === 'ar' ? 'حدث خطأ أثناء حذف النشاط' : 'An error occurred while deleting the activity');
+      }
     }
   };
 
@@ -412,13 +471,24 @@ const OperationsPage = () => {
         {/* Action Controls based on Tab */}
         <div className="flex items-center gap-4">
           {activeTab === 'catering' && (
-            <Button variant="gold" className="flex items-center gap-2 h-12 px-6 rounded-2xl" onClick={() => setShowMealModal(true)}>
+            <Button variant="gold" className="flex items-center gap-2 h-12 px-6 rounded-2xl" onClick={() => {
+              setEditingMealId(null);
+              setMealForm({ title: '', description: '', date_time: '', meal_type: 'breakfast' });
+              setShowMealModal(true);
+            }}>
               <Plus className="w-5 h-5" />
               {lang === 'ar' ? 'إضافة وجبة مبرمجة' : 'Add Program Meal'}
             </Button>
           )}
           {activeTab === 'activities' && (
-            <Button variant="gold" className="flex items-center gap-2 h-12 px-6 rounded-2xl" onClick={() => setShowActivityModal(true)}>
+            <Button variant="gold" className="flex items-center gap-2 h-12 px-6 rounded-2xl" onClick={() => {
+              setEditingActivityId(null);
+              setActivityForm({
+                title: '', description: '', date_time: '', duration: '2 hours',
+                price: 0, currency: 'DZD', max_capacity: 50, location: ''
+              });
+              setShowActivityModal(true);
+            }}>
               <Plus className="w-5 h-5" />
               {lang === 'ar' ? 'إضافة نشاط/رحلة ترفيهية' : 'Add Excursion Trip'}
             </Button>
@@ -554,7 +624,7 @@ const OperationsPage = () => {
                               <span className="text-xs uppercase font-black">{item.flight_number || (lang === 'ar' ? 'سيارة خاصة' : 'Private')}</span>
                             </div>
                             <div className="text-[10px] text-[#D4AF37] mt-1">
-                              ⏰ {item.arrival_time ? new Date(item.arrival_time).toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US') : '---'}
+                              ⏰ {item.arrival_time ? new Date(item.arrival_time).toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US', { numberingSystem: 'latn' }) : '---'}
                             </div>
                             <div className="text-[10px] text-white/40 mt-0.5">{item.arrival_location}</div>
                           </td>
@@ -665,7 +735,7 @@ const OperationsPage = () => {
                               <h4 className="font-black text-base text-white">{meal.title}</h4>
                               <p className="text-xs text-white/50 mt-1 leading-relaxed">{meal.description}</p>
                               <span className="inline-block text-[10px] text-amber-500 mt-2 font-black">
-                                ⏰ {mealDate ? mealDate.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US') : '---'}
+                                ⏰ {mealDate ? mealDate.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US', { numberingSystem: 'latn' }) : '---'}
                               </span>
                             </div>
                           </div>
@@ -674,6 +744,32 @@ const OperationsPage = () => {
                             <span className="px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-black">
                               {lang === 'ar' ? 'تحت الإعداد 🍃' : 'In Prep 🍃'}
                             </span>
+                            <button
+                              onClick={() => {
+                                setEditingMealId(meal.id);
+                                const d = new Date(meal.date_time);
+                                const tzOffset = d.getTimezoneOffset() * 60000;
+                                const localISOTime = (new Date(d.getTime() - tzOffset)).toISOString().slice(0, 16);
+                                setMealForm({
+                                  title: meal.title,
+                                  description: meal.description || '',
+                                  date_time: localISOTime,
+                                  meal_type: meal.meal_type
+                                });
+                                setShowMealModal(true);
+                              }}
+                              className="p-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 rounded-xl text-xs font-black transition-all"
+                              title={lang === 'ar' ? 'تعديل الوجبة' : 'Edit Meal'}
+                            >
+                              ✏️
+                            </button>
+                            <button
+                              onClick={() => handleDeleteMeal(meal.id)}
+                              className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-xl text-xs font-black transition-all"
+                              title={lang === 'ar' ? 'حذف الوجبة' : 'Delete Meal'}
+                            >
+                              🗑️
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -800,7 +896,7 @@ const OperationsPage = () => {
                         </div>
                         <div className="flex items-center gap-2 text-xs font-bold text-white/70">
                           <Clock className="w-4 h-4 text-amber-500/60" />
-                          <span>⏰ {actDate ? actDate.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US') : '---'} ({activity.duration})</span>
+                          <span>⏰ {actDate ? actDate.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US', { numberingSystem: 'latn' }) : '---'} ({activity.duration})</span>
                         </div>
                       </div>
 
@@ -810,6 +906,38 @@ const OperationsPage = () => {
                           <span>
                             {activity.registered_count || 0} / {activity.max_capacity} {lang === 'ar' ? 'مسجل' : 'Registered'}
                           </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => {
+                              setEditingActivityId(activity.id);
+                              const d = new Date(activity.date_time);
+                              const tzOffset = d.getTimezoneOffset() * 60000;
+                              const localISOTime = (new Date(d.getTime() - tzOffset)).toISOString().slice(0, 16);
+                              setActivityForm({
+                                title: activity.title,
+                                description: activity.description || '',
+                                date_time: localISOTime,
+                                duration: activity.duration || '2 hours',
+                                price: activity.price || 0,
+                                currency: activity.currency || 'DZD',
+                                max_capacity: activity.max_capacity || 50,
+                                location: activity.location || ''
+                              });
+                              setShowActivityModal(true);
+                            }}
+                            className="p-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 rounded-xl text-xs font-black transition-all"
+                            title={lang === 'ar' ? 'تعديل النشاط' : 'Edit Activity'}
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            onClick={() => handleDeleteActivity(activity.id)}
+                            className="p-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-xl text-xs font-black transition-all"
+                            title={lang === 'ar' ? 'حذف النشاط' : 'Delete Activity'}
+                          >
+                            🗑️
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -993,7 +1121,9 @@ const OperationsPage = () => {
       {showMealModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 backdrop-blur-xl bg-brand-dark/40">
           <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-[#050B18] border border-white/10 rounded-[40px] p-10 w-full max-w-lg shadow-2xl text-right">
-            <h2 className="text-2xl font-black text-white mb-6 pb-2 border-b border-white/5">🍽️ {lang === 'ar' ? 'إضافة وجبة مبرمجة للفعالية' : 'Add Programmed Meal'}</h2>
+            <h2 className="text-2xl font-black text-white mb-6 pb-2 border-b border-white/5">
+              🍽️ {editingMealId ? (lang === 'ar' ? 'تعديل وجبة مبرمجة' : 'Edit Programmed Meal') : (lang === 'ar' ? 'إضافة وجبة مبرمجة للفعالية' : 'Add Programmed Meal')}
+            </h2>
             <form onSubmit={handleCreateMeal} className="space-y-5 font-bold text-white">
               <div className="space-y-1.5">
                 <label className="text-xs text-white/50">{lang === 'ar' ? 'عنوان الوجبة' : 'Meal Title'}</label>
@@ -1041,7 +1171,7 @@ const OperationsPage = () => {
 
               <div className="flex gap-4 pt-6">
                 <Button className="flex-1 rounded-2xl h-12" variant="gold" type="submit" disabled={isSavingMeal}>
-                  {isSavingMeal ? (lang === 'ar' ? 'جاري الحفظ...' : 'Saving...') : (lang === 'ar' ? 'إضافة الوجبة وجدولتها' : 'Program Meal')}
+                  {isSavingMeal ? (lang === 'ar' ? 'جاري الحفظ...' : 'Saving...') : (editingMealId ? (lang === 'ar' ? 'حفظ التعديلات' : 'Save Changes') : (lang === 'ar' ? 'إضافة الوجبة وجدولتها' : 'Program Meal'))}
                 </Button>
                 <Button className="flex-1 rounded-2xl h-12" variant="outline" type="button" onClick={() => setShowMealModal(false)}>
                   {lang === 'ar' ? 'إلغاء' : 'Cancel'}
@@ -1056,7 +1186,9 @@ const OperationsPage = () => {
       {showActivityModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 backdrop-blur-xl bg-brand-dark/40">
           <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-[#050B18] border border-white/10 rounded-[40px] p-10 w-full max-w-lg shadow-2xl text-right">
-            <h2 className="text-2xl font-black text-white mb-6 pb-2 border-b border-white/5">🏕️ {lang === 'ar' ? 'جدولة وبرمجة رحلة/نشاط ترفيهي' : 'Program Side Activity'}</h2>
+            <h2 className="text-2xl font-black text-white mb-6 pb-2 border-b border-white/5">
+              🏕️ {editingActivityId ? (lang === 'ar' ? 'تعديل رحلة/نشاط ترفيهي' : 'Edit Side Activity') : (lang === 'ar' ? 'جدولة وبرمجة رحلة/نشاط ترفيهي' : 'Program Side Activity')}
+            </h2>
             <form onSubmit={handleCreateActivity} className="space-y-4 font-bold text-white">
               <div className="space-y-1">
                 <label className="text-xs text-white/50">{lang === 'ar' ? 'عنوان النشاط/الرحلة' : 'Activity Title'}</label>
@@ -1129,7 +1261,7 @@ const OperationsPage = () => {
 
               <div className="flex gap-4 pt-6">
                 <Button className="flex-1 rounded-2xl h-12" variant="gold" type="submit" disabled={isSavingActivity}>
-                  {isSavingActivity ? (lang === 'ar' ? 'جاري الحفظ...' : 'Saving...') : (lang === 'ar' ? 'برمجة وإدراج الرحلة' : 'Program Activity')}
+                  {isSavingActivity ? (lang === 'ar' ? 'جاري الحفظ...' : 'Saving...') : (editingActivityId ? (lang === 'ar' ? 'حفظ التعديلات' : 'Save Changes') : (lang === 'ar' ? 'برمجة وإدراج الرحلة' : 'Program Activity'))}
                 </Button>
                 <Button className="flex-1 rounded-2xl h-12" variant="outline" type="button" onClick={() => setShowActivityModal(false)}>
                   {lang === 'ar' ? 'إلغاء' : 'Cancel'}

@@ -76,7 +76,7 @@ const formatPostTime = (timestamp) => {
   if (diffMins < 60) return `منذ ${diffMins} دقيقة`;
   if (diffHours < 24) return `منذ ${diffHours} ساعة`;
   if (diffDays < 7) return `منذ ${diffDays} يوم`;
-  return date.toLocaleDateString('ar-EG', { day: 'numeric', month: 'long' }) + ' · ' + date.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+  return date.toLocaleDateString('ar-EG', { numberingSystem: 'latn', day: 'numeric', month: 'long' }) + ' · ' + date.toLocaleTimeString('ar-EG', { numberingSystem: 'latn', hour: '2-digit', minute: '2-digit' });
 };
 
 const ParticipantPortal = () => {
@@ -2714,7 +2714,7 @@ const ParticipantPortal = () => {
                                   <div className="flex justify-between items-center mb-1">
                                     <span className="font-bold text-white text-xs">{comment.author_name}</span>
                                     <span className="text-[9px] text-white/40">
-                                      {comment.timestamp ? new Date(comment.timestamp).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" }) : "\u0627\u0644\u0622\u0646"}
+                                      {comment.timestamp ? new Date(comment.timestamp).toLocaleTimeString("ar-EG", { numberingSystem: 'latn', hour: "2-digit", minute: "2-digit" }) : "الآن"}
                                     </span>
                                   </div>
                                   <p className="text-white/80 text-xs leading-relaxed">{comment.content}</p>
@@ -2981,7 +2981,7 @@ const ParticipantPortal = () => {
                     <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
                       <span className="text-white/40 text-xs block mb-1">{lang === 'ar' ? 'وقت التحرك' : 'Pickup Time'}</span>
                       <span className="text-white text-base font-black">
-                        ⏳ {logistics.shuttle_time ? new Date(logistics.shuttle_time).toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' }) : '---'}
+                        ⏳ {logistics.shuttle_time ? new Date(logistics.shuttle_time).toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US', { numberingSystem: 'latn', hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' }) : '---'}
                       </span>
                     </div>
                   </div>
@@ -3218,7 +3218,7 @@ const ParticipantPortal = () => {
                             <div>
                               <span className="text-white/40 text-[10px] block">{lang === 'ar' ? 'التاريخ والوقت' : 'Date & Time'}</span>
                               <span className="text-white">
-                                {activity.date_time ? new Date(activity.date_time).toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' }) : '---'}
+                                {activity.date_time ? new Date(activity.date_time).toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US', { numberingSystem: 'latn', hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' }) : '---'}
                               </span>
                             </div>
                           </div>
@@ -3440,7 +3440,7 @@ const ParticipantPortal = () => {
                                     <h5 className="font-black text-sm text-white">{meal.title}</h5>
                                     <p className="text-white/40 text-xs mt-0.5 leading-relaxed font-bold">{meal.description}</p>
                                     <span className="text-[10px] text-amber-500/80 font-black tracking-wider block mt-1.5">
-                                      ⏰ {mealDate ? mealDate.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US', { weekday: 'long', hour: '2-digit', minute: '2-digit' }) : '---'}
+                                      ⏰ {mealDate ? mealDate.toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US', { numberingSystem: 'latn', weekday: 'long', hour: '2-digit', minute: '2-digit' }) : '---'}
                                     </span>
                                   </div>
                                 </div>

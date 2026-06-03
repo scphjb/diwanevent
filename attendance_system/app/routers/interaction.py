@@ -533,6 +533,16 @@ class ActivityCreate(BaseModel):
     max_capacity: Optional[int] = None
     location: Optional[str] = ""
 
+class ActivityUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    date_time: Optional[str] = None
+    duration: Optional[str] = None
+    price: Optional[float] = None
+    currency: Optional[str] = None
+    max_capacity: Optional[int] = None
+    location: Optional[str] = None
+
 class RegisterActivityRequest(BaseModel):
     activity_id: int
     participant_id: int
@@ -718,6 +728,54 @@ async def create_activity(
     await db.refresh(new_act)
     return new_act
 
+@router.patch("/activities/{activity_id}")
+async def update_activity(
+    activity_id: int,
+    req: ActivityUpdate,
+    db: AsyncSession = Depends(get_db)
+):
+    stmt = select(EventActivity).filter(EventActivity.id == activity_id)
+    res = await db.execute(stmt)
+    act = res.scalar()
+    if not act:
+        raise HTTPException(status_code=404, detail="Activity not found")
+    
+    if req.title is not None:
+        act.title = req.title
+    if req.description is not None:
+        act.description = req.description
+    if req.date_time is not None:
+        act.date_time = datetime.fromisoformat(req.date_time.replace("Z", "+00:00")).replace(tzinfo=None)
+    if req.duration is not None:
+        act.duration = req.duration
+    if req.price is not None:
+        act.price = req.price
+    if req.currency is not None:
+        act.currency = req.currency
+    if req.max_capacity is not None:
+        act.max_capacity = req.max_capacity
+    if req.location is not None:
+        act.location = req.location
+        
+    await db.commit()
+    await db.refresh(act)
+    return act
+
+@router.delete("/activities/{activity_id}")
+async def delete_activity(
+    activity_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    stmt = select(EventActivity).filter(EventActivity.id == activity_id)
+    res = await db.execute(stmt)
+    act = res.scalar()
+    if not act:
+        raise HTTPException(status_code=404, detail="Activity not found")
+    
+    await db.delete(act)
+    await db.commit()
+    return {"status": "success", "message": "Activity deleted"}
+
 # --- Pydantic Schemas for Catering & Meals ---
 class CateringProfileSave(BaseModel):
     participant_id: int
@@ -738,6 +796,12 @@ class MealCreate(BaseModel):
     description: Optional[str] = ""
     date_time: str # ISO string
     meal_type: str # breakfast, lunch, dinner, coffee_break
+
+class MealUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    date_time: Optional[str] = None
+    meal_type: Optional[str] = None
 
 # --- Catering & Sustainable Meals Endpoints ---
 
@@ -910,6 +974,46 @@ async def create_event_meal(
     await db.commit()
     await db.refresh(new_meal)
     return new_meal
+
+@router.patch("/meals/{meal_id}")
+async def update_event_meal(
+    meal_id: int,
+    req: MealUpdate,
+    db: AsyncSession = Depends(get_db)
+):
+    stmt = select(EventMeal).filter(EventMeal.id == meal_id)
+    res = await db.execute(stmt)
+    meal = res.scalar()
+    if not meal:
+        raise HTTPException(status_code=404, detail="Meal not found")
+    
+    if req.title is not None:
+        meal.title = req.title
+    if req.description is not None:
+        meal.description = req.description
+    if req.date_time is not None:
+        meal.date_time = datetime.fromisoformat(req.date_time.replace("Z", "+00:00")).replace(tzinfo=None)
+    if req.meal_type is not None:
+        meal.meal_type = req.meal_type
+        
+    await db.commit()
+    await db.refresh(meal)
+    return meal
+
+@router.delete("/meals/{meal_id}")
+async def delete_event_meal(
+    meal_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    stmt = select(EventMeal).filter(EventMeal.id == meal_id)
+    res = await db.execute(stmt)
+    meal = res.scalar()
+    if not meal:
+        raise HTTPException(status_code=404, detail="Meal not found")
+    
+    await db.delete(meal)
+    await db.commit()
+    return {"status": "success", "message": "Meal deleted"}
 
 # --- Committee Task Delegation Schemas & Routes ---
 class TaskCreate(BaseModel):

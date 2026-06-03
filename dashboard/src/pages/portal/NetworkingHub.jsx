@@ -539,7 +539,7 @@ const MessagesTab = ({ myId }) => {
                 color: msg.is_mine ? 'rgba(255,255,255,0.7)' : (isLightTheme ? '#64748B' : 'rgba(255,255,255,0.4)'), 
                 marginTop:4, textAlign: msg.is_mine ? 'left' : 'right' 
               }}>
-                {msg.is_mine && (msg.is_read ? '✓✓' : '✓')} {new Date(msg.sent_at).toLocaleTimeString('ar', { hour:'2-digit', minute:'2-digit' })}
+                {msg.is_mine && (msg.is_read ? '✓✓' : '✓')} {new Date(msg.sent_at).toLocaleTimeString('ar', { numberingSystem: 'latn', hour:'2-digit', minute:'2-digit' })}
               </div>
             </div>
           </div>

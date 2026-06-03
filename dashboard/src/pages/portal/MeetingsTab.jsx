@@ -86,8 +86,8 @@ const MeetingsTab = ({ myId }) => {
   const formatDateTime = (isoString) => {
     const d = new Date(isoString);
     return {
-      date: d.toLocaleDateString('ar', { month: 'short', day: 'numeric' }),
-      time: d.toLocaleTimeString('ar', { hour: '2-digit', minute: '2-digit' })
+      date: d.toLocaleDateString('ar', { numberingSystem: 'latn', month: 'short', day: 'numeric' }),
+      time: d.toLocaleTimeString('ar', { numberingSystem: 'latn', hour: '2-digit', minute: '2-digit' })
     };
   };
 

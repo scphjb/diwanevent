@@ -203,7 +203,27 @@ const interactionService = {
   deleteTask: async (taskId) => {
     const res = await api.delete(`interaction/tasks/${taskId}`);
     return res.data;
-  }
+  },
+
+  updateMeal: async (mealId, mealData) => {
+    const res = await api.patch(`interaction/meals/${mealId}`, mealData);
+    return res.data;
+  },
+
+  deleteMeal: async (mealId) => {
+    const res = await api.delete(`interaction/meals/${mealId}`);
+    return res.data;
+  },
+
+  updateActivity: async (activityId, activityData) => {
+    const res = await api.patch(`interaction/activities/${activityId}`, activityData);
+    return res.data;
+  },
+
+  deleteActivity: async (activityId) => {
+    const res = await api.delete(`interaction/activities/${activityId}`);
+    return res.data;
+  },
 };
 
 export default interactionService;
