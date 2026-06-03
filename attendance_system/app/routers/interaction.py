@@ -587,7 +587,7 @@ async def list_activities(
             "event_id": act.event_id,
             "title": act.title,
             "description": act.description,
-            "date_time": act.date_time.isoformat() if act.date_time else None,
+            "date_time": act.date_time.isoformat() + "Z" if act.date_time else None,
             "duration": act.duration,
             "price": act.price,
             "currency": act.currency,
@@ -726,7 +726,18 @@ async def create_activity(
     db.add(new_act)
     await db.commit()
     await db.refresh(new_act)
-    return new_act
+    return {
+        "id": new_act.id,
+        "event_id": new_act.event_id,
+        "title": new_act.title,
+        "description": new_act.description,
+        "date_time": new_act.date_time.isoformat() + "Z" if new_act.date_time else None,
+        "duration": new_act.duration,
+        "price": new_act.price,
+        "currency": new_act.currency,
+        "max_capacity": new_act.max_capacity,
+        "location": new_act.location,
+    }
 
 @router.patch("/activities/{activity_id}")
 async def update_activity(
@@ -759,7 +770,18 @@ async def update_activity(
         
     await db.commit()
     await db.refresh(act)
-    return act
+    return {
+        "id": act.id,
+        "event_id": act.event_id,
+        "title": act.title,
+        "description": act.description,
+        "date_time": act.date_time.isoformat() + "Z" if act.date_time else None,
+        "duration": act.duration,
+        "price": act.price,
+        "currency": act.currency,
+        "max_capacity": act.max_capacity,
+        "location": act.location,
+    }
 
 @router.delete("/activities/{activity_id}")
 async def delete_activity(
@@ -918,7 +940,7 @@ async def list_event_meals(
             "event_id": meal.event_id,
             "title": meal.title,
             "description": meal.description,
-            "date_time": meal.date_time.isoformat() if meal.date_time else None,
+            "date_time": meal.date_time.isoformat() + "Z" if meal.date_time else None,
             "meal_type": meal.meal_type,
             "has_rsvp": has_rsvp,
             "attending": attending,
@@ -973,7 +995,14 @@ async def create_event_meal(
     db.add(new_meal)
     await db.commit()
     await db.refresh(new_meal)
-    return new_meal
+    return {
+        "id": new_meal.id,
+        "event_id": new_meal.event_id,
+        "title": new_meal.title,
+        "description": new_meal.description,
+        "date_time": new_meal.date_time.isoformat() + "Z" if new_meal.date_time else None,
+        "meal_type": new_meal.meal_type,
+    }
 
 @router.patch("/meals/{meal_id}")
 async def update_event_meal(
@@ -998,7 +1027,14 @@ async def update_event_meal(
         
     await db.commit()
     await db.refresh(meal)
-    return meal
+    return {
+        "id": meal.id,
+        "event_id": meal.event_id,
+        "title": meal.title,
+        "description": meal.description,
+        "date_time": meal.date_time.isoformat() + "Z" if meal.date_time else None,
+        "meal_type": meal.meal_type,
+    }
 
 @router.delete("/meals/{meal_id}")
 async def delete_event_meal(
