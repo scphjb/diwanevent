@@ -144,15 +144,38 @@ async def startup_db_migration():
         "Checked/Created 'registration_otp' table."
     )
 
-    # الخطوة 5: تعديل جدول push_subscriptions لجعل user_id اختيارياً وإضافة participant_id
+    # الخطوة 5: إنشاء جدول push_subscriptions إذا لم يكن موجوداً
+    create_push_subs_table_str = """
+    CREATE TABLE IF NOT EXISTS push_subscriptions (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        participant_id INTEGER REFERENCES participants(id) ON DELETE CASCADE,
+        endpoint TEXT NOT NULL UNIQUE,
+        subscription_data TEXT NOT NULL,
+        user_agent VARCHAR(500),
+        created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT timezone('utc'::text, now())
+    );
+    """
     await run_query(
-        "ALTER TABLE push_subscriptions ALTER COLUMN user_id DROP NOT NULL;",
-        "Updated 'user_id' column to be NULLable in 'push_subscriptions' table."
+        create_push_subs_table_str,
+        "Checked/Created 'push_subscriptions' table."
     )
-    await run_query(
-        "ALTER TABLE push_subscriptions ADD COLUMN IF NOT EXISTS participant_id INTEGER REFERENCES participants(id) ON DELETE CASCADE;",
-        "Checked/Added 'participant_id' column to 'push_subscriptions' table."
-    )
+
+    # تعديل جدول push_subscriptions لجعل user_id اختيارياً وإضافة participant_id (احتياطياً في حال كان الجدول قديماً)
+    try:
+        await run_query(
+            "ALTER TABLE push_subscriptions ALTER COLUMN user_id DROP NOT NULL;",
+            "Updated 'user_id' column to be NULLable in 'push_subscriptions' table."
+        )
+    except Exception as ex:
+        logger.warning(f"Error checking user_id nullable status: {ex}")
+    try:
+        await run_query(
+            "ALTER TABLE push_subscriptions ADD COLUMN IF NOT EXISTS participant_id INTEGER REFERENCES participants(id) ON DELETE CASCADE;",
+            "Checked/Added 'participant_id' column to 'push_subscriptions' table."
+        )
+    except Exception as ex:
+        logger.warning(f"Error checking participant_id column in push_subscriptions: {ex}")
     
     # الخطوة 6: تعديل جدول user_notifications لإضافة participant_id
     await run_query(
