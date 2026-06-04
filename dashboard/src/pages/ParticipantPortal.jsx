@@ -768,6 +768,9 @@ const ParticipantPortal = () => {
 
   useEffect(() => {
     if (eventId && participantToken) {
+      try {
+        localStorage.setItem('participant_token', participantToken);
+      } catch (e) {}
       fetchInitialData();
     }
   }, [eventId, participantToken]);
@@ -842,6 +845,7 @@ const ParticipantPortal = () => {
       try {
         localStorage.setItem(`diwan_cache_participant_${participantToken}`, JSON.stringify(pRes.data));
         localStorage.setItem('last_active_participant_portal', `/p/${eventId}/${participantToken}`);
+        localStorage.setItem('participant_token', participantToken);
       } catch (e) {
         console.error('Failed to write participant cache', e);
       }
