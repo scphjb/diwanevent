@@ -320,15 +320,22 @@ async def send_web_push_notification_to_target(
         # ── بناء كائن Vapid من المفتاح (يدعم PEM المُشفَّر بـ base64 والمفتاح الخام) ──
         vapid_obj = None
         try:
-            # حاول فكّ ترميز base64 لاكتشاف ما إذا كان PEM مخزناً بصيغة base64
-            # نضيف padding لضمان صحة الفكّ
-            padding = 4 - len(private_key_raw) % 4
-            padded = private_key_raw + ('=' * (padding % 4))
-            decoded_bytes = base64.urlsafe_b64decode(padded)
-            if b'BEGIN' in decoded_bytes:
+            # المفتاح قد يكون: (1) PEM مُشفَّر بـ standard base64، أو (2) مفتاح خام base64url
+            # نجرب standard base64 أولاً لأن المفتاح الحالي يحتوي + و /
+            decoded_bytes = None
+            for decode_fn in (base64.b64decode, base64.urlsafe_b64decode):
+                try:
+                    # أضف padding لضمان صحة الفكّ
+                    padded = private_key_raw + '=' * (4 - len(private_key_raw) % 4)
+                    decoded_bytes = decode_fn(padded)
+                    break
+                except Exception:
+                    continue
+
+            if decoded_bytes and b'BEGIN' in decoded_bytes:
                 # إنه PEM — استخدم Vapid.from_pem مباشرة
                 vapid_obj = Vapid.from_pem(decoded_bytes)
-                logger.info("VAPID: loaded from base64-encoded PEM")
+                logger.info("VAPID: loaded from base64-encoded PEM successfully")
             else:
                 # مفتاح خام base64url — مرره مباشرة
                 vapid_obj = None
