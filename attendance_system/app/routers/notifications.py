@@ -308,12 +308,33 @@ async def send_web_push_notification_to_target(
             return 0
 
         from pywebpush import webpush
+        from py_vapid import Vapid
+        import base64
         from app.core.config import settings
-        private_key = getattr(settings, 'VAPID_PRIVATE_KEY', None)
+        private_key_raw = getattr(settings, 'VAPID_PRIVATE_KEY', None)
         email = getattr(settings, 'EMAILS_FROM_EMAIL', 'admin@e-diwan.net')
-        if not private_key:
+        if not private_key_raw:
             logger.warning("VAPID_PRIVATE_KEY not set, cannot send push")
             return 0
+
+        # ── بناء كائن Vapid من المفتاح (يدعم PEM المُشفَّر بـ base64 والمفتاح الخام) ──
+        vapid_obj = None
+        try:
+            # حاول فكّ ترميز base64 لاكتشاف ما إذا كان PEM مخزناً بصيغة base64
+            # نضيف padding لضمان صحة الفكّ
+            padding = 4 - len(private_key_raw) % 4
+            padded = private_key_raw + ('=' * (padding % 4))
+            decoded_bytes = base64.urlsafe_b64decode(padded)
+            if b'BEGIN' in decoded_bytes:
+                # إنه PEM — استخدم Vapid.from_pem مباشرة
+                vapid_obj = Vapid.from_pem(decoded_bytes)
+                logger.info("VAPID: loaded from base64-encoded PEM")
+            else:
+                # مفتاح خام base64url — مرره مباشرة
+                vapid_obj = None
+        except Exception as decode_err:
+            logger.debug(f"VAPID key decode attempt: {decode_err}")
+            vapid_obj = None
 
         unique_targets = {}
         for t in targets:
@@ -334,13 +355,23 @@ async def send_web_push_notification_to_target(
                     "icon": "/icons/icon-192x192.png",
                     "data": {"url": target_url},
                 }
-                
-                webpush(
-                    subscription_info=sub_data,
-                    data=json.dumps(payload),
-                    vapid_private_key=private_key,
-                    vapid_claims={"sub": f"mailto:{email}"}
-                )
+
+                if vapid_obj is not None:
+                    # استخدام كائن Vapid عند توفر PEM
+                    webpush(
+                        subscription_info=sub_data,
+                        data=json.dumps(payload),
+                        vapid_private_key=vapid_obj,
+                        vapid_claims={"sub": f"mailto:{email}"}
+                    )
+                else:
+                    # استخدام المفتاح الخام مباشرة
+                    webpush(
+                        subscription_info=sub_data,
+                        data=json.dumps(payload),
+                        vapid_private_key=private_key_raw,
+                        vapid_claims={"sub": f"mailto:{email}"}
+                    )
                 sent_count += 1
             except Exception as ex:
                 logger.warning(f"Push send failed to endpoint: {ex}")
