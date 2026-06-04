@@ -950,29 +950,29 @@ async def update_activity(
 
     try:
         from app.routers.notifications import send_web_push_notification_to_target
-        # 1. Fetch registered participants for this activity
+        # 1. جلب المشتركين المسجلين في هذا النشاط
         reg_stmt = select(ActivityRegistration.participant_id).filter(ActivityRegistration.activity_id == act.id)
         reg_res = await db.execute(reg_stmt)
         registered_pids = list(reg_res.scalars().all())
 
         if registered_pids:
-            # Send targeted notification to registered participants
+            # أرسل إشعاراً مخصصاً للمشتركين المسجلين فقط (لا إشعار عام مكرر)
             await send_web_push_notification_to_target(
                 db=db,
-                title="تعديل في النشاط المسجل فيه 🔄",
-                body=f"تم تحديث تفاصيل النشاط: {act.title}. يرجى مراجعة التحديثات.",
-                url="/dashboard/activities",
+                title=f"تحديث في نشاطك الترفيهي: {act.title} 🏕️",
+                body=f"تم تعديل تفاصيل النشاط الترفيهي: {act.title}. تفقد البوابة للمزيد.",
+                url=f"/dashboard/activities",
                 participant_ids=registered_pids
             )
-        
-        # 2. Send general push to all event subscribers
-        await send_web_push_notification_to_target(
-            db=db,
-            title=f"تحديث في النشاط الترفيهي: {act.title} 🏕️",
-            body=f"تم تعديل تفاصيل النشاط الترفيهي: {act.title}. تفقد البوابة للمزيد.",
-            url="/dashboard/activities",
-            event_id=act.event_id
-        )
+        else:
+            # لا يوجد مشتركون مسجلون — أرسل لجميع مشتركي الفعالية
+            await send_web_push_notification_to_target(
+                db=db,
+                title=f"تحديث في النشاط الترفيهي: {act.title} 🏕️",
+                body=f"تم تعديل تفاصيل النشاط الترفيهي: {act.title}. تفقد البوابة للمزيد.",
+                url=f"/dashboard/activities",
+                event_id=act.event_id
+            )
     except Exception as e:
         logger.error(f"Failed to send push notifications for updated activity: {e}")
 

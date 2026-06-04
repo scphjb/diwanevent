@@ -8,57 +8,13 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.js',
       includeAssets: ['icons/*.png', '*.png'],
       manifest: false, // نستخدم manifest.json الخارجي في /public
-      workbox: {
-        offlineGoogleAnalytics: false,
-        // للـ SPA: أعد توجيه جميع مسارات React Router إلى index.html
-        navigateFallback: '/index.html',
-        // استثناء مسارات API والـ WebSocket من الـ fallback
-        navigateFallbackDenylist: [/^\/api/, /^\/ws/],
-        runtimeCaching: [
-          {
-            // API calls — Network First مع مهلة 4 ثوانٍ للتوافق مع useOfflineStatus ping
-            urlPattern: /^https?.*\/api\/v1\/.*/i,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'diwan-api-cache',
-              expiration: { maxEntries: 50, maxAgeSeconds: 300 },
-              networkTimeoutSeconds: 4,
-            },
-          },
-          {
-            // صور المشاركين — Cache First
-            urlPattern: /^https?.*\.(png|jpg|jpeg|svg|gif|webp)$/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'diwan-images-cache',
-              expiration: { maxEntries: 100, maxAgeSeconds: 7 * 24 * 60 * 60 },
-            },
-          },
-          {
-            // Google Fonts — Cache First
-            urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'diwan-fonts-cache',
-              expiration: { maxEntries: 10, maxAgeSeconds: 365 * 24 * 60 * 60 },
-            },
-          },
-          {
-            // Locales — Stale While Revalidate
-            urlPattern: /\/locales\/.*/i,
-            handler: 'StaleWhileRevalidate',
-            options: {
-              cacheName: 'diwan-locales-cache',
-              expiration: { maxEntries: 20, maxAgeSeconds: 24 * 60 * 60 },
-            },
-          },
-        ],
+      injectManifest: {
         globPatterns: ['**/*.{js,css,html,png,svg,ico}'],
-        cleanupOutdatedCaches: true,
-        // Push notifications handler مُدمج في Service Worker
-        additionalManifestEntries: [],
       },
       devOptions: {
         enabled: false,
