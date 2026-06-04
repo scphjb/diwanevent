@@ -67,7 +67,9 @@ const getFullUrl = (url) => {
 
 const formatPostTime = (timestamp) => {
   if (!timestamp) return 'الآن';
-  const date = new Date(timestamp);
+  // إضافة 'Z' لإجبار التفسير كـ UTC وتجنب خطأ الساعة
+  const ts = (timestamp || '').endsWith('Z') || (timestamp || '').includes('+') ? timestamp : timestamp + 'Z';
+  const date = new Date(ts);
   if (isNaN(date.getTime())) return 'الآن';
   const now = new Date();
   const diffSecs = Math.floor((now - date) / 1000);
@@ -2373,10 +2375,23 @@ const ParticipantPortal = () => {
                 <div className="space-y-4">
                   {notifications.map((notif) => {
                     const levelColors = {
-                      info: 'from-blue-500/10 to-transparent border-blue-500/20 text-blue-400',
-                      success: 'from-emerald-500/10 to-transparent border-emerald-500/20 text-emerald-400',
-                      warning: 'from-amber-500/10 to-transparent border-amber-500/20 text-amber-500',
-                      error: 'from-red-500/10 to-transparent border-red-500/20 text-red-400',
+                      info: 'from-blue-500/10 to-transparent border-blue-500/20',
+                      success: 'from-emerald-500/10 to-transparent border-emerald-500/20',
+                      warning: 'from-amber-500/10 to-transparent border-amber-500/20',
+                      error: 'from-red-500/10 to-transparent border-red-500/20',
+                    };
+                    const levelEmoji = { info: '📢', success: '✅', warning: '⚠️', error: '🔴' };
+                    // تحويل رابط الإشعار إلى قسم البوابة المناسب
+                    const sectionFromLink = (link) => {
+                      if (!link) return 'notifications';
+                      if (link.includes('activities')) return 'activities';
+                      if (link.includes('logistics')) return 'logistics';
+                      if (link.includes('catering')) return 'catering';
+                      if (link.includes('agenda')) return 'agenda';
+                      if (link.includes('polls')) return 'polls';
+                      if (link.includes('social')) return 'social';
+                      if (link.includes('docs')) return 'docs';
+                      return 'notifications';
                     };
                     const colorClass = levelColors[notif.level] || levelColors.info;
                     return (
@@ -2385,43 +2400,35 @@ const ParticipantPortal = () => {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         className={cn(
-                          "bg-gradient-to-b border rounded-[28px] p-5.5 transition-all shadow-lg flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center relative overflow-hidden",
-                          notif.is_read ? 'from-white/[0.03] to-white/[0.01] border-white/5' : 'from-amber-500/[0.08] to-white/[0.02] border-amber-500/20 shadow-amber-500/[0.02]'
+                          "bg-gradient-to-b border rounded-[28px] p-5 transition-all shadow-lg flex flex-col gap-3 relative cursor-pointer hover:brightness-110",
+                          colorClass,
+                          notif.is_read ? 'border-white/5' : 'border-amber-500/20'
                         )}
+                        onClick={() => setActiveTab(sectionFromLink(notif.link))}
                       >
                         {!notif.is_read && (
-                          <span className="absolute top-3.5 right-3.5 w-2 h-2 rounded-full bg-amber-500 animate-ping" />
+                          <span className="absolute top-3 right-3 w-2.5 h-2.5 rounded-full bg-red-500 shadow-lg shadow-red-500/50" />
                         )}
-                        <div className="space-y-2 flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className={cn("px-2.5 py-0.5 rounded-full text-[10px] font-black border uppercase tracking-wider", colorClass)}>
-                              {notif.level}
-                            </span>
+                        <div className="space-y-1.5 flex-1 min-w-0 pr-6">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-base">{levelEmoji[notif.level] || '📢'}</span>
                             <span className="text-[10px] text-white/40 font-bold">
                               {formatPostTime(notif.created_at)}
                             </span>
                           </div>
-                          <h4 className={cn("text-base font-black text-white", !notif.is_read && "text-amber-100")}>
+                          <h4 className={cn("text-sm font-black text-white break-words", !notif.is_read && "text-amber-100")}>
                             {notif.title}
                           </h4>
-                          <p className="text-sm text-white/70 leading-relaxed font-medium">
+                          <p className="text-xs text-white/65 leading-relaxed font-medium break-words">
                             {notif.message}
                           </p>
                         </div>
-                        {notif.link && (
-                          <button
-                            onClick={() => {
-                              if (notif.link.includes('/p/')) {
-                                window.location.href = notif.link;
-                              } else {
-                                window.open(notif.link, '_blank');
-                              }
-                            }}
-                            className="w-full sm:w-auto px-5 py-2.5 rounded-2xl bg-white/5 hover:bg-white/10 text-xs font-black text-white border border-white/10 transition-all text-center"
-                          >
-                            {lang === 'ar' ? 'تفاصيل 🔗' : 'Details 🔗'}
-                          </button>
-                        )}
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setActiveTab(sectionFromLink(notif.link)); }}
+                          className="w-full px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-black text-white border border-white/10 transition-all text-center mt-1"
+                        >
+                          {lang === 'ar' ? 'عرض التفاصيل ←' : 'View Details →'}
+                        </button>
                       </motion.div>
                     );
                   })}
@@ -4742,8 +4749,8 @@ const ParticipantPortal = () => {
               <div className="relative">
                 <tab.icon className="w-6 h-6" />
                 {tab.id === 'notifications' && unreadNotificationsCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-amber-500 text-[#050B18] text-[8px] font-black w-4.5 h-4.5 px-1 rounded-full flex items-center justify-center border border-[#050B18] shadow-lg animate-pulse min-w-[14px]">
-                    {unreadNotificationsCount}
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] font-black w-4.5 h-4.5 px-1 rounded-full flex items-center justify-center border-2 border-[#050B18] shadow-lg shadow-red-500/50 min-w-[14px]">
+                    {unreadNotificationsCount > 9 ? '9+' : unreadNotificationsCount}
                   </span>
                 )}
               </div>
