@@ -308,40 +308,39 @@ async def send_web_push_notification_to_target(
             return 0
 
         from pywebpush import webpush
-        from py_vapid import Vapid
         import base64
         from app.core.config import settings
+        from cryptography.hazmat.primitives.serialization import load_pem_private_key
+        from cryptography.hazmat.backends import default_backend
         private_key_raw = getattr(settings, 'VAPID_PRIVATE_KEY', None)
         email = getattr(settings, 'EMAILS_FROM_EMAIL', 'admin@e-diwan.net')
         if not private_key_raw:
             logger.warning("VAPID_PRIVATE_KEY not set, cannot send push")
             return 0
 
-        # ── بناء كائن Vapid من المفتاح (يدعم PEM المُشفَّر بـ base64 والمفتاح الخام) ──
-        vapid_obj = None
+        # ── تحويل مفتاح VAPID من PKCS#8 PEM (مُشفَّر base64) إلى base64url خام ──
+        # pywebpush تتوقع القيمة الخام d مُرمَّزة بـ base64url (بدون padding)
+        vapid_key_b64url = None
         try:
-            # المفتاح قد يكون: (1) PEM مُشفَّر بـ standard base64، أو (2) مفتاح خام base64url
-            # نجرب standard base64 أولاً لأن المفتاح الحالي يحتوي + و /
-            decoded_bytes = None
-            for decode_fn in (base64.b64decode, base64.urlsafe_b64decode):
-                try:
-                    # أضف padding لضمان صحة الفكّ
-                    padded = private_key_raw + '=' * (4 - len(private_key_raw) % 4)
-                    decoded_bytes = decode_fn(padded)
-                    break
-                except Exception:
-                    continue
+            padding_needed = (4 - len(private_key_raw) % 4) % 4
+            pem_bytes = base64.b64decode(private_key_raw + '=' * padding_needed)
 
-            if decoded_bytes and b'BEGIN' in decoded_bytes:
-                # إنه PEM — استخدم Vapid.from_pem مباشرة
-                vapid_obj = Vapid.from_pem(decoded_bytes)
-                logger.info("VAPID: loaded from base64-encoded PEM successfully")
+            if b'BEGIN' in pem_bytes:
+                # حمّل مفتاح EC من PKCS#8 PEM باستخدام مكتبة cryptography
+                ec_key = load_pem_private_key(pem_bytes, password=None, backend=default_backend())
+                # استخرج القيمة الخام d (32 bytes لـ P-256)
+                d_value = ec_key.private_numbers().private_value
+                d_bytes = d_value.to_bytes(32, byteorder='big')
+                # حوّل إلى base64url بدون padding
+                vapid_key_b64url = base64.urlsafe_b64encode(d_bytes).rstrip(b'=').decode('ascii')
+                logger.info("VAPID: EC private key extracted from PKCS#8 PEM successfully")
             else:
-                # مفتاح خام base64url — مرره مباشرة
-                vapid_obj = None
-        except Exception as decode_err:
-            logger.debug(f"VAPID key decode attempt: {decode_err}")
-            vapid_obj = None
+                # المفتاح بالفعل بصيغة base64url خام
+                vapid_key_b64url = private_key_raw
+                logger.info("VAPID: using raw base64url key directly")
+        except Exception as key_err:
+            logger.error(f"VAPID key preparation failed: {key_err}")
+            return 0
 
         unique_targets = {}
         for t in targets:
@@ -351,11 +350,11 @@ async def send_web_push_notification_to_target(
         for sub_json, details in unique_targets.items():
             try:
                 sub_data = json.loads(sub_json)
-                
+
                 target_url = url
                 if details["event_id"] and details["qr_code"]:
                     target_url = f"/p/{details['event_id']}/{details['qr_code']}"
-                
+
                 payload = {
                     "title": title,
                     "body": body,
@@ -363,23 +362,14 @@ async def send_web_push_notification_to_target(
                     "data": {"url": target_url},
                 }
 
-                if vapid_obj is not None:
-                    # استخدام كائن Vapid عند توفر PEM
-                    webpush(
-                        subscription_info=sub_data,
-                        data=json.dumps(payload),
-                        vapid_private_key=vapid_obj,
-                        vapid_claims={"sub": f"mailto:{email}"}
-                    )
-                else:
-                    # استخدام المفتاح الخام مباشرة
-                    webpush(
-                        subscription_info=sub_data,
-                        data=json.dumps(payload),
-                        vapid_private_key=private_key_raw,
-                        vapid_claims={"sub": f"mailto:{email}"}
-                    )
+                webpush(
+                    subscription_info=sub_data,
+                    data=json.dumps(payload),
+                    vapid_private_key=vapid_key_b64url,
+                    vapid_claims={"sub": f"mailto:{email}"}
+                )
                 sent_count += 1
+                logger.info(f"Push sent to participant {details.get('participant_id')}")
             except Exception as ex:
                 logger.warning(f"Push send failed to endpoint: {ex}")
         
