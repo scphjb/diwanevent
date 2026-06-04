@@ -1340,7 +1340,7 @@ const ParticipantPortal = () => {
 
       if (isGeneral || roleLower.includes('نقل') || roleLower.includes('لوجست') || roleLower.includes('transport') || roleLower.includes('logistics')) {
         setStaffActiveSubTab('logistics');
-      } else if (roleLower.includes('إطعام') || roleLower.includes('تموين') || roleLower.includes('catering') || roleLower.includes('food')) {
+      } else if (roleLower.includes('إطعام') || roleLower.includes('ضيافة') || roleLower.includes('تموين') || roleLower.includes('catering') || roleLower.includes('food')) {
         setStaffActiveSubTab('catering');
       } else if (roleLower.includes('إيواء') || roleLower.includes('فندق') || roleLower.includes('hotel') || roleLower.includes('accommodation') || roleLower.includes('lodging')) {
         setStaffActiveSubTab('accommodation');
@@ -1726,6 +1726,7 @@ const ParticipantPortal = () => {
 
   const hasCateringStaffAccess = isOrganizer && (isGeneralOrganizer || 
     roleLower.includes('إطعام') || 
+    roleLower.includes('ضيافة') || 
     roleLower.includes('تموين') || 
     roleLower.includes('catering') || 
     roleLower.includes('food'));
