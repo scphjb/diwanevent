@@ -435,6 +435,36 @@ async def save_logistics(data: LogisticsRegistryCreate, db: AsyncSession = Depen
         
     await db.commit()
     await db.refresh(registry)
+    
+    # Broadcast live updates to organizers
+    try:
+        await manager.broadcast_to_event(registry.event_id, {
+            "type": "logistics_updated",
+            "participant_id": registry.participant_id,
+            "logistics_id": registry.id
+        })
+    except Exception as ws_err:
+        logger.warning(f"WebSocket broadcast failed for logistics save: {ws_err}")
+
+    # Notify event creator (organizer)
+    try:
+        participant = await db.get(Participant, data.participant_id)
+        p_name = participant.full_name if participant else "مشارك"
+        
+        event = await db.get(Event, data.event_id)
+        if event and event.created_by:
+            from app.routers.notifications import send_web_push_notification_to_target
+            await send_web_push_notification_to_target(
+                db=db,
+                title="طلب نقل وإيواء جديد 🚗",
+                body=f"قام المشترك {p_name} بتحديث تفاصيل وصوله أو مكان إقامته.",
+                url="/dashboard/operations",
+                user_ids=[event.created_by],
+                event_id=data.event_id
+            )
+    except Exception as notif_err:
+        logger.error(f"Failed to notify organizer about logistics request: {notif_err}")
+        
     return registry
 
 @router.patch("/logistics/dispatch/{participant_id}")
@@ -479,6 +509,23 @@ async def dispatch_logistics(
         }
     })
     
+    # Send push/db notification to the participant
+    try:
+        from app.routers.notifications import send_web_push_notification_to_target
+        msg = f"تم تحديث حالة النقل الخاصة بك إلى: {registry.status}."
+        if registry.driver_name:
+            msg = f"تم تعيين السائق {registry.driver_name} ({registry.driver_phone or ''}). السيارة: {registry.vehicle_details or ''}."
+        await send_web_push_notification_to_target(
+            db=db,
+            title="تحديث في تفاصيل النقل والوصول 🚗",
+            body=msg,
+            url="/dashboard/logistics",
+            participant_ids=[participant_id],
+            event_id=registry.event_id
+        )
+    except Exception as e:
+        logger.error(f"Failed to send push notifications for logistics dispatch: {e}")
+        
     return registry
 
 @router.get("/logistics/event/{event_id}")
@@ -690,6 +737,25 @@ async def register_activity(
     await db.commit()
     await db.refresh(new_reg)
     
+    # Notify event creator (organizer) if pickup is requested
+    if req.pickup_requested:
+        try:
+            participant = await db.get(Participant, req.participant_id)
+            p_name = participant.full_name if participant else "مشارك"
+            event = await db.get(Event, activity.event_id)
+            if event and event.created_by:
+                from app.routers.notifications import send_web_push_notification_to_target
+                await send_web_push_notification_to_target(
+                    db=db,
+                    title="طلب نقل لنشاط ترفيهي 🏕️",
+                    body=f"طلب المشترك {p_name} النقل لنشاط: {activity.title}.",
+                    url="/dashboard/operations",
+                    user_ids=[event.created_by],
+                    event_id=activity.event_id
+                )
+        except Exception as notif_err:
+            logger.error(f"Failed to notify organizer about activity pickup request: {notif_err}")
+
     # Broadcast dynamic real-time event updates to all subscribers
     await manager.broadcast_to_event(activity.event_id, {
         "type": "activity_registered",
@@ -749,12 +815,50 @@ async def update_activity_registration(
     if not reg:
         raise HTTPException(status_code=404, detail="Registration not found")
         
+    # Fetch activity for event_id
+    activity = await db.get(EventActivity, req.activity_id)
+    event_id = activity.event_id if activity else 0
+
+    was_pickup_requested = reg.pickup_requested
+        
     reg.pickup_requested = req.pickup_requested
     if req.pickup_notes is not None:
         reg.pickup_notes = req.pickup_notes
         
     await db.commit()
     await db.refresh(reg)
+
+    if req.pickup_requested and not was_pickup_requested:
+        # Notify organizer
+        try:
+            participant = await db.get(Participant, req.participant_id)
+            p_name = participant.full_name if participant else "مشارك"
+            event = await db.get(Event, event_id)
+            if event and event.created_by:
+                from app.routers.notifications import send_web_push_notification_to_target
+                await send_web_push_notification_to_target(
+                    db=db,
+                    title="طلب نقل لنشاط ترفيهي 🏕️",
+                    body=f"طلب المشترك {p_name} النقل لنشاط: {activity.title if activity else ''}.",
+                    url="/dashboard/operations",
+                    user_ids=[event.created_by],
+                    event_id=event_id
+                )
+        except Exception as notif_err:
+            logger.error(f"Failed to notify organizer about activity pickup update: {notif_err}")
+
+    if event_id:
+        try:
+            await manager.broadcast_to_event(event_id, {
+                "type": "activity_registration_updated",
+                "activity_id": req.activity_id,
+                "participant_id": req.participant_id,
+                "pickup_requested": reg.pickup_requested,
+                "pickup_notes": reg.pickup_notes
+            })
+        except Exception as ws_err:
+            logger.warning(f"WebSocket broadcast failed for activity registration update: {ws_err}")
+
     return {"status": "success", "pickup_requested": reg.pickup_requested, "pickup_notes": reg.pickup_notes}
 
 @router.post("/activities/create")

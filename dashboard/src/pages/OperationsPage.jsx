@@ -27,8 +27,9 @@ import { Input } from '../components/ui/Input';
 import api from '../services/api';
 import { cn } from '../utils/cn';
 import { useEvent } from '../context/EventContext';
-import { showSuccess, showError, showConfirm } from '../utils/swal';
+import { showSuccess, showError, showConfirm, showToast } from '../utils/swal';
 import interactionService from '../services/interactionService';
+import useAttendanceSocket from '../hooks/useAttendanceSocket';
 
 const OperationsPage = () => {
   const { selectedEventId: eventId } = useEvent();
@@ -148,6 +149,25 @@ const OperationsPage = () => {
     { key: 'transport',     icon: '🚗', nameAr: 'لجنة النقل',               nameEn: 'Transport' },
     { key: 'entertainment', icon: '🎭', nameAr: 'لجنة الترفيه والأنشطة',    nameEn: 'Entertainment' },
   ];
+
+  // --- Real-time Updates via WebSocket ---
+  useAttendanceSocket(eventId, (data) => {
+    console.log("Operations Page WebSocket received:", data);
+    if (
+      data.type === 'logistics_updated' ||
+      data.type === 'logistics_dispatched' ||
+      data.type === 'activity_registered' ||
+      data.type === 'activity_unregistered' ||
+      data.type === 'activity_registration_updated'
+    ) {
+      fetchData();
+      if (data.type === 'logistics_updated') {
+        showToast(lang === 'ar' ? 'تم تحديث تفاصيل النقل لمشارك 🚗' : 'Participant logistics updated 🚗');
+      } else if (data.type === 'activity_registration_updated' || data.type === 'activity_registered') {
+        showToast(lang === 'ar' ? 'تم تحديث طلبات نقل النشاط الترفيهي 🏕️' : 'Excursion shuttle request updated 🏕️');
+      }
+    }
+  });
 
   // --- Effect Hooks ---
   useEffect(() => {

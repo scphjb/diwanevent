@@ -209,8 +209,65 @@ async def send_web_push_notification_to_target(
     participant_ids: Optional[List[int]] = None,
     event_id: Optional[int] = None
 ):
-    """إرسال إشعار Web Push لمجموعة مستهدفة من المستخدمين أو المشاركين أو لجميع المسجلين في فعالية معينة."""
+    """إرسال إشعار Web Push لمجموعة مستهدفة من المستخدمين أو المشاركين أو لجميع المسجلين في فعالية معينة، وحفظ الإشعار دائماً في قاعدة البيانات."""
     try:
+        # 1. حفظ الإشعارات في قاعدة البيانات
+        # أ. إذا كان موجهاً لحدث كامل
+        if event_id and not participant_ids and not user_ids:
+            try:
+                db_notif = UserNotification(
+                    user_id=None,
+                    participant_id=None,
+                    event_id=event_id,
+                    title=title,
+                    message=body,
+                    level="info",
+                    is_read=False,
+                    link=url
+                )
+                db.add(db_notif)
+            except Exception as db_err:
+                logger.warning(f"Failed to save global db notification: {db_err}")
+                
+        # ب. إذا كان موجهاً لمستخدمين محددين
+        if user_ids:
+            for uid in user_ids:
+                try:
+                    db_notif = UserNotification(
+                        user_id=uid,
+                        participant_id=None,
+                        event_id=event_id,
+                        title=title,
+                        message=body,
+                        level="info",
+                        is_read=False,
+                        link=url
+                    )
+                    db.add(db_notif)
+                except Exception as db_err:
+                    logger.warning(f"Failed to save user db notification: {db_err}")
+
+        # ج. إذا كان موجهاً لمشاركين محددين
+        if participant_ids:
+            for pid in participant_ids:
+                try:
+                    db_notif = UserNotification(
+                        user_id=None,
+                        participant_id=pid,
+                        event_id=event_id,
+                        title=title,
+                        message=body,
+                        level="info",
+                        is_read=False,
+                        link=url
+                    )
+                    db.add(db_notif)
+                except Exception as db_err:
+                    logger.warning(f"Failed to save participant db notification: {db_err}")
+
+        await db.commit()
+
+        # 2. إرسال Web Push عبر pywebpush للاشتراكات المسجلة
         targets = []
         
         if user_ids:
@@ -234,7 +291,7 @@ async def send_web_push_notification_to_target(
             for row in res.fetchall():
                 targets.append({"sub": row[0], "event_id": row[1], "qr_code": row[2], "user_id": row[3], "participant_id": row[4]})
 
-        if event_id:
+        if event_id and not participant_ids and not user_ids:
             res = await db.execute(
                 text("""
                     SELECT ps.subscription_data, p.event_id, p.qr_code, ps.user_id, ps.participant_id 
@@ -265,21 +322,6 @@ async def send_web_push_notification_to_target(
         sent_count = 0
         for sub_json, details in unique_targets.items():
             try:
-                db_notif = UserNotification(
-                    user_id=details["user_id"],
-                    participant_id=details["participant_id"],
-                    event_id=details["event_id"] or event_id,
-                    title=title,
-                    message=body,
-                    level="info",
-                    is_read=False,
-                    link=url
-                )
-                db.add(db_notif)
-            except Exception as db_err:
-                logger.warning(f"Failed to save db notification: {db_err}")
-
-            try:
                 sub_data = json.loads(sub_json)
                 
                 target_url = url
@@ -303,7 +345,6 @@ async def send_web_push_notification_to_target(
             except Exception as ex:
                 logger.warning(f"Push send failed to endpoint: {ex}")
         
-        await db.commit()
         return sent_count
     except Exception as e:
         logger.error(f"Error sending push: {e}")
