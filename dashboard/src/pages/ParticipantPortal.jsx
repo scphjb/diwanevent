@@ -2333,9 +2333,9 @@ const ParticipantPortal = () => {
 
           {activeTab === 'notifications' && (
             <motion.div key="notifications" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white/[0.03] border border-white/5 rounded-[24px] p-4.5">
+              <div className="flex flex-col justify-center items-center text-center gap-4 bg-white/[0.03] border border-white/5 rounded-[24px] p-6">
                 <div>
-                  <h3 className="text-2xl font-black tracking-tight text-white flex items-center gap-2">
+                  <h3 className="text-2xl font-black tracking-tight text-white flex items-center justify-center gap-2">
                     <span>🔔</span>
                     {lang === 'ar' ? 'مركز التنبيهات' : 'Notifications Center'}
                   </h3>
@@ -2343,18 +2343,18 @@ const ParticipantPortal = () => {
                     {lang === 'ar' ? 'تابع أهم المستجدات والأنشطة الخاصة بالفعالية' : 'Stay updated with important announcements and activities'}
                   </p>
                 </div>
-                <div className="flex gap-2 w-full sm:w-auto">
+                <div className="flex gap-2 w-full max-w-xs justify-center">
                   <button
                     onClick={handleMarkNotificationsAsRead}
                     disabled={notifications.length === 0 || unreadNotificationsCount === 0}
-                    className="flex-1 sm:flex-initial px-4 py-2 text-xs font-bold rounded-xl border border-white/10 hover:bg-white/5 disabled:opacity-30 disabled:pointer-events-none text-white transition-all"
+                    className="flex-1 px-4 py-2 text-xs font-bold rounded-xl border border-white/10 hover:bg-white/5 disabled:opacity-30 disabled:pointer-events-none text-white transition-all"
                   >
                     {lang === 'ar' ? 'قراءة الكل' : 'Mark all read'}
                   </button>
                   <button
                     onClick={handleClearNotifications}
                     disabled={notifications.length === 0}
-                    className="flex-1 sm:flex-initial px-4 py-2 text-xs font-bold rounded-xl border border-red-500/20 text-red-400 hover:bg-red-500/10 disabled:opacity-30 disabled:pointer-events-none transition-all"
+                    className="flex-1 px-4 py-2 text-xs font-bold rounded-xl border border-red-500/20 text-red-400 hover:bg-red-500/10 disabled:opacity-30 disabled:pointer-events-none transition-all"
                   >
                     {lang === 'ar' ? 'مسح الكل' : 'Clear all'}
                   </button>
