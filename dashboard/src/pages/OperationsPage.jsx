@@ -142,13 +142,46 @@ const OperationsPage = () => {
   const [selectedActivityTitle, setSelectedActivityTitle] = useState('');
 
   // --- Committees States ---
+  // --- Committees States ---
   const COMMITTEES = [
     { key: 'reception',      icon: '🎫', nameAr: 'لجنة الاستقبال والتوجيه',  nameEn: 'Reception & Guidance' },
-    { key: 'catering_com',  icon: '🍽️', nameAr: 'لجنة الإطعام',             nameEn: 'Catering Committee' },
-    { key: 'accommodation', icon: '🏨', nameAr: 'لجنة الإيواء',              nameEn: 'Accommodation' },
-    { key: 'transport',     icon: '🚗', nameAr: 'لجنة النقل',               nameEn: 'Transport' },
-    { key: 'entertainment', icon: '🎭', nameAr: 'لجنة الترفيه والأنشطة',    nameEn: 'Entertainment' },
+    { key: 'catering_com',  icon: '🍽️', nameAr: 'لجنة الإطعام والضيافة',  nameEn: 'Catering Committee' },
+    { key: 'accommodation', icon: '🏨', nameAr: 'لجنة الإيواء والتسكين',  nameEn: 'Accommodation' },
+    { key: 'transport',     icon: '🚗', nameAr: 'لجنة النقل والخدمات',  nameEn: 'Transport' },
+    { key: 'entertainment', icon: '🎭', nameAr: 'لجنة الأنشطة والترفيه',  nameEn: 'Entertainment' },
   ];
+
+  const [selectedCommittee, setSelectedCommittee] = useState(null);
+  const [tasksList, setTasksList] = useState([]);
+  const [receptionList, setReceptionList] = useState([]);
+
+  // Accommodation specific states
+  const [hotelBlocks, setHotelBlocks] = useState([
+    { id: 1, hotel_name: 'فندق الأوراسي', room_type: 'VIP Suite', room_number: '101', capacity: 2, occupied: 0, price_per_night: 22000 },
+    { id: 2, hotel_name: 'فندق شيراتون الجزائر', room_type: 'Double Standard', room_number: '302', capacity: 2, occupied: 0, price_per_night: 18000 },
+    { id: 3, hotel_name: 'فندق صوفيتل الجزائر', room_type: 'Single Standard', room_number: '504', capacity: 1, occupied: 0, price_per_night: 15000 }
+  ]);
+  const [selectedHotelBlock, setSelectedHotelBlock] = useState(null);
+  const [showHotelModal, setShowHotelModal] = useState(false);
+  const [hotelForm, setHotelForm] = useState({ hotel_name: '', room_type: '', room_number: '', capacity: 2, price_per_night: 0 });
+  const [isSavingHotel, setIsSavingHotel] = useState(false);
+  const [showAccommodationModal, setShowAccommodationModal] = useState(false);
+  const [accommodationForm, setAccommodationForm] = useState({ participant_id: '', hotel_name: '', room_number: '', check_in_date: '', check_out_date: '' });
+  const [isSavingAccommodation, setIsSavingAccommodation] = useState(false);
+
+  // Transport and activity companion states
+  const [showActivityShuttleModal, setShowActivityShuttleModal] = useState(false);
+  const [selectedActivityShuttle, setSelectedActivityShuttle] = useState(null);
+  const [activityShuttleForm, setActivityShuttleForm] = useState({ driver_name: '', driver_phone: '', vehicle_details: '', status: 'pending' });
+  const [isSavingActivityShuttle, setIsSavingActivityShuttle] = useState(false);
+  const [allActivityRegistrations, setAllActivityRegistrations] = useState([]);
+  const [loadingExtraCommitteeData, setLoadingExtraCommitteeData] = useState(false);
+  const [selectedActivityId, setSelectedActivityId] = useState(null);
+
+  // Tasks states
+  const [showTaskModal, setShowTaskModal] = useState(false);
+  const [newTaskForm, setNewTaskForm] = useState({ title: '', description: '', committee: '', assigned_to_id: '', participant_id: '', due_time: '' });
+  const [isSavingTask, setIsSavingTask] = useState(false);
 
   // --- Real-time Updates via WebSocket ---
   useAttendanceSocket(eventId, (data) => {
@@ -193,7 +226,23 @@ const OperationsPage = () => {
         const activities = await interactionService.listActivities(eventId);
         setActivitiesList(activities || []);
       } else if (activeTab === 'committees') {
-        // committees tab uses tasks from ParticipantPortal — no extra fetch needed here
+        setLoadingExtraCommitteeData(true);
+        try {
+          const [logistics, tasks, parts, activities] = await Promise.all([
+            interactionService.listEventLogistics(eventId).catch(() => []),
+            interactionService.listTasks(eventId).catch(() => []),
+            participantService.getParticipants(eventId, { limit: 1000 }).catch(() => ({ items: [] })),
+            interactionService.listActivities(eventId).catch(() => [])
+          ]);
+          setLogisticsList(logistics || []);
+          setTasksList(tasks || []);
+          setReceptionList(parts?.items || []);
+          setActivitiesList(activities || []);
+        } catch (err) {
+          console.error("Failed to load committees tab data:", err);
+        } finally {
+          setLoadingExtraCommitteeData(false);
+        }
       }
     } catch (err) {
       console.error('Failed to fetch operations data:', err);
@@ -1162,24 +1211,367 @@ const OperationsPage = () => {
 
       {/* --- MODALS SECTION --- */}
 
-      {/* Dispatch (Assign Driver) Modal */}
-      {showDispatchModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 backdrop-blur-xl bg-brand-dark/40">
-          <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-[#050B18] border border-white/10 rounded-[40px] p-10 w-full max-w-lg shadow-2xl text-right">
-            <h2 className="text-2xl font-black text-white mb-6 pb-2 border-b border-white/5">🚗 {lang === 'ar' ? 'تخصيص وتعيين سائق الوفد' : 'Dispatch Coordinator & Driver'}</h2>
-            <form onSubmit={handleSaveDispatch} className="space-y-5 font-bold text-white">
+      {/* Excursion Activity Shuttle Assignment Modal */}
+      {showActivityShuttleModal && selectedActivityShuttle && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 backdrop-blur-xl bg-brand-dark/40" dir="rtl">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-[#050B18] border border-white/10 rounded-[35px] w-full max-w-lg overflow-hidden shadow-2xl flex flex-col font-bold text-right text-white"
+          >
+            <div className="p-6 border-b border-white/10 flex items-center justify-between bg-white/[0.01]">
+              <h3 className="text-base font-black text-white">
+                {lang === 'ar' ? 'تخصيص مرافق وتحديث نقل النشاط الترفيهي' : 'Assign Excursion Companion & Shuttle'}
+              </h3>
+              <button 
+                onClick={() => setShowActivityShuttleModal(false)}
+                className="text-white/40 hover:text-white transition-all text-xl font-bold p-1"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveActivityShuttle} className="p-6 space-y-4">
+              <div className="bg-white/5 p-4 rounded-2xl border border-white/5 text-xs space-y-2">
+                <div>
+                  <span className="text-white/40">{lang === 'ar' ? 'الضيف:' : 'Guest:'}</span>{' '}
+                  <span className="text-white font-black">{selectedActivityShuttle.full_name}</span>
+                </div>
+                <div>
+                  <span className="text-white/40">{lang === 'ar' ? 'النشاط الترفيهي:' : 'Excursion Activity:'}</span>{' '}
+                  <span className="text-amber-500 font-black">{selectedActivityShuttle.activity_title}</span>
+                </div>
+              </div>
+
               <div className="space-y-1.5">
-                <label className="text-xs text-white/50">{lang === 'ar' ? 'اسم السائق / المنسق الميداني' : 'Driver / Coordinator Name'}</label>
+                <label className="text-xs text-white/50">{lang === 'ar' ? 'اسم المرافق / المنسق' : 'Companion / Coordinator Name'}</label>
+                <select
+                  value={activityShuttleForm.driver_name}
+                  onChange={(e) => {
+                    const selectedName = e.target.value;
+                    const cleanName = selectedName.split(' (')[0];
+                    const selectedOrg = receptionList.find(p => p.full_name === cleanName);
+                    setActivityShuttleForm(prev => ({
+                      ...prev,
+                      driver_name: cleanName,
+                      driver_phone: selectedOrg ? (selectedOrg.phone || selectedOrg.phone_number || '') : prev.driver_phone
+                    }));
+                  }}
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3.5 text-sm font-bold text-white outline-none focus:border-amber-500 transition-all appearance-none"
+                >
+                  <option className="bg-[#050B18]" value="">{lang === 'ar' ? '-- اختر مرافقاً من المنظمين --' : '-- Choose companion from staff --'}</option>
+                  {receptionList
+                    .filter(p => {
+                      const role = (p.role || '').toLowerCase();
+                      return role.includes('organizer') || role.includes('helper') || role.includes('منظم') || role.includes('مساعد') || role.includes('رئيس');
+                    })
+                    .map(org => (
+                      <option key={org.id} className="bg-[#050B18]" value={org.full_name}>
+                        {org.full_name} {org.role ? `(${org.role})` : ''}
+                      </option>
+                    ))}
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs text-white/50">{lang === 'ar' ? 'رقم هاتف المرافق' : 'Companion Phone Number'}</label>
                 <Input
-                  required
-                  placeholder={lang === 'ar' ? 'مثال: محمد البوعلام' : 'Example: Mohamed Al-Boualem'}
-                  value={dispatchForm.driver_name}
-                  onChange={(e) => setDispatchForm(prev => ({ ...prev, driver_name: e.target.value }))}
+                  className="h-12 rounded-2xl font-bold"
+                  type="text"
+                  placeholder="+213..."
+                  value={activityShuttleForm.driver_phone}
+                  onChange={(e) => setActivityShuttleForm(prev => ({ ...prev, driver_phone: e.target.value }))}
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs text-white/50">{lang === 'ar' ? 'رقم هاتف السائق' : 'Driver Phone Number'}</label>
+                <label className="text-xs text-white/50">{lang === 'ar' ? 'تفاصيل المركبة / التوصيل' : 'Vehicle details / Route details'}</label>
+                <Input
+                  className="h-12 rounded-2xl font-bold"
+                  type="text"
+                  placeholder={lang === 'ar' ? 'نوع السيارة ولوحتها أو تفاصيل الحافلة' : 'Vehicle type, plate number or bus details'}
+                  value={activityShuttleForm.vehicle_details}
+                  onChange={(e) => setActivityShuttleForm(prev => ({ ...prev, vehicle_details: e.target.value }))}
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs text-white/50">{lang === 'ar' ? 'حالة النقل' : 'Shuttle Status'}</label>
+                <select
+                  value={activityShuttleForm.status}
+                  onChange={(e) => setActivityShuttleForm(prev => ({ ...prev, status: e.target.value }))}
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3.5 text-sm font-bold text-white outline-none focus:border-amber-500 transition-all appearance-none"
+                >
+                  <option className="bg-[#050B18]" value="pending">{lang === 'ar' ? 'قيد الانتظار (Pending)' : 'Pending'}</option>
+                  <option className="bg-[#050B18]" value="assigned">{lang === 'ar' ? 'تم تعيين المرافق (Assigned)' : 'Assigned'}</option>
+                  <option className="bg-[#050B18]" value="dispatched">{lang === 'ar' ? 'في الطريق (Dispatched)' : 'Dispatched'}</option>
+                  <option className="bg-[#050B18]" value="completed">{lang === 'ar' ? 'تم التوصيل بنجاح (Completed)' : 'Completed'}</option>
+                </select>
+              </div>
+
+              <div className="flex gap-4 pt-6">
+                <Button className="flex-1 rounded-2xl h-12" variant="gold" type="submit" disabled={isSavingActivityShuttle}>
+                  {isSavingActivityShuttle ? (lang === 'ar' ? 'جاري الحفظ...' : 'Saving...') : (lang === 'ar' ? 'حفظ وتحديث النقل' : 'Save & Update Shuttle')}
+                </Button>
+                <Button className="flex-1 rounded-2xl h-12" variant="outline" type="button" onClick={() => setShowActivityShuttleModal(false)}>
+                  {lang === 'ar' ? 'إلغاء' : 'Cancel'}
+                </Button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Guest Accommodation Assignment Modal */}
+      {showAccommodationModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 backdrop-blur-xl bg-brand-dark/40" dir="rtl">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-[#050B18] border border-white/10 rounded-[35px] w-full max-w-lg overflow-hidden shadow-2xl flex flex-col font-bold text-right text-white"
+          >
+            <div className="p-6 border-b border-white/10 flex items-center justify-between bg-white/[0.01]">
+              <h3 className="text-base font-black text-white">
+                {lang === 'ar' ? '🏨 إيواء وتسكين ضيف' : '🏨 Guest Accommodation Assignment'}
+              </h3>
+              <button 
+                onClick={() => setShowAccommodationModal(false)}
+                className="text-white/40 hover:text-white transition-all text-xl font-bold p-1"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveAccommodation} className="p-6 space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs text-white/50">{lang === 'ar' ? 'الضيف المراد تسكينه' : 'Guest to Lodging'}</label>
+                <select
+                  value={accommodationForm.participant_id}
+                  onChange={(e) => setAccommodationForm(prev => ({ ...prev, participant_id: e.target.value }))}
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3.5 text-sm font-bold text-white outline-none focus:border-amber-500 transition-all appearance-none"
+                  required
+                >
+                  <option className="bg-[#050B18]" value="">{lang === 'ar' ? '-- اختر الضيف --' : '-- Choose Guest --'}</option>
+                  {receptionList
+                    .filter(p => {
+                      const role = (p.role || '').toLowerCase();
+                      return !role.includes('organizer') && !role.includes('helper') && !role.includes('منظم') && !role.includes('مساعد') && !role.includes('رئيس');
+                    })
+                    .map(guest => (
+                      <option key={guest.id} className="bg-[#050B18]" value={guest.id}>
+                        {guest.full_name}
+                      </option>
+                    ))}
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs text-white/50">{lang === 'ar' ? 'فندق الإقامة' : 'Hotel Name'}</label>
+                <select
+                  value={accommodationForm.hotel_name}
+                  onChange={(e) => setAccommodationForm(prev => ({ ...prev, hotel_name: e.target.value }))}
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3.5 text-sm font-bold text-white outline-none focus:border-amber-500 transition-all appearance-none"
+                  required
+                >
+                  <option className="bg-[#050B18]" value="فندق الأوراسي">فندق الأوراسي (El Aurassi Hotel)</option>
+                  <option className="bg-[#050B18]" value="فندق شيراتون الجزائر">فندق شيراتون الجزائر (Sheraton Algiers)</option>
+                  <option className="bg-[#050B18]" value="فندق صوفيتل الجزائر">فندق صوفيتل الجزائر (Sofitel Algiers)</option>
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs text-white/50">{lang === 'ar' ? 'رقم الغرفة المعينة' : 'Assigned Room Number'}</label>
+                <Input
+                  className="h-12 rounded-2xl font-bold"
+                  type="text"
+                  placeholder="Example: 104"
+                  value={accommodationForm.room_number}
+                  onChange={(e) => setAccommodationForm(prev => ({ ...prev, room_number: e.target.value }))}
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs text-white/50">{lang === 'ar' ? 'تاريخ الدخول' : 'Check-in Date'}</label>
+                  <input
+                    type="date"
+                    value={accommodationForm.check_in_date}
+                    onChange={(e) => setAccommodationForm(prev => ({ ...prev, check_in_date: e.target.value }))}
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-xs font-bold text-white outline-none focus:border-amber-500 transition-all"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs text-white/50">{lang === 'ar' ? 'تاريخ المغادرة' : 'Check-out Date'}</label>
+                  <input
+                    type="date"
+                    value={accommodationForm.check_out_date}
+                    onChange={(e) => setAccommodationForm(prev => ({ ...prev, check_out_date: e.target.value }))}
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-xs font-bold text-white outline-none focus:border-amber-500 transition-all"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-4 pt-6">
+                <Button className="flex-1 rounded-2xl h-12" variant="gold" type="submit" disabled={isSavingAccommodation}>
+                  {isSavingAccommodation ? (lang === 'ar' ? 'جاري الحفظ...' : 'Saving...') : (lang === 'ar' ? 'تحديث وحفظ الإقامة' : 'Assign Lodging Room')}
+                </Button>
+                <Button className="flex-1 rounded-2xl h-12" variant="outline" type="button" onClick={() => setShowAccommodationModal(false)}>
+                  {lang === 'ar' ? 'إلغاء' : 'Cancel'}
+                </Button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Committee Task Delegation Modal */}
+      {showTaskModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 backdrop-blur-xl bg-brand-dark/40" dir="rtl">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-[#050B18] border border-white/10 rounded-[35px] w-full max-w-lg overflow-hidden shadow-2xl flex flex-col font-bold text-right text-white"
+          >
+            <div className="p-6 border-b border-white/10 flex items-center justify-between bg-white/[0.01]">
+              <h3 className="text-base font-black text-white">
+                {lang === 'ar' ? '📋 إسناد مهمة جديدة للجنة' : '📋 Delegate Committee Task'}
+              </h3>
+              <button 
+                onClick={() => setShowTaskModal(false)}
+                className="text-white/40 hover:text-white transition-all text-xl font-bold p-1"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveTask} className="p-6 space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs text-white/50">{lang === 'ar' ? 'عنوان المهمة' : 'Task Title'}</label>
+                <Input
+                  required
+                  placeholder={lang === 'ar' ? 'مثال: تفقد وصول الوفد بمطار الجزائر' : 'Example: Check VIP transport arrival'}
+                  value={newTaskForm.title}
+                  onChange={(e) => setNewTaskForm(prev => ({ ...prev, title: e.target.value }))}
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs text-white/50">{lang === 'ar' ? 'وصف تفصيلي للمهمة' : 'Task Description'}</label>
+                <Input
+                  placeholder={lang === 'ar' ? 'التعليمات والتفاصيل...' : 'Instructions...'}
+                  value={newTaskForm.description}
+                  onChange={(e) => setNewTaskForm(prev => ({ ...prev, description: e.target.value }))}
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs text-white/50">{lang === 'ar' ? 'إسناد للمنظم / المساعد الميداني' : 'Assign to Staff/Helper'}</label>
+                <select
+                  value={newTaskForm.assigned_to_id}
+                  onChange={(e) => setNewTaskForm(prev => ({ ...prev, assigned_to_id: parseInt(e.target.value) }))}
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3.5 text-sm font-bold text-white outline-none focus:border-amber-500 transition-all appearance-none"
+                  required
+                >
+                  <option className="bg-[#050B18]" value="">{lang === 'ar' ? '-- اختر المنظم المسؤول --' : '-- Choose Staff --'}</option>
+                  {receptionList
+                    .filter(p => {
+                      const role = (p.role || '').toLowerCase();
+                      return role.includes('organizer') || role.includes('helper') || role.includes('منظم') || role.includes('مساعد') || role.includes('رئيس');
+                    })
+                    .map(helper => (
+                      <option key={helper.id} className="bg-[#050B18]" value={helper.id}>
+                        {helper.full_name} ({helper.role || 'Staff'})
+                      </option>
+                    ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs text-white/50">{lang === 'ar' ? 'الضيف المرتبط بالخدمة' : 'Related Guest'}</label>
+                  <select
+                    value={newTaskForm.participant_id}
+                    onChange={(e) => setNewTaskForm(prev => ({ ...prev, participant_id: parseInt(e.target.value) }))}
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3.5 text-sm font-bold text-white outline-none focus:border-amber-500 transition-all appearance-none"
+                  >
+                    <option className="bg-[#050B18]" value="">{lang === 'ar' ? '-- لا يوجد مشارك مرتبط --' : '-- None --'}</option>
+                    {receptionList
+                      .filter(p => {
+                        const role = (p.role || '').toLowerCase();
+                        return !role.includes('organizer') && !role.includes('helper') && !role.includes('منظم') && !role.includes('مساعد') && !role.includes('رئيس');
+                      })
+                      .map(p => (
+                        <option key={p.id} className="bg-[#050B18]" value={p.id}>
+                          {p.full_name}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs text-white/50">{lang === 'ar' ? 'الموعد النهائي' : 'Due Time'}</label>
+                  <input
+                    type="datetime-local"
+                    value={newTaskForm.due_time}
+                    onChange={(e) => setNewTaskForm(prev => ({ ...prev, due_time: e.target.value }))}
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-xs font-bold text-white outline-none focus:border-amber-500 transition-all"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-4 pt-6">
+                <Button className="flex-1 rounded-2xl h-12" variant="gold" type="submit" disabled={isSavingTask}>
+                  {isSavingTask ? (lang === 'ar' ? 'جاري الحفظ...' : 'Saving...') : (lang === 'ar' ? 'إسناد المهمة فوراً' : 'Delegate Task')}
+                </Button>
+                <Button className="flex-1 rounded-2xl h-12" variant="outline" type="button" onClick={() => setShowTaskModal(false)}>
+                  {lang === 'ar' ? 'إلغاء' : 'Cancel'}
+                </Button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Dispatch (Assign Driver) Modal */}
+      {showDispatchModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 backdrop-blur-xl bg-brand-dark/40" dir="rtl">
+          <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-[#050B18] border border-white/10 rounded-[40px] p-10 w-full max-w-lg shadow-2xl text-right text-white">
+            <h2 className="text-2xl font-black text-white mb-6 pb-2 border-b border-white/5">🚗 {lang === 'ar' ? 'تخصيص مرافق وتفاصيل استقبال الضيف' : 'Dispatch Coordinator & Driver'}</h2>
+            <form onSubmit={handleSaveDispatch} className="space-y-5 font-bold text-white">
+              <div className="space-y-1.5">
+                <label className="text-xs text-white/50">{lang === 'ar' ? 'اسم المرافق / المنسق الميداني' : 'Assigned Companion Name'}</label>
+                <select
+                  value={dispatchForm.driver_name}
+                  onChange={(e) => {
+                    const selectedName = e.target.value;
+                    const cleanName = selectedName.split(' (')[0];
+                    const selectedOrg = receptionList.find(p => p.full_name === cleanName);
+                    setDispatchForm(prev => ({
+                      ...prev,
+                      driver_name: cleanName,
+                      driver_phone: selectedOrg ? (selectedOrg.phone || selectedOrg.phone_number || '') : prev.driver_phone
+                    }));
+                  }}
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3.5 text-sm font-bold text-white outline-none focus:border-amber-500 transition-all appearance-none"
+                  required
+                >
+                  <option className="bg-[#050B18]" value="">{lang === 'ar' ? '-- اختر مرافقاً من المنظمين --' : '-- Choose companion from staff --'}</option>
+                  {receptionList
+                    .filter(p => {
+                      const role = (p.role || '').toLowerCase();
+                      return role.includes('organizer') || role.includes('helper') || role.includes('منظم') || role.includes('مساعد') || role.includes('رئيس');
+                    })
+                    .map(org => (
+                      <option key={org.id} className="bg-[#050B18]" value={org.full_name}>
+                        {org.full_name} {org.role ? `(${org.role})` : ''}
+                      </option>
+                    ))}
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs text-white/50">{lang === 'ar' ? 'رقم هاتف المرافق' : 'Companion Phone Number'}</label>
                 <Input
                   required
                   placeholder="+213..."
@@ -1191,28 +1583,28 @@ const OperationsPage = () => {
               <div className="space-y-1.5">
                 <label className="text-xs text-white/50">{lang === 'ar' ? 'تفاصيل المركبة' : 'Vehicle details'}</label>
                 <Input
-                  placeholder={lang === 'ar' ? 'مثال: مرسيدس سوداء الفئة E' : 'Example: Mercedes black E-Class'}
+                  placeholder={lang === 'ar' ? 'مثال: مرسيدس سوداء صنف E' : 'Example: Mercedes black E-Class'}
                   value={dispatchForm.vehicle_details}
                   onChange={(e) => setDispatchForm(prev => ({ ...prev, vehicle_details: e.target.value }))}
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs text-white/50">{lang === 'ar' ? 'حالة نقل المشارك الفورية' : 'Logistics Dispatch status'}</label>
+                <label className="text-xs text-white/50">{lang === 'ar' ? 'حالة التوصيل والنقل' : 'Logistics Dispatch status'}</label>
                 <select
                   value={dispatchForm.status}
                   onChange={(e) => setDispatchForm(prev => ({ ...prev, status: e.target.value }))}
                   className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3.5 text-sm font-bold text-white outline-none focus:border-amber-500 transition-all appearance-none"
                 >
-                  <option className="bg-[#050B18]" value="pending">{lang === 'ar' ? 'بانتظار السائق (Pending)' : 'Pending'}</option>
-                  <option className="bg-[#050B18]" value="dispatched">{lang === 'ar' ? 'تم الانطلاق والتحرك (Dispatched)' : 'Dispatched'}</option>
-                  <option className="bg-[#050B18]" value="arrived">{lang === 'ar' ? 'تم الوصول للفندق وتأمين الإيواء (Arrived)' : 'Arrived'}</option>
+                  <option className="bg-[#050B18]" value="pending">{lang === 'ar' ? 'قيد الانتظار (Pending)' : 'Pending'}</option>
+                  <option className="bg-[#050B18]" value="dispatched">{lang === 'ar' ? 'تم الانطلاق (Dispatched)' : 'Dispatched'}</option>
+                  <option className="bg-[#050B18]" value="arrived">{lang === 'ar' ? 'وصل للوجهة (Arrived)' : 'Arrived'}</option>
                 </select>
               </div>
 
               <div className="flex gap-4 pt-6">
                 <Button className="flex-1 rounded-2xl h-12" variant="gold" type="submit" disabled={isSavingDispatch}>
-                  {isSavingDispatch ? (lang === 'ar' ? 'جاري الحفظ...' : 'Saving...') : (lang === 'ar' ? 'تحديث وتأمين السائق' : 'Dispatch Driver')}
+                  {isSavingDispatch ? (lang === 'ar' ? 'جاري الحفظ...' : 'Saving...') : (lang === 'ar' ? 'حفظ وتحديث النقل' : 'Dispatch Driver')}
                 </Button>
                 <Button className="flex-1 rounded-2xl h-12" variant="outline" type="button" onClick={() => setShowDispatchModal(false)}>
                   {lang === 'ar' ? 'إلغاء' : 'Cancel'}

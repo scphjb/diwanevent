@@ -514,7 +514,7 @@ async def dispatch_logistics(
         from app.routers.notifications import send_web_push_notification_to_target
         msg = f"تم تحديث حالة النقل الخاصة بك إلى: {registry.status}."
         if registry.driver_name:
-            msg = f"تم تعيين السائق {registry.driver_name} ({registry.driver_phone or ''}). السيارة: {registry.vehicle_details or ''}."
+            msg = f"تم تعيين المرافق {registry.driver_name} ({registry.driver_phone or ''}). السيارة: {registry.vehicle_details or ''}."
         await send_web_push_notification_to_target(
             db=db,
             title="تحديث في تفاصيل النقل والوصول 🚗",
@@ -691,7 +691,10 @@ async def list_activity_registrations(
         "qr_code": p.qr_code,
         "pickup_requested": reg.pickup_requested,
         "pickup_status": reg.pickup_status,
-        "pickup_notes": reg.pickup_notes
+        "pickup_notes": reg.pickup_notes,
+        "driver_name": reg.driver_name,
+        "driver_phone": reg.driver_phone,
+        "vehicle_details": reg.vehicle_details
     } for p, reg in results]
 
 @router.post("/activities/register")
@@ -860,6 +863,73 @@ async def update_activity_registration(
             logger.warning(f"WebSocket broadcast failed for activity registration update: {ws_err}")
 
     return {"status": "success", "pickup_requested": reg.pickup_requested, "pickup_notes": reg.pickup_notes}
+
+class ActivityShuttleAssignRequest(BaseModel):
+    activity_id: int
+    participant_id: int
+    driver_name: str
+    driver_phone: str
+    vehicle_details: Optional[str] = ""
+    pickup_status: str  # pending, assigned, arrived, completed
+
+@router.patch("/activities/assign-shuttle")
+async def assign_activity_shuttle(
+    req: ActivityShuttleAssignRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    stmt = select(ActivityRegistration).filter(
+        ActivityRegistration.activity_id == req.activity_id,
+        ActivityRegistration.participant_id == req.participant_id
+    )
+    res = await db.execute(stmt)
+    reg = res.scalar()
+    if not reg:
+        raise HTTPException(status_code=404, detail="Registration not found")
+        
+    # Update fields
+    reg.driver_name = req.driver_name
+    reg.driver_phone = req.driver_phone
+    reg.vehicle_details = req.vehicle_details
+    reg.pickup_status = req.pickup_status
+    
+    await db.commit()
+    await db.refresh(reg)
+    
+    # Send Web Push notification to the participant
+    try:
+        activity = await db.get(EventActivity, req.activity_id)
+        act_title = activity.title if activity else "النشاط الترفيهي"
+        from app.routers.notifications import send_web_push_notification_to_target
+        await send_web_push_notification_to_target(
+            db=db,
+            title="تم تعيين المرافق وتأكيد النقل 🚍",
+            body=f"تم تعيين المرافق {req.driver_name} لنقلكم لنشاط: {act_title}. رقم الهاتف: {req.driver_phone}.",
+            url="/portal/activities",
+            user_ids=[],
+            event_id=activity.event_id if activity else 0,
+            participant_id=req.participant_id
+        )
+    except Exception as notif_err:
+        logger.error(f"Failed to notify participant about activity companion assignment: {notif_err}")
+
+    # Broadcast websocket update
+    activity = await db.get(EventActivity, req.activity_id)
+    event_id = activity.event_id if activity else 0
+    if event_id:
+        try:
+            await manager.broadcast_to_event(event_id, {
+                "type": "activity_shuttle_assigned",
+                "activity_id": req.activity_id,
+                "participant_id": req.participant_id,
+                "pickup_status": reg.pickup_status,
+                "driver_name": reg.driver_name,
+                "driver_phone": reg.driver_phone,
+                "vehicle_details": reg.vehicle_details
+            })
+        except Exception as ws_err:
+            logger.warning(f"WebSocket broadcast failed for activity shuttle assignment: {ws_err}")
+
+    return {"status": "success", "pickup_status": reg.pickup_status}
 
 @router.post("/activities/create")
 async def create_activity(

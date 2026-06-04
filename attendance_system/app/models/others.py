@@ -197,6 +197,9 @@ class ActivityRegistration(Base, TimestampMixin):
     pickup_requested = Column(Boolean, default=False)
     pickup_status = Column(String, default="none") # none, pending, assigned, completed
     pickup_notes = Column(Text, nullable=True)
+    driver_name = Column(String, nullable=True)
+    driver_phone = Column(String, nullable=True)
+    vehicle_details = Column(String, nullable=True)
 
 class CateringProfile(Base, TimestampMixin):
     __tablename__ = "catering_profiles"

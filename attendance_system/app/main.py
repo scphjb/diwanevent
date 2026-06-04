@@ -206,6 +206,18 @@ async def startup_db_migration():
         "ALTER TABLE activity_registrations ADD COLUMN IF NOT EXISTS pickup_status VARCHAR(50) DEFAULT 'none';",
         "Checked/Added 'pickup_status' column to 'activity_registrations' table."
     )
+    await run_query(
+        "ALTER TABLE activity_registrations ADD COLUMN IF NOT EXISTS driver_name VARCHAR(255) NULL;",
+        "Checked/Added 'driver_name' column to 'activity_registrations' table."
+    )
+    await run_query(
+        "ALTER TABLE activity_registrations ADD COLUMN IF NOT EXISTS driver_phone VARCHAR(50) NULL;",
+        "Checked/Added 'driver_phone' column to 'activity_registrations' table."
+    )
+    await run_query(
+        "ALTER TABLE activity_registrations ADD COLUMN IF NOT EXISTS vehicle_details VARCHAR(255) NULL;",
+        "Checked/Added 'vehicle_details' column to 'activity_registrations' table."
+    )
 
     print("🏁 Database Startup Migration finished.", flush=True)
 

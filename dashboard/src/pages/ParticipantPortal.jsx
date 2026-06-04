@@ -1546,7 +1546,7 @@ const ParticipantPortal = () => {
           shuttle_time: new Date().toISOString()
         }
       );
-      toast.success(lang === 'ar' ? 'تم تعيين السائق وإرسال التفاصيل للمشارك بنجاح! 🚗' : 'Driver assigned and details dispatched successfully! 🚗');
+      toast.success(lang === 'ar' ? 'تم تعيين المرافق وإرسال التفاصيل للمشارك بنجاح! 🚗' : 'Companion assigned and details dispatched successfully! 🚗');
       setIsStaffDispatchModalOpen(false);
       fetchStaffLogistics();
     } catch (err) {
@@ -1838,7 +1838,7 @@ const ParticipantPortal = () => {
     
     const availableHelpers = receptionList.filter(p => {
       const r = (p.role || '').toLowerCase();
-      return r.includes('منظم') || r.includes('organizer') || r.includes('سائق') || r.includes('driver') || r.includes('helper') || r.includes('مساعد') || r.includes('رئيس');
+      return r.includes('منظم') || r.includes('organizer') || r.includes('سائق') || r.includes('مرافق') || r.includes('driver') || r.includes('companion') || r.includes('helper') || r.includes('مساعد') || r.includes('رئيس');
     });
 
     return (
@@ -3212,11 +3212,11 @@ const ParticipantPortal = () => {
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm font-bold text-right" dir="rtl">
                     <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-                      <span className="text-white/40 text-xs block mb-1">{lang === 'ar' ? 'اسم السائق' : 'Driver Name'}</span>
+                      <span className="text-white/40 text-xs block mb-1">{lang === 'ar' ? 'اسم المرافق' : 'Companion Name'}</span>
                       <span className="text-white text-base font-black">👤 {logistics.driver_name}</span>
                     </div>
                     <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-                      <span className="text-white/40 text-xs block mb-1">{lang === 'ar' ? 'رقم جوال السائق' : 'Driver Phone'}</span>
+                      <span className="text-white/40 text-xs block mb-1">{lang === 'ar' ? 'رقم جوال المرافق' : 'Companion Phone'}</span>
                       <a href={`tel:${logistics.driver_phone}`} className="text-amber-500 text-base font-black block">📞 {logistics.driver_phone}</a>
                     </div>
                     <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
@@ -3232,9 +3232,9 @@ const ParticipantPortal = () => {
                   </div>
                   {logistics.status && (
                     <div className="mt-4 text-center">
-                      <span className="inline-block px-4 py-1.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-full text-xs font-black">
-                        {lang === 'ar' ? `الحالة الحالية: ${logistics.status === 'dispatched' ? 'في الطريق إليك' : logistics.status === 'arrived' ? 'وصل السائق' : 'مكتمل'}` : `Status: ${logistics.status}`}
-                      </span>
+                       <span className="inline-block px-4 py-1.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-full text-xs font-black">
+                        {lang === 'ar' ? `الحالة الحالية: ${logistics.status === 'dispatched' ? 'في الطريق إليك' : logistics.status === 'arrived' ? 'وصل المرافق' : 'مكتمل'}` : `Status: ${logistics.status}`}
+                       </span>
                     </div>
                   )}
                 </div>
@@ -3889,7 +3889,7 @@ const ParticipantPortal = () => {
                     </div>
                     <div className="bg-gradient-to-br from-red-500/10 to-red-500/5 border border-red-500/20 rounded-[30px] p-6 text-right">
                       <span className="text-3xl block mb-2">⏳</span>
-                      <h4 className="text-sm font-black text-white/50">{lang === 'ar' ? 'بانتظار تعيين سائق' : 'Awaiting Drivers'}</h4>
+                      <h4 className="text-sm font-black text-white/50">{lang === 'ar' ? 'بانتظار تعيين مرافق' : 'Awaiting Companions'}</h4>
                       <p className="text-3xl font-black text-red-400 mt-1">{staffLogisticsList.filter(l => !l.driver_name).length}</p>
                     </div>
                     <div className="bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 border border-emerald-500/20 rounded-[30px] p-6 text-right">
@@ -3938,7 +3938,7 @@ const ParticipantPortal = () => {
                                     )}>
                                       {item.status === 'completed' ? (lang === 'ar' ? 'تم الوصول للوجهة' : 'Completed') :
                                        item.status === 'arrived' ? (lang === 'ar' ? 'وصل المطار' : 'Arrived') :
-                                       item.status === 'dispatched' ? (lang === 'ar' ? 'تم إرسال السائق' : 'Dispatched') : (lang === 'ar' ? 'قيد الانتظار' : 'Pending')}
+                                       item.status === 'dispatched' ? (lang === 'ar' ? 'تم إرسال المرافق' : 'Companion Dispatched') : (lang === 'ar' ? 'قيد الانتظار' : 'Pending')}
                                     </span>
                                   </div>
                                   
@@ -3953,7 +3953,7 @@ const ParticipantPortal = () => {
                                     <div className="p-3 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 mt-3 text-xs text-emerald-400/90 font-bold space-y-1">
                                       <div className="flex items-center gap-1">
                                         <span>🚗</span>
-                                        <span>{lang === 'ar' ? `السائق المخصص: ${item.driver_name} (${item.driver_phone})` : `Driver: ${item.driver_name} (${item.driver_phone})`}</span>
+                                        <span>{lang === 'ar' ? `المرافق المخصص: ${item.driver_name} (${item.driver_phone})` : `Companion: ${item.driver_name} (${item.driver_phone})`}</span>
                                       </div>
                                       <div className="text-[10px] text-white/40">🚘 {item.vehicle_details}</div>
                                     </div>
@@ -3987,7 +3987,7 @@ const ParticipantPortal = () => {
                                     className="px-4 py-3 bg-amber-500 hover:bg-amber-600 text-brand-dark rounded-2xl text-xs font-black transition-all flex items-center gap-1.5"
                                   >
                                     <span>🚗</span>
-                                    {item.driver_name ? (lang === 'ar' ? 'تعديل السائق' : 'Edit Driver') : (lang === 'ar' ? 'تخصيص سائق' : 'Assign Driver')}
+                                    {item.driver_name ? (lang === 'ar' ? 'تعديل المرافق' : 'Edit Companion') : (lang === 'ar' ? 'تخصيص مرافق' : 'Assign Companion')}
                                   </button>
                                 </div>
                               </div>
@@ -4435,77 +4435,77 @@ const ParticipantPortal = () => {
                       exit={{ scale: 0.9, y: 20 }}
                       className="w-full max-w-lg bg-gradient-to-b from-[#0D1527] to-[#050B18] border border-white/10 rounded-[40px] p-6 relative shadow-[0_24px_80px_rgba(0,0,0,0.6)] text-right"
                     >
-                      <div className="flex justify-between items-center pb-4 border-b border-white/5 mb-4">
-                        <div className="flex items-center gap-2">
-                          <span>🚗</span>
-                          <h3 className="text-lg font-black">{lang === 'ar' ? 'تخصيص سائق وإرسال تفاصيل النقل' : 'Assign Driver & Dispatch Details'}</h3>
-                        </div>
-                        <button
-                          onClick={() => setIsStaffDispatchModalOpen(false)}
-                          className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-white/60 hover:bg-white/10 hover:text-white"
-                        >
-                          <X size={16} />
-                        </button>
-                      </div>
-
-                      <p className="text-xs text-white/50 mb-6 font-bold leading-relaxed">
-                        {lang === 'ar'
-                          ? `سيتم حفظ هذه البيانات وإرسالها فوراً بهاتف الضيف (${selectedStaffParticipant.participant_name}) وتعديل لوحة وصوله لحظياً.`
-                          : `These details will be saved and immediately sent/updated on the guest's mobile portal.`}
-                      </p>
-
-                      <form onSubmit={handleSaveStaffDispatch} className="space-y-4">
-                        {/* Driver Name */}
-                        <div className="space-y-2">
-                          <label className="text-xs font-black text-white/50 block">{lang === 'ar' ? 'اسم السائق' : 'Driver Name'}</label>
-                          <Input
-                            required
-                            value={staffDispatchForm.driver_name}
-                            onChange={(e) => setStaffDispatchForm({ ...staffDispatchForm, driver_name: e.target.value })}
-                            placeholder={lang === 'ar' ? 'مثال: محمد الشريف' : 'e.g. Mohamed Al-Sharif'}
-                            className="w-full bg-[#050B18] border border-white/10 rounded-2xl h-14 text-right px-4 text-white"
-                          />
-                        </div>
-
-                        {/* Driver Phone */}
-                        <div className="space-y-2">
-                          <label className="text-xs font-black text-white/50 block">{lang === 'ar' ? 'رقم هاتف السائق' : 'Driver Phone Number'}</label>
-                          <Input
-                            required
-                            value={staffDispatchForm.driver_phone}
-                            onChange={(e) => setStaffDispatchForm({ ...staffDispatchForm, driver_phone: e.target.value })}
-                            placeholder="+213555123456"
-                            className="w-full bg-[#050B18] border border-white/10 rounded-2xl h-14 text-right px-4 text-white"
-                          />
-                        </div>
-
-                        {/* Vehicle details */}
-                        <div className="space-y-2">
-                          <label className="text-xs font-black text-white/50 block">{lang === 'ar' ? 'تفاصيل ولون ورقم السيارة' : 'Vehicle Make, Model & Plate'}</label>
-                          <Input
-                            required
-                            value={staffDispatchForm.vehicle_details}
-                            onChange={(e) => setStaffDispatchForm({ ...staffDispatchForm, vehicle_details: e.target.value })}
-                            placeholder={lang === 'ar' ? 'مثال: مرسيدس سوداء رقم 12345-120-16' : 'e.g. Black Mercedes S-Class, Plate 12345-120-16'}
-                            className="w-full bg-[#050B18] border border-white/10 rounded-2xl h-14 text-right px-4 text-white"
-                          />
-                        </div>
-
-                        {/* Status Select */}
-                        <div className="space-y-2">
-                          <label className="text-xs font-black text-white/50 block">{lang === 'ar' ? 'حالة الاستقبال والوصول' : 'Dispatch & Arrival Status'}</label>
-                          <select
-                            value={staffDispatchForm.status}
-                            onChange={(e) => setStaffDispatchForm({ ...staffDispatchForm, status: e.target.value })}
-                            className="w-full bg-[#050B18] border border-white/10 rounded-2xl h-14 px-4 text-white font-bold outline-none focus:border-amber-500/50 transition-all text-right"
-                            dir="rtl"
+                        <div className="flex justify-between items-center pb-4 border-b border-white/5 mb-4">
+                          <div className="flex items-center gap-2">
+                            <span>🚗</span>
+                            <h3 className="text-lg font-black">{lang === 'ar' ? 'تخصيص مرافق وإرسال تفاصيل النقل' : 'Assign Companion & Dispatch Details'}</h3>
+                          </div>
+                          <button
+                            onClick={() => setIsStaffDispatchModalOpen(false)}
+                            className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-white/60 hover:bg-white/10 hover:text-white"
                           >
-                            <option value="pending">{lang === 'ar' ? '⏳ قيد الانتظار' : 'Pending'}</option>
-                            <option value="dispatched">{lang === 'ar' ? '🚗 تم إرسال السائق للموقع' : 'Dispatched'}</option>
-                            <option value="arrived">{lang === 'ar' ? '✈️ وصل لمكان اللقاء' : 'Arrived at pickup location'}</option>
-                            <option value="completed">{lang === 'ar' ? '✅ تم التوصيل بنجاح' : 'Completed'}</option>
-                          </select>
+                            <X size={16} />
+                          </button>
                         </div>
+
+                        <p className="text-xs text-white/50 mb-6 font-bold leading-relaxed">
+                          {lang === 'ar'
+                            ? `سيتم حفظ هذه البيانات وإرسالها فوراً بهاتف الضيف (${selectedStaffParticipant.participant_name}) وتعديل لوحة وصوله لحظياً.`
+                            : `These details will be saved and immediately sent/updated on the guest's mobile portal.`}
+                        </p>
+
+                        <form onSubmit={handleSaveStaffDispatch} className="space-y-4">
+                          {/* Driver Name */}
+                          <div className="space-y-2">
+                            <label className="text-xs font-black text-white/50 block">{lang === 'ar' ? 'اسم المرافق' : 'Companion Name'}</label>
+                            <Input
+                              required
+                              value={staffDispatchForm.driver_name}
+                              onChange={(e) => setStaffDispatchForm({ ...staffDispatchForm, driver_name: e.target.value })}
+                              placeholder={lang === 'ar' ? 'مثال: محمد الشريف' : 'e.g. Mohamed Al-Sharif'}
+                              className="w-full bg-[#050B18] border border-white/10 rounded-2xl h-14 text-right px-4 text-white"
+                            />
+                          </div>
+
+                          {/* Driver Phone */}
+                          <div className="space-y-2">
+                            <label className="text-xs font-black text-white/50 block">{lang === 'ar' ? 'رقم هاتف المرافق' : 'Companion Phone Number'}</label>
+                            <Input
+                              required
+                              value={staffDispatchForm.driver_phone}
+                              onChange={(e) => setStaffDispatchForm({ ...staffDispatchForm, driver_phone: e.target.value })}
+                              placeholder="+213555123456"
+                              className="w-full bg-[#050B18] border border-white/10 rounded-2xl h-14 text-right px-4 text-white"
+                            />
+                          </div>
+
+                          {/* Vehicle details */}
+                          <div className="space-y-2">
+                            <label className="text-xs font-black text-white/50 block">{lang === 'ar' ? 'تفاصيل ولون ورقم السيارة' : 'Vehicle Make, Model & Plate'}</label>
+                            <Input
+                              required
+                              value={staffDispatchForm.vehicle_details}
+                              onChange={(e) => setStaffDispatchForm({ ...staffDispatchForm, vehicle_details: e.target.value })}
+                              placeholder={lang === 'ar' ? 'مثال: مرسيدس سوداء رقم 12345-120-16' : 'e.g. Black Mercedes S-Class, Plate 12345-120-16'}
+                              className="w-full bg-[#050B18] border border-white/10 rounded-2xl h-14 text-right px-4 text-white"
+                            />
+                          </div>
+
+                          {/* Status Select */}
+                          <div className="space-y-2">
+                            <label className="text-xs font-black text-white/50 block">{lang === 'ar' ? 'حالة الاستقبال والوصول' : 'Dispatch & Arrival Status'}</label>
+                            <select
+                              value={staffDispatchForm.status}
+                              onChange={(e) => setStaffDispatchForm({ ...staffDispatchForm, status: e.target.value })}
+                              className="w-full bg-[#050B18] border border-white/10 rounded-2xl h-14 px-4 text-white font-bold outline-none focus:border-amber-500/50 transition-all text-right"
+                              dir="rtl"
+                            >
+                              <option value="pending">{lang === 'ar' ? '⏳ قيد الانتظار' : 'Pending'}</option>
+                              <option value="dispatched">{lang === 'ar' ? '🚗 تم إرسال المرافق للموقع' : 'Dispatched'}</option>
+                              <option value="arrived">{lang === 'ar' ? '✈️ وصل لمكان اللقاء' : 'Arrived at pickup location'}</option>
+                              <option value="completed">{lang === 'ar' ? '✅ تم التوصيل بنجاح' : 'Completed'}</option>
+                            </select>
+                          </div>
 
                         {/* Dispatch Save Button */}
                         <Button
@@ -4659,11 +4659,11 @@ const ParticipantPortal = () => {
                             onChange={(e) => setNewTaskForm({ ...newTaskForm, assigned_to_id: e.target.value })}
                             className="w-full bg-[#050B18] border border-white/10 rounded-2xl h-12 px-4 text-xs text-white font-bold outline-none focus:border-amber-500/50 transition-all text-right"
                           >
-                            <option value="">{lang === 'ar' ? '--- حدد العضو المساعد المنفذ ---' : '--- Choose assistant/driver ---'}</option>
+                            <option value="">{lang === 'ar' ? '--- حدد العضو المساعد المنفذ ---' : '--- Choose assistant/companion ---'}</option>
                             {receptionList
                               .filter(p => {
                                 const role = (p.role || '').toLowerCase();
-                                return role.includes('منظم') || role.includes('organizer') || role.includes('سائق') || role.includes('driver') || role.includes('helper') || role.includes('مساعد') || role.includes('رئيس');
+                                return role.includes('منظم') || role.includes('organizer') || role.includes('سائق') || role.includes('مرافق') || role.includes('driver') || role.includes('companion') || role.includes('helper') || role.includes('مساعد') || role.includes('رئيس');
                               })
                               .map(p => (
                                 <option key={p.id} value={p.id}>{p.full_name} ({p.role})</option>

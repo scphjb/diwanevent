@@ -215,6 +215,11 @@ const interactionService = {
     return res.data;
   },
 
+  assignActivityShuttle: async (shuttleData) => {
+    const res = await api.patch('interaction/activities/assign-shuttle', shuttleData);
+    return res.data;
+  },
+
   updateMeal: async (mealId, mealData) => {
     const res = await api.patch(`interaction/meals/${mealId}`, mealData);
     return res.data;
