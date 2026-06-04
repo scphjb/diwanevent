@@ -358,7 +358,7 @@ const ParticipantPortal = () => {
       tab_qa: 'الأسئلة',
       tab_logistics: 'اللوجستيات 🚗',
       tab_activities: 'الأنشطة 🏕️',
-      tab_catering: 'التموين 🍽️',
+      tab_catering: 'الإطعام والضيافة 🍽️',
       profile_title: 'البوابة الرقمية للمشارك',
       profile_online: '🟢 متصل',
       profile_offline: '🔴 غير متصل',
@@ -3604,7 +3604,7 @@ const ParticipantPortal = () => {
               {/* Header block */}
               <div className="text-center mb-8">
                 <Utensils className="w-16 h-16 text-amber-500 mx-auto mb-6 animate-pulse" />
-                <h3 className="text-3xl font-black">{lang === 'ar' ? 'التموين والوجبات المستدامة 🍽️' : 'Smart Catering & Sustainable Meals 🍽️'}</h3>
+                <h3 className="text-3xl font-black">{lang === 'ar' ? 'الإطعام والضيافة والوجبات المستدامة 🍽️' : 'Smart Catering & Sustainable Meals 🍽️'}</h3>
                 <p className="text-brand-secondary/50 font-bold mt-2">
                   {lang === 'ar' 
                     ? 'أعلم اللجنة المنظمة بنوع حميتك الغذائية، وأكد حضور الوجبات للمساهمة في مبادرة منع الهدر الغذائي 🌱.'
@@ -3803,7 +3803,7 @@ const ParticipantPortal = () => {
                 <h3 className="text-3xl font-black">{lang === 'ar' ? 'إدارة اللجان والعمليات الميدانية 🛠️' : 'Staff Operations Panel 🛠️'}</h3>
                 <p className="text-brand-secondary/50 font-bold mt-2">
                   {lang === 'ar' 
-                    ? 'لوحة التحكم الموحدة المتكيفة لإدارة النقل، الإيواء، وإحصائيات التموين الذكية 🌱.'
+                    ? 'لوحة التحكم الموحدة المتكيفة لإدارة النقل، الإيواء، وإحصائيات الإطعام والضيافة الذكية 🌱.'
                     : 'Unified operations hub for managing field logistics, hotel accommodations, and catering stats 🌱.'}
                 </p>
               </div>
@@ -3832,7 +3832,7 @@ const ParticipantPortal = () => {
                     )}
                   >
                     <span>🍽️</span>
-                    {lang === 'ar' ? 'تجنب الهدر والتموين' : 'Catering & Zero Waste'}
+                    {lang === 'ar' ? 'تجنب الهدر والإطعام والضيافة' : 'Catering & Zero Waste'}
                   </button>
                 )}
 

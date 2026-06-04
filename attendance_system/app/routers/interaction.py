@@ -962,7 +962,8 @@ async def update_activity(
                 title=f"تحديث في نشاطك الترفيهي: {act.title} 🏕️",
                 body=f"تم تعديل تفاصيل النشاط الترفيهي: {act.title}. تفقد البوابة للمزيد.",
                 url=f"/dashboard/activities",
-                participant_ids=registered_pids
+                participant_ids=registered_pids,
+                event_id=act.event_id
             )
         else:
             # لا يوجد مشتركون مسجلون — أرسل لجميع مشتركي الفعالية

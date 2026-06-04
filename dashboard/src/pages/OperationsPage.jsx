@@ -559,7 +559,7 @@ const OperationsPage = () => {
           </h1>
           <p className="text-brand-secondary/50 font-bold">
             {lang === 'ar' 
-              ? 'اللوحة التشغيلية المركزية لإيواء الوفود، التموين، النقل، وإحصائيات الهدر الغذائي 🌿.' 
+              ? 'اللوحة التشغيلية المركزية لإيواء الوفود، الإطعام والضيافة، النقل، وإحصائيات الهدر الغذائي 🌿.' 
               : 'Central operations hub for coordinator dispatches, VIP hotels, transport logistics, and sustainable catering 🌿.'}
           </p>
         </div>
@@ -617,7 +617,7 @@ const OperationsPage = () => {
           )}
         >
           <span>🍽️</span>
-          {lang === 'ar' ? 'التموين والحد من الهدر' : 'Catering & Zero Waste'}
+          {lang === 'ar' ? 'الإطعام والضيافة والحد من الهدر' : 'Catering & Zero Waste'}
         </button>
 
         <button
