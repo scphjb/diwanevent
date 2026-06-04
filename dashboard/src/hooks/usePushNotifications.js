@@ -76,12 +76,12 @@ export const usePushNotifications = () => {
       });
 
       // إرسال الاشتراك للـ backend للحفظ
-      const token = localStorage.getItem('diwan_token');
+      const token = localStorage.getItem('diwan_token') || localStorage.getItem('participant_token');
       await fetch(`${API_BASE}/notifications/push-subscribe`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+          Authorization: token ? `Bearer ${token}` : '',
         },
         body: JSON.stringify({
           subscription: sub.toJSON(),
@@ -108,12 +108,12 @@ export const usePushNotifications = () => {
 
     try {
       await subscription.unsubscribe();
-      const token = localStorage.getItem('diwan_token');
+      const token = localStorage.getItem('diwan_token') || localStorage.getItem('participant_token');
       await fetch(`${API_BASE}/notifications/push-unsubscribe`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+          Authorization: token ? `Bearer ${token}` : '',
         },
         body: JSON.stringify({ endpoint: subscription.endpoint }),
       });
