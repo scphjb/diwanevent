@@ -271,22 +271,22 @@ async def send_web_push_notification_to_target(
         targets = []
         
         if user_ids:
+            uids_str = ",".join(str(int(uid)) for uid in user_ids)
             res = await db.execute(
-                text("SELECT subscription_data, NULL as event_id, NULL as qr_code, user_id, NULL as participant_id FROM push_subscriptions WHERE user_id IN :uids"),
-                {"uids": tuple(user_ids)}
+                text(f"SELECT subscription_data, NULL as event_id, NULL as qr_code, user_id, NULL as participant_id FROM push_subscriptions WHERE user_id IN ({uids_str})")
             )
             for row in res.fetchall():
                 targets.append({"sub": row[0], "event_id": row[1], "qr_code": row[2], "user_id": row[3], "participant_id": row[4]})
         
         if participant_ids:
+            pids_str = ",".join(str(int(pid)) for pid in participant_ids)
             res = await db.execute(
-                text("""
+                text(f"""
                     SELECT ps.subscription_data, p.event_id, p.qr_code, ps.user_id, ps.participant_id 
                     FROM push_subscriptions ps
                     JOIN participants p ON ps.participant_id = p.id
-                    WHERE ps.participant_id IN :pids
-                """),
-                {"pids": tuple(participant_ids)}
+                    WHERE ps.participant_id IN ({pids_str})
+                """)
             )
             for row in res.fetchall():
                 targets.append({"sub": row[0], "event_id": row[1], "qr_code": row[2], "user_id": row[3], "participant_id": row[4]})
@@ -299,7 +299,7 @@ async def send_web_push_notification_to_target(
                     JOIN participants p ON ps.participant_id = p.id
                     WHERE p.event_id = :event_id
                 """),
-                {"event_id": event_id}
+                {"event_id": int(event_id)}
             )
             for row in res.fetchall():
                 targets.append({"sub": row[0], "event_id": row[1], "qr_code": row[2], "user_id": row[3], "participant_id": row[4]})
