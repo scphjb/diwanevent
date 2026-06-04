@@ -6,7 +6,7 @@ __pycache__/
 *.pdb
 *.egg
 *.egg-info/
-dist/
+/dist/
 build/
 .eggs/
 *.so
@@ -43,7 +43,7 @@ attendance_system/alembic/versions/__pycache__/
 
 # Node modules & build
 dashboard/node_modules/
-dashboard/dist/
+# dashboard/dist/
 dashboard/.vite/
 
 # IDE
