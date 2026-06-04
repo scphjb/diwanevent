@@ -87,6 +87,19 @@ const ParticipantPortal = () => {
   const participantToken = token;
   
   const [activeTab, setActiveTab] = useState('home');
+
+  // فتح التاب الصحيح عند الضغط على إشعار Push (يحمل ?section=...)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const section = params.get('section');
+    const validTabs = ['home','notifications','agenda','polls','social','networking','cert','docs','ai','logistics','activities','catering'];
+    if (section && validTabs.includes(section)) {
+      setActiveTab(section);
+      // مسح الـ param من الـ URL دون إعادة تحميل الصفحة
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+    }
+  }, []);
   const [eventSettings, setEventSettings] = useState({});
   const [participant, setParticipant] = useState(null);
   const [isOptedIn, setIsOptedIn] = useState(false);
@@ -870,7 +883,7 @@ const ParticipantPortal = () => {
           interactionService.listActivities(eventId, pRes.data.id).catch(() => []),
           interactionService.getCateringProfile(pRes.data.id).catch(() => ({ dietary_type: 'none', allergies: '', notes: '' })),
           interactionService.listEventMeals(eventId, pRes.data.id).catch(() => []),
-          api.get('notifications').then(res => res.data).catch(() => [])
+          api.get('notifications/').then(res => res.data).catch(() => [])
         ]);
         setEventSettings(settings || {});
         setAgenda(ag || []);
@@ -1425,7 +1438,7 @@ const ParticipantPortal = () => {
   const fetchNotifications = async () => {
     setLoadingNotifications(true);
     try {
-      const res = await api.get('notifications');
+      const res = await api.get('notifications/');
       setNotifications(res.data || []);
       setUnreadNotificationsCount((res.data || []).filter(n => !n.is_read).length);
     } catch (err) {

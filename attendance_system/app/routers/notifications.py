@@ -353,7 +353,7 @@ async def send_web_push_notification_to_target(
 
                 target_url = url
                 if details["event_id"] and details["qr_code"]:
-                    target_url = f"/p/{details['event_id']}/{details['qr_code']}"
+                    target_url = f"/p/{details['event_id']}/{details['qr_code']}?section=notifications"
 
                 payload = {
                     "title": title,
