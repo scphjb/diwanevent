@@ -11,6 +11,9 @@ from app.core.auth_deps import get_current_active_user
 from sqlalchemy import select, delete, Date, Boolean, DateTime
 from sqlalchemy.orm import class_mapper
 
+import logging
+
+logger = logging.getLogger("diwan.events")
 router = APIRouter()
 
 @router.get("/")
@@ -152,6 +155,10 @@ async def update_event(
     mapper = class_mapper(Event)
     column_types = {col.key: type(col.columns[0].type) for col in mapper.column_attrs}
 
+    old_name = event.event_name
+    old_date = event.event_date
+    old_location = event.location
+
     for key, value in data.items():
         if not hasattr(event, key):
             continue
@@ -172,6 +179,20 @@ async def update_event(
 
     await db.commit()
     await db.refresh(event)
+
+    # إرسال إشعار للمشتركين في حال تم تعديل الاسم أو التاريخ أو الموقع
+    if (old_name != event.event_name) or (old_date != event.event_date) or (old_location != event.location):
+        try:
+            from app.routers.notifications import send_web_push_notification_to_target
+            await send_web_push_notification_to_target(
+                db=db,
+                title=f"تحديث في فعالية: {event.event_name}",
+                body=f"تم تعديل تفاصيل الفعالية. يرجى مراجعة صفحة اشتراكك.",
+                event_id=event.id
+            )
+        except Exception as e:
+            logger.warning(f"Could not send push notification for event update: {e}")
+
     return event
 
 @router.post("/")
