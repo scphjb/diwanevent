@@ -2404,7 +2404,7 @@ const ParticipantPortal = () => {
                           colorClass,
                           notif.is_read ? 'border-white/5' : 'border-amber-500/20'
                         )}
-                        onClick={() => setActiveTab(sectionFromLink(notif.link))}
+                        onClick={() => notif.link && setActiveTab(sectionFromLink(notif.link))}
                       >
                         {!notif.is_read && (
                           <span className="absolute top-3 right-3 w-2.5 h-2.5 rounded-full bg-red-500 shadow-lg shadow-red-500/50" />
@@ -2423,12 +2423,14 @@ const ParticipantPortal = () => {
                             {notif.message}
                           </p>
                         </div>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setActiveTab(sectionFromLink(notif.link)); }}
-                          className="w-full px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-black text-white border border-white/10 transition-all text-center mt-1"
-                        >
-                          {lang === 'ar' ? 'عرض التفاصيل ←' : 'View Details →'}
-                        </button>
+                        {notif.link && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setActiveTab(sectionFromLink(notif.link)); }}
+                            className="w-full px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-black text-white border border-white/10 transition-all text-center mt-1"
+                          >
+                            {lang === 'ar' ? 'عرض التفاصيل ←' : 'View Details →'}
+                          </button>
+                        )}
                       </motion.div>
                     );
                   })}

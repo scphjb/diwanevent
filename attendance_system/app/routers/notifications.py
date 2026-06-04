@@ -20,6 +20,7 @@ class NotificationSchema(BaseModel):
     level: str
     is_read: bool
     created_at: datetime
+    link: Optional[str] = None
     
     class Config:
         from_attributes = True
@@ -353,7 +354,17 @@ async def send_web_push_notification_to_target(
 
                 target_url = url
                 if details["event_id"] and details["qr_code"]:
-                    target_url = f"/p/{details['event_id']}/{details['qr_code']}?section=notifications"
+                    # استخراج القسم المناسب من رابط الـ url
+                    section = "notifications"
+                    if url:
+                        if "activities" in url: section = "activities"
+                        elif "logistics" in url: section = "logistics"
+                        elif "catering" in url: section = "catering"
+                        elif "agenda" in url: section = "agenda"
+                        elif "polls" in url: section = "polls"
+                        elif "social" in url: section = "social"
+                        elif "docs" in url: section = "docs"
+                    target_url = f"/p/{details['event_id']}/{details['qr_code']}?section={section}"
 
                 payload = {
                     "title": title,
