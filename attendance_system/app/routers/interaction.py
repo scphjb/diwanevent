@@ -15,6 +15,7 @@ from pydantic import BaseModel
 from app.core.auth_deps import get_current_active_user
 from app.models.user import User
 from app.models.event import Event
+from app.routers.notifications import get_current_user_or_participant
 
 router = APIRouter()
 
