@@ -813,6 +813,22 @@ async def update_participant(
                 status_code=409,
                 detail="البريد الإلكتروني مسجل مسبقاً لمشارك آخر في هذه الفعالية"
             )
+            
+    # التحقق من عدم تعيين رئيس للجنة مرتين
+    new_role = data.get("role")
+    if new_role and "رئيس" in new_role:
+        stmt = select(Participant).filter(
+            Participant.event_id == participant.event_id,
+            Participant.role == new_role,
+            Participant.id != participant_id
+        )
+        res = await db.execute(stmt)
+        existing_pres = res.scalars().first()
+        if existing_pres:
+            raise HTTPException(
+                status_code=400,
+                detail=f"تم تعيين رئيس لهذه اللجنة مسبقاً: {existing_pres.full_name}"
+            )
     
     for key, value in data.items():
         if hasattr(participant, key):
@@ -1322,6 +1338,20 @@ async def register_participant(
             raise HTTPException(
                 status_code=409,
                 detail="البريد الإلكتروني مسجل مسبقاً لمشارك آخر في هذه الفعالية"
+            )
+
+    # التحقق من عدم تعيين رئيس للجنة مرتين
+    if role and "رئيس" in role:
+        stmt = select(Participant).filter(
+            Participant.event_id == event_id,
+            Participant.role == role
+        )
+        res = await db.execute(stmt)
+        existing_pres = res.scalars().first()
+        if existing_pres:
+            raise HTTPException(
+                status_code=400,
+                detail=f"تم تعيين رئيس لهذه اللجنة مسبقاً: {existing_pres.full_name}"
             )
 
     order_num = f"DWN-{uuid.uuid4().hex[:8].upper()}"

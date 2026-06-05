@@ -32,6 +32,36 @@ import interactionService from '../services/interactionService';
 import participantService from '../services/participantService';
 import useAttendanceSocket from '../hooks/useAttendanceSocket';
 
+const COMMITTEE_TASK_PRESETS = {
+  reception: [
+    { titleAr: 'استقبال الوفود وتوجيههم لمقراتهم', titleEn: 'Welcome delegates and guide them to quarters', descAr: 'استقبال الضيوف وتوجيههم لغرفهم أو مقاعدهم', descEn: 'Welcome guests and guide them to rooms/seats' },
+    { titleAr: 'تسجيل وصول المشاركين وتوزيع الشارات', titleEn: 'Register arrivals and distribute badges', descAr: 'التحقق من الهوية وطباعة أو تسليم شارة الدخول', descEn: 'Verify identity and print/distribute entry badges' },
+    { titleAr: 'مسح شارات الدخول عند البوابات', titleEn: 'Scan entry badges at gates', descAr: 'استخدام الهاتف لمسح شارة الباركود للضيوف عند المداخل', descEn: 'Use scanner/phone to scan participant badges' },
+    { titleAr: 'توجيه الضيوف VIP لقاعة كبار الشخصيات', titleEn: 'Guide VIP guests to the VIP hall', descAr: 'مرافقة الشخصيات الهامة وتأمين متطلباتهم', descEn: 'Accompany VIPs and ensure hospitality requirements' }
+  ],
+  catering: [
+    { titleAr: 'متابعة تجهيز وجبات الإفطار والضيافة الصباحية', titleEn: 'Monitor morning breakfast and catering', descAr: 'التأكد من جهوزية البوفيه والقهوة الصباحية', descEn: 'Verify readiness of morning buffet and coffee' },
+    { titleAr: 'متابعة تجهيز وجبات الغداء', titleEn: 'Monitor lunch preparation', descAr: 'التنسيق مع المطعم أو المطبخ لتنظيم بوفيه الغداء', descEn: 'Coordinate with catering for lunch buffet' },
+    { titleAr: 'متابعة تجهيز وجبات العشاء', titleEn: 'Monitor dinner preparation', descAr: 'التأكد من تقديم وجبات العشاء في موعدها المخطط', descEn: 'Ensure dinners are served on time' },
+    { titleAr: 'التنسيق مع المطبخ لتلبية الحميات الخاصة', titleEn: 'Coordinate catering special diets', descAr: 'تأمين الوجبات النباتية أو الخالية من الجلوتين للمسجلين', descEn: 'Coordinate gluten-free/vegetarian meals for registered guests' }
+  ],
+  accommodation: [
+    { titleAr: 'استلام غرف الفندق وتأكيد جهوزيتها', titleEn: 'Inspect hotel rooms and verify readiness', descAr: 'التنسيق مع إدارة الفندق والتأكد من نظافة وجاهزية الغرف', descEn: 'Check cleanliness and readiness of rooms' },
+    { titleAr: 'تسليم مفاتيح الغرف للضيوف وتأكيد التسكين', titleEn: 'Hand over keys and confirm lodging', descAr: 'تسكين الضيوف في الغرف المحددة وتأكيد استلامهم المفاتيح', descEn: 'Assign rooms to guests and verify key delivery' },
+    { titleAr: 'تسوية النزاعات والطلبات الخاصة بالفندق', titleEn: 'Resolve lodging issues and requests', descAr: 'متابعة أي طلبات أو شكاوى خاصة بالغرف وحلها فوراً', descEn: 'Resolve any guest requests/complaints with hotel' }
+  ],
+  logistics: [
+    { titleAr: 'تنسيق استقبال الضيوف من المطار', titleEn: 'Coordinate airport guest reception', descAr: 'متابعة توقيت هبوط الطائرة وتوجيه السائق المخصص للانتظار', descEn: 'Monitor flight landing and dispatch driver' },
+    { titleAr: 'توجيه سيارة النقل لنقل وفد محدد', titleEn: 'Dispatch shuttle for delegation', descAr: 'إرسال سائق محدد بالسيارة لتوصيل وفد من أو إلى الفعالية', descEn: 'Dispatch a driver to transport delegation' },
+    { titleAr: 'توصيل الضيوف من الفندق إلى مقر الفعالية', titleEn: 'Shuttle guests from hotel to venue', descAr: 'تأمين نقل الضيوف صباحاً لمقر الفعالية والتأكد من المواعيد', descEn: 'Coordinate morning shuttle from hotel to venue' }
+  ],
+  entertainment: [
+    { titleAr: 'تنظيم ومرافقة جولة سياحية ترفيهية', titleEn: 'Accompany recreation/sightseeing tour', descAr: 'التنسيق مع حافلة النقل ومرافقة الوفود في الجولة السياحية', descEn: 'Coordinate sightseeing tour bus and accompany delegates' },
+    { titleAr: 'إدارة وتوزيع منشورات الفعالية الترفيهية', titleEn: 'Distribute recreation pamphlets', descAr: 'توزيع تذاكر أو كتيبات الأنشطة والتعريف بالبرنامج الترفيهي', descEn: 'Distribute event tour books or activity tickets' },
+    { titleAr: 'تنظيم الفعالية الترفيهية المسائية', titleEn: 'Organize evening entertainment event', descAr: 'الإشراف على التجمع المسائي وتأمين متطلبات الضيافة فيه', descEn: 'Supervise evening gathering and catering requirements' }
+  ]
+};
+
 const OperationsPage = () => {
   const { selectedEventId: eventId } = useEvent();
   const { i18n } = useTranslation();
@@ -1715,6 +1745,35 @@ const OperationsPage = () => {
 
             <form onSubmit={handleSaveTask} className="p-6 space-y-4">
               <div className="space-y-1.5">
+                <label className="text-xs text-white/50">{lang === 'ar' ? 'اختر مهمة مقترحة جاهزة للجنة' : 'Select Suggested Task Preset'}</label>
+                <select
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val) {
+                      const committeeKey = selectedCommittee?.key || newTaskForm.committee || 'reception';
+                      const presets = COMMITTEE_TASK_PRESETS[committeeKey] || [];
+                      const preset = presets.find(p => p.titleAr === val || p.titleEn === val);
+                      if (preset) {
+                        setNewTaskForm(prev => ({
+                          ...prev,
+                          title: lang === 'ar' ? preset.titleAr : preset.titleEn,
+                          description: lang === 'ar' ? preset.descAr : preset.descEn
+                        }));
+                      }
+                    }
+                  }}
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm font-bold text-white outline-none focus:border-amber-500 transition-all appearance-none text-right"
+                >
+                  <option className="bg-[#050B18]" value="">{lang === 'ar' ? '--- اختر مهمة جاهزة أو اكتب مخصصة أدناه ---' : '--- Choose a preset task or write custom ---'}</option>
+                  {((COMMITTEE_TASK_PRESETS[selectedCommittee?.key || newTaskForm.committee || 'reception']) || []).map((preset, idx) => (
+                    <option key={idx} className="bg-[#050B18]" value={lang === 'ar' ? preset.titleAr : preset.titleEn}>
+                      {lang === 'ar' ? preset.titleAr : preset.titleEn}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
                 <label className="text-xs text-white/50">{lang === 'ar' ? 'عنوان المهمة' : 'Task Title'}</label>
                 <Input
                   required
@@ -1745,7 +1804,33 @@ const OperationsPage = () => {
                   {receptionList
                     .filter(p => {
                       const role = (p.role || '').toLowerCase();
-                      return role.includes('organizer') || role.includes('helper') || role.includes('منظم') || role.includes('مساعد') || role.includes('رئيس');
+                      const normalize = (str) => {
+                        if (!str) return '';
+                        return str.replace(/[أإآأ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').toLowerCase();
+                      };
+                      const normRole = normalize(role);
+                      
+                      // General organizers
+                      const isGeneral = normRole === 'organizer' || normRole === 'منظم' || normRole.includes('عام') || normRole.includes('general') || normRole.includes('اداري');
+                      if (isGeneral) return true;
+                      
+                      const committeeKey = selectedCommittee?.key || newTaskForm.committee || 'reception';
+                      if (committeeKey === 'reception') {
+                        return normRole.includes('استقبل') || normRole.includes('تسجيل') || normRole.includes('reception');
+                      }
+                      if (committeeKey === 'catering') {
+                        return normRole.includes('اطعام') || normRole.includes('ضيافه') || normRole.includes('catering') || normRole.includes('food');
+                      }
+                      if (committeeKey === 'accommodation') {
+                        return normRole.includes('ايواء') || normRole.includes('تسكين') || normRole.includes('accommodation') || normRole.includes('hotel') || normRole.includes('lodging');
+                      }
+                      if (committeeKey === 'logistics') {
+                        return normRole.includes('نقل') || normRole.includes('لوجست') || normRole.includes('سائق') || normRole.includes('transport') || normRole.includes('driver') || normRole.includes('logistics');
+                      }
+                      if (committeeKey === 'entertainment') {
+                        return normRole.includes('ترفيه') || normRole.includes('نشاط') || normRole.includes('انشطه') || normRole.includes('excursion') || normRole.includes('activity');
+                      }
+                      return false;
                     })
                     .map(helper => (
                       <option key={helper.id} className="bg-[#050B18]" value={helper.id}>

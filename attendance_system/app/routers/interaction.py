@@ -1349,8 +1349,18 @@ async def list_committee_tasks(
     event_id: int,
     committee: Optional[str] = Query(None),
     db: AsyncSession = Depends(get_db),
-    user: User = Depends(get_current_active_user)
+    identity = Depends(get_current_user_or_participant)
 ):
+    # Verify access
+    if identity["type"] == "participant":
+        participant = identity["obj"]
+        if participant.event_id != event_id:
+            raise HTTPException(status_code=403, detail="Not authorized for this event")
+        role_lower = (participant.role or "").lower()
+        is_staff = any(x in role_lower for x in ("منظم", "رئيس", "عضو", "organizer", "helper", "driver", "companion", "staff", "president", "member"))
+        if not is_staff:
+            raise HTTPException(status_code=403, detail="Not authorized as staff")
+
     stmt = select(CommitteeTask).filter(CommitteeTask.event_id == event_id)
     if committee:
         stmt = stmt.filter(CommitteeTask.committee == committee)
@@ -1378,8 +1388,18 @@ async def list_committee_tasks(
 async def create_committee_task(
     req: TaskCreate,
     db: AsyncSession = Depends(get_db),
-    user: User = Depends(get_current_active_user)
+    identity = Depends(get_current_user_or_participant)
 ):
+    # Verify access
+    if identity["type"] == "participant":
+        participant = identity["obj"]
+        if participant.event_id != req.event_id:
+            raise HTTPException(status_code=403, detail="Not authorized for this event")
+        role_lower = (participant.role or "").lower()
+        is_allowed = any(x in role_lower for x in ("منظم", "رئيس", "organizer", "president"))
+        if not is_allowed:
+            raise HTTPException(status_code=403, detail="Only committee presidents or general organizers can delegate tasks")
+
     dt = None
     if req.due_time:
         try:
@@ -1401,6 +1421,30 @@ async def create_committee_task(
     db.add(new_task)
     await db.commit()
     await db.refresh(new_task)
+
+    # ── إشعار العضو المسندة إليه المهمة ──
+    if new_task.assigned_to_id:
+        try:
+            from app.routers.notifications import send_web_push_notification_to_target
+            committee_names = {
+                'reception': 'الاستقبال والتوجيه',
+                'catering': 'الإطعام والضيافة',
+                'accommodation': 'الإيواء والتسكين',
+                'logistics': 'النقل والخدمات',
+                'entertainment': 'الأنشطة والترفيه'
+            }
+            c_name = committee_names.get(new_task.committee, new_task.committee)
+            await send_web_push_notification_to_target(
+                db=db,
+                title="📋 مهمة جديدة مسندة إليك",
+                body=f"تم إسناد مهمة في لجنة {c_name}: {new_task.title}",
+                url="/portal?section=organizer",
+                participant_ids=[new_task.assigned_to_id],
+                event_id=new_task.event_id
+            )
+        except Exception as e:
+            logger.error(f"Failed to notify task assignee: {e}")
+
     return new_task
 
 @router.patch("/tasks/{task_id}/status")
@@ -1408,27 +1452,107 @@ async def update_committee_task_status(
     task_id: int,
     req: TaskStatusUpdate,
     db: AsyncSession = Depends(get_db),
-    user: User = Depends(get_current_active_user)
+    identity = Depends(get_current_user_or_participant)
 ):
     task = await db.get(CommitteeTask, task_id)
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
         
+    # Verify access
+    if identity["type"] == "participant":
+        participant = identity["obj"]
+        if participant.event_id != task.event_id:
+            raise HTTPException(status_code=403, detail="Not authorized")
+        role_lower = (participant.role or "").lower()
+        is_president_or_gen = any(x in role_lower for x in ("رئيس", "president", "منظم", "organizer"))
+        # Members can only update their own assigned tasks
+        if not is_president_or_gen and task.assigned_to_id != participant.id:
+            raise HTTPException(status_code=403, detail="You can only update tasks assigned to you")
+
+    old_status = task.status
     task.status = req.status
     await db.commit()
     await db.refresh(task)
+
+    # ── إشعار عند إتمام المهمة ──
+    if req.status == "completed" and old_status != "completed":
+        try:
+            from app.routers.notifications import send_web_push_notification_to_target
+            assignee_name = task.assigned_to_name or "أحد الأعضاء"
+            
+            # 1. إخطار المنظم العام للفعالية
+            event = await db.get(Event, task.event_id)
+            if event and event.created_by:
+                try:
+                    await send_web_push_notification_to_target(
+                        db=db,
+                        title="✅ تم إنجاز مهمة ميدانية",
+                        body=f"قام {assignee_name} بإكمال المهمة: '{task.title}'",
+                        url="/dashboard/operations",
+                        user_ids=[event.created_by],
+                        event_id=task.event_id
+                    )
+                except Exception as ex:
+                    logger.error(f"Failed to notify main event creator: {ex}")
+
+            # 2. إخطار رئيس اللجنة
+            committee_keywords = {
+                'reception': ['استقبال'],
+                'catering': ['إطعام', 'اطعام', 'ضيافة', 'ضيافه'],
+                'accommodation': ['إيواء', 'ايواء', 'تسكين'],
+                'logistics': ['نقل', 'سائق'],
+                'entertainment': ['ترفيه', 'أنشطة', 'انشطه']
+            }
+            keywords = committee_keywords.get(task.committee, [])
+            
+            p_stmt = select(Participant).filter(Participant.event_id == task.event_id)
+            p_res = await db.execute(p_stmt)
+            participants = p_res.scalars().all()
+            
+            president_ids = []
+            for p in participants:
+                p_role = (p.role or "").lower()
+                if "رئيس" in p_role or "president" in p_role:
+                    if any(kw in p_role for kw in keywords) or "عام" in p_role or "organizer" in p_role:
+                        president_ids.append(p.id)
+            
+            if president_ids:
+                try:
+                    await send_web_push_notification_to_target(
+                        db=db,
+                        title="✅ تم إنجاز مهمة في لجنتك",
+                        body=f"قام {assignee_name} بإتمام المهمة: '{task.title}'",
+                        url="/portal?section=organizer",
+                        participant_ids=president_ids,
+                        event_id=task.event_id
+                    )
+                except Exception as ex:
+                    logger.error(f"Failed to notify committee presidents: {ex}")
+        except Exception as e:
+            logger.error(f"Failed to send task completion notifications: {e}")
+
     return task
 
 @router.delete("/tasks/{task_id}")
 async def delete_committee_task(
     task_id: int,
     db: AsyncSession = Depends(get_db),
-    user: User = Depends(get_current_active_user)
+    identity = Depends(get_current_user_or_participant)
 ):
     task = await db.get(CommitteeTask, task_id)
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
         
+    # Verify access
+    if identity["type"] == "participant":
+        participant = identity["obj"]
+        if participant.event_id != task.event_id:
+            raise HTTPException(status_code=403, detail="Not authorized")
+        role_lower = (participant.role or "").lower()
+        is_allowed = any(x in role_lower for x in ("منظم", "رئيس", "organizer", "president"))
+        if not is_allowed:
+            raise HTTPException(status_code=403, detail="Only committee presidents or general organizers can delete tasks")
+
     await db.delete(task)
     await db.commit()
     return {"status": "success", "message": "Task deleted"}
