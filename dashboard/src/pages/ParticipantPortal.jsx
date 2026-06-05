@@ -1706,6 +1706,12 @@ const ParticipantPortal = () => {
     participant.custom_values?.is_organizer ||
     participant.role?.toLowerCase().includes('organizer') ||
     participant.role?.includes('منظم') ||
+    participant.role?.includes('لجنة') ||
+    participant.role?.includes('رئيس') ||
+    participant.role?.includes('عضو') ||
+    participant.role?.toLowerCase().includes('committee') ||
+    participant.role?.toLowerCase().includes('president') ||
+    participant.role?.toLowerCase().includes('member') ||
     localStorage.getItem('diwan_force_organizer') === 'true'
   );
 
