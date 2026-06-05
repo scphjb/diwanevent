@@ -820,6 +820,28 @@ const ParticipantPortal = () => {
     }
   }, [eventId, participantToken]);
 
+  useEffect(() => {
+    if (participant) {
+      const role = (participant.role || '').toLowerCase();
+      const normalize = (str) => {
+        if (!str) return '';
+        return str.replace(/[أإآأ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').toLowerCase();
+      };
+      const normRole = normalize(role);
+      if (normRole.includes('استقبل') || normRole.includes('reception')) {
+        setSelectedTaskCommittee('reception');
+      } else if (normRole.includes('اطعام') || normRole.includes('catering') || normRole.includes('food') || normRole.includes('ضيافه')) {
+        setSelectedTaskCommittee('catering');
+      } else if (normRole.includes('ايواء') || normRole.includes('accommodation') || normRole.includes('hotel') || normRole.includes('lodging') || normRole.includes('تسكين')) {
+        setSelectedTaskCommittee('accommodation');
+      } else if (normRole.includes('نقل') || normRole.includes('logistics') || normRole.includes('سائق') || normRole.includes('transport') || normRole.includes('driver')) {
+        setSelectedTaskCommittee('logistics');
+      } else if (normRole.includes('ترفيه') || normRole.includes('نشاط') || normRole.includes('انشطه') || normRole.includes('excursion') || normRole.includes('activity')) {
+        setSelectedTaskCommittee('entertainment');
+      }
+    }
+  }, [participant]);
+
   const loadOptionalDataFromCache = () => {
     try {
       const cachedSettings = localStorage.getItem(`diwan_cache_settings_${eventId}`);
@@ -4764,26 +4786,49 @@ const ParticipantPortal = () => {
                                 };
                                 const normRole = normalize(role);
                                 
-                                // General organizers can do anything
-                                const isGeneral = normRole === 'organizer' || normRole === 'منظم' || normRole.includes('عام') || normRole.includes('general') || normRole.includes('اداري');
-                                if (isGeneral) return true;
+                                // Get logged-in user's role
+                                const userRole = (participant?.role || '').toLowerCase();
+                                const normUserRole = normalize(userRole);
+                                const isUserPresident = normUserRole.includes('رئيس') || normUserRole.includes('president');
                                 
-                                // Committee filtering
+                                // Determine active committee
                                 const committeeKey = selectedTaskCommittee || 'reception';
+                                
+                                // If logged in as president, restrict to matching committee
+                                if (isUserPresident) {
+                                  let userCommittee = null;
+                                  if (normUserRole.includes('استقبل') || normUserRole.includes('reception')) userCommittee = 'reception';
+                                  else if (normUserRole.includes('اطعام') || normUserRole.includes('catering') || normUserRole.includes('food') || normUserRole.includes('ضيافه')) userCommittee = 'catering';
+                                  else if (normUserRole.includes('ايواء') || normUserRole.includes('accommodation') || normUserRole.includes('hotel') || normUserRole.includes('lodging') || normUserRole.includes('تسكين')) userCommittee = 'accommodation';
+                                  else if (normUserRole.includes('نقل') || normUserRole.includes('logistics') || normUserRole.includes('سائق') || normUserRole.includes('transport') || normUserRole.includes('driver')) userCommittee = 'logistics';
+                                  else if (normUserRole.includes('ترفيه') || normUserRole.includes('نشاط') || normUserRole.includes('انشطه') || normUserRole.includes('excursion') || normUserRole.includes('activity')) userCommittee = 'entertainment';
+                                  
+                                  if (userCommittee && userCommittee !== committeeKey) {
+                                    return false;
+                                  }
+                                }
+                                
+                                // General organizers can be seen if logged in user is NOT a specific committee president
+                                if (!isUserPresident) {
+                                  const isGeneral = normRole === 'organizer' || normRole === 'منظم' || normRole.includes('عام') || normRole.includes('general') || normRole.includes('اداري');
+                                  if (isGeneral) return true;
+                                }
+                                
+                                // Filter matching committee members (excluding other presidents)
                                 if (committeeKey === 'reception') {
-                                  return normRole.includes('استقبل') || normRole.includes('تسجيل') || normRole.includes('reception');
+                                  return (normRole.includes('استقبل') || normRole.includes('تسجيل') || normRole.includes('reception')) && !normRole.includes('رئيس') && !normRole.includes('president');
                                 }
                                 if (committeeKey === 'catering') {
-                                  return normRole.includes('اطعام') || normRole.includes('ضيافه') || normRole.includes('catering') || normRole.includes('food');
+                                  return (normRole.includes('اطعام') || normRole.includes('ضيافه') || normRole.includes('catering') || normRole.includes('food')) && !normRole.includes('رئيس') && !normRole.includes('president');
                                 }
                                 if (committeeKey === 'accommodation') {
-                                  return normRole.includes('ايواء') || normRole.includes('تسكين') || normRole.includes('accommodation') || normRole.includes('hotel') || normRole.includes('lodging');
+                                  return (normRole.includes('ايواء') || normRole.includes('تسكين') || normRole.includes('accommodation') || normRole.includes('hotel') || normRole.includes('lodging')) && !normRole.includes('رئيس') && !normRole.includes('president');
                                 }
                                 if (committeeKey === 'logistics') {
-                                  return normRole.includes('نقل') || normRole.includes('لوجست') || normRole.includes('سائق') || normRole.includes('transport') || normRole.includes('driver') || normRole.includes('logistics');
+                                  return (normRole.includes('نقل') || normRole.includes('لوجست') || normRole.includes('سائق') || normRole.includes('transport') || normRole.includes('driver') || normRole.includes('logistics')) && !normRole.includes('رئيس') && !normRole.includes('president');
                                 }
                                 if (committeeKey === 'entertainment') {
-                                  return normRole.includes('ترفيه') || normRole.includes('نشاط') || normRole.includes('انشطه') || normRole.includes('excursion') || normRole.includes('activity');
+                                  return (normRole.includes('ترفيه') || normRole.includes('نشاط') || normRole.includes('انشطه') || normRole.includes('excursion') || normRole.includes('activity')) && !normRole.includes('رئيس') && !normRole.includes('president');
                                 }
                                 return false;
                               })
