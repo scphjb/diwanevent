@@ -112,6 +112,7 @@ const COMMITTEE_TASK_PRESETS = {
     { titleAr: 'تنظيم الفعالية الترفيهية المسائية', titleEn: 'Organize evening entertainment event', descAr: 'الإشراف على التجمع المسائي وتأمين متطلبات الضيافة فيه', descEn: 'Supervise evening gathering and catering requirements' }
   ]
 };
+COMMITTEE_TASK_PRESETS.transport = COMMITTEE_TASK_PRESETS.logistics;
 
 const ParticipantPortal = () => {
   const { eid, token } = useParams();
@@ -835,7 +836,7 @@ const ParticipantPortal = () => {
       } else if (normRole.includes('ايواء') || normRole.includes('accommodation') || normRole.includes('hotel') || normRole.includes('lodging') || normRole.includes('تسكين')) {
         setSelectedTaskCommittee('accommodation');
       } else if (normRole.includes('نقل') || normRole.includes('logistics') || normRole.includes('سائق') || normRole.includes('transport') || normRole.includes('driver')) {
-        setSelectedTaskCommittee('logistics');
+        setSelectedTaskCommittee('transport');
       } else if (normRole.includes('ترفيه') || normRole.includes('نشاط') || normRole.includes('انشطه') || normRole.includes('excursion') || normRole.includes('activity')) {
         setSelectedTaskCommittee('entertainment');
       }
@@ -4800,10 +4801,13 @@ const ParticipantPortal = () => {
                                   if (normUserRole.includes('استقبل') || normUserRole.includes('reception')) userCommittee = 'reception';
                                   else if (normUserRole.includes('اطعام') || normUserRole.includes('catering') || normUserRole.includes('food') || normUserRole.includes('ضيافه')) userCommittee = 'catering';
                                   else if (normUserRole.includes('ايواء') || normUserRole.includes('accommodation') || normUserRole.includes('hotel') || normUserRole.includes('lodging') || normUserRole.includes('تسكين')) userCommittee = 'accommodation';
-                                  else if (normUserRole.includes('نقل') || normUserRole.includes('logistics') || normUserRole.includes('سائق') || normUserRole.includes('transport') || normUserRole.includes('driver')) userCommittee = 'logistics';
+                                  else if (normUserRole.includes('نقل') || normUserRole.includes('logistics') || normUserRole.includes('سائق') || normUserRole.includes('transport') || normUserRole.includes('driver')) userCommittee = 'transport';
                                   else if (normUserRole.includes('ترفيه') || normUserRole.includes('نشاط') || normUserRole.includes('انشطه') || normUserRole.includes('excursion') || normUserRole.includes('activity')) userCommittee = 'entertainment';
                                   
-                                  if (userCommittee && userCommittee !== committeeKey) {
+                                  const matchesCommittee = (userCommittee === committeeKey) || 
+                                                           (userCommittee === 'transport' && committeeKey === 'logistics') || 
+                                                           (userCommittee === 'logistics' && committeeKey === 'transport');
+                                  if (userCommittee && !matchesCommittee) {
                                     return false;
                                   }
                                 }
@@ -4824,7 +4828,7 @@ const ParticipantPortal = () => {
                                 if (committeeKey === 'accommodation') {
                                   return (normRole.includes('ايواء') || normRole.includes('تسكين') || normRole.includes('accommodation') || normRole.includes('hotel') || normRole.includes('lodging')) && !normRole.includes('رئيس') && !normRole.includes('president');
                                 }
-                                if (committeeKey === 'logistics') {
+                                if (committeeKey === 'logistics' || committeeKey === 'transport') {
                                   return (normRole.includes('نقل') || normRole.includes('لوجست') || normRole.includes('سائق') || normRole.includes('transport') || normRole.includes('driver') || normRole.includes('logistics')) && !normRole.includes('رئيس') && !normRole.includes('president');
                                 }
                                 if (committeeKey === 'entertainment') {
