@@ -36,6 +36,21 @@ import { useEvent } from '../context/EventContext';
 import { showSuccess, showError, showConfirm, showToast } from '../utils/swal';
 import templateService from '../services/templateService';
 
+const PRESET_ROLES = [
+  { value: 'VIP', labelAr: 'ضيف شرف / VIP', labelEn: 'VIP Guest' },
+  { value: 'organizer', labelAr: 'منظم عام', labelEn: 'General Organizer' },
+  { value: 'رئيس لجنة الاستقبال', labelAr: 'رئيس لجنة الاستقبال والتوجيه', labelEn: 'President of Reception Committee' },
+  { value: 'عضو لجنة الاستقبال', labelAr: 'عضو لجنة الاستقبال والتوجيه', labelEn: 'Member of Reception Committee' },
+  { value: 'رئيس لجنة الإطعام', labelAr: 'رئيس لجنة الإطعام والضيافة', labelEn: 'President of Catering Committee' },
+  { value: 'عضو لجنة الإطعام', labelAr: 'عضو لجنة الإطعام والضيافة', labelEn: 'Member of Catering Committee' },
+  { value: 'رئيس لجنة الإيواء', labelAr: 'رئيس لجنة الإيواء والتسكين', labelEn: 'President of Accommodation Committee' },
+  { value: 'عضو لجنة الإيواء', labelAr: 'عضو لجنة الإيواء والتسكين', labelEn: 'Member of Accommodation Committee' },
+  { value: 'رئيس لجنة النقل', labelAr: 'رئيس لجنة النقل والخدمات', labelEn: 'President of Transport Committee' },
+  { value: 'عضو لجنة النقل', labelAr: 'عضو لجنة النقل والخدمات', labelEn: 'Member of Transport Committee' },
+  { value: 'رئيس لجنة الأنشطة', labelAr: 'رئيس لجنة الأنشطة والترفيه', labelEn: 'President of Activities Committee' },
+  { value: 'عضو لجنة الأنشطة', labelAr: 'عضو لجنة الأنشطة والترفيه', labelEn: 'Member of Activities Committee' },
+];
+
 const ParticipantsPage = () => {
   const fileInputRef = useRef(null);
   const { selectedEventId: eventId, searchQuery: search, setSearchQuery: setSearch } = useEvent();
@@ -213,6 +228,7 @@ const ParticipantsPage = () => {
     seat_info: '',
     seat_number: '',
   });
+  const [isCustomRole, setIsCustomRole] = useState(false);
 
   useEffect(() => {
     const handleClickOutside = () => setActiveMenu(null);
@@ -332,6 +348,10 @@ const ParticipantsPage = () => {
         seat_info: details.seat_info || '',
         seat_number: details.seat_number || '',
       });
+      // Check if it's custom
+      const roleVal = details.role || '';
+      const foundPreset = roleVal === '' || PRESET_ROLES.some(r => r.value === roleVal);
+      setIsCustomRole(!foundPreset);
     } catch (err) {
       showError('فشل جلب بيانات المشارك للتعديل');
     } finally {
@@ -853,12 +873,43 @@ const ParticipantsPage = () => {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="space-y-2">
                       <label className="text-sm font-bold text-brand-secondary">{t('participants.role_label', 'الصفة / الدور')}</label>
-                      <Input 
-                        placeholder="الصفة (VIP, متحدث, إلخ)"
-                        className="bg-white/5 border-white/10 h-12"
-                        value={editForm.role}
-                        onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
-                      />
+                      <select
+                        className="w-full bg-white/5 border border-white/10 rounded-xl h-12 px-4 outline-none text-brand-secondary font-medium focus:border-brand-primary transition-all"
+                        value={isCustomRole ? 'custom' : editForm.role}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === 'custom') {
+                            setIsCustomRole(true);
+                            setEditForm({ ...editForm, role: '' });
+                          } else {
+                            setIsCustomRole(false);
+                            setEditForm({ ...editForm, role: val });
+                          }
+                        }}
+                      >
+                        <option value="" className="bg-[#050B18]">{i18n.language.startsWith('ar') ? '-- بدون دور --' : '-- No Role --'}</option>
+                        {PRESET_ROLES.map(r => (
+                          <option key={r.value} value={r.value} className="bg-[#050B18]">
+                            {i18n.language.startsWith('ar') ? r.labelAr : r.labelEn}
+                          </option>
+                        ))}
+                        <option value="custom" className="bg-[#050B18]">{i18n.language.startsWith('ar') ? 'دور مخصص...' : 'Custom Role...'}</option>
+                      </select>
+                      
+                      {isCustomRole && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="mt-2"
+                        >
+                          <Input 
+                            placeholder={i18n.language.startsWith('ar') ? "أدخل الصفة المخصصة هنا..." : "Enter custom role here..."}
+                            className="bg-white/5 border-white/10 h-12"
+                            value={editForm.role}
+                            onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
+                          />
+                        </motion.div>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-bold text-brand-secondary">{t('participants.seat_info_label', 'معلومات الجلوس')}</label>
