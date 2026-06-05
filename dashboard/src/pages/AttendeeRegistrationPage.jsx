@@ -38,10 +38,9 @@ const getFullUrl = (url) => {
 };
 
 const PARTICIPANT_ROLES = [
-  { value: 'attendee',  label: 'مشارك عادي',     icon: '👤', desc: 'حضور الفعاليات والجلسات' },
-  { value: 'vip',       label: 'ضيف شرف',         icon: '⭐', desc: 'بروتوكول خاص وأولوية الدخول' },
-  { value: 'press',     label: 'صحافة وإعلام',    icon: '📰', desc: 'تغطية إعلامية معتمدة' },
-  { value: 'speaker',   label: 'متحدث / خبير',    icon: '🎤', desc: 'تقديم عروض وجلسات' },
+  { value: 'attendee',  label: 'مشارك',          icon: '👤', desc: 'تصفح البوابة التفاعلية وحضور الجلسات' },
+  { value: 'press',     label: 'صحافة وإعلام',    icon: '📰', desc: 'تغطية إعلامية (شارة دخول فقط)' },
+  { value: 'exhibitor', label: 'عارض / جناح',     icon: '🎪', desc: 'جناح عارض (شارة دخول فقط)' },
 ];
 
 const AttendeeRegistrationPage = () => {
@@ -149,11 +148,15 @@ const AttendeeRegistrationPage = () => {
         }
       }
 
-      // 3. تم إرسال الإيميل الموحد آلياً من الخلفية عند التسجيل
-      if (formData.email) {
-        setStep('otp_sent');
+      // 3. التحقق مما إذا كان المشارك مسجلاً مسبقاً (تم تأكيده) أو يحتاج موافقة
+      if (result.merged) {
+        if (formData.email) {
+          setStep('otp_sent');
+        } else {
+          setStep('success');
+        }
       } else {
-        setStep('success');
+        setStep('pending_approval');
       }
 
     } catch (err) {
@@ -176,6 +179,51 @@ const AttendeeRegistrationPage = () => {
       <p>تعذر تحميل بيانات الفعالية</p>
     </div>
   );
+
+  // ─── شاشة الانتظار للموافقة ─────────────────────────────────────────
+  if (step === 'pending_approval') {
+    return (
+      <div className="min-h-screen bg-[#050B18] flex items-center justify-center p-6" dir="rtl">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-white/5 border border-white/10 rounded-[40px] p-12 max-w-md w-full text-center"
+        >
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: 'spring', stiffness: 200, delay: 0.2 }}
+            className="text-6xl mb-6"
+          >
+            ⏳
+          </motion.div>
+          <h1 className="text-3xl font-black text-white mb-3">
+            طلبك قيد المراجعة
+          </h1>
+          <p className="text-brand-secondary/60 mb-8 text-sm leading-relaxed">
+            تم استلام طلب التسجيل الخاص بك بنجاح! طلبك الآن قيد المراجعة والتدقيق من قبل إدارة تنظيم الفعالية. ستصلك رسالة تأكيد تحتوي على رابط تذكرة الدخول والرمز السري على بريدك الإلكتروني بمجرد الموافقة على الطلب.
+          </p>
+
+          {registrationResult && (
+            <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-6 mb-8 text-right">
+              <p className="text-amber-500/60 text-xs font-bold uppercase tracking-widest mb-2">رقم التسجيل المرجعي</p>
+              <p className="text-4xl font-black text-amber-400 tracking-widest font-mono">{registrationResult.order_num}</p>
+              <p className="text-white/40 text-sm mt-2">يرجى الاحتفاظ بهذا الرقم كمرجع لطلبك</p>
+            </div>
+          )}
+
+          <div className="flex flex-col gap-3">
+            <button
+              className="w-full h-14 rounded-2xl bg-white/5 hover:bg-white/10 text-white font-bold text-sm transition-all border border-white/10"
+              onClick={() => navigate('/')}
+            >
+              العودة للصفحة الرئيسية
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
 
   // ─── شاشة النجاح ─────────────────────────────────────────────────
   if (step === 'success' || step === 'otp_sent') {

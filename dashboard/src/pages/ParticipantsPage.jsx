@@ -561,6 +561,7 @@ const ParticipantsPage = () => {
               <tr className="bg-white/5 text-brand-secondary/50 text-xs uppercase tracking-widest border-b border-white/5">
                 <th className="px-8 py-6 font-bold">{t('common.participants')}</th>
                 <th className="px-8 py-6 font-bold">{t('participants.organization', 'الجهة / المؤسسة')}</th>
+                <th className="px-8 py-6 font-bold">{t('participants.role', 'الصفة / الدور')}</th>
                 <th className="px-8 py-6 font-bold">{t('participants.status')}</th>
                 <th className="px-8 py-6 font-bold">{t('participants.time')}</th>
                 <th className="px-8 py-6 font-bold text-center">{t('common.actions')}</th>
@@ -571,7 +572,7 @@ const ParticipantsPage = () => {
                 {loading ? (
                   Array.from({ length: 5 }).map((_, i) => (
                     <tr key={i} className="animate-pulse">
-                      <td colSpan="5" className="px-8 py-6 bg-white/5 mb-2 rounded-lg" />
+                      <td colSpan="6" className="px-8 py-6 bg-white/5 mb-2 rounded-lg" />
                     </tr>
                   ))
                 ) : (
@@ -605,6 +606,31 @@ const ParticipantsPage = () => {
                           {p.department || ''}
                           {p.seat_number && ` | مقعد: ${p.seat_number}`}
                         </div>
+                      </td>
+                      <td className="px-8 py-6">
+                        <select
+                          value={p.role || ''}
+                          onChange={async (e) => {
+                            const newRole = e.target.value;
+                            try {
+                              await participantService.updateParticipant(p.id, { role: newRole });
+                              setParticipants(prev => prev.map(item => item.id === p.id ? { ...item, role: newRole } : item));
+                              showToast(i18n.language.startsWith('ar') ? 'تم تحديث الدور بنجاح' : 'Role updated successfully', 'success');
+                            } catch (err) {
+                              showError(i18n.language.startsWith('ar') ? 'فشل تحديث الدور' : 'Failed to update role');
+                            }
+                          }}
+                          className="bg-white/5 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-brand-secondary outline-none focus:border-brand-primary transition-all cursor-pointer font-bold"
+                        >
+                          <option value="" className="bg-[#050B18]">{i18n.language.startsWith('ar') ? 'مشارك عادي' : 'Participant'}</option>
+                          <option value="press" className="bg-[#050B18]">{i18n.language.startsWith('ar') ? 'صحافة وإعلام' : 'Press'}</option>
+                          <option value="exhibitor" className="bg-[#050B18]">{i18n.language.startsWith('ar') ? 'عارض / جناح' : 'Exhibitor'}</option>
+                          {PRESET_ROLES.map(r => (
+                            <option key={r.value} value={r.value} className="bg-[#050B18]">
+                              {i18n.language.startsWith('ar') ? r.labelAr : r.labelEn}
+                            </option>
+                          ))}
+                        </select>
                       </td>
                       <td className="px-8 py-6">
                         <span className={cn(

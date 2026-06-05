@@ -588,46 +588,10 @@ async def public_register_participant(
     await db.commit()
     await db.refresh(participant)
     
-    # إرسال البريد الموحد وخصم الرصيد للجدد (تخطي في اختبارات الضغط لمنع اختناق السيرفر)
-    if participant.email and has_credits and participant.department != "قسم التسجيل الآني":
-        if organizer.role != 'super_admin':
-            organizer.credits -= 1
-        
-        participant.payment_status = 'paid'
-        
-        from app.routers.participant_auth import generate_otp
-        otp_code = generate_otp()
-        from app.models.otp import ParticipantOTP
-        from datetime import datetime, timedelta
-        new_otp = ParticipantOTP(
-            participant_id=participant.id,
-            email=participant.email,
-            otp_code=otp_code,
-            expires_at=datetime.utcnow() + timedelta(minutes=60)
-        )
-        db.add(new_otp)
-        await db.commit()
-
-        frontend_url = _get_frontend_url()
-        magic_link = f"{frontend_url}/p/{participant.event_id}/{participant.qr_code}?origin=email"
-
-        background_tasks.add_task(
-            send_unified_welcome_email,
-            email=participant.email,
-            participant_name=participant.full_name,
-            event_name=event.event_name,
-            order_num=participant.order_num,
-            otp=otp_code,
-            magic_link=magic_link,
-            qr_code=participant.qr_code,
-            event_date=str(event.event_date) if event.event_date else None,
-            event_location=event.location,
-            event_id=participant.event_id
-        )
-
+    # لا نقوم بتفعيل المشارك الجديد تلقائياً أو إرسال الإيميل حتى يقوم المنظم بالموافقة اليدوية (Pending Approval)
+    # سيظل الحقل payment_status = 'pending' ولن يخصم رصيد حتى يتم التفعيل من لوحة التحكم
     
-    await db.commit()
-    return {"status": "success", "participant_id": participant.id, "order_num": participant.order_num, "active": has_credits}
+    return {"status": "success", "participant_id": participant.id, "order_num": participant.order_num, "merged": False, "active": False}
 
 @router.get("/")
 async def read_participants(

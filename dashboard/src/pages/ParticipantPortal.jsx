@@ -1710,6 +1710,12 @@ const ParticipantPortal = () => {
   );
 
   const roleLower = (participant?.role || '').toLowerCase();
+
+  const isPressOrExhibitor = roleLower.includes('press') || 
+    roleLower.includes('صحافة') || 
+    roleLower.includes('exhibitor') || 
+    roleLower.includes('عارض') ||
+    roleLower.includes('صحافي');
   
   const isGeneralOrganizer = !participant?.role || 
     roleLower === 'organizer' || 
@@ -1718,34 +1724,34 @@ const ParticipantPortal = () => {
     roleLower.includes('general') ||
     localStorage.getItem('diwan_force_organizer') === 'true';
 
-  const hasLogisticsStaffAccess = isOrganizer && (isGeneralOrganizer || 
+  const hasLogisticsStaffAccess = isOrganizer && !isPressOrExhibitor && (isGeneralOrganizer || 
     roleLower.includes('نقل') || 
     roleLower.includes('لوجست') || 
     roleLower.includes('transport') || 
     roleLower.includes('logistics'));
 
-  const hasCateringStaffAccess = isOrganizer && (isGeneralOrganizer || 
+  const hasCateringStaffAccess = isOrganizer && !isPressOrExhibitor && (isGeneralOrganizer || 
     roleLower.includes('إطعام') || 
     roleLower.includes('ضيافة') || 
     roleLower.includes('تموين') || 
     roleLower.includes('catering') || 
     roleLower.includes('food'));
 
-  const hasAccommodationStaffAccess = isOrganizer && (isGeneralOrganizer || 
+  const hasAccommodationStaffAccess = isOrganizer && !isPressOrExhibitor && (isGeneralOrganizer || 
     roleLower.includes('إيواء') || 
     roleLower.includes('فندق') || 
     roleLower.includes('hotel') || 
     roleLower.includes('accommodation') || 
     roleLower.includes('lodging'));
 
-  const hasEntertainmentStaffAccess = isOrganizer && (isGeneralOrganizer || 
+  const hasEntertainmentStaffAccess = isOrganizer && !isPressOrExhibitor && (isGeneralOrganizer || 
     roleLower.includes('ترفيه') || 
     roleLower.includes('نشاط') || 
     roleLower.includes('entertainment') || 
     roleLower.includes('excursion') || 
     roleLower.includes('activity'));
 
-  const hasReceptionStaffAccess = isOrganizer && (isGeneralOrganizer || 
+  const hasReceptionStaffAccess = isOrganizer && !isPressOrExhibitor && (isGeneralOrganizer || 
     roleLower.includes('استقبال') || 
     roleLower.includes('تسجيل') || 
     roleLower.includes('reception') || 
@@ -1753,11 +1759,16 @@ const ParticipantPortal = () => {
     roleLower.includes('gate') || 
     roleLower.includes('scanner'));
 
-  if (isOrganizer) {
+  if (isOrganizer && !isPressOrExhibitor) {
     tabs.push({ id: 'organizer', label: lang === 'ar' ? 'إدارة اللجان 🛠️' : 'Staff Panel 🛠️', icon: Shield });
   }
 
-  const filteredTabs = tabs.filter(t => t.show !== false);
+  const filteredTabs = tabs.filter(t => {
+    if (isPressOrExhibitor) {
+      return t.id === 'home';
+    }
+    return t.show !== false;
+  });
 
   if (loading) return (
     <div className="min-h-screen bg-[#050B18] flex items-center justify-center">
@@ -2043,7 +2054,7 @@ const ParticipantPortal = () => {
         </div>
       </header>
 
-      <main className="flex-1 p-6 pb-40 relative z-10 overflow-y-auto">
+      <main className={cn("flex-1 p-6 relative z-10 overflow-y-auto", filteredTabs.length > 1 ? "pb-40" : "pb-12")}>
         {renderLiveStatusBar()}
         <AnimatePresence mode="wait">
           {activeTab === 'home' && (
@@ -4718,56 +4729,58 @@ const ParticipantPortal = () => {
         }}
       />
 
-      <nav
-        className="fixed bottom-0 left-0 right-0 bg-[#050B18]/90 backdrop-blur-3xl border-t border-white/10 z-50"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom, 12px)' }}
-      >
-        <div
-          className="flex items-center gap-1 px-3 pt-3 pb-3 overflow-x-auto"
-          style={{
-            scrollbarWidth: 'none',
-            msOverflowStyle: 'none',
-            WebkitOverflowScrolling: 'touch',
-            scrollSnapType: 'x mandatory',
-          }}
+      {filteredTabs.length > 1 && (
+        <nav
+          className="fixed bottom-0 left-0 right-0 bg-[#050B18]/90 backdrop-blur-3xl border-t border-white/10 z-50"
+          style={{ paddingBottom: 'env(safe-area-inset-bottom, 12px)' }}
         >
-          {filteredTabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => {
-                setActiveTab(tab.id);
-                if (tab.id === 'notifications') {
-                  fetchNotifications();
-                  handleMarkNotificationsAsRead();
-                }
-              }}
-              style={{ scrollSnapAlign: 'start', flexShrink: 0 }}
-              className={cn(
-                "flex flex-col items-center gap-1 px-4 py-2 rounded-2xl relative transition-all min-w-[60px]",
-                activeTab === tab.id
-                  ? "bg-amber-500/10 text-amber-500"
-                  : "text-white/30 hover:text-white/60"
-              )}
-            >
-              <div className="relative">
-                <tab.icon className="w-6 h-6" />
-                {tab.id === 'notifications' && unreadNotificationsCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] font-black w-4.5 h-4.5 px-1 rounded-full flex items-center justify-center border-2 border-[#050B18] shadow-lg shadow-red-500/50 min-w-[14px]">
-                    {unreadNotificationsCount > 9 ? '9+' : unreadNotificationsCount}
-                  </span>
+          <div
+            className="flex items-center gap-1 px-3 pt-3 pb-3 overflow-x-auto"
+            style={{
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none',
+              WebkitOverflowScrolling: 'touch',
+              scrollSnapType: 'x mandatory',
+            }}
+          >
+            {filteredTabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => {
+                  setActiveTab(tab.id);
+                  if (tab.id === 'notifications') {
+                    fetchNotifications();
+                    handleMarkNotificationsAsRead();
+                  }
+                }}
+                style={{ scrollSnapAlign: 'start', flexShrink: 0 }}
+                className={cn(
+                  "flex flex-col items-center gap-1 px-4 py-2 rounded-2xl relative transition-all min-w-[60px]",
+                  activeTab === tab.id
+                    ? "bg-amber-500/10 text-amber-500"
+                    : "text-white/30 hover:text-white/60"
                 )}
-              </div>
-              <span className="text-[9px] font-black uppercase tracking-wide whitespace-nowrap">{tab.label}</span>
-              {activeTab === tab.id && (
-                <motion.div
-                  layoutId="nav-active"
-                  className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-amber-500 rounded-full"
-                />
-              )}
-            </button>
-          ))}
-        </div>
-      </nav>
+              >
+                <div className="relative">
+                  <tab.icon className="w-6 h-6" />
+                  {tab.id === 'notifications' && unreadNotificationsCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] font-black w-4.5 h-4.5 px-1 rounded-full flex items-center justify-center border-2 border-[#050B18] shadow-lg shadow-red-500/50 min-w-[14px]">
+                      {unreadNotificationsCount > 9 ? '9+' : unreadNotificationsCount}
+                    </span>
+                  )}
+                </div>
+                <span className="text-[9px] font-black uppercase tracking-wide whitespace-nowrap">{tab.label}</span>
+                {activeTab === tab.id && (
+                  <motion.div
+                    layoutId="nav-active"
+                    className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-amber-500 rounded-full"
+                  />
+                )}
+              </button>
+            ))}
+          </div>
+        </nav>
+      )}
 
       {/* Scan Mode Fullscreen Modal */}
       <AnimatePresence>
