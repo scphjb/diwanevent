@@ -1387,7 +1387,7 @@ const ParticipantPortal = () => {
       const isGeneral = !participant.role || 
         roleLower === 'organizer' || 
         roleLower === 'منظم' || 
-        roleLower.includes('عام') || 
+        (roleLower.includes('عام') && !roleLower.includes('طعام')) || 
         roleLower.includes('general') ||
         localStorage.getItem('diwan_force_organizer') === 'true';
 
@@ -1787,7 +1787,7 @@ const ParticipantPortal = () => {
   const isGeneralOrganizer = !participant?.role || 
     normRole === 'organizer' || 
     normRole === 'منظم' || 
-    normRole.includes('عام') || 
+    (normRole.includes('عام') && !normRole.includes('طعام')) || 
     normRole.includes('general') ||
     localStorage.getItem('diwan_force_organizer') === 'true';
 
@@ -1908,7 +1908,7 @@ const ParticipantPortal = () => {
     const isGeneral = !participant.role || 
       roleLower === 'organizer' || 
       roleLower === 'منظم' || 
-      roleLower.includes('عام') || 
+      (roleLower.includes('عام') && !roleLower.includes('طعام')) || 
       roleLower.includes('general') ||
       localStorage.getItem('diwan_force_organizer') === 'true';
 
@@ -4814,7 +4814,7 @@ const ParticipantPortal = () => {
                                 
                                 // General organizers can be seen if logged in user is NOT a specific committee president
                                 if (!isUserPresident) {
-                                  const isGeneral = normRole === 'organizer' || normRole === 'منظم' || normRole.includes('عام') || normRole.includes('general') || normRole.includes('اداري');
+                                  const isGeneral = normRole === 'organizer' || normRole === 'منظم' || (normRole.includes('عام') && !normRole.includes('طعام')) || normRole.includes('general') || normRole.includes('اداري');
                                   if (isGeneral) return true;
                                 }
                                 
