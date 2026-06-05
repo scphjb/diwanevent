@@ -1383,23 +1383,29 @@ const ParticipantPortal = () => {
 
   useEffect(() => {
     if (participant) {
+      const normalize = (str) => {
+        if (!str) return '';
+        return str.replace(/[أإآأ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').toLowerCase();
+      };
       const roleLower = (participant.role || '').toLowerCase();
+      const normRoleLower = normalize(roleLower);
+      
       const isGeneral = !participant.role || 
-        roleLower === 'organizer' || 
-        roleLower === 'منظم' || 
-        (roleLower.includes('عام') && !roleLower.includes('طعام')) || 
-        roleLower.includes('general') ||
+        normRoleLower === 'organizer' || 
+        normRoleLower === 'منظم' || 
+        (normRoleLower.includes('عام') && !normRoleLower.includes('طعام')) || 
+        normRoleLower.includes('general') ||
         localStorage.getItem('diwan_force_organizer') === 'true';
 
-      if (isGeneral || roleLower.includes('نقل') || roleLower.includes('لوجست') || roleLower.includes('transport') || roleLower.includes('logistics')) {
+      if (isGeneral || normRoleLower.includes('نقل') || normRoleLower.includes('لوجست') || normRoleLower.includes('transport') || normRoleLower.includes('logistics') || normRoleLower.includes('سائق')) {
         setStaffActiveSubTab('logistics');
-      } else if (roleLower.includes('إطعام') || roleLower.includes('ضيافة') || roleLower.includes('تموين') || roleLower.includes('catering') || roleLower.includes('food')) {
+      } else if (normRoleLower.includes('اطعام') || normRoleLower.includes('ضيافه') || normRoleLower.includes('تموين') || normRoleLower.includes('catering') || normRoleLower.includes('food')) {
         setStaffActiveSubTab('catering');
-      } else if (roleLower.includes('إيواء') || roleLower.includes('فندق') || roleLower.includes('hotel') || roleLower.includes('accommodation') || roleLower.includes('lodging')) {
+      } else if (normRoleLower.includes('ايواء') || normRoleLower.includes('تسكين') || normRoleLower.includes('فندق') || normRoleLower.includes('hotel') || normRoleLower.includes('accommodation') || normRoleLower.includes('lodging')) {
         setStaffActiveSubTab('accommodation');
-      } else if (roleLower.includes('ترفيه') || roleLower.includes('نشاط') || roleLower.includes('entertainment') || roleLower.includes('excursion') || roleLower.includes('activity')) {
+      } else if (normRoleLower.includes('ترفيه') || normRoleLower.includes('نشاط') || normRoleLower.includes('انشط') || normRoleLower.includes('entertainment') || normRoleLower.includes('excursion') || normRoleLower.includes('activity')) {
         setStaffActiveSubTab('entertainment');
-      } else if (roleLower.includes('استقبال') || roleLower.includes('تسجيل') || roleLower.includes('reception') || roleLower.includes('checkin') || roleLower.includes('gate') || roleLower.includes('scanner')) {
+      } else if (normRoleLower.includes('استقبل') || normRoleLower.includes('تسجيل') || normRoleLower.includes('reception') || normRoleLower.includes('checkin') || normRoleLower.includes('gate') || normRoleLower.includes('scanner')) {
         setStaffActiveSubTab('reception');
       }
     }
