@@ -12,6 +12,7 @@ from app.core.websockets import manager
 from app.utils.badge import generate_badge_pdf
 from app.routers.participant_auth import send_unified_welcome_email, OTP_EXPIRE_MINUTES
 from app.core.auth_deps import get_current_active_user
+from app.routers.notifications import get_current_user_or_participant
 from app.models.user import User
 from app.services.data_sanitizer import DataSanitizer
 from app.services.webhook_engine import WebhookEngine
@@ -600,20 +601,37 @@ async def read_participants(
     limit: int = 1000,
     query: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
-    _: None = Depends(require_permission("event:read"))
+    identity = Depends(get_current_user_or_participant)
 ):
     """جلب المشاركين وإرجاعهم كقواميس لتفادي أخطاء الـ Serialization"""
 
-    # BUG 5 FIX: تحقق من ملكية الفعالية لمنع تسريب البيانات بين المنظمين
-    if current_user.role != "super_admin":
-        from app.models.event import Event
-        event = await db.get(Event, event_id)
-        if not event or event.created_by != current_user.id:
+    if identity["type"] == "user":
+        current_user = identity["obj"]
+        if current_user.role != "super_admin":
+            from app.models.event import Event
+            event = await db.get(Event, event_id)
+            if not event or event.created_by != current_user.id:
+                raise HTTPException(
+                    status_code=403,
+                    detail="هذه الفعالية لا تنتمي لحسابك"
+                )
+    elif identity["type"] == "participant":
+        current_participant = identity["obj"]
+        if current_participant.event_id != event_id:
             raise HTTPException(
                 status_code=403,
-                detail="هذه الفعالية لا تنتمي لحسابك"
+                detail="ليس لديك صلاحية لعرض مشاركي هذه الفعالية"
             )
+        # Check if the participant is a helper/organizer/committee member
+        role_lower = (current_participant.role or "").lower()
+        is_staff = any(x in role_lower for x in ("منظم", "رئيس", "عضو", "organizer", "helper", "driver", "companion", "staff", "president", "member"))
+        if not is_staff:
+            raise HTTPException(
+                status_code=403,
+                detail="المشاركون العاديون لا يمكنهم عرض كامل القائمة"
+            )
+    else:
+        raise HTTPException(status_code=401, detail="Unauthorized")
 
     stmt = select(Participant).filter(Participant.event_id == event_id)
     if query:
