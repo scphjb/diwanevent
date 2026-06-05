@@ -1700,70 +1700,80 @@ const ParticipantPortal = () => {
     { id: 'catering', label: t('tab_catering'), icon: Utensils },
   ];
 
+  const normalizeArabic = (str) => {
+    if (!str) return '';
+    return str
+      .replace(/[أإآ]/g, 'ا')
+      .replace(/ة/g, 'ه')
+      .toLowerCase();
+  };
+
+  const normRole = normalizeArabic(participant?.role || '');
+
   const isOrganizer = participant && (
     participant.role === 'organizer' || 
     participant.role === 'منظم' || 
     participant.custom_values?.is_organizer ||
-    participant.role?.toLowerCase().includes('organizer') ||
-    participant.role?.includes('منظم') ||
-    participant.role?.includes('لجنة') ||
-    participant.role?.includes('رئيس') ||
-    participant.role?.includes('عضو') ||
-    participant.role?.toLowerCase().includes('committee') ||
-    participant.role?.toLowerCase().includes('president') ||
-    participant.role?.toLowerCase().includes('member') ||
+    normRole.includes('organizer') ||
+    normRole.includes('منظم') ||
+    normRole.includes('لجنه') ||
+    normRole.includes('رئيس') ||
+    normRole.includes('عضو') ||
+    normRole.includes('committee') ||
+    normRole.includes('president') ||
+    normRole.includes('member') ||
     localStorage.getItem('diwan_force_organizer') === 'true'
   );
 
-  const roleLower = (participant?.role || '').toLowerCase();
-
-  const isPressOrExhibitor = roleLower.includes('press') || 
-    roleLower.includes('صحافة') || 
-    roleLower.includes('exhibitor') || 
-    roleLower.includes('عارض') ||
-    roleLower.includes('صحافي');
+  const isPressOrExhibitor = normRole.includes('press') || 
+    normRole.includes('صحافه') || 
+    normRole.includes('exhibitor') || 
+    normRole.includes('عارض') ||
+    normRole.includes('صحافي');
   
   const isGeneralOrganizer = !participant?.role || 
-    roleLower === 'organizer' || 
-    roleLower === 'منظم' || 
-    roleLower.includes('عام') || 
-    roleLower.includes('general') ||
+    normRole === 'organizer' || 
+    normRole === 'منظم' || 
+    normRole.includes('عام') || 
+    normRole.includes('general') ||
     localStorage.getItem('diwan_force_organizer') === 'true';
 
   const hasLogisticsStaffAccess = isOrganizer && !isPressOrExhibitor && (isGeneralOrganizer || 
-    roleLower.includes('نقل') || 
-    roleLower.includes('لوجست') || 
-    roleLower.includes('transport') || 
-    roleLower.includes('logistics'));
+    normRole.includes('نقل') || 
+    normRole.includes('لوجست') || 
+    normRole.includes('transport') || 
+    normRole.includes('logistics'));
 
   const hasCateringStaffAccess = isOrganizer && !isPressOrExhibitor && (isGeneralOrganizer || 
-    roleLower.includes('إطعام') || 
-    roleLower.includes('ضيافة') || 
-    roleLower.includes('تموين') || 
-    roleLower.includes('catering') || 
-    roleLower.includes('food'));
+    normRole.includes('اطعام') || 
+    normRole.includes('ضيافه') || 
+    normRole.includes('تموين') || 
+    normRole.includes('catering') || 
+    normRole.includes('food'));
 
   const hasAccommodationStaffAccess = isOrganizer && !isPressOrExhibitor && (isGeneralOrganizer || 
-    roleLower.includes('إيواء') || 
-    roleLower.includes('فندق') || 
-    roleLower.includes('hotel') || 
-    roleLower.includes('accommodation') || 
-    roleLower.includes('lodging'));
+    normRole.includes('ايواء') || 
+    normRole.includes('تسكين') || 
+    normRole.includes('فندق') || 
+    normRole.includes('hotel') || 
+    normRole.includes('accommodation') || 
+    normRole.includes('lodging'));
 
   const hasEntertainmentStaffAccess = isOrganizer && !isPressOrExhibitor && (isGeneralOrganizer || 
-    roleLower.includes('ترفيه') || 
-    roleLower.includes('نشاط') || 
-    roleLower.includes('entertainment') || 
-    roleLower.includes('excursion') || 
-    roleLower.includes('activity'));
+    normRole.includes('ترفيه') || 
+    normRole.includes('نشاط') || 
+    normRole.includes('انشطه') || 
+    normRole.includes('entertainment') || 
+    normRole.includes('excursion') || 
+    normRole.includes('activity'));
 
   const hasReceptionStaffAccess = isOrganizer && !isPressOrExhibitor && (isGeneralOrganizer || 
-    roleLower.includes('استقبال') || 
-    roleLower.includes('تسجيل') || 
-    roleLower.includes('reception') || 
-    roleLower.includes('checkin') || 
-    roleLower.includes('gate') || 
-    roleLower.includes('scanner'));
+    normRole.includes('استقبال') || 
+    normRole.includes('تسجيل') || 
+    normRole.includes('reception') || 
+    normRole.includes('checkin') || 
+    normRole.includes('gate') || 
+    normRole.includes('scanner'));
 
   if (isOrganizer && !isPressOrExhibitor) {
     tabs.push({ id: 'organizer', label: lang === 'ar' ? 'إدارة اللجان 🛠️' : 'Staff Panel 🛠️', icon: Shield });

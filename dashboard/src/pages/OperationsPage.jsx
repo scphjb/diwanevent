@@ -29,6 +29,7 @@ import { cn } from '../utils/cn';
 import { useEvent } from '../context/EventContext';
 import { showSuccess, showError, showConfirm, showToast } from '../utils/swal';
 import interactionService from '../services/interactionService';
+import participantService from '../services/participantService';
 import useAttendanceSocket from '../hooks/useAttendanceSocket';
 
 const OperationsPage = () => {
@@ -575,6 +576,121 @@ const OperationsPage = () => {
     }
   };
 
+  // --- Committee Tasks Actions ---
+  const handleSaveTask = async (e) => {
+    e.preventDefault();
+    if (!newTaskForm.title.trim()) return;
+    
+    let assignedName = '';
+    if (newTaskForm.assigned_to_id) {
+      const helper = receptionList.find(p => p.id === parseInt(newTaskForm.assigned_to_id));
+      if (helper) assignedName = helper.full_name;
+    }
+    
+    setIsSavingTask(true);
+    try {
+      await interactionService.createTask({
+        event_id: eventId,
+        committee: selectedCommittee?.key || newTaskForm.committee,
+        title: newTaskForm.title,
+        description: newTaskForm.description,
+        participant_id: newTaskForm.participant_id ? parseInt(newTaskForm.participant_id) : null,
+        assigned_to_id: newTaskForm.assigned_to_id ? parseInt(newTaskForm.assigned_to_id) : null,
+        assigned_to_name: assignedName || null,
+        due_time: newTaskForm.due_time || null
+      });
+      showSuccess(lang === 'ar' ? 'تم إسناد المهمة بنجاح! 📋' : 'Task delegated successfully! 📋');
+      setShowTaskModal(false);
+      setNewTaskForm({
+        title: '',
+        description: '',
+        committee: '',
+        assigned_to_id: '',
+        participant_id: '',
+        due_time: ''
+      });
+      // reload tasks list
+      const tasks = await interactionService.listTasks(eventId).catch(() => []);
+      setTasksList(tasks || []);
+    } catch (err) {
+      console.error('Failed to delegate task:', err);
+      showError(lang === 'ar' ? 'فشل إسناد المهمة' : 'Failed to delegate task');
+    } finally {
+      setIsSavingTask(false);
+    }
+  };
+
+  const handleDeleteTask = async (taskId) => {
+    const confirmed = await showConfirm(
+      lang === 'ar' ? 'حذف المهمة' : 'Delete Task',
+      lang === 'ar' ? 'هل أنت متأكد من حذف هذه المهمة نهائياً؟' : 'Are you sure you want to delete this task?'
+    );
+    if (!confirmed) return;
+    
+    try {
+      await interactionService.deleteTask(taskId);
+      showSuccess(lang === 'ar' ? 'تم حذف المهمة بنجاح' : 'Task deleted successfully');
+      const tasks = await interactionService.listTasks(eventId).catch(() => []);
+      setTasksList(tasks || []);
+    } catch (err) {
+      console.error('Failed to delete task:', err);
+      showError(lang === 'ar' ? 'فشل حذف المهمة' : 'Failed to delete task');
+    }
+  };
+
+  const handleUpdateTaskStatus = async (taskId, newStatus) => {
+    try {
+      await interactionService.updateTaskStatus(taskId, newStatus);
+      showToast(lang === 'ar' ? 'تم تحديث حالة المهمة بنجاح' : 'Task status updated successfully', 'success');
+      const tasks = await interactionService.listTasks(eventId).catch(() => []);
+      setTasksList(tasks || []);
+    } catch (err) {
+      console.error('Failed to update task status:', err);
+      showError(lang === 'ar' ? 'فشل تحديث حالة المهمة' : 'Failed to update task status');
+    }
+  };
+
+  // --- Accommodation Booking Actions ---
+  const handleSaveAccommodation = async (e) => {
+    e.preventDefault();
+    if (!accommodationForm.participant_id) return;
+    setIsSavingAccommodation(true);
+    try {
+      await interactionService.dispatchLogistics(
+        parseInt(accommodationForm.participant_id),
+        {
+          hotel_name: accommodationForm.hotel_name,
+          room_number: accommodationForm.room_number,
+          check_in_date: accommodationForm.check_in_date,
+          check_out_date: accommodationForm.check_out_date
+        }
+      );
+      showSuccess(lang === 'ar' ? 'تم حفظ وتسكين الضيف بنجاح! 🏨' : 'Guest lodging assigned successfully! 🏨');
+      setShowAccommodationModal(false);
+      setAccommodationForm({ participant_id: '', hotel_name: '', room_number: '', check_in_date: '', check_out_date: '' });
+      fetchData();
+    } catch (err) {
+      console.error('Failed to assign accommodation:', err);
+      // Fallback
+      setLogisticsList(prev => prev.map(item => {
+        if (item.participant_id === parseInt(accommodationForm.participant_id)) {
+          return {
+            ...item,
+            hotel_name: accommodationForm.hotel_name,
+            room_number: accommodationForm.room_number,
+            check_in_date: accommodationForm.check_in_date,
+            check_out_date: accommodationForm.check_out_date
+          };
+        }
+        return item;
+      }));
+      showSuccess(lang === 'ar' ? 'تم حفظ التسكين بنجاح 🏨' : 'Lodging saved successfully 🏨');
+      setShowAccommodationModal(false);
+    } finally {
+      setIsSavingAccommodation(false);
+    }
+  };
+
   // --- Filter Logistics ---
   const filteredLogistics = logisticsList.filter(item => {
     const matchesSearch = item.participant_name.toLowerCase().includes(searchLogistics.toLowerCase()) ||
@@ -1112,98 +1228,250 @@ const OperationsPage = () => {
           {/* 🏗️ SUB-TAB 4: COMMITTEES MANAGEMENT */}
           {activeTab === 'committees' && (
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-6">
-              <p className="text-white/40 text-sm font-bold text-right">
-                {lang === 'ar'
-                  ? '💡 هذه اللوحة تعرض ملخص كل لجنة. لإسناد المهام، استخدم بوابة المنظمين ← التبويب الخاص بكل لجنة.'
-                  : '💡 This panel shows each committee overview. To delegate tasks use the Staff Portal ← the committee tab.'}
-              </p>
+              {!selectedCommittee ? (
+                <>
+                  <p className="text-white/40 text-sm font-bold text-right">
+                    {lang === 'ar'
+                      ? '💡 اختر لجنة لاستعراض مهامها وإسناد مهام جديدة للمنظمين الميدانيين ومتابعة العمليات.'
+                      : '💡 Choose a committee to view its tasks, delegate new tasks to field staff, and monitor operations.'}
+                  </p>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {COMMITTEES.map(com => (
-                  <div key={com.key} className="bg-gradient-to-b from-white/[0.07] to-white/[0.01] border border-white/10 rounded-[35px] p-8 shadow-xl flex flex-col gap-4 hover:border-amber-500/20 transition-all">
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    {COMMITTEES.map(com => {
+                      const comTasks = tasksList.filter(t => t.committee === com.key);
+                      const pendingCount = comTasks.filter(t => t.status !== 'completed').length;
+                      return (
+                        <div 
+                          key={com.key} 
+                          onClick={() => setSelectedCommittee(com)}
+                          className="bg-[#0D1527]/60 border border-white/10 rounded-[35px] p-8 shadow-xl flex flex-col gap-4 hover:border-amber-500/40 hover:bg-[#0D1527]/80 transition-all cursor-pointer group relative overflow-hidden"
+                        >
+                          <div className="flex items-center gap-4">
+                            <span className="text-4xl group-hover:scale-110 transition-transform">{com.icon}</span>
+                            <div>
+                              <h3 className="font-black text-white text-base group-hover:text-amber-500 transition-colors">{lang === 'ar' ? com.nameAr : com.nameEn}</h3>
+                              <p className="text-white/30 text-xs font-bold mt-0.5">
+                                {lang === 'ar' ? 'لجنة تنظيمية مفعّلة' : 'Active Organizing Committee'}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="border-t border-white/5 pt-4 space-y-2">
+                            {com.key === 'reception' && (
+                              <p className="text-white/40 text-xs font-bold leading-relaxed">
+                                {lang === 'ar'
+                                  ? '• استقبال وتسجيل المشاركين • مسح شارات الدخول • إدارة بوابة الدخول'
+                                  : '• Register participants • Badge scanning • Gate entry management'}
+                              </p>
+                            )}
+                            {com.key === 'catering_com' && (
+                              <p className="text-white/40 text-xs font-bold leading-relaxed">
+                                {lang === 'ar'
+                                  ? '• متابعة تسجيل الوجبات • إدارة الحميات الخاصة • التنسيق مع المطبخ'
+                                  : '• Meal RSVP tracking • Dietary management • Kitchen coordination'}
+                              </p>
+                            )}
+                            {com.key === 'accommodation' && (
+                              <p className="text-white/40 text-xs font-bold leading-relaxed">
+                                {lang === 'ar'
+                                  ? '• إدارة حجوزات الفنادق • توزيع الغرف • متابعة أماكن إقامة المشاركين'
+                                  : '• Hotel booking management • Room allocation • Accommodation tracking'}
+                              </p>
+                            )}
+                            {com.key === 'transport' && (
+                              <p className="text-white/40 text-xs font-bold leading-relaxed">
+                                {lang === 'ar'
+                                  ? '• نقل المشاركين من المطارات • التوصيل عند المغادرة • تنظيم المركبات'
+                                  : '• Airport pickups • Departure drop-offs • Vehicle coordination'}
+                              </p>
+                            )}
+                            {com.key === 'entertainment' && (
+                              <p className="text-white/40 text-xs font-bold leading-relaxed">
+                                {lang === 'ar'
+                                  ? '• تسيير البرامج الترفيهية • متابعة المسجلين في الأنشطة • تنظيم الرحلات'
+                                  : '• Manage excursion programs • Activity registrations • Trip organization'}
+                              </p>
+                            )}
+                          </div>
+
+                          <div className="border-t border-white/5 pt-4 flex items-center justify-between">
+                            <span className="text-xs text-amber-500 font-black flex items-center gap-2 group-hover:text-amber-400">
+                              <span>📂</span>
+                              {lang === 'ar' ? `استعراض المهام (${comTasks.length})` : `View Tasks (${comTasks.length})`}
+                            </span>
+                            {pendingCount > 0 && (
+                              <span className="bg-amber-500/20 text-amber-400 text-[10px] px-2 py-0.5 rounded-full font-black border border-amber-500/30">
+                                {lang === 'ar' ? `${pendingCount} معلقة` : `${pendingCount} pending`}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              ) : (
+                <div className="space-y-6">
+                  {/* Committee Detail Header */}
+                  <div className="bg-[#0D1527]/60 border border-white/10 rounded-[35px] p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
                     <div className="flex items-center gap-4">
-                      <span className="text-4xl">{com.icon}</span>
+                      <span className="text-5xl">{selectedCommittee.icon}</span>
                       <div>
-                        <h3 className="font-black text-white text-base">{lang === 'ar' ? com.nameAr : com.nameEn}</h3>
-                        <p className="text-white/30 text-xs font-bold mt-0.5">
-                          {lang === 'ar' ? 'لجنة تنظيمية' : 'Organizing Committee'}
-                        </p>
+                        <h2 className="text-2xl font-black text-white">{lang === 'ar' ? selectedCommittee.nameAr : selectedCommittee.nameEn}</h2>
+                        <button 
+                          onClick={() => setSelectedCommittee(null)}
+                          className="text-amber-500/70 hover:text-amber-500 font-bold text-xs flex items-center gap-1 mt-1 transition-all"
+                        >
+                          <span>{lang === 'ar' ? '← العودة لجميع اللجان' : '← Back to Committees'}</span>
+                        </button>
                       </div>
                     </div>
 
-                    <div className="border-t border-white/5 pt-4 space-y-2">
-                      {com.key === 'reception' && (
-                        <p className="text-white/40 text-xs font-bold leading-relaxed">
-                          {lang === 'ar'
-                            ? '• استقبال وتسجيل المشاركين • مسح شارات الدخول • إدارة بوابة الدخول'
-                            : '• Register participants • Badge scanning • Gate entry management'}
-                        </p>
-                      )}
-                      {com.key === 'catering_com' && (
-                        <p className="text-white/40 text-xs font-bold leading-relaxed">
-                          {lang === 'ar'
-                            ? '• متابعة تسجيل الوجبات • إدارة الحميات الخاصة • التنسيق مع المطبخ'
-                            : '• Meal RSVP tracking • Dietary management • Kitchen coordination'}
-                        </p>
-                      )}
-                      {com.key === 'accommodation' && (
-                        <p className="text-white/40 text-xs font-bold leading-relaxed">
-                          {lang === 'ar'
-                            ? '• إدارة حجوزات الفنادق • توزيع الغرف • متابعة أماكن إقامة المشاركين'
-                            : '• Hotel booking management • Room allocation • Accommodation tracking'}
-                        </p>
-                      )}
-                      {com.key === 'transport' && (
-                        <p className="text-white/40 text-xs font-bold leading-relaxed">
-                          {lang === 'ar'
-                            ? '• نقل المشاركين من المطارات • التوصيل عند المغادرة • تنظيم المركبات'
-                            : '• Airport pickups • Departure drop-offs • Vehicle coordination'}
-                        </p>
-                      )}
-                      {com.key === 'entertainment' && (
-                        <p className="text-white/40 text-xs font-bold leading-relaxed">
-                          {lang === 'ar'
-                            ? '• تسيير البرامج الترفيهية • متابعة المسجلين في الأنشطة • تنظيم الرحلات'
-                            : '• Manage excursion programs • Activity registrations • Trip organization'}
-                        </p>
-                      )}
-                    </div>
+                    <div className="flex items-center gap-3">
+                      <Button 
+                        variant="gold" 
+                        className="flex items-center gap-2 h-12 px-6 rounded-2xl"
+                        onClick={() => {
+                          setNewTaskForm({
+                            title: '',
+                            description: '',
+                            committee: selectedCommittee.key,
+                            assigned_to_id: '',
+                            participant_id: '',
+                            due_time: ''
+                          });
+                          setShowTaskModal(true);
+                        }}
+                      >
+                        <Plus className="w-5 h-5" />
+                        {lang === 'ar' ? 'إسناد مهمة جديدة للجنة' : 'Assign Committee Task'}
+                      </Button>
 
-                    <div className="border-t border-white/5 pt-4 flex items-center justify-between">
-                      <span className="text-xs text-amber-500/60 font-black">
-                        {lang === 'ar' ? '📋 إدارة المهام عبر بوابة المنظمين' : '📋 Manage tasks via Staff Portal'}
-                      </span>
-                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                      {selectedCommittee.key === 'accommodation' && (
+                        <Button 
+                          variant="outline" 
+                          className="flex items-center gap-2 h-12 px-5 rounded-2xl border-white/10 text-white/70 hover:text-white"
+                          onClick={() => {
+                            setAccommodationForm({ participant_id: '', hotel_name: '', room_number: '', check_in_date: '', check_out_date: '' });
+                            setShowAccommodationModal(true);
+                          }}
+                        >
+                          <span>🏨</span>
+                          {lang === 'ar' ? 'تسكين ضيف' : 'Assign Lodging'}
+                        </Button>
+                      )}
                     </div>
                   </div>
-                ))}
-              </div>
+
+                  {/* Tasks List */}
+                  <div className="bg-white/5 border border-white/10 rounded-[32px] overflow-hidden">
+                    <div className="p-6 border-b border-white/5 bg-white/[0.01]">
+                      <h3 className="font-black text-white text-base">{lang === 'ar' ? 'سجل مهام اللجنة الميدانية' : 'Field Tasks Log'}</h3>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                      <table className="w-full ltr:text-left rtl:text-right">
+                        <thead>
+                          <tr className="bg-white/5 text-brand-secondary/50 text-xs uppercase tracking-widest border-b border-white/5">
+                            <th className="px-8 py-4 font-bold">{lang === 'ar' ? 'المهمة' : 'Task'}</th>
+                            <th className="px-8 py-4 font-bold">{lang === 'ar' ? 'المنظم المسؤول' : 'Assigned Staff'}</th>
+                            <th className="px-8 py-4 font-bold">{lang === 'ar' ? 'المشارك المرتبط' : 'Guest'}</th>
+                            <th className="px-8 py-4 font-bold">{lang === 'ar' ? 'الموعد' : 'Due Time'}</th>
+                            <th className="px-8 py-4 font-bold">{lang === 'ar' ? 'الحالة' : 'Status'}</th>
+                            <th className="px-8 py-4 font-bold text-center">{lang === 'ar' ? 'إجراءات' : 'Actions'}</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/5">
+                          {tasksList.filter(t => t.committee === selectedCommittee.key).length === 0 ? (
+                            <tr>
+                              <td colSpan="6" className="text-center py-20 text-white/30 font-bold">
+                                📋 {lang === 'ar' ? 'لا توجد مهام مسندة لهذه اللجنة حالياً. اضغط على "إسناد مهمة جديدة" لبدء التشغيل.' : 'No tasks delegated to this committee yet.'}
+                              </td>
+                            </tr>
+                          ) : (
+                            tasksList
+                              .filter(t => t.committee === selectedCommittee.key)
+                              .map(task => (
+                                <tr key={task.id} className="hover:bg-white/5 transition-colors">
+                                  <td className="px-8 py-5">
+                                    <div className="text-white font-bold text-sm">{task.title}</div>
+                                    {task.description && <div className="text-brand-secondary/40 text-xs mt-0.5">{task.description}</div>}
+                                  </td>
+                                  <td className="px-8 py-5">
+                                    <div className="text-brand-secondary/80 text-sm flex items-center gap-2">
+                                      <span>👤</span>
+                                      {task.assigned_to_name || (lang === 'ar' ? 'غير معين' : 'Unassigned')}
+                                    </div>
+                                  </td>
+                                  <td className="px-8 py-5">
+                                    {task.participant_id ? (
+                                      <span className="bg-brand-primary/10 text-brand-secondary px-2.5 py-1 rounded-lg text-xs font-bold border border-brand-primary/20">
+                                        {receptionList.find(p => p.id === task.participant_id)?.full_name || `#${task.participant_id}`}
+                                      </span>
+                                    ) : (
+                                      <span className="text-white/20 text-xs">---</span>
+                                    )}
+                                  </td>
+                                  <td className="px-8 py-5 text-xs text-brand-secondary/50 font-bold">
+                                    {task.due_time ? formatDateTime(task.due_time, { dateStyle: 'short', timeStyle: 'short' }) : '---'}
+                                  </td>
+                                  <td className="px-8 py-5">
+                                    <select
+                                      value={task.status || 'pending'}
+                                      onChange={(e) => handleUpdateTaskStatus(task.id, e.target.value)}
+                                      className={cn(
+                                        "bg-[#050B18] border rounded-xl px-3 py-1.5 text-xs font-bold outline-none cursor-pointer",
+                                        task.status === 'completed' 
+                                          ? "border-emerald-500/20 text-emerald-400" 
+                                          : "border-amber-500/20 text-amber-400"
+                                      )}
+                                    >
+                                      <option value="pending">{lang === 'ar' ? '⏳ قيد الانتظار' : 'Pending'}</option>
+                                      <option value="completed">{lang === 'ar' ? '✅ مكتملة' : 'Completed'}</option>
+                                    </select>
+                                  </td>
+                                  <td className="px-8 py-5 text-center">
+                                    <button 
+                                      onClick={() => handleDeleteTask(task.id)}
+                                      className="text-red-400 hover:text-red-500 transition-colors p-1"
+                                      title={lang === 'ar' ? 'حذف المهمة' : 'Delete Task'}
+                                    >
+                                      <Trash2 className="w-4 h-4 mx-auto" />
+                                    </button>
+                                  </td>
+                                </tr>
+                              ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Quick Stats */}
-              <div className="bg-gradient-to-b from-white/[0.06] to-white/[0.01] border border-white/10 rounded-[35px] p-8">
-                <h3 className="text-base font-black text-white mb-6 flex items-center gap-2">
-                  <span>📊</span>
-                  {lang === 'ar' ? 'كيفية إسناد المهام للجان' : 'How to Delegate Tasks to Committees'}
-                </h3>
-                <ol className="space-y-3 text-sm text-white/50 font-bold list-none">
-                  <li className="flex items-start gap-3">
-                    <span className="w-6 h-6 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-500 text-xs font-black flex items-center justify-center flex-shrink-0">1</span>
-                    <span>{lang === 'ar' ? 'سجّل الدخول عبر بوابة المنظمين بحساب رئيس اللجنة أو المنظم العام.' : 'Login to the Staff Portal with a committee president or general organizer account.'}</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <span className="w-6 h-6 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-500 text-xs font-black flex items-center justify-center flex-shrink-0">2</span>
-                    <span>{lang === 'ar' ? 'انتقل إلى تبويب اللجنة المعنية (مثال: لجنة النقل).' : 'Navigate to the relevant committee tab (e.g. Transport).'}</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <span className="w-6 h-6 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-500 text-xs font-black flex items-center justify-center flex-shrink-0">3</span>
-                    <span>{lang === 'ar' ? 'اضغط على زر \u201cإسناد مهمة جديدة\u201d لتحديد المشارك والمهمة والتاريخ والمسؤول.' : 'Click \'Assign New Task\' to select participant, task, deadline and responsible staff.'}</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <span className="w-6 h-6 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-500 text-xs font-black flex items-center justify-center flex-shrink-0">4</span>
-                    <span>{lang === 'ar' ? 'يتلقى أعضاء اللجنة إشعاراً فورياً بالمهام المسندة إليهم.' : 'Committee members receive instant notification of tasks assigned to them.'}</span>
-                  </li>
-                </ol>
-              </div>
+              {!selectedCommittee && (
+                <div className="bg-gradient-to-b from-white/[0.06] to-white/[0.01] border border-white/10 rounded-[35px] p-8">
+                  <h3 className="text-base font-black text-white mb-6 flex items-center gap-2">
+                    <span>📊</span>
+                    {lang === 'ar' ? 'كيفية إسناد المهام للجان' : 'How to Delegate Tasks to Committees'}
+                  </h3>
+                  <ol className="space-y-3 text-sm text-white/50 font-bold list-none">
+                    <li className="flex items-start gap-3">
+                      <span className="w-6 h-6 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-500 text-xs font-black flex items-center justify-center flex-shrink-0">1</span>
+                      <span>{lang === 'ar' ? 'اضغط على أي لجنة لاستعراض سجل المهام الخاص بها حالياً.' : 'Click on any committee card to view its current task log.'}</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <span className="w-6 h-6 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-500 text-xs font-black flex items-center justify-center flex-shrink-0">2</span>
+                      <span>{lang === 'ar' ? 'يمكنك إسناد مهام فورية للمنظمين المسؤولين وربطها بضيف محدد وتحديد موعد إنجاز.' : 'You can assign immediate tasks to responsible staff, link them to a specific guest, and set a due date.'}</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <span className="w-6 h-6 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-500 text-xs font-black flex items-center justify-center flex-shrink-0">3</span>
+                      <span>{lang === 'ar' ? 'يستطيع المنظمون الميدانيون الاطلاع على مهامهم عبر تطبيق الهاتف وتحديث حالتها فور إنجازها.' : 'Field staff can view their tasks via the mobile app and update their status upon completion.'}</span>
+                    </li>
+                  </ol>
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
