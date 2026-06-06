@@ -521,7 +521,7 @@ async def dispatch_logistics(
     participant_id: int, 
     data: LogisticsDispatchUpdate, 
     db: AsyncSession = Depends(get_db),
-    user: User = Depends(get_current_active_user)
+    identity = Depends(get_current_user_or_participant)
 ):
     stmt = select(LogisticsRegistry).filter(LogisticsRegistry.participant_id == participant_id)
     res = await db.execute(stmt)
@@ -529,7 +529,17 @@ async def dispatch_logistics(
     if not registry:
         raise HTTPException(status_code=404, detail="Logistics registry not found for participant")
         
-    await verify_event_access(registry.event_id, db, user)
+    if identity["type"] == "user":
+        user = identity["obj"]
+        await verify_event_access(registry.event_id, db, user)
+    else:
+        participant = identity["obj"]
+        if participant.event_id != registry.event_id:
+            raise HTTPException(status_code=403, detail="Not authorized for this event")
+        role = (participant.role or "").lower()
+        keywords = ["نقل", "لوجست", "سائق", "transport", "logistics", "driver", "organizer", "منظم"]
+        if not any(kw in role for kw in keywords) and "عام" not in role:
+            raise HTTPException(status_code=403, detail="Not authorized for logistics")
     
     if data.driver_name is not None:
         registry.driver_name = data.driver_name
@@ -608,9 +618,19 @@ async def dispatch_logistics(
 async def list_event_logistics(
     event_id: int, 
     db: AsyncSession = Depends(get_db),
-    user: User = Depends(get_current_active_user)
+    identity = Depends(get_current_user_or_participant)
 ):
-    await verify_event_access(event_id, db, user)
+    if identity["type"] == "user":
+        user = identity["obj"]
+        await verify_event_access(event_id, db, user)
+    else:
+        participant = identity["obj"]
+        if participant.event_id != event_id:
+            raise HTTPException(status_code=403, detail="Not authorized for this event")
+        role = (participant.role or "").lower()
+        keywords = ["نقل", "لوجست", "سائق", "transport", "logistics", "driver", "organizer", "منظم"]
+        if not any(kw in role for kw in keywords) and "عام" not in role:
+            raise HTTPException(status_code=403, detail="Not authorized for logistics")
     
     stmt = select(LogisticsRegistry, Participant).join(
         Participant, LogisticsRegistry.participant_id == Participant.id
