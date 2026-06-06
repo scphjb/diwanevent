@@ -205,6 +205,7 @@ const ParticipantPortal = () => {
   const [detailedTask, setDetailedTask] = useState(null);
   const [isApologizing, setIsApologizing] = useState(false);
   const [apologyReasonText, setApologyReasonText] = useState('');
+  const [selectedReassigneeId, setSelectedReassigneeId] = useState('');
   const [newTaskForm, setNewTaskForm] = useState({
     title: '',
     description: '',
@@ -1608,6 +1609,23 @@ const ParticipantPortal = () => {
     }
   };
 
+  const handleReassignTask = async (taskId, assignedToId) => {
+    try {
+      const targetParticipant = receptionList.find(p => p.id === parseInt(assignedToId));
+      const assignedToName = targetParticipant ? targetParticipant.full_name : '';
+      
+      const updated = await interactionService.reassignTask(taskId, assignedToId, assignedToName);
+      toast.success(lang === 'ar' ? 'تم إسناد المهمة للعضو الجديد' : 'Task successfully reassigned');
+      
+      setDetailedTask(updated);
+      setSelectedReassigneeId('');
+      fetchCommitteeTasks();
+    } catch (err) {
+      console.error('Failed to reassign task:', err);
+      toast.error(lang === 'ar' ? 'فشل إعادة إسناد المهمة' : 'Failed to reassign task');
+    }
+  };
+
   const handleDeleteTask = async (taskId) => {
     if (window.confirm(lang === 'ar' ? 'هل أنت متأكد من حذف هذه المهمة؟' : 'Are you sure you want to delete this task?')) {
       try {
@@ -2108,6 +2126,15 @@ const ParticipantPortal = () => {
 
   const myLeaderboardEntry = (leaderboard || []).find(entry => entry.id === participant.id);
   const myPoints = myLeaderboardEntry ? myLeaderboardEntry.points : 0;
+
+  const roleLower = (participant?.role || '').toLowerCase();
+  const isGeneral = !participant?.role || 
+    roleLower === 'organizer' || 
+    roleLower === 'منظم' || 
+    (roleLower.includes('عام') && !roleLower.includes('طعام')) || 
+    roleLower.includes('general') ||
+    localStorage.getItem('diwan_force_organizer') === 'true';
+  const isPresident = roleLower.includes('رئيس') || roleLower.includes('president') || isGeneral;
 
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(participant?.qr_code || '')}`;
 
@@ -5011,6 +5038,65 @@ const ParticipantPortal = () => {
                             </div>
                           )}
                         </div>
+
+                        {isPresident && detailedTask.status !== 'completed' && detailedTask.status !== 'cancelled' && (
+                          <div className="p-4 bg-amber-500/5 rounded-2xl border border-amber-500/10 mt-2 space-y-3">
+                            <span className="text-[10px] text-amber-500 font-bold block text-right">
+                              {lang === 'ar' ? '👑 تفويض وإسناد المهمة لعضو آخر' : '👑 Reassign Task to Another Member'}
+                            </span>
+                            <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                              <select
+                                value={selectedReassigneeId}
+                                onChange={(e) => setSelectedReassigneeId(e.target.value)}
+                                className="flex-1 bg-[#050B18] border border-white/10 rounded-xl h-10 px-3 text-xs text-white font-bold outline-none focus:border-amber-500/50 transition-all text-right"
+                              >
+                                <option value="">{lang === 'ar' ? '--- حدد العضو المسؤول ---' : '--- Select Member ---'}</option>
+                                {receptionList
+                                  .filter(p => {
+                                    const role = (p.role || '').toLowerCase();
+                                    const normalize = (str) => {
+                                      if (!str) return '';
+                                      return str.replace(/[أإآأ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').toLowerCase();
+                                    };
+                                    const normRole = normalize(role);
+                                    const committeeKey = detailedTask.committee;
+                                    
+                                    if (committeeKey === 'reception') {
+                                      return (normRole.includes('استقبل') || normRole.includes('تسجيل') || normRole.includes('reception')) && !normRole.includes('رئيس') && !normRole.includes('president');
+                                    }
+                                    if (committeeKey === 'catering') {
+                                      return (normRole.includes('اطعام') || normRole.includes('ضيافه') || normRole.includes('catering') || normRole.includes('food')) && !normRole.includes('رئيس') && !normRole.includes('president');
+                                    }
+                                    if (committeeKey === 'accommodation') {
+                                      return (normRole.includes('ايواء') || normRole.includes('تسكين') || normRole.includes('accommodation') || normRole.includes('hotel') || normRole.includes('lodging')) && !normRole.includes('رئيس') && !normRole.includes('president');
+                                    }
+                                    if (committeeKey === 'logistics' || committeeKey === 'transport') {
+                                      return (normRole.includes('نقل') || normRole.includes('لوجست') || normRole.includes('سائق') || normRole.includes('transport') || normRole.includes('driver') || normRole.includes('logistics')) && !normRole.includes('رئيس') && !normRole.includes('president');
+                                    }
+                                    if (committeeKey === 'entertainment') {
+                                      return (normRole.includes('ترفيه') || normRole.includes('نشاط') || normRole.includes('انشطه') || normRole.includes('excursion') || normRole.includes('activity')) && !normRole.includes('رئيس') && !normRole.includes('president');
+                                    }
+                                    return false;
+                                  })
+                                  .map(p => (
+                                    <option key={p.id} value={p.id}>{p.full_name} ({p.role})</option>
+                                  ))}
+                              </select>
+                              <button
+                                onClick={() => {
+                                  if (!selectedReassigneeId) {
+                                    toast.error(lang === 'ar' ? 'يرجى تحديد العضو أولاً' : 'Please select a member first');
+                                    return;
+                                  }
+                                  handleReassignTask(detailedTask.id, selectedReassigneeId);
+                                }}
+                                className="px-4 h-10 rounded-xl bg-amber-500 hover:bg-amber-400 text-brand-dark text-xs font-black transition-all shadow-md shadow-amber-500/10"
+                              >
+                                {lang === 'ar' ? 'إسناد وتكليف' : 'Assign'}
+                              </button>
+                            </div>
+                          </div>
+                        )}
 
                         {detailedTask.status !== 'completed' && detailedTask.status !== 'cancelled' && (
                           <div className="flex flex-col gap-2 pt-4 border-t border-white/5 mt-4">

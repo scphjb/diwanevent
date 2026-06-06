@@ -1346,6 +1346,10 @@ class TaskStatusUpdate(BaseModel):
     status: str
     apology_reason: Optional[str] = None
 
+class TaskReassign(BaseModel):
+    assigned_to_id: int
+    assigned_to_name: Optional[str] = ""
+
 @router.get("/tasks/{event_id}")
 async def list_committee_tasks(
     event_id: int,
@@ -1642,3 +1646,70 @@ async def delete_committee_task(
     await db.delete(task)
     await db.commit()
     return {"status": "success", "message": "Task deleted"}
+
+@router.patch("/tasks/{task_id}/reassign")
+async def reassign_committee_task(
+    task_id: int,
+    req: TaskReassign,
+    db: AsyncSession = Depends(get_db),
+    identity = Depends(get_current_user_or_participant)
+):
+    task = await db.get(CommitteeTask, task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    if identity["type"] == "participant":
+        participant = identity["obj"]
+        if participant.event_id != task.event_id:
+            raise HTTPException(status_code=403, detail="Not authorized for this event")
+        role_lower = (participant.role or "").lower()
+        is_allowed = any(x in role_lower for x in ("منظم", "رئيس", "organizer", "president"))
+        if not is_allowed:
+            raise HTTPException(status_code=403, detail="Only committee presidents or general organizers can reassign tasks")
+
+    new_assignee = await db.get(Participant, req.assigned_to_id)
+    if not new_assignee:
+        raise HTTPException(status_code=404, detail="Assignee participant not found")
+    if new_assignee.event_id != task.event_id:
+        raise HTTPException(status_code=400, detail="Assignee is not registered for this event")
+
+    task.assigned_to_id = req.assigned_to_id
+    task.assigned_to_name = req.assigned_to_name or new_assignee.full_name
+    task.status = "pending"
+    
+    await db.commit()
+    await db.refresh(task)
+
+    try:
+        from app.routers.notifications import send_web_push_notification_to_target
+        committee_names = {
+            'reception': 'الاستقبال والتوجيه',
+            'catering': 'الإطعام والضيافة',
+            'accommodation': 'الإيواء والتسكين',
+            'logistics': 'النقل والخدمات',
+            'entertainment': 'الأنشطة والترفيه'
+        }
+        c_name = committee_names.get(task.committee, task.committee)
+        await send_web_push_notification_to_target(
+            db=db,
+            title="📋 مهمة جديدة مسندة إليك",
+            body=f"تم إسناد مهمة في لجنة {c_name}: {task.title}",
+            url=f"/portal?section=organizer&task_id={task.id}",
+            participant_ids=[task.assigned_to_id],
+            event_id=task.event_id
+        )
+    except Exception as e:
+        logger.error(f"Failed to notify reassigned task assignee: {e}")
+
+    return {
+        "id": task.id,
+        "event_id": task.event_id,
+        "committee": task.committee,
+        "title": task.title,
+        "description": task.description,
+        "participant_id": task.participant_id,
+        "assigned_to_id": task.assigned_to_id,
+        "assigned_to_name": task.assigned_to_name,
+        "status": task.status,
+        "due_time": task.due_time.isoformat() if task.due_time else None
+    }

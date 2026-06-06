@@ -215,6 +215,14 @@ const interactionService = {
     return res.data;
   },
 
+  reassignTask: async (taskId, assignedToId, assignedToName = "") => {
+    const res = await api.patch(`interaction/tasks/${taskId}/reassign`, {
+      assigned_to_id: assignedToId,
+      assigned_to_name: assignedToName
+    });
+    return res.data;
+  },
+
   assignActivityShuttle: async (shuttleData) => {
     const res = await api.patch('interaction/activities/assign-shuttle', shuttleData);
     return res.data;
