@@ -2,6 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query, File, UploadFile
 import shutil
 import uuid
 import os
+import logging
+
+logger = logging.getLogger("diwan.interaction")
+
 from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import func, select, update, delete
@@ -1562,8 +1566,6 @@ async def update_committee_task_status(
         # Send notification to committee presidents
         try:
             from app.routers.notifications import send_web_push_notification_to_target
-            from sqlalchemy import select
-            from app.models.participant import Participant
             committee_keywords = {
                 'reception': ['استقبال', 'تسجيل', 'reception'],
                 'catering': ['اطعام', 'ضيافه', 'catering', 'food'],
@@ -1595,6 +1597,7 @@ async def update_committee_task_status(
         except Exception as e:
             logger.error(f"Failed to notify presidents of apology: {e}")
             
+        await db.refresh(task)
         return task
 
     task.status = req.status
@@ -1692,6 +1695,7 @@ async def update_committee_task_status(
         except Exception as e:
             logger.error(f"Failed to send task completion notifications: {e}")
 
+    await db.refresh(task)
     return task
 
 @router.delete("/tasks/{task_id}")
