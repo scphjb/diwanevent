@@ -554,9 +554,16 @@ async def dispatch_logistics(
         }
     })
     
-    # Send push/db notification to the participant
+    # Send push/db notification to the participant and presidents
     try:
         from app.routers.notifications import send_web_push_notification_to_target
+        from app.models.participant import Participant
+        # Get participant (guest) name
+        p_stmt = select(Participant).filter(Participant.id == participant_id)
+        p_res = await db.execute(p_stmt)
+        part = p_res.scalars().first()
+        p_name = part.full_name if part else "مشارك"
+
         msg = f"تم تحديث حالة النقل الخاصة بك إلى: {registry.status}."
         if registry.driver_name:
             msg = f"تم تعيين المرافق {registry.driver_name} ({registry.driver_phone or ''}). السيارة: {registry.vehicle_details or ''}."
@@ -568,6 +575,26 @@ async def dispatch_logistics(
             participant_ids=[participant_id],
             event_id=registry.event_id
         )
+
+        # Notify committee presidents of logistics (transport)
+        president_stmt = select(Participant).filter(
+            Participant.event_id == registry.event_id,
+            (Participant.role.like("%رئيس%") | Participant.role.like("%president%") | Participant.role.like("%organizer%") | Participant.role.like("%منظم%"))
+        )
+        pres_res = await db.execute(president_stmt)
+        presidents = pres_res.scalars().all()
+        pres_ids = [p.id for p in presidents if p.id != participant_id]
+
+        if pres_ids:
+            pres_msg = f"تم تأمين نقل الضيف {p_name} مع السائق {registry.driver_name or '---'}. الحالة: {registry.status}"
+            await send_web_push_notification_to_target(
+                db=db,
+                title="تحديث ميداني في حالة النقل 🚗",
+                body=pres_msg,
+                url="/dashboard/logistics",
+                participant_ids=pres_ids,
+                event_id=registry.event_id
+            )
     except Exception as e:
         logger.error(f"Failed to send push notifications for logistics dispatch: {e}")
         

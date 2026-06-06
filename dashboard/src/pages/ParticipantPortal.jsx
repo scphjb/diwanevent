@@ -4187,22 +4187,24 @@ const ParticipantPortal = () => {
                                   </a>
 
                                   {/* Dispatch Button */}
-                                  <button
-                                    onClick={() => {
-                                      setSelectedStaffParticipant(item);
-                                      setStaffDispatchForm({
-                                        driver_name: item.driver_name || '',
-                                        driver_phone: item.driver_phone || '',
-                                        vehicle_details: item.vehicle_details || '',
-                                        status: item.status || 'pending'
-                                      });
-                                      setIsStaffDispatchModalOpen(true);
-                                    }}
-                                    className="px-4 py-3 bg-amber-500 hover:bg-amber-600 text-brand-dark rounded-2xl text-xs font-black transition-all flex items-center gap-1.5"
-                                  >
-                                    <span>🚗</span>
-                                    {item.driver_name ? (lang === 'ar' ? 'تعديل المرافق' : 'Edit Companion') : (lang === 'ar' ? 'تخصيص مرافق' : 'Assign Companion')}
-                                  </button>
+                                  {(isPresident || tasksList.some(t => t.participant_id === item.participant_id && t.assigned_to_id === participant.id && t.status !== 'cancelled')) && (
+                                    <button
+                                      onClick={() => {
+                                        setSelectedStaffParticipant(item);
+                                        setStaffDispatchForm({
+                                          driver_name: item.driver_name || '',
+                                          driver_phone: item.driver_phone || '',
+                                          vehicle_details: item.vehicle_details || '',
+                                          status: item.status || 'pending'
+                                        });
+                                        setIsStaffDispatchModalOpen(true);
+                                      }}
+                                      className="px-4 py-3 bg-amber-500 hover:bg-amber-600 text-brand-dark rounded-2xl text-xs font-black transition-all flex items-center gap-1.5"
+                                    >
+                                      <span>🚗</span>
+                                      {item.driver_name ? (lang === 'ar' ? 'تعديل المرافق' : 'Edit Companion') : (lang === 'ar' ? 'تخصيص مرافق' : 'Assign Companion')}
+                                    </button>
+                                  )}
                                 </div>
                               </div>
                             </div>
@@ -4720,6 +4722,33 @@ const ParticipantPortal = () => {
                               <option value="completed">{lang === 'ar' ? '✅ تم التوصيل بنجاح' : 'Completed'}</option>
                             </select>
                           </div>
+
+                          {/* Share with Driver Button */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const driverPhone = staffDispatchForm.driver_phone.replace(/\+/g, '').replace(/[^0-9]/g, '');
+                              if (!driverPhone) {
+                                toast.error(lang === 'ar' ? 'يرجى إدخال رقم هاتف السائق أولاً' : 'Please enter the driver phone number first');
+                                return;
+                              }
+                              const guestName = selectedStaffParticipant.participant_name;
+                              const hotel = selectedStaffParticipant.hotel_name || '---';
+                              const flight = selectedStaffParticipant.flight_number || '---';
+                              const arrivalTime = selectedStaffParticipant.arrival_time ? new Date(selectedStaffParticipant.arrival_time).toLocaleString() : '---';
+                              const location = selectedStaffParticipant.arrival_location || '---';
+                              
+                              const text = lang === 'ar'
+                                ? `أهلاً بك، تفاصيل استقبال الضيف:\n\n👤 اسم الضيف: ${guestName}\n✈️ رقم الرحلة: ${flight}\n⏰ موعد الوصول: ${arrivalTime}\n📍 موقع اللقاء: ${location}\n🏨 وجهة التوصيل (الفندق): ${hotel}`
+                                : `Hello, here are the guest arrival details:\n\n👤 Guest Name: ${guestName}\n✈️ Flight: ${flight}\n⏰ Arrival Time: ${arrivalTime}\n📍 Pickup Location: ${location}\n🏨 Destination Hotel: ${hotel}`;
+                                
+                              window.open(`https://wa.me/${driverPhone}?text=${encodeURIComponent(text)}`, '_blank');
+                            }}
+                            className="w-full py-3.5 px-4 rounded-2xl bg-[#25D366]/10 border border-[#25D366]/20 hover:bg-[#25D366]/20 text-[#25D366] text-xs font-black transition-all flex items-center justify-center gap-2 mt-4"
+                          >
+                            <span>💬</span>
+                            {lang === 'ar' ? 'مشاركة تفاصيل الرحلة مع السائق عبر واتساب' : 'Share Flight Details with Driver via WhatsApp'}
+                          </button>
 
                         {/* Dispatch Save Button */}
                         <Button
