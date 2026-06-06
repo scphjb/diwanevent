@@ -247,6 +247,22 @@ const interactionService = {
     const res = await api.delete(`interaction/activities/${activityId}`);
     return res.data;
   },
+
+  // Drivers Registry
+  listDrivers: async (eventId) => {
+    const res = await api.get(`interaction/drivers/event/${eventId}`);
+    return res.data;
+  },
+
+  createDriver: async (driverData) => {
+    const res = await api.post('interaction/drivers', driverData);
+    return res.data;
+  },
+
+  deleteDriver: async (driverId) => {
+    const res = await api.delete(`interaction/drivers/${driverId}`);
+    return res.data;
+  },
 };
 
 export default interactionService;

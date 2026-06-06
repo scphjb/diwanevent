@@ -1784,3 +1784,83 @@ async def reassign_committee_task(
         "status": task.status,
         "due_time": task.due_time.isoformat() if task.due_time else None
     }
+
+# ── DRIVERS REGISTRY ENDPOINTS ──
+
+from pydantic import BaseModel
+from typing import Optional, List
+
+class EventDriverCreate(BaseModel):
+    event_id: int
+    name: str
+    phone: str
+    vehicle_details: Optional[str] = None
+
+@router.get("/drivers/event/{event_id}")
+async def list_event_drivers(
+    event_id: int,
+    db: AsyncSession = Depends(get_db),
+    identity = Depends(get_current_user_or_participant)
+):
+    if identity["type"] == "participant":
+        participant = identity["obj"]
+        if participant.event_id != event_id:
+            raise HTTPException(status_code=403, detail="Not authorized for this event")
+            
+    from app.models.others import EventDriver
+    stmt = select(EventDriver).filter(EventDriver.event_id == event_id, EventDriver.is_active == True)
+    res = await db.execute(stmt)
+    drivers = res.scalars().all()
+    return drivers
+
+@router.post("/drivers")
+async def create_event_driver(
+    req: EventDriverCreate,
+    db: AsyncSession = Depends(get_db),
+    identity = Depends(get_current_user_or_participant)
+):
+    if identity["type"] == "participant":
+        participant = identity["obj"]
+        if participant.event_id != req.event_id:
+            raise HTTPException(status_code=403, detail="Not authorized")
+        role_lower = (participant.role or "").lower()
+        is_allowed = any(x in role_lower for x in ("منظم", "رئيس", "organizer", "president"))
+        if not is_allowed:
+            raise HTTPException(status_code=403, detail="Only organizers can add drivers")
+            
+    from app.models.others import EventDriver
+    driver = EventDriver(
+        event_id=req.event_id,
+        name=req.name,
+        phone=req.phone,
+        vehicle_details=req.vehicle_details,
+        is_active=True
+    )
+    db.add(driver)
+    await db.commit()
+    await db.refresh(driver)
+    return driver
+
+@router.delete("/drivers/{driver_id}")
+async def delete_event_driver(
+    driver_id: int,
+    db: AsyncSession = Depends(get_db),
+    identity = Depends(get_current_user_or_participant)
+):
+    from app.models.others import EventDriver
+    driver = await db.get(EventDriver, driver_id)
+    if not driver:
+        raise HTTPException(status_code=404, detail="Driver not found")
+        
+    if identity["type"] == "participant":
+        participant = identity["obj"]
+        if participant.event_id != driver.event_id:
+            raise HTTPException(status_code=403, detail="Not authorized")
+        role_lower = (participant.role or "").lower()
+        is_allowed = any(x in role_lower for x in ("منظم", "رئيس", "organizer", "president"))
+        if not is_allowed:
+            raise HTTPException(status_code=403, detail="Only organizers can delete drivers")
+            
+    driver.is_active = False
+    await db.commit()
+    return {"status": "success", "message": "Driver removed"}

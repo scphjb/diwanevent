@@ -192,6 +192,14 @@ const ParticipantPortal = () => {
     status: 'pending'
   });
   const [isSavingStaffDispatch, setIsSavingStaffDispatch] = useState(false);
+  const [driversList, setDriversList] = useState([]);
+  const [isAddingNewDriver, setIsAddingNewDriver] = useState(false);
+  const [newDriverForm, setNewDriverForm] = useState({
+    name: '',
+    phone: '',
+    vehicle_details: ''
+  });
+  const [isSavingNewDriver, setIsSavingNewDriver] = useState(false);
   const [selectedActivityForList, setSelectedActivityForList] = useState(null);
   const [activityRegistrationsList, setActivityRegistrationsList] = useState([]);
   const [isActivityRegistrationsOpen, setIsActivityRegistrationsOpen] = useState(false);
@@ -1383,6 +1391,7 @@ const ParticipantPortal = () => {
       fetchReceptionParticipants();
       fetchCommitteeTasks();
       fetchStaffCatering();
+      fetchDrivers();
     }
   }, [activeTab]);
 
@@ -1474,6 +1483,15 @@ const ParticipantPortal = () => {
       console.error('Failed to fetch event catering for staff:', err);
     } finally {
       setIsLoadingStaffCatering(false);
+    }
+  };
+
+  const fetchDrivers = async () => {
+    try {
+      const data = await interactionService.listDrivers(eventId);
+      setDriversList(data || []);
+    } catch (err) {
+      console.error('Failed to fetch event drivers:', err);
     }
   };
 
@@ -1637,6 +1655,33 @@ const ParticipantPortal = () => {
         toast.error(lang === 'ar' ? 'فشل حذف المهمة' : 'Failed to delete task');
       }
     }
+  };
+
+  const getDriverConflictWarning = () => {
+    if (!selectedStaffParticipant) return null;
+    const currentPhone = staffDispatchForm.driver_phone.trim();
+    if (!currentPhone) return null;
+    
+    const currentGuestId = selectedStaffParticipant.participant_id;
+    const currentArrivalTime = selectedStaffParticipant.arrival_time ? new Date(selectedStaffParticipant.arrival_time) : null;
+    if (!currentArrivalTime) return null;
+    
+    const conflict = staffLogisticsList.find(item => {
+      if (item.participant_id === currentGuestId) return false;
+      if (!item.driver_phone || item.driver_phone.trim() !== currentPhone) return false;
+      if (!item.arrival_time) return false;
+      
+      const otherTime = new Date(item.arrival_time);
+      const diffHours = Math.abs(currentArrivalTime - otherTime) / (1000 * 60 * 60);
+      return diffHours < 2;
+    });
+    
+    if (conflict) {
+      return lang === 'ar'
+        ? `⚠️ السائق مخصص للضيف (${conflict.participant_name}) بوقت وصول متقارب (${new Date(conflict.arrival_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})!`
+        : `⚠️ Driver is already assigned to guest (${conflict.participant_name}) with close arrival time (${new Date(conflict.arrival_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})!`;
+    }
+    return null;
   };
 
   const handleSaveStaffDispatch = async (e) => {
@@ -4671,6 +4716,131 @@ const ParticipantPortal = () => {
                         </p>
 
                         <form onSubmit={handleSaveStaffDispatch} className="space-y-4">
+                          {/* Predefined Driver Registry Select */}
+                          <div className="space-y-2">
+                            <label className="text-xs font-black text-amber-500 block">
+                              {lang === 'ar' ? '🚗 اختر سائقاً من السجل المعتمد' : '🚗 Select Predefined Driver'}
+                            </label>
+                            <select
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                if (val === 'manual') {
+                                  setStaffDispatchForm({
+                                    ...staffDispatchForm,
+                                    driver_name: '',
+                                    driver_phone: '',
+                                    vehicle_details: ''
+                                  });
+                                } else {
+                                  const d = driversList.find(x => x.id === parseInt(val));
+                                  if (d) {
+                                    setStaffDispatchForm({
+                                      ...staffDispatchForm,
+                                      driver_name: d.name,
+                                      driver_phone: d.phone,
+                                      vehicle_details: d.vehicle_details || ''
+                                    });
+                                  }
+                                }
+                              }}
+                              className="w-full bg-[#050B18] border border-white/10 rounded-2xl h-14 px-4 text-white font-bold outline-none focus:border-amber-500/50 transition-all text-right"
+                              dir="rtl"
+                            >
+                              <option value="manual">{lang === 'ar' ? '✍️ إدخال يدوي حر...' : '✍️ Manual Custom Entry...'}</option>
+                              {driversList.map(d => (
+                                <option key={d.id} value={d.id}>
+                                  👤 {d.name} ({d.phone}) {d.vehicle_details ? `[${d.vehicle_details}]` : ''}
+                                </option>
+                              ))}
+                            </select>
+                            
+                            {/* Driver conflict alert */}
+                            {getDriverConflictWarning() && (
+                              <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-400 rounded-2xl text-xs font-black text-right mt-2">
+                                {getDriverConflictWarning()}
+                              </div>
+                            )}
+
+                            {/* Organizer On-The-Fly Driver Manager */}
+                            {(isPresident || roleLower.includes('رئيس') || roleLower.includes('منظم')) && (
+                              <div className="border-t border-white/5 pt-2 mt-1">
+                                {!isAddingNewDriver ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => setIsAddingNewDriver(true)}
+                                    className="text-[11px] font-black text-amber-500/80 hover:text-amber-400 flex items-center gap-1"
+                                  >
+                                    ➕ {lang === 'ar' ? 'إضافة سائق جديد إلى السجل المعتمد للفعالية' : 'Add New Driver to Event Registry'}
+                                  </button>
+                                ) : (
+                                  <div className="bg-white/5 p-3 rounded-2xl border border-white/5 space-y-2 mt-2 text-right" dir="rtl">
+                                    <div className="flex justify-between items-center mb-1">
+                                      <span className="text-[10px] font-black text-amber-500">{lang === 'ar' ? 'إضافة سائق جديد للسجل' : 'Add Driver to Registry'}</span>
+                                      <button
+                                        type="button"
+                                        onClick={() => setIsAddingNewDriver(false)}
+                                        className="text-white/40 hover:text-white text-[10px] font-black"
+                                      >
+                                        {lang === 'ar' ? 'إلغاء' : 'Cancel'}
+                                      </button>
+                                    </div>
+                                    
+                                    <input
+                                      value={newDriverForm.name}
+                                      onChange={(e) => setNewDriverForm({ ...newDriverForm, name: e.target.value })}
+                                      placeholder={lang === 'ar' ? 'اسم السائق' : 'Driver Name'}
+                                      className="w-full bg-[#050B18] border border-white/10 rounded-xl h-10 px-3 text-xs text-white text-right"
+                                      dir="rtl"
+                                    />
+                                    <input
+                                      value={newDriverForm.phone}
+                                      onChange={(e) => setNewDriverForm({ ...newDriverForm, phone: e.target.value })}
+                                      placeholder={lang === 'ar' ? 'رقم الهاتف' : 'Phone Number'}
+                                      className="w-full bg-[#050B18] border border-white/10 rounded-xl h-10 px-3 text-xs text-white text-right"
+                                      dir="rtl"
+                                    />
+                                    <input
+                                      value={newDriverForm.vehicle_details}
+                                      onChange={(e) => setNewDriverForm({ ...newDriverForm, vehicle_details: e.target.value })}
+                                      placeholder={lang === 'ar' ? 'تفاصيل ولون ورقم السيارة' : 'Vehicle Make, Model & Plate'}
+                                      className="w-full bg-[#050B18] border border-white/10 rounded-xl h-10 px-3 text-xs text-white text-right"
+                                      dir="rtl"
+                                    />
+                                    
+                                    <button
+                                      type="button"
+                                      disabled={isSavingNewDriver || !newDriverForm.name || !newDriverForm.phone}
+                                      onClick={async () => {
+                                        setIsSavingNewDriver(true);
+                                        try {
+                                          const newD = await interactionService.createDriver({
+                                            event_id: eventId,
+                                            name: newDriverForm.name,
+                                            phone: newDriverForm.phone,
+                                            vehicle_details: newDriverForm.vehicle_details
+                                          });
+                                          toast.success(lang === 'ar' ? 'تمت إضافة السائق للسجل بنجاح! 🚗' : 'Driver added successfully! 🚗');
+                                          setDriversList(prev => [...prev, newD]);
+                                          setIsAddingNewDriver(false);
+                                          setNewDriverForm({ name: '', phone: '', vehicle_details: '' });
+                                        } catch (err) {
+                                          console.error('Failed to save driver:', err);
+                                          toast.error(lang === 'ar' ? 'فشل حفظ السائق' : 'Failed to save driver');
+                                        } finally {
+                                          setIsSavingNewDriver(false);
+                                        }
+                                      }}
+                                      className="w-full h-10 bg-amber-500 hover:bg-amber-600 text-brand-dark rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5"
+                                    >
+                                      {isSavingNewDriver && <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} className="w-3.5 h-3.5 border border-brand-dark border-t-transparent rounded-full" />}
+                                      {lang === 'ar' ? 'حفظ السائق في السجل' : 'Save Driver'}
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+
                           {/* Driver Name */}
                           <div className="space-y-2">
                             <label className="text-xs font-black text-white/50 block">{lang === 'ar' ? 'اسم المرافق' : 'Companion Name'}</label>
