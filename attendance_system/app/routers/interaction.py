@@ -373,9 +373,31 @@ class LogisticsDispatchUpdate(BaseModel):
 
 @router.get("/logistics/{participant_id}")
 async def get_logistics(participant_id: int, db: AsyncSession = Depends(get_db)):
+    host_name = ""
+    host_phone = ""
+    try:
+        from app.models.others import CommitteeTask
+        from app.models.participant import Participant
+        task_stmt = select(CommitteeTask).filter(
+            CommitteeTask.participant_id == participant_id,
+            CommitteeTask.status != 'cancelled'
+        ).order_by(CommitteeTask.created_at.desc())
+        task_res = await db.execute(task_stmt)
+        task = task_res.scalars().first()
+        if task and task.assigned_to_id:
+            host_stmt = select(Participant).filter(Participant.id == task.assigned_to_id)
+            host_res = await db.execute(host_stmt)
+            host = host_res.scalars().first()
+            if host:
+                host_name = host.full_name
+                host_phone = host.phone_number or ""
+    except Exception as e:
+        logger.error(f"Error fetching host details for logistics: {e}")
+
     stmt = select(LogisticsRegistry).filter(LogisticsRegistry.participant_id == participant_id)
     res = await db.execute(stmt)
     registry = res.scalar_one_or_none()
+    
     if not registry:
         return {
             "participant_id": participant_id,
@@ -392,9 +414,31 @@ async def get_logistics(participant_id: int, db: AsyncSession = Depends(get_db))
             "driver_phone": "",
             "vehicle_details": "",
             "shuttle_time": None,
-            "status": "pending"
+            "status": "pending",
+            "host_name": host_name,
+            "host_phone": host_phone
         }
-    return registry
+        
+    return {
+        "id": registry.id,
+        "participant_id": registry.participant_id,
+        "transport_type": registry.transport_type,
+        "flight_number": registry.flight_number,
+        "arrival_time": registry.arrival_time.isoformat() if registry.arrival_time else None,
+        "departure_time": registry.departure_time.isoformat() if registry.departure_time else None,
+        "arrival_location": registry.arrival_location,
+        "hotel_name": registry.hotel_name,
+        "room_number": registry.room_number,
+        "check_in_date": registry.check_in_date.isoformat() if registry.check_in_date else None,
+        "check_out_date": registry.check_out_date.isoformat() if registry.check_out_date else None,
+        "driver_name": registry.driver_name,
+        "driver_phone": registry.driver_phone,
+        "vehicle_details": registry.vehicle_details,
+        "shuttle_time": registry.shuttle_time.isoformat() if registry.shuttle_time else None,
+        "status": registry.status,
+        "host_name": host_name,
+        "host_phone": host_phone
+    }
 
 @router.post("/logistics")
 async def save_logistics(data: LogisticsRegistryCreate, db: AsyncSession = Depends(get_db)):

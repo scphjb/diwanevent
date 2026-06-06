@@ -3409,6 +3409,40 @@ const ParticipantPortal = () => {
                         ⏳ {logistics.shuttle_time ? formatDateTime(logistics.shuttle_time, { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' }) : '---'}
                       </span>
                     </div>
+
+                    {logistics.host_name && (
+                      <div className="md:col-span-2 p-4 bg-amber-500/5 rounded-2xl border border-amber-500/10 space-y-2 mt-2">
+                        <span className="text-amber-500 text-xs block font-black">
+                          {lang === 'ar' ? '🙋‍♂️ المستقبل الميداني المخصص لاستقبالك' : '🙋‍♂️ Assigned Welcoming Host'}
+                        </span>
+                        <div className="flex flex-wrap items-center justify-between gap-4 mt-1">
+                          <div className="text-right">
+                            <span className="text-white/40 text-[10px] block">{lang === 'ar' ? 'الاسم' : 'Name'}</span>
+                            <span className="text-white text-sm font-black">{logistics.host_name}</span>
+                          </div>
+                          {logistics.host_phone && (
+                            <div className="flex gap-2">
+                              <a
+                                href={`tel:${logistics.host_phone}`}
+                                className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white text-xs font-black transition-all flex items-center gap-1"
+                              >
+                                <span>📞</span>
+                                {lang === 'ar' ? 'اتصال مباشر' : 'Call'}
+                              </a>
+                              <a
+                                href={`https://wa.me/${logistics.host_phone.replace(/\+/g, '').replace(/[^0-9]/g, '')}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="px-3 py-1.5 rounded-xl bg-[#075E54]/10 border border-[#075E54]/20 hover:bg-[#075E54]/20 text-[#25D366] text-xs font-black transition-all flex items-center gap-1"
+                              >
+                                <span>💬</span>
+                                {lang === 'ar' ? 'واتساب' : 'WhatsApp'}
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                   {logistics.status && (
                     <div className="mt-4 text-center">
