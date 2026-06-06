@@ -1344,6 +1344,7 @@ class TaskCreate(BaseModel):
 
 class TaskStatusUpdate(BaseModel):
     status: str
+    apology_reason: Optional[str] = None
 
 @router.get("/tasks/{event_id}")
 async def list_committee_tasks(
@@ -1439,7 +1440,7 @@ async def create_committee_task(
                 db=db,
                 title="📋 مهمة جديدة مسندة إليك",
                 body=f"تم إسناد مهمة في لجنة {c_name}: {new_task.title}",
-                url="/portal?section=organizer",
+                url=f"/portal?section=organizer&task_id={new_task.id}",
                 participant_ids=[new_task.assigned_to_id],
                 event_id=new_task.event_id
             )
@@ -1471,6 +1472,56 @@ async def update_committee_task_status(
             raise HTTPException(status_code=403, detail="You can only update tasks assigned to you")
 
     old_status = task.status
+    
+    if req.status == "apologized":
+        old_assignee = task.assigned_to_name or f"عضو (ID: {task.assigned_to_id})"
+        reason_str = req.apology_reason or "لم يذكر سبب"
+        apology_text = f"\n\n⚠️ اعتذر {old_assignee} عن المهمة لسبب: {reason_str}"
+        task.description = (task.description or "") + apology_text
+        task.status = "pending"
+        task.assigned_to_id = None
+        task.assigned_to_name = None
+        await db.commit()
+        await db.refresh(task)
+        
+        # Send notification to committee presidents
+        try:
+            from app.routers.notifications import send_web_push_notification_to_target
+            from sqlalchemy import select
+            from app.models.participant import Participant
+            committee_keywords = {
+                'reception': ['استقبال', 'تسجيل', 'reception'],
+                'catering': ['اطعام', 'ضيافه', 'catering', 'food'],
+                'accommodation': ['ايواء', 'تسكين', 'accommodation', 'hotel', 'lodging'],
+                'logistics': ['نقل', 'لوجست', 'transport', 'logistics'],
+                'entertainment': ['ترفيه', 'نشاط', 'انشطه', 'excursion', 'activity']
+            }
+            keywords = committee_keywords.get(task.committee, [])
+            p_stmt = select(Participant).filter(Participant.event_id == task.event_id)
+            p_res = await db.execute(p_stmt)
+            participants = p_res.scalars().all()
+            
+            presidents = []
+            for p in participants:
+                role_p = (p.role or "").lower()
+                is_pres = ('رئيس' in role_p or 'president' in role_p) and any(kw in role_p for kw in keywords)
+                if is_pres:
+                    presidents.append(p.id)
+            
+            if presidents:
+                await send_web_push_notification_to_target(
+                    db=db,
+                    title="⚠️ اعتذار عن مهمة ميدانية",
+                    body=f"اعتذر {old_assignee} عن مهمة '{task.title}': {reason_str}",
+                    url=f"/portal?section=organizer&task_id={task.id}",
+                    participant_ids=presidents,
+                    event_id=task.event_id
+                )
+        except Exception as e:
+            logger.error(f"Failed to notify presidents of apology: {e}")
+            
+        return task
+
     task.status = req.status
     await db.commit()
     await db.refresh(task)
@@ -1523,7 +1574,7 @@ async def update_committee_task_status(
                         db=db,
                         title="✅ تم إنجاز مهمة في لجنتك",
                         body=f"قام {assignee_name} بإتمام المهمة: '{task.title}'",
-                        url="/portal?section=organizer",
+                        url=f"/portal?section=organizer&task_id={task.id}",
                         participant_ids=president_ids,
                         event_id=task.event_id
                     )

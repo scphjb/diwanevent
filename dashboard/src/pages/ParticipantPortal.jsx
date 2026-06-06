@@ -201,6 +201,10 @@ const ParticipantPortal = () => {
   const [tasksList, setTasksList] = useState([]);
   const [isLoadingTasks, setIsLoadingTasks] = useState(false);
   const [isCreateTaskModalOpen, setIsCreateTaskModalOpen] = useState(false);
+  const [selectedTaskIdFromNotif, setSelectedTaskIdFromNotif] = useState(null);
+  const [detailedTask, setDetailedTask] = useState(null);
+  const [isApologizing, setIsApologizing] = useState(false);
+  const [apologyReasonText, setApologyReasonText] = useState('');
   const [newTaskForm, setNewTaskForm] = useState({
     title: '',
     description: '',
@@ -1496,6 +1500,16 @@ const ParticipantPortal = () => {
     }
   };
 
+  useEffect(() => {
+    if (selectedTaskIdFromNotif && tasksList.length > 0) {
+      const found = tasksList.find(t => t.id === selectedTaskIdFromNotif);
+      if (found) {
+        setDetailedTask(found);
+      }
+      setSelectedTaskIdFromNotif(null);
+    }
+  }, [selectedTaskIdFromNotif, tasksList]);
+
   const fetchNotifications = async () => {
     setLoadingNotifications(true);
     try {
@@ -1566,10 +1580,27 @@ const ParticipantPortal = () => {
     }
   };
 
-  const handleUpdateTaskStatus = async (taskId, newStatus) => {
+  const handleUpdateTaskStatus = async (taskId, newStatus, apologyReason = null) => {
     try {
-      await interactionService.updateTaskStatus(taskId, newStatus);
+      await interactionService.updateTaskStatus(taskId, newStatus, apologyReason);
       toast.success(lang === 'ar' ? 'تم تحديث حالة المهمة' : 'Task status updated');
+      
+      setDetailedTask(prev => {
+        if (prev && prev.id === taskId) {
+          if (newStatus === 'apologized') {
+            return {
+              ...prev,
+              status: 'pending',
+              assigned_to_id: null,
+              assigned_to_name: null,
+              description: (prev.description || '') + `\n\n⚠️ سبب الاعتذار: ${apologyReason}`
+            };
+          }
+          return { ...prev, status: newStatus };
+        }
+        return prev;
+      });
+
       fetchCommitteeTasks();
     } catch (err) {
       console.error('Failed to update task status:', err);
@@ -1967,12 +1998,16 @@ const ParticipantPortal = () => {
             {filteredTasks.map(task => {
               const guest = receptionList.find(p => p.id === task.participant_id);
               return (
-                <div key={task.id} className="p-4 bg-white/[0.01] border border-white/5 hover:border-white/10 rounded-2xl transition-all">
+                <div 
+                  key={task.id} 
+                  onClick={() => setDetailedTask(task)}
+                  className="p-4 bg-white/[0.01] border border-white/5 hover:border-amber-500/20 rounded-2xl transition-all cursor-pointer hover:bg-white/[0.02]"
+                >
                   <div className="flex items-center justify-between gap-3 mb-2">
                     <div className="flex items-center gap-2">
                       {isPresident && (
                         <button
-                          onClick={() => handleDeleteTask(task.id)}
+                          onClick={(e) => { e.stopPropagation(); handleDeleteTask(task.id); }}
                           className="text-red-400/60 hover:text-red-400 transition-colors p-1"
                           title={lang === 'ar' ? 'حذف المهمة' : 'Delete Task'}
                         >
@@ -2004,28 +2039,48 @@ const ParticipantPortal = () => {
                   <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-white/[0.03] text-[11px] font-bold text-white/40">
                     <div className="flex items-center gap-2">
                       {task.status !== 'completed' && task.status !== 'cancelled' && (
-                        <div className="flex items-center gap-1">
-                          {task.status === 'pending' ? (
+                        <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                          {/* Start / Complete: only for the assigned member */}
+                          {task.assigned_to_id === participant.id && (
+                            task.status === 'pending' ? (
+                              <button
+                                onClick={() => handleUpdateTaskStatus(task.id, 'in_progress')}
+                                className="px-2 py-0.5 rounded bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 transition-all"
+                              >
+                                {lang === 'ar' ? 'بدء التنفيذ' : 'Start'}
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => handleUpdateTaskStatus(task.id, 'completed')}
+                                className="px-2 py-0.5 rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 transition-all"
+                              >
+                                {lang === 'ar' ? 'إكمال المهمة' : 'Complete'}
+                              </button>
+                            )
+                          )}
+
+                          {/* Apologize: only for the assigned member */}
+                          {task.assigned_to_id === participant.id && (
                             <button
-                              onClick={() => handleUpdateTaskStatus(task.id, 'in_progress')}
-                              className="px-2 py-0.5 rounded bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 transition-all"
+                              onClick={() => {
+                                setDetailedTask(task);
+                                setIsApologizing(true);
+                              }}
+                              className="px-2 py-0.5 rounded bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/20 transition-all"
                             >
-                              {lang === 'ar' ? 'بدء التنفيذ' : 'Start'}
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => handleUpdateTaskStatus(task.id, 'completed')}
-                              className="px-2 py-0.5 rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 transition-all"
-                            >
-                              {lang === 'ar' ? 'إكمال المهمة' : 'Complete'}
+                              {lang === 'ar' ? 'اعتذار' : 'Apologize'}
                             </button>
                           )}
-                          <button
-                            onClick={() => handleUpdateTaskStatus(task.id, 'cancelled')}
-                            className="px-2 py-0.5 rounded bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 transition-all"
-                          >
-                            {lang === 'ar' ? 'إلغاء' : 'Cancel'}
-                          </button>
+
+                          {/* Cancel: only for the president */}
+                          {isPresident && (
+                            <button
+                              onClick={() => handleUpdateTaskStatus(task.id, 'cancelled')}
+                              className="px-2 py-0.5 rounded bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 transition-all"
+                            >
+                              {lang === 'ar' ? 'إلغاء' : 'Cancel'}
+                            </button>
+                          )}
                         </div>
                       )}
                     </div>
@@ -2475,6 +2530,14 @@ const ParticipantPortal = () => {
                     // تحويل رابط الإشعار إلى قسم البوابة المناسب
                     const sectionFromLink = (link) => {
                       if (!link) return 'notifications';
+                      if (link.includes('task_id=')) {
+                        const match = link.match(/task_id=(\d+)/);
+                        if (match) {
+                          const tId = parseInt(match[1]);
+                          setSelectedTaskIdFromNotif(tId);
+                        }
+                      }
+                      if (link.includes('organizer')) return 'organizer';
                       if (link.includes('activities')) return 'activities';
                       if (link.includes('logistics')) return 'logistics';
                       if (link.includes('catering')) return 'catering';
@@ -4866,6 +4929,212 @@ const ParticipantPortal = () => {
                           {lang === 'ar' ? 'تأكيد وإسناد المهمة' : 'Assign Task Now'}
                         </Button>
                       </form>
+                    </motion.div>
+                  </div>
+                )}
+
+                {detailedTask && !isApologizing && (
+                  <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-md flex items-center justify-center p-4 text-[#F0F4F2]">
+                    <motion.div
+                      initial={{ scale: 0.9, y: 20 }}
+                      animate={{ scale: 1, y: 0 }}
+                      exit={{ scale: 0.9, y: 20 }}
+                      className="w-full max-w-lg bg-gradient-to-b from-[#0D1527] to-[#050B18] border border-white/10 rounded-[40px] p-6 relative shadow-[0_24px_80px_rgba(0,0,0,0.6)] text-right"
+                    >
+                      <div className="flex justify-between items-center pb-4 border-b border-white/5 mb-4">
+                        <div className="flex items-center gap-2">
+                          <span>📋</span>
+                          <h3 className="text-lg font-black">{lang === 'ar' ? 'تفاصيل المهمة الميدانية' : 'Task Details'}</h3>
+                        </div>
+                        <button
+                          onClick={() => setDetailedTask(null)}
+                          className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-white/60 hover:bg-white/10 hover:text-white"
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
+
+                      <div className="space-y-4" dir="rtl">
+                        <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
+                          <span className="text-[10px] text-white/40 block mb-1 font-bold">{lang === 'ar' ? 'عنوان المهمة' : 'Title'}</span>
+                          <h4 className="text-base font-black text-white">{detailedTask.title}</h4>
+                        </div>
+
+                        {detailedTask.description && (
+                          <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
+                            <span className="text-[10px] text-white/40 block mb-1 font-bold">{lang === 'ar' ? 'الوصف والتفاصيل' : 'Description'}</span>
+                            <p className="text-xs text-white/80 leading-relaxed font-bold whitespace-pre-wrap">{detailedTask.description}</p>
+                          </div>
+                        )}
+
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
+                            <span className="text-[10px] text-white/40 block mb-1 font-bold">{lang === 'ar' ? 'حالة المهمة' : 'Status'}</span>
+                            <span className={cn(
+                              "text-xs px-2.5 py-1 rounded font-black inline-block mt-1",
+                              detailedTask.status === 'completed' ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" :
+                              detailedTask.status === 'in_progress' ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" :
+                              detailedTask.status === 'cancelled' ? "bg-red-500/10 text-red-400 border border-red-500/20" :
+                              "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                            )}>
+                              {detailedTask.status === 'completed' ? (lang === 'ar' ? '✅ مكتملة' : 'Completed') :
+                               detailedTask.status === 'in_progress' ? (lang === 'ar' ? '⚙️ جاري العمل' : 'In Progress') :
+                               detailedTask.status === 'cancelled' ? (lang === 'ar' ? '❌ ملغاة' : 'Cancelled') :
+                               (lang === 'ar' ? '⏳ قيد الانتظار' : 'Pending')}
+                            </span>
+                          </div>
+
+                          <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
+                            <span className="text-[10px] text-white/40 block mb-1 font-bold">{lang === 'ar' ? 'تاريخ الاستحقاق' : 'Due Time'}</span>
+                            <p className="text-xs text-white font-bold mt-1.5">
+                              {detailedTask.due_time 
+                                ? new Date(detailedTask.due_time).toLocaleString(lang === 'ar' ? 'ar-DZ' : 'en-US')
+                                : (lang === 'ar' ? 'مفتوح' : 'Anytime')}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                          {detailedTask.assigned_to_name && (
+                            <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
+                              <span className="text-[10px] text-white/40 block mb-1 font-bold">{lang === 'ar' ? 'العضو المكلف' : 'Assignee'}</span>
+                              <p className="text-xs text-emerald-400 font-black mt-1.5">🛡️ {detailedTask.assigned_to_name}</p>
+                            </div>
+                          )}
+
+                          {detailedTask.participant_id && (
+                            <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
+                              <span className="text-[10px] text-white/40 block mb-1 font-bold">{lang === 'ar' ? 'الضيف المستهدف' : 'Target Guest'}</span>
+                              <p className="text-xs text-amber-500 font-black mt-1.5">
+                                👤 {receptionList.find(p => p.id === detailedTask.participant_id)?.full_name || detailedTask.participant_id}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+
+                        {detailedTask.status !== 'completed' && detailedTask.status !== 'cancelled' && (
+                          <div className="flex flex-col gap-2 pt-4 border-t border-white/5 mt-4">
+                            <div className="flex gap-2">
+                              {detailedTask.assigned_to_id === participant.id && (
+                                detailedTask.status === 'pending' ? (
+                                  <button
+                                    onClick={() => handleUpdateTaskStatus(detailedTask.id, 'in_progress')}
+                                    className="flex-1 py-3 rounded-2xl bg-blue-500 hover:bg-blue-400 text-brand-dark text-xs font-black transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-blue-500/10"
+                                  >
+                                    <span>⚙️</span>
+                                    {lang === 'ar' ? 'بدء التنفيذ' : 'Start'}
+                                  </button>
+                                ) : (
+                                  <button
+                                    onClick={() => handleUpdateTaskStatus(detailedTask.id, 'completed')}
+                                    className="flex-1 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-brand-dark text-xs font-black transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-500/10"
+                                  >
+                                    <span>✅</span>
+                                    {lang === 'ar' ? 'إكمال المهمة' : 'Complete'}
+                                  </button>
+                                )
+                              )}
+
+                              {detailedTask.assigned_to_id === participant.id && (
+                                <button
+                                  onClick={() => setIsApologizing(true)}
+                                  className="flex-1 py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-brand-dark text-xs font-black transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-amber-500/10"
+                                >
+                                  <span>⚠️</span>
+                                  {lang === 'ar' ? 'اعتذار عن المهمة' : 'Apologize'}
+                                </button>
+                              )}
+                            </div>
+
+                            {((participant.role || '').toLowerCase().includes('رئيس') || (participant.role || '').toLowerCase().includes('president') || !participant.role || (participant.role || '').toLowerCase().includes('منظم') || (participant.role || '').toLowerCase().includes('organizer')) ? (
+                              <button
+                                onClick={() => {
+                                  if (window.confirm(lang === 'ar' ? 'هل أنت متأكد من إلغاء هذه المهمة؟' : 'Are you sure you want to cancel this task?')) {
+                                    handleUpdateTaskStatus(detailedTask.id, 'cancelled');
+                                  }
+                                }}
+                                className="w-full py-3 rounded-2xl bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 text-xs font-black transition-all flex items-center justify-center gap-1.5"
+                              >
+                                <span>❌</span>
+                                {lang === 'ar' ? 'إلغاء المهمة' : 'Cancel Task'}
+                              </button>
+                            ) : null}
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  </div>
+                )}
+
+                {isApologizing && detailedTask && (
+                  <div className="fixed inset-0 z-[110] bg-black/70 backdrop-blur-md flex items-center justify-center p-4 text-[#F0F4F2]">
+                    <motion.div
+                      initial={{ scale: 0.9, y: 20 }}
+                      animate={{ scale: 1, y: 0 }}
+                      exit={{ scale: 0.9, y: 20 }}
+                      className="w-full max-w-md bg-gradient-to-b from-[#0D1527] to-[#050B18] border border-white/10 rounded-[40px] p-6 relative shadow-[0_24px_80px_rgba(0,0,0,0.6)] text-right"
+                    >
+                      <div className="flex justify-between items-center pb-4 border-b border-white/5 mb-4">
+                        <div className="flex items-center gap-2">
+                          <span>⚠️</span>
+                          <h3 className="text-lg font-black text-amber-500">{lang === 'ar' ? 'الاعتذار عن المهمة' : 'Task Apology'}</h3>
+                        </div>
+                        <button
+                          onClick={() => {
+                            setIsApologizing(false);
+                            setApologyReasonText('');
+                          }}
+                          className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-white/60 hover:bg-white/10 hover:text-white"
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
+
+                      <div className="space-y-4" dir="rtl">
+                        <p className="text-xs text-white/70 font-bold leading-relaxed">
+                          {lang === 'ar' 
+                            ? 'يرجى كتابة سبب الاعتذار بالتفصيل. سيصل إشعار لرئيس اللجنة بذلك، وسيتم إرجاع المهمة لقيد الانتظار لإسنادها لعضو آخر.'
+                            : 'Please write down the reason for your apology. The committee president will be notified, and the task will revert to pending to be assigned to someone else.'}
+                        </p>
+
+                        <div className="space-y-1">
+                          <label className="text-xs font-black text-white/50 block">{lang === 'ar' ? 'سبب الاعتذار' : 'Reason'}</label>
+                          <textarea
+                            placeholder={lang === 'ar' ? 'اكتب هنا سبب عدم القدرة على تنفيذ المهمة...' : 'Write reason here...'}
+                            value={apologyReasonText}
+                            onChange={(e) => setApologyReasonText(e.target.value)}
+                            className="w-full bg-white/5 border border-white/10 rounded-2xl p-3 text-xs text-white font-bold outline-none focus:border-amber-500/50 transition-all text-right h-24 resize-none"
+                            required
+                          />
+                        </div>
+
+                        <div className="flex gap-2 pt-2">
+                          <button
+                            onClick={async () => {
+                              if (!apologyReasonText.trim()) {
+                                toast.error(lang === 'ar' ? 'يرجى كتابة سبب الاعتذار' : 'Please specify a reason');
+                                return;
+                              }
+                              await handleUpdateTaskStatus(detailedTask.id, 'apologized', apologyReasonText);
+                              setIsApologizing(false);
+                              setApologyReasonText('');
+                              setDetailedTask(null);
+                            }}
+                            className="flex-1 py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-brand-dark text-xs font-black transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-amber-500/10"
+                          >
+                            {lang === 'ar' ? 'تأكيد الاعتذار' : 'Confirm Apology'}
+                          </button>
+                          <button
+                            onClick={() => {
+                              setIsApologizing(false);
+                              setApologyReasonText('');
+                            }}
+                            className="flex-1 py-3 rounded-2xl bg-white/5 hover:bg-white/10 text-white border border-white/10 text-xs font-black transition-all"
+                          >
+                            {lang === 'ar' ? 'إلغاء' : 'Cancel'}
+                          </button>
+                        </div>
+                      </div>
                     </motion.div>
                   </div>
                 )}

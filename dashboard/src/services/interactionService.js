@@ -205,8 +205,8 @@ const interactionService = {
     return res.data;
   },
 
-  updateTaskStatus: async (taskId, status) => {
-    const res = await api.patch(`interaction/tasks/${taskId}/status`, { status });
+  updateTaskStatus: async (taskId, status, apologyReason = null) => {
+    const res = await api.patch(`interaction/tasks/${taskId}/status`, { status, apology_reason: apologyReason });
     return res.data;
   },
 
