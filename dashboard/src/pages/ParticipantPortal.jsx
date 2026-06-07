@@ -2241,27 +2241,51 @@ const ParticipantPortal = () => {
         contactY += 35;
       }
 
-      // Load QR
-      const qrImage = new Image();
-      qrImage.crossOrigin = 'anonymous';
-      const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(window.location.origin + '/card/' + eventId + '/' + (participant.public_card_token || participantToken))}`;
+      // Load Avatar (or fallback to text initial)
+      const avatarImg = new Image();
+      avatarImg.crossOrigin = 'anonymous';
+      const avatarUrl = participant.avatar_url ? getFullUrl(participant.avatar_url) : null;
       
-      qrImage.onload = () => {
-        const qrSize = 180;
-        const qrX = 75;
-        const qrY = 170;
-        const qPad = 12;
+      const drawAvatarAndFinalize = () => {
+        const size = 180;
+        const ax = 75;
+        const ay = 170;
         
-        ctx.fillStyle = '#FFFFFF';
+        ctx.save();
         ctx.beginPath();
-        if (ctx.roundRect) ctx.roundRect(qrX, qrY, qrSize, qrSize, 24); else ctx.rect(qrX, qrY, qrSize, qrSize);
-        ctx.fill();
-        ctx.strokeStyle = 'rgba(212, 175, 55, 0.3)';
-        ctx.lineWidth = 2;
+        if (ctx.roundRect) {
+          ctx.roundRect(ax, ay, size, size, 32);
+        } else {
+          ctx.rect(ax, ay, size, size);
+        }
+        ctx.clip();
+        
+        if (avatarUrl && avatarImg.complete && avatarImg.naturalWidth !== 0) {
+          ctx.drawImage(avatarImg, ax, ay, size, size);
+        } else {
+          // Beautiful gold placeholder background
+          const fGrad = ctx.createLinearGradient(ax, ay, ax + size, ay + size);
+          fGrad.addColorStop(0, '#FFE082');
+          fGrad.addColorStop(1, '#FFB300');
+          ctx.fillStyle = fGrad;
+          ctx.fillRect(ax, ay, size, size);
+          
+          ctx.fillStyle = '#111827';
+          ctx.font = 'bold 72px Cairo, system-ui, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(participant.full_name ? participant.full_name.trim().charAt(0) : 'D', ax + size/2, ay + size/2);
+        }
+        ctx.restore();
+        
+        // Gold outline
+        ctx.strokeStyle = 'rgba(212, 175, 55, 0.4)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(ax, ay, size, size, 32); else ctx.rect(ax, ay, size, size);
         ctx.stroke();
-        
-        ctx.drawImage(qrImage, qrX + qPad, qrY + qPad, qrSize - qPad*2, qrSize - qPad*2);
-        
+
+        // Specialties Tags (bottom right)
         ctx.textAlign = 'right';
         const specialties = participant.custom_values?.specialties || [];
         if (specialties.length > 0) {
@@ -2309,12 +2333,13 @@ const ParticipantPortal = () => {
         toast.success(lang === 'ar' ? 'تم تحميل بطاقة الأعمال كصورة بنجاح! 🖼️' : 'Business card downloaded as image successfully! 🖼️');
       };
 
-      qrImage.onerror = () => {
-        toast.error(lang === 'ar' ? 'فشل تحميل رمز الـ QR لتوليد الصورة' : 'Failed to load QR code for image generation');
-        toast.dismiss('card-gen');
-      };
-      
-      qrImage.src = qrCodeUrl;
+      if (avatarUrl) {
+        avatarImg.onload = drawAvatarAndFinalize;
+        avatarImg.onerror = drawAvatarAndFinalize;
+        avatarImg.src = avatarUrl;
+      } else {
+        drawAvatarAndFinalize();
+      }
       
     } catch (err) {
       console.error(err);
@@ -3089,15 +3114,20 @@ const ParticipantPortal = () => {
                 </div>
               </div>
 
-              {/* Card Middle: Split Name & QR code */}
+              {/* Card Middle: Split Name & Avatar */}
               <div className="flex items-center justify-between gap-4 my-3 text-right">
-                {/* Left: Rounded QR Code for quick scan */}
-                <div className="flex-shrink-0 bg-white p-1 rounded-2xl border border-amber-500/20 shadow-md">
-                  <img 
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(window.location.origin + '/card/' + eventId + '/' + (participant.public_card_token || participantToken))}`}
-                    alt="vCard QR"
-                    className="w-16 h-16 rounded-xl object-contain"
-                  />
+                {/* Left: Rounded Avatar */}
+                <div className="flex-shrink-0 w-16 h-16 rounded-2xl border border-amber-500/30 overflow-hidden shadow-md bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center font-black text-brand-dark text-xl">
+                  {participant?.avatar_url ? (
+                    <img 
+                      src={getFullUrl(participant.avatar_url)} 
+                      alt="Avatar" 
+                      className="w-full h-full object-cover"
+                      onError={(e) => { e.target.style.display = 'none'; }}
+                    />
+                  ) : (
+                    <span>{participant?.full_name ? participant.full_name.trim().charAt(0) : 'D'}</span>
+                  )}
                 </div>
 
                 {/* Right: Name & Job details */}
@@ -3148,20 +3178,13 @@ const ParticipantPortal = () => {
             </div>
 
             {/* Card Actions Panel */}
-            <div className="grid grid-cols-2 gap-3 mt-6">
-              <button
-                onClick={() => handleDownloadVCard(participant)}
-                className="py-3 px-4 bg-amber-500 hover:bg-amber-600 text-brand-dark text-xs font-black rounded-2xl transition-all shadow-lg shadow-amber-500/10 flex items-center justify-center gap-2"
-              >
-                <span>📥</span>
-                <span>{lang === 'ar' ? 'حفظ جهة الاتصال' : 'Save Contact'}</span>
-              </button>
+            <div className="mt-6">
               <button
                 onClick={handleDownloadCardAsImage}
-                className="py-3 px-4 bg-white/5 hover:bg-white/10 text-white border border-white/10 text-xs font-black rounded-2xl transition-all flex items-center justify-center gap-2"
+                className="w-full py-3.5 px-4 bg-amber-500 hover:bg-amber-600 text-brand-dark text-sm font-black rounded-2xl transition-all shadow-lg shadow-amber-500/10 flex items-center justify-center gap-2"
               >
                 <span>🖼️</span>
-                <span>{lang === 'ar' ? 'تحميل كصورة' : 'Download Image'}</span>
+                <span>{lang === 'ar' ? 'تحميل بطاقة الأعمال كصورة' : 'Download Business Card as Image'}</span>
               </button>
             </div>
           </div>
@@ -3424,15 +3447,20 @@ const ParticipantPortal = () => {
                                 </div>
                               </div>
 
-                              {/* Card Middle: Split Name & QR code */}
+                              {/* Card Middle: Split Name & Avatar */}
                               <div className="flex items-center justify-between gap-4 my-3 text-right">
-                                {/* Left: Rounded QR Code for quick scan */}
-                                <div className="flex-shrink-0 bg-white p-1 rounded-2xl border border-amber-500/20 shadow-md">
-                                  <img 
-                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(window.location.origin + '/card/' + eventId + '/' + (participant.public_card_token || participantToken))}`}
-                                    alt="vCard QR"
-                                    className="w-16 h-16 rounded-xl object-contain"
-                                  />
+                                {/* Left: Rounded Avatar */}
+                                <div className="flex-shrink-0 w-16 h-16 rounded-2xl border border-amber-500/30 overflow-hidden shadow-md bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center font-black text-brand-dark text-xl">
+                                  {participant?.avatar_url ? (
+                                    <img 
+                                      src={getFullUrl(participant.avatar_url)} 
+                                      alt="Avatar" 
+                                      className="w-full h-full object-cover"
+                                      onError={(e) => { e.target.style.display = 'none'; }}
+                                    />
+                                  ) : (
+                                    <span>{participant?.full_name ? participant.full_name.trim().charAt(0) : 'D'}</span>
+                                  )}
                                 </div>
 
                                 {/* Right: Name & Job details */}
@@ -3483,27 +3511,13 @@ const ParticipantPortal = () => {
                             </div>
 
                             {/* Card Actions Panel */}
-                            <div className="grid grid-cols-3 gap-2 mt-4 max-w-sm mx-auto">
+                            <div className="mt-4 max-w-xs mx-auto">
                               <button
                                 onClick={handleDownloadCardAsImage}
-                                className="py-2.5 px-3 bg-amber-500 hover:bg-amber-600 text-brand-dark text-[10px] font-black rounded-xl transition-all shadow-md shadow-amber-500/10 flex items-center justify-center gap-1"
+                                className="w-full py-3 px-4 bg-amber-500 hover:bg-amber-600 text-brand-dark text-xs font-black rounded-2xl transition-all shadow-lg shadow-amber-500/10 flex items-center justify-center gap-2"
                               >
                                 <span>🖼️</span>
-                                <span>{lang === 'ar' ? 'مشاركة كصورة' : 'Share Image'}</span>
-                              </button>
-                              <button
-                                onClick={() => handleDownloadVCard(participant)}
-                                className="py-2.5 px-3 bg-white/5 hover:bg-white/10 text-white border border-white/10 text-[10px] font-black rounded-xl transition-all flex items-center justify-center gap-1"
-                              >
-                                <span>📥</span>
-                                <span>{lang === 'ar' ? 'حفظ الاتصال' : 'Save Contact'}</span>
-                              </button>
-                              <button
-                                onClick={handleShareCard}
-                                className="py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black rounded-xl transition-all shadow-md shadow-emerald-600/10 flex items-center justify-center gap-1"
-                              >
-                                <span>🔗</span>
-                                <span>{lang === 'ar' ? 'رابط البطاقة' : 'Card Link'}</span>
+                                <span>{lang === 'ar' ? 'مشاركة بطاقة الأعمال كصورة' : 'Share Business Card as Image'}</span>
                               </button>
                             </div>
                           </motion.div>
