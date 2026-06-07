@@ -3560,9 +3560,27 @@ const ParticipantPortal = () => {
                   </div>
                   {logistics.status && (
                     <div className="mt-4 text-center">
-                       <span className="inline-block px-4 py-1.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-full text-xs font-black">
-                        {lang === 'ar' ? `الحالة الحالية: ${logistics.status === 'dispatched' ? 'في الطريق إليك' : logistics.status === 'arrived' ? 'وصل السائق' : 'مكتمل'}` : `Status: ${logistics.status === 'dispatched' ? 'Driver Dispatched' : logistics.status === 'arrived' ? 'Driver Arrived' : 'Completed'}`}
-                       </span>
+                      <span className={`inline-block px-4 py-1.5 border rounded-full text-xs font-black ${
+                        logistics.status === 'dispatched' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' :
+                        logistics.status === 'arrived' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' :
+                        logistics.status === 'completed' ? 'bg-emerald-500/25 text-emerald-400 border-emerald-500/40' :
+                        'bg-amber-500/20 text-amber-400 border-amber-500/30'
+                      }`}>
+                        {lang === 'ar'
+                          ? `الحالة الحالية: ${
+                              logistics.status === 'dispatched' ? '🚗 في الطريق إليك' :
+                              logistics.status === 'arrived'   ? '✅ وصل السائق إلى موقعك' :
+                              logistics.status === 'completed' ? '🎉 اكتمل الاستقبال' :
+                              '⏳ قيد التنسيق'
+                            }`
+                          : `Status: ${
+                              logistics.status === 'dispatched' ? '🚗 Driver Dispatched' :
+                              logistics.status === 'arrived'   ? '✅ Driver Arrived' :
+                              logistics.status === 'completed' ? '🎉 Completed' :
+                              '⏳ Pending Coordination'
+                            }`
+                        }
+                      </span>
                     </div>
                   )}
                 </div>
