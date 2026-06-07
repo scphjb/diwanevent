@@ -151,6 +151,27 @@ const ParticipantsPage = () => {
     }
   };
 
+  const handleSingleActivate = async (id) => {
+    const result = await showConfirm(
+      t('participants.confirm_activate', 'تفعيل المشارك'),
+      t('participants.activate_desc', 'هل أنت متأكد من تفعيل هذا المشارك؟ سيتم خصم اعتماد واحد (1 credit) من رصيدك.')
+    );
+    if (!result.isConfirmed) return;
+
+    try {
+      setLoading(true);
+      const response = await api.post('participants/bulk-activate', [id]);
+      showSuccess(t('participants.activate_success', 'تم التفعيل بنجاح'), t('participants.activate_detail', `تم تفعيل المشارك بنجاح. الرصيد المتبقي: ${response.data.remaining_credits}`));
+      fetchParticipants();
+    } catch (err) {
+      showError(t('participants.activate_error', 'فشل التفعيل'), err.response?.data?.detail || t('common.check_credits', 'يرجى التحقق من الرصيد.'));
+    } finally {
+      setLoading(false);
+    }
+    setActiveMenu(null);
+  };
+
+
   const fetchParticipants = async () => {
     if (!eventId) {
       setParticipants([]);
@@ -686,7 +707,15 @@ const ParticipantsPage = () => {
                                   onClick={e => e.stopPropagation()}
                                   className="absolute left-0 mt-2 w-48 bg-[#050B18] border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden py-2"
                                 >
-                                  {!p.check_in_time ? (
+                                  {p.payment_status !== 'paid' ? (
+                                    <button 
+                                      onClick={() => handleSingleActivate(p.id)}
+                                      className="w-full text-right px-4 py-3 text-sm text-emerald-400 font-bold hover:bg-emerald-500/10 flex items-center gap-3 transition-colors"
+                                    >
+                                      <Zap className="w-4 h-4 text-emerald-400" />
+                                      {t('participants.activate', 'تفعيل المشارك')}
+                                    </button>
+                                  ) : !p.check_in_time ? (
                                     <button 
                                       onClick={() => handleManualCheckIn(p.id)}
                                       className="w-full text-right px-4 py-3 text-sm text-brand-secondary font-bold hover:bg-brand-primary/10 flex items-center gap-3 transition-colors"
