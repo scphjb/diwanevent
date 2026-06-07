@@ -3496,38 +3496,20 @@ const ParticipantPortal = () => {
               </div>
 
               {/* Driver & Shuttle Live Dispatch Information (If Assigned) */}
-              {logistics && logistics.driver_name && (
+              {logistics && (logistics.driver_name || logistics.host_name) && (
                 <div className="p-6 bg-gradient-to-br from-emerald-500/10 via-[#0D1527] to-[#050B18] border border-emerald-500/20 rounded-[30px] relative overflow-hidden shadow-[0_20px_50px_rgba(16,185,129,0.1)]">
                   <div className="absolute top-0 left-0 bg-emerald-500 text-brand-dark px-4 py-1 rounded-br-2xl text-[10px] font-black uppercase tracking-widest">
-                    {lang === 'ar' ? 'تم تأكيد التوصيل 🟢' : 'SHUTTLE CONFIRMED 🟢'}
+                    {lang === 'ar' ? 'تم تأكيد الاستقبال والنقل 🟢' : 'RECEPTION CONFIRMED 🟢'}
                   </div>
                   <h4 className="text-lg font-black text-emerald-400 mb-4 mt-2">
-                    {lang === 'ar' ? 'تفاصيل التوصيل المخصصة لك' : 'Your Dedicated Shuttle Details'}
+                    {lang === 'ar' ? 'تفاصيل الاستقبال والنقل المخصصة لك' : 'Your Reception & Shuttle Details'}
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm font-bold text-right" dir="rtl">
-                    <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-                      <span className="text-white/40 text-xs block mb-1">{lang === 'ar' ? 'اسم السائق' : 'Driver Name'}</span>
-                      <span className="text-white text-base font-black">👤 {logistics.driver_name}</span>
-                    </div>
-                    <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-                      <span className="text-white/40 text-xs block mb-1">{lang === 'ar' ? 'رقم هاتف السائق' : 'Driver Phone'}</span>
-                      <a href={`tel:${logistics.driver_phone}`} className="text-amber-500 text-base font-black block">📞 {logistics.driver_phone}</a>
-                    </div>
-                    <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-                      <span className="text-white/40 text-xs block mb-1">{lang === 'ar' ? 'تفاصيل السيارة' : 'Vehicle Details'}</span>
-                      <span className="text-white text-base font-black">🚗 {logistics.vehicle_details}</span>
-                    </div>
-                    <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-                      <span className="text-white/40 text-xs block mb-1">{lang === 'ar' ? 'وقت التحرك' : 'Pickup Time'}</span>
-                      <span className="text-white text-base font-black">
-                        ⏳ {logistics.shuttle_time ? formatDateTime(logistics.shuttle_time, { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' }) : '---'}
-                      </span>
-                    </div>
-
+                    {/* Welcoming Host Details */}
                     {logistics.host_name && (
-                      <div className="md:col-span-2 p-4 bg-amber-500/5 rounded-2xl border border-amber-500/10 space-y-2 mt-2">
-                        <span className="text-amber-500 text-xs block font-black">
-                          {lang === 'ar' ? '🙋‍♂️ المستقبل الميداني المخصص لاستقبالك' : '🙋‍♂️ Assigned Welcoming Host'}
+                      <div className="md:col-span-2 p-4 bg-blue-500/5 rounded-2xl border border-blue-500/10 space-y-2 mb-2">
+                        <span className="text-blue-400 text-xs block font-black">
+                          {lang === 'ar' ? '🙋‍♂️ المستقبل الميداني المخصص لاستقبالك (عضو اللجنة)' : '🙋‍♂️ Assigned Welcoming Host (Committee Member)'}
                         </span>
                         <div className="flex flex-wrap items-center justify-between gap-4 mt-1">
                           <div className="text-right">
@@ -3555,6 +3537,34 @@ const ParticipantPortal = () => {
                             </div>
                           )}
                         </div>
+                      </div>
+                    )}
+
+                    {/* Driver & Car details */}
+                    {logistics.driver_name ? (
+                      <>
+                        <div className="bg-white/5 p-4 rounded-2xl border border-white/5 md:col-span-1">
+                          <span className="text-white/40 text-xs block mb-1">{lang === 'ar' ? 'اسم السائق المخصص' : 'Driver Name'}</span>
+                          <span className="text-white text-base font-black">👤 {logistics.driver_name}</span>
+                        </div>
+                        <div className="bg-white/5 p-4 rounded-2xl border border-white/5 md:col-span-1">
+                          <span className="text-white/40 text-xs block mb-1">{lang === 'ar' ? 'رقم هاتف السائق' : 'Driver Phone'}</span>
+                          <a href={`tel:${logistics.driver_phone}`} className="text-amber-500 text-base font-black block">📞 {logistics.driver_phone}</a>
+                        </div>
+                        <div className="bg-white/5 p-4 rounded-2xl border border-white/5 md:col-span-1">
+                          <span className="text-white/40 text-xs block mb-1">{lang === 'ar' ? 'تفاصيل المركبة' : 'Vehicle Details'}</span>
+                          <span className="text-white text-base font-black">🚗 {logistics.vehicle_details}</span>
+                        </div>
+                        <div className="bg-white/5 p-4 rounded-2xl border border-white/5 md:col-span-1">
+                          <span className="text-white/40 text-xs block mb-1">{lang === 'ar' ? 'وقت تحرك السيارة' : 'Shuttle Departure Time'}</span>
+                          <span className="text-white text-base font-black">
+                            ⏳ {logistics.shuttle_time ? formatDateTime(logistics.shuttle_time, { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' }) : '---'}
+                          </span>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="md:col-span-2 p-4 bg-white/5 rounded-2xl border border-white/5 text-center text-white/40 text-xs font-bold">
+                        {lang === 'ar' ? '🚗 لم يتم تخصيص سيارة وسائق لهذا المسار بعد.' : '🚗 No vehicle or driver assigned for this shuttle yet.'}
                       </div>
                     )}
                   </div>
@@ -4461,8 +4471,18 @@ const ParticipantPortal = () => {
                                     {item.hotel_name && <div>🏨 {lang === 'ar' ? 'فندق الإقامة' : 'Hotel'}: <span className="text-white">{item.hotel_name} (غرفة {item.room_number || '---'})</span></div>}
                                   </div>
 
+                                  {item.host_name && (
+                                    <div className="p-3 rounded-2xl bg-blue-500/5 border border-blue-500/10 mt-3 text-xs text-blue-400 font-bold space-y-1">
+                                      <div className="flex items-center gap-1">
+                                        <span>🙋‍♂️</span>
+                                        <span>{lang === 'ar' ? `المستقبل الميداني (عضو اللجنة): ${item.host_name}` : `Welcoming Host (Committee Member): ${item.host_name}`}</span>
+                                      </div>
+                                      {item.host_phone && <div className="text-[10px] text-white/40">📞 {item.host_phone}</div>}
+                                    </div>
+                                  )}
+
                                   {item.driver_name && (
-                                    <div className="p-3 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 mt-3 text-xs text-emerald-400/90 font-bold space-y-1">
+                                    <div className="p-3 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 mt-2 text-xs text-emerald-400/90 font-bold space-y-1">
                                       <div className="flex items-center gap-1">
                                         <span>🚗</span>
                                         <span>{lang === 'ar' ? `السائق المخصص: ${item.driver_name} (${item.driver_phone})` : `Driver: ${item.driver_name} (${item.driver_phone})`}</span>

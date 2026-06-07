@@ -973,10 +973,23 @@ const OperationsPage = () => {
                               <div className="text-[10px] text-emerald-400 mt-1">🔑 {lang === 'ar' ? 'غرفة رقم' : 'Room'} {item.room_number}</div>
                             )}
                           </td>
-                          <td className="px-6 py-5">
+                          <td className="px-6 py-5 space-y-3">
+                            {/* Host (Committee Member) */}
+                            {item.host_name ? (
+                              <div className="pb-2 border-b border-white/5">
+                                <div className="text-xs text-blue-400 font-black">🙋‍♂️ {lang === 'ar' ? 'المستقبل:' : 'Host:'} {item.host_name}</div>
+                                {item.host_phone && <div className="text-[10px] text-white/30 mt-0.5">📞 {item.host_phone}</div>}
+                              </div>
+                            ) : (
+                              <div className="pb-2 border-b border-white/5">
+                                <span className="text-xs text-blue-500/60 font-black">{lang === 'ar' ? '⏳ لم يُسند لمستقبل' : '⏳ No host assigned'}</span>
+                              </div>
+                            )}
+
+                            {/* Driver */}
                             {item.driver_name ? (
                               <div>
-                                <div className="text-xs text-amber-500 font-black">🚗 {item.driver_name}</div>
+                                <div className="text-xs text-amber-500 font-black">🚗 {lang === 'ar' ? 'السائق:' : 'Driver:'} {item.driver_name}</div>
                                 <div className="text-[10px] text-white/30 mt-0.5">{item.driver_phone}</div>
                                 <div className="text-[9px] text-white/20 mt-0.5">{item.vehicle_details}</div>
                               </div>
