@@ -2539,6 +2539,40 @@ const ParticipantPortal = () => {
                     <p className="text-white/60 text-xs mt-1.5 font-bold mb-2 leading-relaxed">{task.description}</p>
                   )}
 
+                  {task.participant_id && (() => {
+                    const guest = receptionList.find(p => p.id === task.participant_id);
+                    if (!guest) return null;
+                    const guestPhone = guest.phone_number || guest.phone;
+                    return (
+                      <div className="flex items-center justify-between bg-white/[0.02] p-2.5 rounded-xl border border-white/5 mt-2 text-xs font-bold text-white/70" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center gap-1.5">
+                          <span>👤</span>
+                          <span className="text-amber-500">{guest.full_name}</span>
+                        </div>
+                        {guestPhone && (
+                          <div className="flex items-center gap-1">
+                            <a
+                              href={`tel:${guestPhone}`}
+                              className="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 text-white flex items-center justify-center transition-all text-[11px]"
+                              title={lang === 'ar' ? 'اتصال هاتفي' : 'Call'}
+                            >
+                              📞
+                            </a>
+                            <a
+                              href={`https://wa.me/${guestPhone.replace(/\+/g, '').replace(/[^0-9]/g, '')}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="w-7 h-7 rounded-lg bg-[#075E54]/15 hover:bg-[#075E54]/25 text-[#25D366] flex items-center justify-center transition-all text-[11px]"
+                              title={lang === 'ar' ? 'واتساب' : 'WhatsApp'}
+                            >
+                              💬
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+
                   <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-white/[0.03] text-[11px] font-bold text-white/40">
                     <div className="flex items-center gap-2">
                       {task.status !== 'completed' && task.status !== 'cancelled' && (
@@ -6207,14 +6241,62 @@ const ParticipantPortal = () => {
                             </div>
                           )}
 
-                          {detailedTask.participant_id && (
-                            <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
-                              <span className="text-[10px] text-white/40 block mb-1 font-bold">{lang === 'ar' ? 'الضيف المستهدف' : 'Target Guest'}</span>
-                              <p className="text-xs text-amber-500 font-black mt-1.5">
-                                👤 {receptionList.find(p => p.id === detailedTask.participant_id)?.full_name || detailedTask.participant_id}
-                              </p>
-                            </div>
-                          )}
+                          {detailedTask.participant_id && (() => {
+                            const guest = receptionList.find(p => p.id === detailedTask.participant_id);
+                            if (!guest) return null;
+                            const guestPhone = guest.phone_number || guest.phone;
+                            const guestEmail = guest.email;
+                            
+                            return (
+                              <div className="p-4 bg-white/5 rounded-2xl border border-white/5 col-span-2 space-y-3">
+                                <span className="text-[10px] text-white/40 block font-bold">{lang === 'ar' ? '🙋‍♂️ الضيف المستهدف وتفاصيل الاتصال' : '🙋‍♂️ Target Guest & Contact Details'}</span>
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white/[0.02] p-3 rounded-xl border border-white/5">
+                                  <div className="space-y-1">
+                                    <span className="text-white text-sm font-black block">👤 {guest.full_name}</span>
+                                    {guest.organization && (
+                                      <span className="text-white/40 text-[10px] block font-bold">{guest.organization}</span>
+                                    )}
+                                  </div>
+                                  
+                                  {/* Contact Buttons */}
+                                  <div className="flex flex-wrap gap-2">
+                                    {guestPhone && (
+                                      <>
+                                        <a
+                                          href={`tel:${guestPhone}`}
+                                          className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-white text-[11px] font-black transition-all flex items-center gap-1"
+                                          title={lang === 'ar' ? 'اتصال هاتفي' : 'Call Phone'}
+                                        >
+                                          <span>📞</span>
+                                          {lang === 'ar' ? 'اتصال' : 'Call'}
+                                        </a>
+                                        <a
+                                          href={`https://wa.me/${guestPhone.replace(/\+/g, '').replace(/[^0-9]/g, '')}`}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          className="px-3 py-1.5 rounded-lg bg-[#075E54]/10 border border-[#075E54]/20 hover:bg-[#075E54]/20 text-[#25D366] text-[11px] font-black transition-all flex items-center gap-1"
+                                          title={lang === 'ar' ? 'اتصال واتساب' : 'WhatsApp'}
+                                        >
+                                          <span>💬</span>
+                                          {lang === 'ar' ? 'واتساب' : 'WhatsApp'}
+                                        </a>
+                                      </>
+                                    )}
+                                    {guestEmail && (
+                                      <a
+                                        href={`mailto:${guestEmail}`}
+                                        className="px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20 text-amber-400 text-[11px] font-black transition-all flex items-center gap-1"
+                                        title={lang === 'ar' ? 'إرسال بريد إلكتروني' : 'Send Email'}
+                                      >
+                                        <span>✉️</span>
+                                        {lang === 'ar' ? 'بريد' : 'Email'}
+                                      </a>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })()}
                         </div>
 
                         {/* Driver details section for transport / logistics tasks */}
