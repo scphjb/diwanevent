@@ -926,8 +926,8 @@ const ParticipantPortal = () => {
           linkedin: parsed.custom_values?.linkedin || '',
           specialties: parsed.custom_values?.specialties || [],
           website: parsed.custom_values?.website || '',
-          phone_number: parsed.phone || parsed.phone_number || '',
-          email: parsed.email || ''
+          phone_number: parsed.phone || parsed.phone_number || parsed.custom_values?.phone_number || '',
+          email: parsed.email || parsed.custom_values?.email || ''
         });
         setIsOptedIn(parsed.custom_values?.is_visible || false);
         loadOptionalDataFromCache();
@@ -954,8 +954,8 @@ const ParticipantPortal = () => {
         linkedin: pRes.data.custom_values?.linkedin || '',
         specialties: pRes.data.custom_values?.specialties || [],
         website: pRes.data.custom_values?.website || '',
-        phone_number: pRes.data.phone || pRes.data.phone_number || '',
-        email: pRes.data.email || ''
+        phone_number: pRes.data.phone || pRes.data.phone_number || pRes.data.custom_values?.phone_number || '',
+        email: pRes.data.email || pRes.data.custom_values?.email || ''
       });
       
       if (!isPublicCardOnly) {
