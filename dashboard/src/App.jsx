@@ -189,6 +189,7 @@ function App() {
 
       {/* ═══ المسارات العامة (بدون مصادقة) ═══ */}
       <Route path="/p/:eid/:token" element={<ParticipantPortal />} />
+      <Route path="/card/:eid/:token" element={<ParticipantPortal />} />
       <Route path="/kiosk/:eid" element={<SelfServicePage />} />
       <Route path="/kiosk" element={<SelfServicePage />} />
       <Route path="/display/:eid/:channel" element={<PublicDisplay />} />

@@ -115,6 +115,7 @@ const COMMITTEE_TASK_PRESETS = {
 COMMITTEE_TASK_PRESETS.transport = COMMITTEE_TASK_PRESETS.logistics;
 
 const ParticipantPortal = () => {
+  const isPublicCardOnly = window.location.pathname.startsWith('/card/');
   const { eid, token } = useParams();
   const eventId = eid;
   const participantToken = token;
@@ -849,12 +850,14 @@ const ParticipantPortal = () => {
 
   useEffect(() => {
     if (eventId && participantToken) {
-      try {
-        localStorage.setItem('participant_token', participantToken);
-      } catch (e) {}
+      if (!isPublicCardOnly) {
+        try {
+          localStorage.setItem('participant_token', participantToken);
+        } catch (e) {}
+      }
       fetchInitialData();
     }
-  }, [eventId, participantToken]);
+  }, [eventId, participantToken, isPublicCardOnly]);
 
   useEffect(() => {
     if (participant) {
@@ -948,45 +951,51 @@ const ParticipantPortal = () => {
         email: pRes.data.email || ''
       });
       
-      // Save participant to local cache and set last active PWA portal path
-      try {
-        localStorage.setItem(`diwan_cache_participant_${participantToken}`, JSON.stringify(pRes.data));
-        localStorage.setItem('last_active_participant_portal', `/p/${eventId}/${participantToken}`);
-        localStorage.setItem('participant_token', participantToken);
-      } catch (e) {
-        console.error('Failed to write participant cache', e);
-      }
+      if (!isPublicCardOnly) {
+        // Save participant to local cache and set last active PWA portal path
+        try {
+          localStorage.setItem(`diwan_cache_participant_${participantToken}`, JSON.stringify(pRes.data));
+          localStorage.setItem('last_active_participant_portal', `/p/${eventId}/${participantToken}`);
+          localStorage.setItem('participant_token', participantToken);
+        } catch (e) {
+          console.error('Failed to write participant cache', e);
+        }
 
-      if (participantToken) {
-        api.defaults.headers.common['Authorization'] = `Bearer ${participantToken}`;
+        if (participantToken) {
+          api.defaults.headers.common['Authorization'] = `Bearer ${participantToken}`;
+        }
       }
       
       setIsOptedIn(pRes.data.custom_values?.is_visible || false);
         
       try {
-        const [settings, ag, lead, dirRes, wallPosts, activePolls, eventDocs, qList, logisticsData, activitiesData, cateringData, mealsData, notificationsData] = await Promise.all([
-          api.get(`events/public/${eventId}`).then(res => res.data),
-          agendaService.getSessions(eventId),
-          interactionService.getLeaderboard(eventId),
-          api.get(`networking/directory?event_id=${eventId}`),
-          interactionService.getPosts(eventId),
-          interactionService.getActivePolls(eventId),
-          interactionService.getDocuments(eventId).catch(() => []),
-          interactionService.getQuestions(eventId).catch(() => []),
-          interactionService.getLogistics(pRes.data.id).catch(() => null),
-          interactionService.listActivities(eventId, pRes.data.id).catch(() => []),
-          interactionService.getCateringProfile(pRes.data.id).catch(() => ({ dietary_type: 'none', allergies: '', notes: '' })),
-          interactionService.listEventMeals(eventId, pRes.data.id).catch(() => []),
-          api.get('notifications/').then(res => res.data).catch(() => [])
-        ]);
-        setEventSettings(settings || {});
-        setAgenda(ag || []);
-        setLeaderboard(lead || []);
-        setDirectory(dirRes.data || []);
-        setPosts(wallPosts || []);
-        setPolls(activePolls || []);
-        setDocuments(eventDocs || []);
-        setQuestions(qList || []);
+        if (isPublicCardOnly) {
+          const settings = await api.get(`events/public/${eventId}`).then(res => res.data);
+          setEventSettings(settings || {});
+        } else {
+          const [settings, ag, lead, dirRes, wallPosts, activePolls, eventDocs, qList, logisticsData, activitiesData, cateringData, mealsData, notificationsData] = await Promise.all([
+            api.get(`events/public/${eventId}`).then(res => res.data),
+            agendaService.getSessions(eventId),
+            interactionService.getLeaderboard(eventId),
+            api.get(`networking/directory?event_id=${eventId}`),
+            interactionService.getPosts(eventId),
+            interactionService.getActivePolls(eventId),
+            interactionService.getDocuments(eventId).catch(() => []),
+            interactionService.getQuestions(eventId).catch(() => []),
+            interactionService.getLogistics(pRes.data.id).catch(() => null),
+            interactionService.listActivities(eventId, pRes.data.id).catch(() => []),
+            interactionService.getCateringProfile(pRes.data.id).catch(() => ({ dietary_type: 'none', allergies: '', notes: '' })),
+            interactionService.listEventMeals(eventId, pRes.data.id).catch(() => []),
+            api.get('notifications/').then(res => res.data).catch(() => [])
+          ]);
+          setEventSettings(settings || {});
+          setAgenda(ag || []);
+          setLeaderboard(lead || []);
+          setDirectory(dirRes.data || []);
+          setPosts(wallPosts || []);
+          setPolls(activePolls || []);
+          setDocuments(eventDocs || []);
+          setQuestions(qList || []);
         if (logisticsData) {
           setLogistics(logisticsData);
         }
@@ -1026,6 +1035,7 @@ const ParticipantPortal = () => {
         } catch (e) {
           console.error('Failed to write resource cache', e);
         }
+      }
       } catch (e) {
         console.warn('Optional data fetch failed, fallback to cache', e);
         loadOptionalDataFromCache();
@@ -2039,7 +2049,7 @@ const ParticipantPortal = () => {
   };
 
   const handleShareCard = async () => {
-    const shareUrl = `${window.location.origin}/p/${eventId}/${participant?.qr_code || participantToken}`;
+    const shareUrl = `${window.location.origin}/card/${eventId}/${participant?.qr_code || participantToken}`;
     const shareText = lang === 'ar' 
       ? `بطاقة الأعمال الرقمية للمشارك: ${participant?.full_name}\nالفعالية: ${eventSettings?.event_name || eventSettings?.name}`
       : `Digital Business Card of: ${participant?.full_name}\nEvent: ${eventSettings?.event_name || eventSettings?.name}`;
@@ -2066,7 +2076,7 @@ const ParticipantPortal = () => {
   };
 
   const handleShareWhatsApp = () => {
-    const shareUrl = `${window.location.origin}/p/${eventId}/${participant?.qr_code || participantToken}`;
+    const shareUrl = `${window.location.origin}/card/${eventId}/${participant?.qr_code || participantToken}`;
     const shareText = encodeURIComponent(
       (lang === 'ar' 
         ? `أهلاً بك، إليك بطاقة أعمالي الرقمية الخاصة بـ ${eventSettings?.event_name || eventSettings?.name}:\n`
@@ -2775,6 +2785,152 @@ const ParticipantPortal = () => {
     : 0;
 
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(participant?.qr_code || '')}`;
+
+  if (isPublicCardOnly) {
+    return (
+      <div dir={lang === 'ar' ? 'rtl' : 'ltr'} className={cn(
+        "min-h-screen bg-[#050B18] text-[#F0F4F2] selection:bg-amber-500 selection:text-brand-dark flex flex-col items-center justify-center p-4 relative overflow-hidden",
+        lang === 'ar' ? 'font-arabic' : 'font-sans'
+      )}>
+        {/* Glows */}
+        <div className="fixed inset-0 pointer-events-none z-0">
+          <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-brand-primary/10 blur-[120px] rounded-full animate-pulse" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-amber-500/5 blur-[120px] rounded-full" />
+        </div>
+
+        {/* Header/Brand logo */}
+        <div className="mb-8 text-center z-10 space-y-3">
+          {eventSettings?.logo_url ? (
+            <img 
+              src={getFullUrl(eventSettings.logo_url)} 
+              alt="Logo" 
+              className="w-16 h-16 mx-auto rounded-3xl object-cover shadow-2xl border border-white/10"
+            />
+          ) : (
+            <div className="w-16 h-16 mx-auto rounded-3xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center font-black text-brand-dark text-xl shadow-2xl">
+              D
+            </div>
+          )}
+          <h2 className="text-sm font-black tracking-widest text-amber-500 uppercase">
+            {eventSettings?.event_name || eventSettings?.name || 'DIWAN EVENTS'}
+          </h2>
+          <p className="text-white/40 text-xs font-bold">
+            {lang === 'ar' ? 'بطاقة الأعمال الرقمية الرسمية للضيف' : 'Official Guest Digital Business Card'}
+          </p>
+        </div>
+
+        {/* The Card */}
+        {participant && (
+          <div className="w-full max-w-sm z-10">
+            {/* Card Body */}
+            <div className="relative w-full aspect-[1.586/1] rounded-[32px] p-6 bg-gradient-to-br from-amber-500/20 via-[#0A0F1D]/98 to-[#02050E]/98 border-2 border-amber-500/40 backdrop-blur-3xl overflow-hidden shadow-[0_25px_60px_rgba(212,175,55,0.25)] flex flex-col justify-between text-right group/vcard relative">
+              {/* Shiny Metallic Light Effect Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/[0.04] to-transparent -translate-x-full group-hover/vcard:translate-x-full transition-transform duration-1000 ease-out pointer-events-none" />
+              
+              {/* Background Glowing Orb */}
+              <div className="absolute top-[-20%] right-[-20%] w-48 h-48 bg-amber-500/10 rounded-full blur-[80px] pointer-events-none -z-10 group-hover/vcard:bg-amber-500/15 transition-colors duration-500" />
+              
+              {/* Card Header (Chip & Event Logo) */}
+              <div className="flex justify-between items-center w-full mb-4">
+                {/* Gold Smart Chip */}
+                <div className="w-11 h-8 rounded-lg bg-gradient-to-br from-amber-300 via-amber-500 to-amber-600 p-1 flex flex-col justify-between border border-amber-400/40 relative overflow-hidden shadow-md">
+                  <div className="absolute inset-0 bg-black/10 grid grid-cols-3 gap-0.5 pointer-events-none p-0.5">
+                    <div className="border border-white/10 rounded-sm"></div>
+                    <div className="border border-white/10 rounded-sm"></div>
+                    <div className="border border-white/10 rounded-sm"></div>
+                    <div className="border border-white/10 rounded-sm"></div>
+                    <div className="border border-white/10 rounded-sm"></div>
+                    <div className="border border-white/10 rounded-sm"></div>
+                  </div>
+                </div>
+                
+                <div className="text-left">
+                  <span className="text-[9px] font-black uppercase text-amber-500 border border-amber-500/30 px-2 py-0.5 rounded-full tracking-widest bg-amber-500/5">
+                    {participant.role === 'vip' ? 'VIP PASS 👑' : 'EXECUTIVE PASS'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Card Middle: Split Name & QR code */}
+              <div className="flex items-center justify-between gap-4 my-3 text-right">
+                {/* Left: Rounded QR Code for quick scan */}
+                <div className="flex-shrink-0 bg-white p-1 rounded-2xl border border-amber-500/20 shadow-md">
+                  <img 
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(window.location.origin + '/card/' + eventId + '/' + (participant.qr_code || participantToken))}`}
+                    alt="vCard QR"
+                    className="w-16 h-16 rounded-xl object-contain"
+                  />
+                </div>
+
+                {/* Right: Name & Job details */}
+                <div className="space-y-1 flex-1">
+                  <h4 className="text-xl font-black text-white leading-tight tracking-tight">{participant.full_name}</h4>
+                  <p className="text-[10px] text-amber-500 font-bold uppercase tracking-wider">{participant.organization}</p>
+                  {participant.department && (
+                    <p className="text-[9px] text-white/50 font-medium">{participant.department}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Card Contact Info Details */}
+              <div className="space-y-1 py-3 border-t border-white/5 text-right text-[10px] text-white/60 font-medium">
+                {(participant.phone_number || participant.phone) && (
+                  <div className="flex items-center justify-end gap-1.5" dir="ltr">
+                    <span>{participant.phone_number || participant.phone}</span>
+                    <span>📞</span>
+                  </div>
+                )}
+                {participant.email && (
+                  <div className="flex items-center justify-end gap-1.5" dir="ltr">
+                    <span>{participant.email}</span>
+                    <span>✉️</span>
+                  </div>
+                )}
+                {participant.custom_values?.linkedin && (
+                  <div className="flex items-center justify-end gap-1.5 text-blue-400" dir="ltr">
+                    <span>linkedin.com/in/{participant.custom_values.linkedin}</span>
+                    <span>🔗</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Bottom: Specialties tags & Event Identity */}
+              <div className="flex justify-between items-center w-full pt-3 border-t border-white/5 text-right">
+                <div className="text-[8px] font-black text-white/30 tracking-wider">
+                  {eventSettings?.event_name || 'DIWAN EVENTS'}
+                </div>
+                <div className="flex gap-1 flex-wrap justify-end">
+                  {(participant.custom_values?.specialties || []).slice(0, 2).map((s, idx) => (
+                    <span key={idx} className="px-2 py-0.5 bg-amber-500/10 border border-amber-500/20 rounded-full text-[8px] font-black text-amber-500">
+                      #{s}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Card Actions Panel */}
+            <div className="grid grid-cols-2 gap-3 mt-6">
+              <button
+                onClick={() => handleDownloadVCard(participant)}
+                className="py-3 px-4 bg-amber-500 hover:bg-amber-600 text-brand-dark text-xs font-black rounded-2xl transition-all shadow-lg shadow-amber-500/10 flex items-center justify-center gap-2"
+              >
+                <span>📥</span>
+                <span>{lang === 'ar' ? 'حفظ جهة الاتصال' : 'Save Contact'}</span>
+              </button>
+              <button
+                onClick={handleShareCard}
+                className="py-3 px-4 bg-white/5 hover:bg-white/10 text-white border border-white/10 text-xs font-black rounded-2xl transition-all flex items-center justify-center gap-2"
+              >
+                <span>🔗</span>
+                <span>{lang === 'ar' ? 'مشاركة الرابط' : 'Share Card'}</span>
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div dir={lang === 'ar' ? 'rtl' : 'ltr'} className={cn(
