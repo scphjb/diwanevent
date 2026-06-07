@@ -228,6 +228,15 @@ const ParticipantPortal = () => {
   });
   const [selectedTaskCommittee, setSelectedTaskCommittee] = useState('transport');
   const [editingDriverTaskId, setEditingDriverTaskId] = useState(null);
+  const [isEditingGuestLogistics, setIsEditingGuestLogistics] = useState(false);
+  const [guestLogisticsForm, setGuestLogisticsForm] = useState({
+    transport_type: 'none',
+    flight_number: '',
+    arrival_time: '',
+    arrival_location: '',
+    hotel_name: '',
+    room_number: ''
+  });
   const [taskDriverForm, setTaskDriverForm] = useState({
     driver_name: '',
     driver_phone: '',
@@ -1403,8 +1412,21 @@ const ParticipantPortal = () => {
       fetchCommitteeTasks();
       fetchStaffCatering();
       fetchDrivers();
+
+      // Silent polling every 8 seconds for real-time updates without loading spinners
+      const intervalId = setInterval(() => {
+        interactionService.listTasks(eventId)
+          .then(data => { if (data) setTasksList(data); })
+          .catch(err => console.error('Silent tasks fetch failed:', err));
+
+        interactionService.listEventLogistics(eventId)
+          .then(data => { if (data) setStaffLogisticsList(data); })
+          .catch(err => console.error('Silent logistics fetch failed:', err));
+      }, 8000);
+
+      return () => clearInterval(intervalId);
     }
-  }, [activeTab]);
+  }, [activeTab, eventId]);
 
   useEffect(() => {
     if (participant) {
@@ -1690,6 +1712,40 @@ const ParticipantPortal = () => {
     } catch (err) {
       console.error('Failed to assign driver to task:', err);
       toast.error(lang === 'ar' ? 'فشل تعيين السائق للمهمة' : 'Failed to assign driver to task');
+    }
+  };
+
+  const handleSaveGuestLogistics = async (guestId) => {
+    try {
+      const parseSafeDate = (val) => {
+        if (!val) return null;
+        const d = new Date(val);
+        if (isNaN(d.getTime())) return null;
+        return d.toISOString();
+      };
+
+      await interactionService.saveLogistics({
+        event_id: parseInt(eventId),
+        participant_id: guestId,
+        transport_type: guestLogisticsForm.transport_type || 'none',
+        flight_number: guestLogisticsForm.flight_number || null,
+        arrival_time: parseSafeDate(guestLogisticsForm.arrival_time),
+        arrival_location: guestLogisticsForm.arrival_location || null,
+        hotel_name: guestLogisticsForm.hotel_name || null,
+        room_number: guestLogisticsForm.room_number || null
+      });
+
+      toast.success(lang === 'ar' ? 'تم حفظ تفاصيل سفر وإقامة الضيف بنجاح! 🚗' : 'Guest travel and lodging details saved successfully! 🚗');
+      setIsEditingGuestLogistics(false);
+      
+      // Fetch fresh logistics & tasks to update current view
+      const freshLogistics = await interactionService.listEventLogistics(eventId);
+      setStaffLogisticsList(freshLogistics || []);
+      const freshTasks = await interactionService.listTasks(eventId);
+      setTasksList(freshTasks || []);
+    } catch (err) {
+      console.error('Failed to save guest logistics details:', err);
+      toast.error(lang === 'ar' ? 'فشل حفظ بيانات وصول الضيف' : 'Failed to save guest logistics details');
     }
   };
 
@@ -5771,7 +5827,10 @@ const ParticipantPortal = () => {
                           <h3 className="text-lg font-black">{lang === 'ar' ? 'تفاصيل المهمة الميدانية' : 'Task Details'}</h3>
                         </div>
                         <button
-                          onClick={() => setDetailedTask(null)}
+                          onClick={() => {
+                            setDetailedTask(null);
+                            setIsEditingGuestLogistics(false);
+                          }}
                           className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-white/60 hover:bg-white/10 hover:text-white"
                         >
                           <X size={16} />
@@ -5963,6 +6022,150 @@ const ParticipantPortal = () => {
                                   {lang === 'ar' ? '❌ لم يتم تعيين سائق للمهمة بعد.' : 'No driver assigned to this task.'}
                                 </p>
                               )
+                            )}
+                          </div>
+                        )}
+
+                        {/* President Guest Logistics Details Editor */}
+                        {isPresident && detailedTask.participant_id && (detailedTask.committee === 'transport' || detailedTask.committee === 'logistics') && (
+                          <div className="p-4 bg-blue-500/5 rounded-2xl border border-blue-500/10 mt-2 space-y-3">
+                            <div className="flex justify-between items-center">
+                              <span className="text-[10px] text-blue-400 font-bold">{lang === 'ar' ? '👑 تفاصيل سفر الضيف (رئيس اللجنة)' : '👑 Guest Travel Details (President)'}</span>
+                              {!isEditingGuestLogistics ? (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const gl = staffLogisticsList.find(l => l.participant_id === detailedTask.participant_id);
+                                    setGuestLogisticsForm({
+                                      transport_type: gl?.transport_type || 'none',
+                                      flight_number: gl?.flight_number || '',
+                                      arrival_time: gl?.arrival_time ? gl.arrival_time.slice(0, 16) : '',
+                                      arrival_location: gl?.arrival_location || '',
+                                      hotel_name: gl?.hotel_name || '',
+                                      room_number: gl?.room_number || ''
+                                    });
+                                    setIsEditingGuestLogistics(true);
+                                  }}
+                                  className="text-[11px] text-blue-400 font-bold hover:underline"
+                                >
+                                  {lang === 'ar' ? '📝 تعديل بيانات الوصول' : 'Edit Arrival Details'}
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => setIsEditingGuestLogistics(false)}
+                                  className="text-[11px] text-white/40 font-bold hover:underline"
+                                >
+                                  {lang === 'ar' ? 'إلغاء' : 'Cancel'}
+                                </button>
+                              )}
+                            </div>
+
+                            {!isEditingGuestLogistics ? (
+                              (() => {
+                                const gl = staffLogisticsList.find(l => l.participant_id === detailedTask.participant_id);
+                                if (!gl || (!gl.flight_number && !gl.arrival_time && !gl.hotel_name)) {
+                                  return (
+                                    <div className="text-right space-y-1 py-1">
+                                      <p className="text-xs text-amber-500/70 font-bold">
+                                        ⚠️ {lang === 'ar' ? 'الضيف لم يسجل تفاصيل وصوله بعد.' : 'Guest has not registered details yet.'}
+                                      </p>
+                                    </div>
+                                  );
+                                }
+                                return (
+                                  <div className="grid grid-cols-2 gap-2 text-xs font-bold text-white/80 text-right">
+                                    <div>✈️ <span className="text-white/40">{lang === 'ar' ? 'نوع النقل:' : 'Transport:'}</span> {gl.transport_type === 'plane' ? (lang === 'ar' ? 'طيران' : 'Plane') : gl.transport_type === 'car' ? (lang === 'ar' ? 'سيارة خاصة' : 'Car') : '---'}</div>
+                                    {gl.flight_number && <div>🎫 <span className="text-white/40">{lang === 'ar' ? 'الرحلة:' : 'Flight:'}</span> {gl.flight_number}</div>}
+                                    {gl.arrival_time && <div className="col-span-2">⏰ <span className="text-white/40">{lang === 'ar' ? 'الوصول:' : 'Arrival:'}</span> {new Date(gl.arrival_time).toLocaleString(lang === 'ar' ? 'ar-DZ' : 'en-US')}</div>}
+                                    {gl.arrival_location && <div className="col-span-2">📍 <span className="text-white/40">{lang === 'ar' ? 'الموقع:' : 'Location:'}</span> {gl.arrival_location}</div>}
+                                    {gl.hotel_name && <div className="col-span-2">🏨 <span className="text-white/40">{lang === 'ar' ? 'الفندق:' : 'Hotel:'}</span> {gl.hotel_name} (غرفة {gl.room_number || '---'})</div>}
+                                  </div>
+                                );
+                              })()
+                            ) : (
+                              <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
+                                <div className="grid grid-cols-2 gap-2">
+                                  <div className="space-y-1">
+                                    <label className="text-[10px] text-white/40 block font-bold">{lang === 'ar' ? 'وسيلة السفر' : 'Transport Type'}</label>
+                                    <select
+                                      value={guestLogisticsForm.transport_type}
+                                      onChange={(e) => setGuestLogisticsForm({ ...guestLogisticsForm, transport_type: e.target.value })}
+                                      className="w-full bg-[#050B18] border border-white/10 rounded-xl h-10 px-3 text-xs text-white font-bold outline-none focus:border-blue-500/50 transition-all text-right"
+                                    >
+                                      <option value="none">{lang === 'ar' ? 'اختر الوسيلة' : 'Select Transport'}</option>
+                                      <option value="plane">{lang === 'ar' ? '✈️ طيران' : '✈️ Plane'}</option>
+                                      <option value="car">{lang === 'ar' ? '🚗 سيارة خاصة' : '🚗 Private Car'}</option>
+                                    </select>
+                                  </div>
+                                  <div className="space-y-1">
+                                    <label className="text-[10px] text-white/40 block font-bold">{lang === 'ar' ? 'رقم الرحلة / لوحة السيارة' : 'Flight / Plate No'}</label>
+                                    <input
+                                      type="text"
+                                      placeholder={lang === 'ar' ? 'مثال: SV-320' : 'SV-320'}
+                                      value={guestLogisticsForm.flight_number}
+                                      onChange={(e) => setGuestLogisticsForm({ ...guestLogisticsForm, flight_number: e.target.value })}
+                                      className="w-full bg-[#050B18] border border-white/10 rounded-xl h-10 px-3 text-xs text-white font-bold outline-none focus:border-blue-500/50 transition-all text-right"
+                                    />
+                                  </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-2">
+                                  <div className="space-y-1">
+                                    <label className="text-[10px] text-white/40 block font-bold">{lang === 'ar' ? 'تاريخ ووقت الوصول' : 'Arrival Time'}</label>
+                                    <input
+                                      type="datetime-local"
+                                      value={guestLogisticsForm.arrival_time}
+                                      onChange={(e) => setGuestLogisticsForm({ ...guestLogisticsForm, arrival_time: e.target.value })}
+                                      className="w-full bg-[#050B18] border border-white/10 rounded-xl h-10 px-3 text-xs text-white font-bold outline-none focus:border-blue-500/50 transition-all text-right"
+                                    />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <label className="text-[10px] text-white/40 block font-bold">{lang === 'ar' ? 'موقع الوصول / صالة الاستقبال' : 'Pickup Location'}</label>
+                                    <input
+                                      type="text"
+                                      placeholder={lang === 'ar' ? 'مثال: مطار الجزائر - الصالة الشرفية' : 'VIP Lounge'}
+                                      value={guestLogisticsForm.arrival_location}
+                                      onChange={(e) => setGuestLogisticsForm({ ...guestLogisticsForm, arrival_location: e.target.value })}
+                                      className="w-full bg-[#050B18] border border-white/10 rounded-xl h-10 px-3 text-xs text-white font-bold outline-none focus:border-blue-500/50 transition-all text-right"
+                                    />
+                                  </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-2">
+                                  <div className="space-y-1">
+                                    <label className="text-[10px] text-white/40 block font-bold">{lang === 'ar' ? 'فندق الإقامة' : 'Hotel Name'}</label>
+                                    <input
+                                      type="text"
+                                      placeholder={lang === 'ar' ? 'مثال: فندق الأوراسي' : 'Hotel Name'}
+                                      value={guestLogisticsForm.hotel_name}
+                                      onChange={(e) => setGuestLogisticsForm({ ...guestLogisticsForm, hotel_name: e.target.value })}
+                                      className="w-full bg-[#050B18] border border-white/10 rounded-xl h-10 px-3 text-xs text-white font-bold outline-none focus:border-blue-500/50 transition-all text-right"
+                                    />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <label className="text-[10px] text-white/40 block font-bold">{lang === 'ar' ? 'رقم الغرفة' : 'Room Number'}</label>
+                                    <input
+                                      type="text"
+                                      placeholder="---"
+                                      value={guestLogisticsForm.room_number}
+                                      onChange={(e) => setGuestLogisticsForm({ ...guestLogisticsForm, room_number: e.target.value })}
+                                      className="w-full bg-[#050B18] border border-white/10 rounded-xl h-10 px-3 text-xs text-white font-bold outline-none focus:border-blue-500/50 transition-all text-right"
+                                    />
+                                  </div>
+                                </div>
+
+                                <div className="flex justify-end pt-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSaveGuestLogistics(detailedTask.participant_id)}
+                                    className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-black transition-all flex items-center gap-1.5 shadow-md shadow-blue-600/10"
+                                  >
+                                    <span>💾</span>
+                                    {lang === 'ar' ? 'حفظ بيانات الوصول للضيف' : 'Save Guest Arrival Details'}
+                                  </button>
+                                </div>
+                              </div>
                             )}
                           </div>
                         )}
