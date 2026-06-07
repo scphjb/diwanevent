@@ -5341,9 +5341,17 @@ const ParticipantPortal = () => {
                                 }
                                 return false;
                               })
-                              .map(p => (
-                                <option key={p.id} value={p.id}>{p.full_name} ({p.role})</option>
-                              ))}
+                              .map(p => {
+                                const activeTasks = tasksList.filter(t => t.assigned_to_id === p.id && (t.status === 'pending' || t.status === 'in_progress'));
+                                const statusText = activeTasks.length > 0
+                                  ? (lang === 'ar' ? `🔴 مشغول (${activeTasks.length} مهام نشطة)` : `🔴 Busy (${activeTasks.length} active tasks)`)
+                                  : (lang === 'ar' ? '🟢 متوفر' : '🟢 Available');
+                                return (
+                                  <option key={p.id} value={p.id}>
+                                    {p.full_name} ({p.role}) - {statusText}
+                                  </option>
+                                );
+                              })}
                           </select>
                         </div>
 

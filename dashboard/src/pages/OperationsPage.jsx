@@ -1832,11 +1832,17 @@ const OperationsPage = () => {
                       }
                       return false;
                     })
-                    .map(helper => (
-                      <option key={helper.id} className="bg-[#050B18]" value={helper.id}>
-                        {helper.full_name} ({helper.role || 'Staff'})
-                      </option>
-                    ))}
+                    .map(helper => {
+                      const activeTasks = tasksList.filter(t => t.assigned_to_id === helper.id && (t.status === 'pending' || t.status === 'in_progress'));
+                      const statusText = activeTasks.length > 0
+                        ? (lang === 'ar' ? `🔴 مشغول (${activeTasks.length} مهام نشطة)` : `🔴 Busy (${activeTasks.length} active tasks)`)
+                        : (lang === 'ar' ? '🟢 متوفر' : '🟢 Available');
+                      return (
+                        <option key={helper.id} className="bg-[#050B18]" value={helper.id}>
+                          {helper.full_name} ({helper.role || 'Staff'}) - {statusText}
+                        </option>
+                      );
+                    })}
                 </select>
               </div>
 
