@@ -4487,6 +4487,27 @@ const ParticipantPortal = () => {
                                       {item.driver_name ? (lang === 'ar' ? 'تعديل السائق' : 'Edit Driver') : (lang === 'ar' ? 'تخصيص سائق' : 'Assign Driver')}
                                     </button>
                                   )}
+
+                                  {/* Quick Assign Member — presidents only */}
+                                  {isPresident && (
+                                    <button
+                                      onClick={() => {
+                                        setSelectedTaskCommittee('transport');
+                                        setNewTaskForm({
+                                          title: lang === 'ar' ? `استقبال الضيف: ${item.participant_name}` : `Receive Guest: ${item.participant_name}`,
+                                          description: '',
+                                          participant_id: item.participant_id,
+                                          assigned_to_id: '',
+                                          due_time: item.arrival_time ? item.arrival_time.slice(0, 16) : ''
+                                        });
+                                        setIsCreateTaskModalOpen(true);
+                                      }}
+                                      className="px-4 py-3 bg-blue-600/80 hover:bg-blue-600 text-white rounded-2xl text-xs font-black transition-all flex items-center gap-1.5"
+                                    >
+                                      <span>👤</span>
+                                      {lang === 'ar' ? 'إسناد لعضو' : 'Assign Member'}
+                                    </button>
+                                  )}
                                 </div>
                               </div>
                             </div>
