@@ -4493,6 +4493,63 @@ const ParticipantPortal = () => {
                           ))}
                       </div>
                     )}
+
+                    {/* Non-president: show assigned guests who have NO logistics record yet */}
+                    {!isPresident && (() => {
+                      const myGuestTasks = tasksList.filter(t =>
+                        t.assigned_to_id === participant.id &&
+                        t.participant_id &&
+                        t.status !== 'cancelled'
+                      );
+                      const assignedGuestIds = myGuestTasks.map(t => t.participant_id);
+                      const logisticsGuestIds = staffLogisticsList.map(l => l.participant_id);
+                      const missingGuests = assignedGuestIds.filter(id => !logisticsGuestIds.includes(id));
+                      if (missingGuests.length === 0) return null;
+                      return (
+                        <div className="space-y-4 mt-4">
+                          <p className="text-xs text-amber-500/70 font-bold text-right">
+                            ⚠️ {lang === 'ar' ? 'الضيوف التاليون مسندون إليك لكن لم يكملوا بيانات الوصول بعد:' : 'The following guests are assigned to you but have not filled arrival details yet:'}
+                          </p>
+                          {missingGuests.map(guestId => {
+                            const guest = receptionList.find(p => p.id === guestId);
+                            if (!guest) return null;
+                            const task = myGuestTasks.find(t => t.participant_id === guestId);
+                            return (
+                              <div key={guestId} className="p-5 rounded-3xl border border-amber-500/10 bg-amber-500/[0.02] relative">
+                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                  <div className="space-y-2">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <h5 className="font-black text-md text-white">{guest.full_name}</h5>
+                                      <span className="text-[9px] px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500 font-bold">
+                                        ⏳ {lang === 'ar' ? 'في انتظار بيانات الوصول' : 'Awaiting Arrival Data'}
+                                      </span>
+                                    </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5 text-xs text-white/50 font-bold">
+                                      {guest.organization && <div>🏢 {guest.organization}</div>}
+                                      {(guest.phone || guest.phone_number) && <div dir="ltr">📞 {guest.phone || guest.phone_number}</div>}
+                                      {task && <div className="sm:col-span-2">📋 {lang === 'ar' ? 'المهمة:' : 'Task:'} <span className="text-amber-400">{task.title}</span></div>}
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-2 self-end md:self-center">
+                                    {(guest.phone || guest.phone_number) && (
+                                      <a
+                                        href={`https://wa.me/${(guest.phone || guest.phone_number).replace(/\+/g, '')}`}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="p-3 rounded-2xl bg-[#075E54]/10 border border-[#075E54]/20 text-[#25D366] hover:bg-[#075E54]/20 transition-all text-xs font-black flex items-center gap-1.5"
+                                      >
+                                        <span>💬</span>
+                                        {lang === 'ar' ? 'واتساب' : 'WhatsApp'}
+                                      </a>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
                   </div>
                   {isPresident && renderCommitteeTasks('transport')}
                 </div>
