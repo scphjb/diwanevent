@@ -181,6 +181,14 @@ const ParticipantPortal = () => {
   const [staffActiveSubTab, setStaffActiveSubTab] = useState('logistics'); // logistics, catering, accommodation, qr_scan
   const [staffLogisticsList, setStaffLogisticsList] = useState([]);
   const [staffCateringList, setStaffCateringList] = useState([]);
+
+  // Catering stats computations
+  const totalOptOuts = eventMeals.reduce((acc, meal) => acc + (meal.opt_out_count || 0), 0);
+  const specialDietsCount = staffCateringList.filter(p => p.dietary_type && p.dietary_type !== 'none').length;
+  const totalParticipants = staffCateringList.length;
+  const optOutRate = (totalParticipants > 0 && eventMeals.length > 0)
+    ? ((totalOptOuts / (totalParticipants * eventMeals.length)) * 100).toFixed(1)
+    : "0";
   const [isLoadingStaffCatering, setIsLoadingStaffCatering] = useState(false);
   const [searchStaffCatering, setSearchStaffCatering] = useState('');
   const [isLoadingStaffLogistics, setIsLoadingStaffLogistics] = useState(false);
@@ -5803,25 +5811,25 @@ const ParticipantPortal = () => {
                     <div className="bg-gradient-to-br from-amber-500/10 to-amber-500/5 border border-amber-500/20 rounded-[30px] p-6 text-right">
                       <span className="text-3xl block mb-2">🍲</span>
                       <h4 className="text-sm font-black text-white/50">{lang === 'ar' ? 'إجمالي وجبات الفعالية' : 'Total Event Meals'}</h4>
-                      <p className="text-3xl font-black text-white mt-1">4</p>
+                      <p className="text-3xl font-black text-white mt-1">{eventMeals.length}</p>
                     </div>
                     <div className="bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 border border-emerald-500/20 rounded-[30px] p-6 text-right relative overflow-hidden">
                       <div className="absolute top-0 left-0 bg-emerald-500/20 px-3 py-1 rounded-br-2xl text-[9px] font-black uppercase tracking-wider text-emerald-400">
-                        {lang === 'ar' ? 'إنقاذ 🍃' : 'Saved 🍃'}
+                        {lang === 'ar' ? 'اعتذار 🍃' : 'Opt-out 🍃'}
                       </div>
                       <span className="text-3xl block mb-2">🥗</span>
-                      <h4 className="text-sm font-black text-white/50">{lang === 'ar' ? 'وجبات تم إنقاذها من الهدر' : 'Meals Saved (Opt-out)'}</h4>
-                      <p className="text-3xl font-black text-emerald-400 mt-1">32 وجبة</p>
+                      <h4 className="text-sm font-black text-white/50">{lang === 'ar' ? 'وجبات تم الاعتذار عنها' : 'Cancelled Meals (Opt-out)'}</h4>
+                      <p className="text-3xl font-black text-emerald-400 mt-1">{totalOptOuts} {lang === 'ar' ? 'وجبة' : 'Meals'}</p>
                     </div>
                     <div className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 border border-blue-500/20 rounded-[30px] p-6 text-right">
                       <span className="text-3xl block mb-2">🥦</span>
                       <h4 className="text-sm font-black text-white/50">{lang === 'ar' ? 'وجبات حمية خاصة (نباتي/جلوتين)' : 'Special Dietary Meals'}</h4>
-                      <p className="text-3xl font-black text-blue-400 mt-1">14 وجبة</p>
+                      <p className="text-3xl font-black text-blue-400 mt-1">{specialDietsCount} {lang === 'ar' ? 'وجبة' : 'Meals'}</p>
                     </div>
                     <div className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 border border-purple-500/20 rounded-[30px] p-6 text-right">
                       <span className="text-3xl block mb-2">🌱</span>
-                      <h4 className="text-sm font-black text-white/50">{lang === 'ar' ? 'نسبة الهدر التي تم خفضها' : 'Reduced Food Waste %'}</h4>
-                      <p className="text-3xl font-black text-purple-400 mt-1">35.4%</p>
+                      <h4 className="text-sm font-black text-white/50">{lang === 'ar' ? 'معدل الاعتذار عن الوجبات' : 'Opt-out Rate %'}</h4>
+                      <p className="text-3xl font-black text-purple-400 mt-1">{optOutRate}%</p>
                     </div>
                   </div>
 

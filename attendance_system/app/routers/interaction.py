@@ -1337,6 +1337,22 @@ async def list_event_meals(
     res = await db.execute(stmt)
     meals = res.scalars().all()
     
+    # Fetch total participants for the event to compute attending_count
+    from app.models.participant import Participant
+    total_stmt = select(func.count(Participant.id)).filter(Participant.event_id == event_id)
+    total_res = await db.execute(total_stmt)
+    total_participants = total_res.scalar() or 0
+
+    # Fetch opt-out counts for all meals of this event
+    opt_out_stmt = (
+        select(MealAttendance.meal_id, func.count(MealAttendance.id))
+        .join(EventMeal, MealAttendance.meal_id == EventMeal.id)
+        .filter(EventMeal.event_id == event_id, MealAttendance.attending == False)
+        .group_by(MealAttendance.meal_id)
+    )
+    opt_out_res = await db.execute(opt_out_stmt)
+    opt_out_map = {row[0]: row[1] for row in opt_out_res.all()}
+    
     # If participant is provided, get RSVP status for each meal
     rsvp_dict = {}
     if participant_id:
@@ -1354,6 +1370,9 @@ async def list_event_meals(
         attending = rsvp_dict[meal.id]["attending"] if has_rsvp else True # Default to True (opt-in) until changed
         pref = rsvp_dict[meal.id]["dietary_preference"] if has_rsvp else None
         
+        opt_out_count = opt_out_map.get(meal.id, 0)
+        attending_count = max(0, total_participants - opt_out_count)
+        
         output.append({
             "id": meal.id,
             "event_id": meal.event_id,
@@ -1363,7 +1382,9 @@ async def list_event_meals(
             "meal_type": meal.meal_type,
             "has_rsvp": has_rsvp,
             "attending": attending,
-            "dietary_preference": pref
+            "dietary_preference": pref,
+            "opt_out_count": opt_out_count,
+            "attending_count": attending_count
         })
     return output
 
