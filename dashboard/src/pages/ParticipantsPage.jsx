@@ -37,6 +37,8 @@ import { showSuccess, showError, showConfirm, showToast } from '../utils/swal';
 import templateService from '../services/templateService';
 
 const PRESET_ROLES = [
+  { value: 'attendee', labelAr: 'مشارك', labelEn: 'Attendee' },
+  { value: 'مشارك', labelAr: 'مشارك', labelEn: 'Attendee' },
   { value: 'VIP', labelAr: 'ضيف شرف / VIP', labelEn: 'VIP Guest' },
   { value: 'organizer', labelAr: 'منظم عام', labelEn: 'General Organizer' },
   { value: 'رئيس لجنة الاستقبال', labelAr: 'رئيس لجنة الاستقبال والتوجيه', labelEn: 'President of Reception & Orientation Committee' },
@@ -376,7 +378,7 @@ const ParticipantsPage = () => {
         department: details.department || '',
         role: details.role || '',
         email: details.email || '',
-        phone_number: details.phone_number || '',
+        phone_number: details.phone_number || details.custom_values?.phone_number || '',
         seat_info: details.seat_info || '',
         seat_number: details.seat_number || '',
       });

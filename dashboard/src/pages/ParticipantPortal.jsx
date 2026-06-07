@@ -402,6 +402,8 @@ const ParticipantPortal = () => {
 
   const [isNotebookOpen, setIsNotebookOpen] = useState(false);
   const [showPremiumCard, setShowPremiumCard] = useState(false);
+  const [avatarError, setAvatarError] = useState(false);
+  const [avatarError2, setAvatarError2] = useState(false);
 
   const handleSaveNote = (sessionId, text) => {
     const updated = { ...sessionNotes, [sessionId]: text };
@@ -944,6 +946,8 @@ const ParticipantPortal = () => {
         : `participants/public/access/${participantToken}`;
       const pRes = await api.get(endpoint);
       setParticipant(pRes.data);
+      setAvatarError(false);
+      setAvatarError2(false);
       
       setProfileData({
         bio: pRes.data.custom_values?.bio || '',
@@ -1998,6 +2002,8 @@ const ParticipantPortal = () => {
       
       const updatedParticipant = { ...participant, avatar_url: newAvatarUrl };
       setParticipant(updatedParticipant);
+      setAvatarError(false);
+      setAvatarError2(false);
       
       localStorage.setItem(`diwan_cache_participant_${participantToken}`, JSON.stringify(updatedParticipant));
       
@@ -2204,24 +2210,34 @@ const ParticipantPortal = () => {
 
       ctx.font = 'bold 24px Cairo, system-ui, sans-serif';
       ctx.fillStyle = '#D4AF37';
-      ctx.fillText(participant.organization, w - 75, 250);
+      const roleLabel = participant.role
+        ? ` - ${participant.role === 'attendee' || participant.role === 'مشارك' ? (lang === 'ar' ? 'مشارك' : 'Attendee') : participant.role}`
+        : '';
+      ctx.fillText(participant.organization + roleLabel, w - 75, 250);
 
+      let detailsY = 285;
       if (participant.department) {
         ctx.font = '500 20px Cairo, system-ui, sans-serif';
         ctx.fillStyle = 'rgba(255,255,255,0.6)';
-        ctx.fillText(participant.department, w - 75, 285);
+        ctx.fillText(participant.department, w - 75, detailsY);
+        detailsY += 30;
+      }
+      if (participant.custom_values?.professional_address) {
+        ctx.font = '500 18px Cairo, system-ui, sans-serif';
+        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        ctx.fillText(participant.custom_values.professional_address, w - 75, detailsY);
       }
 
       ctx.strokeStyle = 'rgba(255,255,255,0.08)';
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(w - 75, 320);
-      ctx.lineTo(w - 500, 320);
+      ctx.moveTo(w - 75, 335);
+      ctx.lineTo(w - 500, 335);
       ctx.stroke();
 
       ctx.font = '500 20px Cairo, system-ui, sans-serif';
       ctx.fillStyle = 'rgba(255,255,255,0.7)';
-      let contactY = 365;
+      let contactY = 375;
       
       const phone = participant.phone_number || participant.phone;
       if (phone) {
@@ -2244,7 +2260,9 @@ const ParticipantPortal = () => {
       // Load Avatar (or fallback to text initial)
       const avatarImg = new Image();
       avatarImg.crossOrigin = 'anonymous';
-      const avatarUrl = participant.avatar_url ? getFullUrl(participant.avatar_url) : null;
+      const avatarUrl = participant.avatar_url 
+        ? getFullUrl(participant.avatar_url) + (participant.avatar_url.includes('?') ? '&' : '?') + 't=' + new Date().getTime()
+        : null;
       
       const drawAvatarAndFinalize = () => {
         const size = 180;
@@ -3118,12 +3136,12 @@ const ParticipantPortal = () => {
               <div className="flex items-center justify-between gap-4 my-3 text-right">
                 {/* Left: Rounded Avatar */}
                 <div className="flex-shrink-0 w-16 h-16 rounded-2xl border border-amber-500/30 overflow-hidden shadow-md bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center font-black text-brand-dark text-xl">
-                  {participant?.avatar_url ? (
-                    <img 
-                      src={getFullUrl(participant.avatar_url)} 
-                      alt="Avatar" 
+                  {participant?.avatar_url && !avatarError ? (
+                    <img
+                      src={getFullUrl(participant.avatar_url)}
+                      alt="Avatar"
                       className="w-full h-full object-cover"
-                      onError={(e) => { e.target.style.display = 'none'; }}
+                      onError={() => setAvatarError(true)}
                     />
                   ) : (
                     <span>{participant?.full_name ? participant.full_name.trim().charAt(0) : 'D'}</span>
@@ -3133,9 +3151,19 @@ const ParticipantPortal = () => {
                 {/* Right: Name & Job details */}
                 <div className="space-y-1 flex-1">
                   <h4 className="text-xl font-black text-white leading-tight tracking-tight">{participant.full_name}</h4>
-                  <p className="text-[10px] text-amber-500 font-bold uppercase tracking-wider">{participant.organization}</p>
+                  <p className="text-[10px] text-amber-500 font-bold uppercase tracking-wider">
+                    {participant.organization}
+                    {participant.role && ` - ${
+                      participant.role === 'attendee' || participant.role === 'مشارك'
+                        ? (lang === 'ar' ? 'مشارك' : 'Attendee')
+                        : participant.role
+                    }`}
+                  </p>
                   {participant.department && (
                     <p className="text-[9px] text-white/50 font-medium">{participant.department}</p>
+                  )}
+                  {participant.custom_values?.professional_address && (
+                    <p className="text-[9px] text-white/45 font-medium">{participant.custom_values.professional_address}</p>
                   )}
                 </div>
               </div>
@@ -3451,12 +3479,12 @@ const ParticipantPortal = () => {
                               <div className="flex items-center justify-between gap-4 my-3 text-right">
                                 {/* Left: Rounded Avatar */}
                                 <div className="flex-shrink-0 w-16 h-16 rounded-2xl border border-amber-500/30 overflow-hidden shadow-md bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center font-black text-brand-dark text-xl">
-                                  {participant?.avatar_url ? (
+                                  {participant?.avatar_url && !avatarError2 ? (
                                     <img 
                                       src={getFullUrl(participant.avatar_url)} 
                                       alt="Avatar" 
                                       className="w-full h-full object-cover"
-                                      onError={(e) => { e.target.style.display = 'none'; }}
+                                      onError={() => setAvatarError2(true)}
                                     />
                                   ) : (
                                     <span>{participant?.full_name ? participant.full_name.trim().charAt(0) : 'D'}</span>
@@ -3466,9 +3494,19 @@ const ParticipantPortal = () => {
                                 {/* Right: Name & Job details */}
                                 <div className="space-y-1 flex-1">
                                   <h4 className="text-xl font-black text-white leading-tight tracking-tight">{participant.full_name}</h4>
-                                  <p className="text-[10px] text-amber-500 font-bold uppercase tracking-wider">{participant.organization}</p>
+                                  <p className="text-[10px] text-amber-500 font-bold uppercase tracking-wider">
+                                    {participant.organization}
+                                    {participant.role && ` - ${
+                                      participant.role === 'attendee' || participant.role === 'مشارك'
+                                        ? (lang === 'ar' ? 'مشارك' : 'Attendee')
+                                        : participant.role
+                                    }`}
+                                  </p>
                                   {participant.department && (
                                     <p className="text-[9px] text-white/50 font-medium">{participant.department}</p>
+                                  )}
+                                  {participant.custom_values?.professional_address && (
+                                    <p className="text-[9px] text-white/45 font-medium">{participant.custom_values.professional_address}</p>
                                   )}
                                 </div>
                               </div>
