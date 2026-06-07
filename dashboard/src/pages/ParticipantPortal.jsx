@@ -4389,10 +4389,22 @@ const ParticipantPortal = () => {
                     ) : (
                       <div className="space-y-4">
                         {staffLogisticsList
-                          .filter(item => 
-                            item.participant_name.toLowerCase().includes(searchStaffQuery.toLowerCase()) ||
-                            (item.flight_number && item.flight_number.toLowerCase().includes(searchStaffQuery.toLowerCase()))
-                          )
+                          .filter(item => {
+                            // Non-presidents only see guests assigned to them via a CommitteeTask
+                            if (!isPresident) {
+                              const hasAssignedTask = tasksList.some(t =>
+                                t.participant_id === item.participant_id &&
+                                t.assigned_to_id === participant.id &&
+                                t.status !== 'cancelled'
+                              );
+                              if (!hasAssignedTask) return false;
+                            }
+                            // Apply search filter
+                            return (
+                              item.participant_name.toLowerCase().includes(searchStaffQuery.toLowerCase()) ||
+                              (item.flight_number && item.flight_number.toLowerCase().includes(searchStaffQuery.toLowerCase()))
+                            );
+                          })
                           .map((item) => (
                             <div key={item.id} className="p-5 rounded-3xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-all relative">
                               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -4471,7 +4483,7 @@ const ParticipantPortal = () => {
                       </div>
                     )}
                   </div>
-                  {renderCommitteeTasks('transport')}
+                  {isPresident && renderCommitteeTasks('transport')}
                 </div>
               )}
 
@@ -4636,7 +4648,7 @@ const ParticipantPortal = () => {
                     )}
                   </div>
 
-                  {renderCommitteeTasks('catering')}
+                  {isPresident && renderCommitteeTasks('catering')}
                 </div>
               )}
 
@@ -4685,7 +4697,7 @@ const ParticipantPortal = () => {
                       ))}
                     </div>
                   </div>
-                  {renderCommitteeTasks('accommodation')}
+                  {isPresident && renderCommitteeTasks('accommodation')}
                 </div>
               )}
 
@@ -4772,7 +4784,7 @@ const ParticipantPortal = () => {
                       </div>
                     )}
                   </div>
-                  {renderCommitteeTasks('entertainment')}
+                  {isPresident && renderCommitteeTasks('entertainment')}
                 </div>
               )}
 
@@ -4896,7 +4908,7 @@ const ParticipantPortal = () => {
                       </div>
                     )}
                   </div>
-                  {renderCommitteeTasks('reception')}
+                  {isPresident && renderCommitteeTasks('reception')}
                 </div>
               )}
 
