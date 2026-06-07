@@ -2088,6 +2088,241 @@ const ParticipantPortal = () => {
     window.open(`https://wa.me/?text=${shareText}`, '_blank');
   };
 
+  const handleDownloadCardAsImage = async () => {
+    try {
+      toast.loading(lang === 'ar' ? 'جاري تجهيز صورة البطاقة...' : 'Preparing card image...', { id: 'card-gen' });
+      
+      const canvas = document.createElement('canvas');
+      canvas.width = 1012;
+      canvas.height = 638;
+      const ctx = canvas.getContext('2d');
+
+      // Gradient background
+      const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+      grad.addColorStop(0, '#12192A');
+      grad.addColorStop(0.5, '#0A0F1D');
+      grad.addColorStop(1, '#02050E');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Gold Glow
+      const radialGlow = ctx.createRadialGradient(canvas.width * 0.9, canvas.height * 0.1, 50, canvas.width * 0.9, canvas.height * 0.1, 400);
+      radialGlow.addColorStop(0, 'rgba(212, 175, 55, 0.15)');
+      radialGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = radialGlow;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Double golden border
+      ctx.lineWidth = 6;
+      ctx.strokeStyle = '#D4AF37';
+      const r = 40;
+      const w = canvas.width;
+      const h = canvas.height;
+      const pad = 12;
+      
+      const drawRoundedRect = (x, y, width, height, radius) => {
+        ctx.beginPath();
+        ctx.moveTo(x + radius, y);
+        ctx.lineTo(x + width - radius, y);
+        ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+        ctx.lineTo(x + width, y + height - radius);
+        ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+        ctx.lineTo(x + radius, y + height);
+        ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+        ctx.lineTo(x, y + radius);
+        ctx.quadraticCurveTo(x, y, x + radius, y);
+        ctx.closePath();
+      };
+      
+      drawRoundedRect(pad, pad, w - pad * 2, h - pad * 2, r);
+      ctx.stroke();
+
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = 'rgba(212, 175, 55, 0.4)';
+      drawRoundedRect(pad + 10, pad + 10, w - (pad + 10) * 2, h - (pad + 10) * 2, r - 8);
+      ctx.stroke();
+
+      // Smart Chip
+      const chipX = 75;
+      const chipY = 70;
+      const chipW = 100;
+      const chipH = 70;
+      
+      const chipGrad = ctx.createLinearGradient(chipX, chipY, chipX + chipW, chipY + chipH);
+      chipGrad.addColorStop(0, '#FFE082');
+      chipGrad.addColorStop(0.5, '#FFB300');
+      chipGrad.addColorStop(1, '#FF6F00');
+      ctx.fillStyle = chipGrad;
+      
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(chipX, chipY, chipW, chipH, 10); else ctx.rect(chipX, chipY, chipW, chipH);
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+      ctx.stroke();
+      
+      ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(chipX + chipW/3, chipY); ctx.lineTo(chipX + chipW/3, chipY + chipH);
+      ctx.moveTo(chipX + 2*chipW/3, chipY); ctx.lineTo(chipX + 2*chipW/3, chipY + chipH);
+      ctx.moveTo(chipX, chipY + chipH/2); ctx.lineTo(chipX + chipW, chipY + chipH/2);
+      ctx.stroke();
+
+      // Event Branding
+      ctx.font = 'bold 22px Cairo, system-ui, sans-serif';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+      ctx.textAlign = 'left';
+      ctx.fillText(eventSettings?.event_name || 'DIWAN EVENTS', 75, h - 70);
+
+      // VIP Pass Badge
+      const isVip = participant.role === 'vip';
+      const badgeText = isVip ? 'VIP PASS 👑' : 'EXECUTIVE PASS';
+      ctx.font = 'bold 18px Cairo, system-ui, sans-serif';
+      const badgeW = ctx.measureText(badgeText).width + 30;
+      const badgeH = 36;
+      const badgeX = w - badgeW - 75;
+      const badgeY = 70;
+      
+      ctx.fillStyle = 'rgba(212, 175, 55, 0.1)';
+      ctx.strokeStyle = 'rgba(212, 175, 55, 0.4)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 18); else ctx.rect(badgeX, badgeY, badgeW, badgeH);
+      ctx.fill();
+      ctx.stroke();
+      
+      ctx.fillStyle = '#D4AF37';
+      ctx.textAlign = 'center';
+      ctx.fillText(badgeText, badgeX + badgeW/2, badgeY + 24);
+
+      // Name & Details
+      ctx.textAlign = 'right';
+      ctx.font = 'bold 44px Cairo, system-ui, sans-serif';
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillText(participant.full_name, w - 75, 200);
+
+      ctx.font = 'bold 24px Cairo, system-ui, sans-serif';
+      ctx.fillStyle = '#D4AF37';
+      ctx.fillText(participant.organization, w - 75, 250);
+
+      if (participant.department) {
+        ctx.font = '500 20px Cairo, system-ui, sans-serif';
+        ctx.fillStyle = 'rgba(255,255,255,0.6)';
+        ctx.fillText(participant.department, w - 75, 285);
+      }
+
+      ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(w - 75, 320);
+      ctx.lineTo(w - 500, 320);
+      ctx.stroke();
+
+      ctx.font = '500 20px Cairo, system-ui, sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      let contactY = 365;
+      
+      const phone = participant.phone_number || participant.phone;
+      if (phone) {
+        ctx.fillText(`${phone}  📞`, w - 75, contactY);
+        contactY += 35;
+      }
+      
+      if (participant.email) {
+        ctx.fillText(`${participant.email}  ✉️`, w - 75, contactY);
+        contactY += 35;
+      }
+
+      if (participant.custom_values?.linkedin) {
+        ctx.fillStyle = '#60A5FA';
+        ctx.fillText(`linkedin.com/in/${participant.custom_values.linkedin}  🔗`, w - 75, contactY);
+        ctx.fillStyle = 'rgba(255,255,255,0.7)';
+        contactY += 35;
+      }
+
+      // Load QR
+      const qrImage = new Image();
+      qrImage.crossOrigin = 'anonymous';
+      const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(window.location.origin + '/card/' + eventId + '/' + (participant.public_card_token || participantToken))}`;
+      
+      qrImage.onload = () => {
+        const qrSize = 180;
+        const qrX = 75;
+        const qrY = 170;
+        const qPad = 12;
+        
+        ctx.fillStyle = '#FFFFFF';
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(qrX, qrY, qrSize, qrSize, 24); else ctx.rect(qrX, qrY, qrSize, qrSize);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(212, 175, 55, 0.3)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        ctx.drawImage(qrImage, qrX + qPad, qrY + qPad, qrSize - qPad*2, qrSize - qPad*2);
+        
+        ctx.textAlign = 'right';
+        const specialties = participant.custom_values?.specialties || [];
+        if (specialties.length > 0) {
+          ctx.font = 'bold 16px Cairo, system-ui, sans-serif';
+          ctx.fillStyle = '#D4AF37';
+          const tagsStr = specialties.slice(0, 3).map(s => `#${s}`).join('   ');
+          ctx.fillText(tagsStr, w - 75, h - 70);
+        }
+
+        const dataUrl = canvas.toDataURL('image/png');
+        
+        // Share File API
+        if (navigator.canShare && navigator.share) {
+          fetch(dataUrl)
+            .then(res => res.blob())
+            .then(blob => {
+              const file = new File([blob], `diwan-card-${participant.id}.png`, { type: 'image/png' });
+              if (navigator.canShare({ files: [file] })) {
+                navigator.share({
+                  files: [file],
+                  title: participant.full_name,
+                  text: lang === 'ar' ? 'إليك بطاقة أعمالي الرقمية الرسمية' : 'Here is my official guest business card'
+                })
+                .then(() => toast.success(lang === 'ar' ? 'تمت المشاركة بنجاح' : 'Shared successfully'))
+                .catch(err => {
+                  console.log('Share error, downloading instead:', err);
+                  triggerDownload(dataUrl);
+                });
+              } else {
+                triggerDownload(dataUrl);
+              }
+            })
+            .catch(() => triggerDownload(dataUrl));
+        } else {
+          triggerDownload(dataUrl);
+        }
+        toast.dismiss('card-gen');
+      };
+
+      const triggerDownload = (url) => {
+        const link = document.createElement('a');
+        link.download = `diwan-card-${participant.id}.png`;
+        link.href = url;
+        link.click();
+        toast.success(lang === 'ar' ? 'تم تحميل بطاقة الأعمال كصورة بنجاح! 🖼️' : 'Business card downloaded as image successfully! 🖼️');
+      };
+
+      qrImage.onerror = () => {
+        toast.error(lang === 'ar' ? 'فشل تحميل رمز الـ QR لتوليد الصورة' : 'Failed to load QR code for image generation');
+        toast.dismiss('card-gen');
+      };
+      
+      qrImage.src = qrCodeUrl;
+      
+    } catch (err) {
+      console.error(err);
+      toast.dismiss('card-gen');
+      toast.error(lang === 'ar' ? 'حدث خطأ أثناء توليد بطاقة الأعمال كصورة' : 'Error generating business card image');
+    }
+  };
+
   const tabs = [
     { id: 'home', label: t('tab_me'), icon: User },
     { id: 'notifications', label: lang === 'ar' ? 'التنبيهات' : 'Notifications', icon: Bell },
@@ -2922,11 +3157,11 @@ const ParticipantPortal = () => {
                 <span>{lang === 'ar' ? 'حفظ جهة الاتصال' : 'Save Contact'}</span>
               </button>
               <button
-                onClick={handleShareCard}
+                onClick={handleDownloadCardAsImage}
                 className="py-3 px-4 bg-white/5 hover:bg-white/10 text-white border border-white/10 text-xs font-black rounded-2xl transition-all flex items-center justify-center gap-2"
               >
-                <span>🔗</span>
-                <span>{lang === 'ar' ? 'مشاركة الرابط' : 'Share Card'}</span>
+                <span>🖼️</span>
+                <span>{lang === 'ar' ? 'تحميل كصورة' : 'Download Image'}</span>
               </button>
             </div>
           </div>
@@ -3250,25 +3485,25 @@ const ParticipantPortal = () => {
                             {/* Card Actions Panel */}
                             <div className="grid grid-cols-3 gap-2 mt-4 max-w-sm mx-auto">
                               <button
-                                onClick={() => handleDownloadVCard(participant)}
+                                onClick={handleDownloadCardAsImage}
                                 className="py-2.5 px-3 bg-amber-500 hover:bg-amber-600 text-brand-dark text-[10px] font-black rounded-xl transition-all shadow-md shadow-amber-500/10 flex items-center justify-center gap-1"
                               >
+                                <span>🖼️</span>
+                                <span>{lang === 'ar' ? 'مشاركة كصورة' : 'Share Image'}</span>
+                              </button>
+                              <button
+                                onClick={() => handleDownloadVCard(participant)}
+                                className="py-2.5 px-3 bg-white/5 hover:bg-white/10 text-white border border-white/10 text-[10px] font-black rounded-xl transition-all flex items-center justify-center gap-1"
+                              >
                                 <span>📥</span>
-                                <span>{lang === 'ar' ? 'حفظ جهة الاتصال' : 'Save Contact'}</span>
+                                <span>{lang === 'ar' ? 'حفظ الاتصال' : 'Save Contact'}</span>
                               </button>
                               <button
                                 onClick={handleShareCard}
-                                className="py-2.5 px-3 bg-white/5 hover:bg-white/10 text-white border border-white/10 text-[10px] font-black rounded-xl transition-all flex items-center justify-center gap-1"
-                              >
-                                <span>🔗</span>
-                                <span>{lang === 'ar' ? 'مشاركة البطاقة' : 'Share Card'}</span>
-                              </button>
-                              <button
-                                onClick={handleShareWhatsApp}
                                 className="py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black rounded-xl transition-all shadow-md shadow-emerald-600/10 flex items-center justify-center gap-1"
                               >
-                                <span>💬</span>
-                                <span>واتساب</span>
+                                <span>🔗</span>
+                                <span>{lang === 'ar' ? 'رابط البطاقة' : 'Card Link'}</span>
                               </button>
                             </div>
                           </motion.div>
