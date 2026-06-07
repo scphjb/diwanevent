@@ -4390,14 +4390,25 @@ const ParticipantPortal = () => {
                       <div className="space-y-4">
                         {staffLogisticsList
                           .filter(item => {
-                            // Non-presidents only see guests assigned to them via a CommitteeTask
+                            // Non-presidents: filter based on CommitteeTask assignments
                             if (!isPresident) {
-                              const hasAssignedTask = tasksList.some(t =>
-                                t.participant_id === item.participant_id &&
+                              const myTasks = tasksList.filter(t =>
                                 t.assigned_to_id === participant.id &&
                                 t.status !== 'cancelled'
                               );
-                              if (!hasAssignedTask) return false;
+                              // No tasks at all → show nothing
+                              if (myTasks.length === 0) return false;
+                              // Has at least one general task (no specific guest) → show all guests
+                              const hasGeneralTask = myTasks.some(t => !t.participant_id);
+                              if (hasGeneralTask) {
+                                // falls through to search filter below
+                              } else {
+                                // Only guest-specific tasks → show only those guests
+                                const hasAssignedTask = myTasks.some(t =>
+                                  t.participant_id === item.participant_id
+                                );
+                                if (!hasAssignedTask) return false;
+                              }
                             }
                             // Apply search filter
                             return (
