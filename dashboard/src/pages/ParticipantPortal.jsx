@@ -2472,7 +2472,7 @@ const ParticipantPortal = () => {
                               </button>
                             ) : null
                           )}
-                          {Number(task.assigned_to_id) === Number(participant.id) && (
+                          {Number(task.assigned_to_id) === Number(participant.id) && (task.status === 'pending' || task.status === 'confirmed') && (
                             <button
                               onClick={() => {
                                 setDetailedTask(task);
@@ -2617,7 +2617,7 @@ const ParticipantPortal = () => {
                           )}
 
                           {/* Apologize: only for the assigned member */}
-                          {Number(task.assigned_to_id) === Number(participant.id) && (
+                          {Number(task.assigned_to_id) === Number(participant.id) && (task.status === 'pending' || task.status === 'confirmed') && (
                             <button
                               onClick={() => {
                                 setDetailedTask(task);
@@ -3156,10 +3156,28 @@ const ParticipantPortal = () => {
                             </span>
                           </div>
                           <h4 className={cn("text-sm font-black text-white break-words", !notif.is_read && "text-amber-100")}>
-                            {notif.title}
+                            {notif.title
+                              ? notif.title
+                                 .replace(/transport/g, 'النقل')
+                                 .replace(/logistics/g, 'النقل')
+                                 .replace(/catering/g, 'الإطعام')
+                                 .replace(/accommodation/g, 'الإيواء')
+                                 .replace(/reception/g, 'الاستقبال')
+                                 .replace(/entertainment/g, 'الترفيه')
+                              : ''
+                            }
                           </h4>
                           <p className="text-xs text-white/65 leading-relaxed font-medium break-words">
-                            {notif.message}
+                            {notif.message 
+                              ? notif.message
+                                 .replace(/لجنة transport/g, 'لجنة النقل')
+                                 .replace(/لجنة logistics/g, 'لجنة النقل')
+                                 .replace(/لجنة catering/g, 'لجنة الإطعام')
+                                 .replace(/لجنة accommodation/g, 'لجنة الإيواء')
+                                 .replace(/لجنة reception/g, 'لجنة الاستقبال والتوجيه')
+                                 .replace(/لجنة entertainment/g, 'لجنة الترفيه')
+                              : ''
+                            }
                           </p>
                         </div>
                         {notif.link && (
@@ -6617,7 +6635,7 @@ const ParticipantPortal = () => {
                                 )
                               )}
 
-                              {Number(detailedTask.assigned_to_id) === Number(participant.id) && (
+                              {Number(detailedTask.assigned_to_id) === Number(participant.id) && (detailedTask.status === 'pending' || detailedTask.status === 'confirmed') && (
                                 <button
                                   onClick={() => setIsApologizing(true)}
                                   className="flex-1 py-3 px-4 rounded-2xl bg-amber-500 hover:bg-amber-400 text-brand-dark text-xs font-black transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-amber-500/10 min-w-[100px]"
