@@ -4674,6 +4674,19 @@ const ParticipantPortal = () => {
                                       {guest.organization && <div>🏢 {guest.organization}</div>}
                                       {(guest.phone || guest.phone_number) && <div dir="ltr">📞 {guest.phone || guest.phone_number}</div>}
                                       {task && <div className="sm:col-span-2">📋 {lang === 'ar' ? 'المهمة:' : 'Task:'} <span className="text-amber-400">{task.title}</span></div>}
+                                      {task && task.due_time && (
+                                        <div className="sm:col-span-2">⏰ {lang === 'ar' ? 'وقت الوصول المحدد:' : 'Scheduled Arrival:'} <span className="text-white">{new Date(task.due_time).toLocaleString(lang === 'ar' ? 'ar-DZ' : 'en-US')}</span></div>
+                                      )}
+                                      {task && task.driver_name && (
+                                        <div className="sm:col-span-2 p-3 bg-white/5 rounded-2xl border border-white/5 mt-2 space-y-1 text-white">
+                                          <div className="text-[10px] text-white/40 font-bold">{lang === 'ar' ? '🚗 السائق المعين للمهمة:' : '🚗 Assigned Driver:'}</div>
+                                          <div className="flex justify-between items-center text-xs font-black">
+                                            <span>👤 {task.driver_name}</span>
+                                            {task.driver_phone && <span dir="ltr">📞 {task.driver_phone}</span>}
+                                          </div>
+                                          {task.driver_vehicle && <div className="text-[11px] text-white/60">🚘 {task.driver_vehicle}</div>}
+                                        </div>
+                                      )}
                                     </div>
                                   </div>
                                   <div className="flex items-center gap-2 self-end md:self-center">
