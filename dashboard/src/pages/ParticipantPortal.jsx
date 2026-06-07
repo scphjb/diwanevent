@@ -3940,7 +3940,7 @@ const ParticipantPortal = () => {
               </div>
 
               {/* Driver & Shuttle Live Dispatch Information (If Assigned) */}
-              {logistics && (logistics.driver_name || logistics.host_name) && (
+              {logistics && (logistics.host_name || logistics.driver_name) && (
                 <div className="p-6 bg-gradient-to-br from-emerald-500/10 via-[#0D1527] to-[#050B18] border border-emerald-500/20 rounded-[30px] relative overflow-hidden shadow-[0_20px_50px_rgba(16,185,129,0.1)]">
                   <div className="absolute top-0 left-0 bg-emerald-500 text-brand-dark px-4 py-1 rounded-br-2xl text-[10px] font-black uppercase tracking-widest">
                     {lang === 'ar' ? 'تم تأكيد الاستقبال والنقل 🟢' : 'RECEPTION CONFIRMED 🟢'}
@@ -3948,90 +3948,50 @@ const ParticipantPortal = () => {
                   <h4 className="text-lg font-black text-emerald-400 mb-4 mt-2">
                     {lang === 'ar' ? 'تفاصيل الاستقبال والنقل المخصصة لك' : 'Your Reception & Shuttle Details'}
                   </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm font-bold text-right" dir="rtl">
-                    {/* Welcoming Host Details */}
-                    {logistics.host_name && (
-                      <div className="md:col-span-2 p-4 bg-blue-500/5 rounded-2xl border border-blue-500/10 space-y-2 mb-2">
-                        <span className="text-blue-400 text-xs block font-black">
-                          {lang === 'ar' ? '🙋‍♂️ المستقبل الميداني المخصص لاستقبالك (عضو اللجنة)' : '🙋‍♂️ Assigned Welcoming Host (Committee Member)'}
-                        </span>
-                        <div className="flex flex-wrap items-center justify-between gap-4 mt-1">
-                          <div className="text-right">
-                            <span className="text-white/40 text-[10px] block">{lang === 'ar' ? 'الاسم' : 'Name'}</span>
-                            <span className="text-white text-sm font-black">{logistics.host_name}</span>
-                          </div>
-                          {logistics.host_phone && (
-                            <div className="flex gap-2">
-                              <a
-                                href={`tel:${logistics.host_phone}`}
-                                className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white text-xs font-black transition-all flex items-center gap-1"
-                              >
-                                <span>📞</span>
-                                {lang === 'ar' ? 'اتصال مباشر' : 'Call'}
-                              </a>
-                              <a
-                                href={`https://wa.me/${logistics.host_phone.replace(/\+/g, '').replace(/[^0-9]/g, '')}`}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="px-3 py-1.5 rounded-xl bg-[#075E54]/10 border border-[#075E54]/20 hover:bg-[#075E54]/20 text-[#25D366] text-xs font-black transition-all flex items-center gap-1"
-                              >
-                                <span>💬</span>
-                                {lang === 'ar' ? 'واتساب' : 'WhatsApp'}
-                              </a>
-                            </div>
+                  <div className="space-y-4 text-sm font-bold text-right" dir="rtl">
+                    {/* Host & Vehicle Card */}
+                    <div className="p-4 bg-emerald-500/5 rounded-2xl border border-emerald-500/10 space-y-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div className="space-y-1">
+                          <span className="text-emerald-400 text-xs block font-black">
+                            {lang === 'ar' ? '🙋‍♂️ المستقبل الميداني المخصص لاستقبالك' : '🙋‍♂️ Assigned Field Host'}
+                          </span>
+                          <span className="text-white text-base font-black">{logistics.host_name || logistics.driver_name}</span>
+                          {logistics.vehicle_details && (
+                            <span className="text-white/60 text-xs block mt-1">
+                              🚗 {lang === 'ar' ? `السيارة المخصصة: ${logistics.vehicle_details}` : `Assigned Vehicle: ${logistics.vehicle_details}`}
+                            </span>
+                          )}
+                          {logistics.shuttle_time && (
+                            <span className="text-white/40 text-[10px] block mt-1">
+                              ⏳ {lang === 'ar' ? 'وقت التحرك المخطط:' : 'Departure time:'} {formatDateTime(logistics.shuttle_time, { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' })}
+                            </span>
                           )}
                         </div>
-                      </div>
-                    )}
-
-                    {/* Driver & Car details */}
-                    {logistics.driver_name ? (
-                      <div className="md:col-span-2 p-4 bg-emerald-500/5 rounded-2xl border border-emerald-500/10 space-y-2 mb-2">
-                        <span className="text-emerald-400 text-xs block font-black">
-                          {lang === 'ar' ? '🚗 السائق المخصص لتوصيلك' : '🚗 Assigned Driver Details'}
-                        </span>
-                        <div className="flex flex-wrap items-center justify-between gap-4 mt-1">
-                          <div className="text-right">
-                            <span className="text-white/40 text-[10px] block">{lang === 'ar' ? 'الاسم والسيارة' : 'Name & Vehicle'}</span>
-                            <span className="text-white text-sm font-black">👤 {logistics.driver_name}</span>
-                            {logistics.vehicle_details && (
-                              <span className="text-white/60 text-xs block mt-0.5">🚘 {logistics.vehicle_details}</span>
-                            )}
-                            {logistics.shuttle_time && (
-                              <span className="text-white/40 text-[10px] block mt-1">
-                                ⏳ {lang === 'ar' ? 'وقت التحرك المخطط:' : 'Departure time:'} {formatDateTime(logistics.shuttle_time, { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' })}
-                              </span>
-                            )}
+                        {(logistics.host_phone || logistics.driver_phone) && (
+                          <div className="flex gap-2 self-start sm:self-center">
+                            <a
+                              href={`tel:${logistics.host_phone || logistics.driver_phone}`}
+                              className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white text-xs font-black transition-all flex items-center gap-1.5"
+                            >
+                              <span>📞</span>
+                              {lang === 'ar' ? 'اتصال مباشر' : 'Call'}
+                            </a>
+                            <a
+                              href={`https://wa.me/${(logistics.host_phone || logistics.driver_phone).replace(/\+/g, '').replace(/[^0-9]/g, '')}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="px-4 py-2 rounded-xl bg-[#075E54]/10 border border-[#075E54]/20 hover:bg-[#075E54]/20 text-[#25D366] text-xs font-black transition-all flex items-center gap-1.5"
+                            >
+                              <span>💬</span>
+                              {lang === 'ar' ? 'واتساب' : 'WhatsApp'}
+                            </a>
                           </div>
-                          {logistics.driver_phone && (
-                            <div className="flex gap-2">
-                              <a
-                                href={`tel:${logistics.driver_phone}`}
-                                className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white text-xs font-black transition-all flex items-center gap-1"
-                              >
-                                <span>📞</span>
-                                {lang === 'ar' ? 'اتصال مباشر' : 'Call'}
-                              </a>
-                              <a
-                                href={`https://wa.me/${logistics.driver_phone.replace(/\+/g, '').replace(/[^0-9]/g, '')}`}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="px-3 py-1.5 rounded-xl bg-[#075E54]/10 border border-[#075E54]/20 hover:bg-[#075E54]/20 text-[#25D366] text-xs font-black transition-all flex items-center gap-1"
-                              >
-                                <span>💬</span>
-                                {lang === 'ar' ? 'واتساب' : 'WhatsApp'}
-                              </a>
-                            </div>
-                          )}
-                        </div>
+                        )}
                       </div>
-                    ) : (
-                      <div className="md:col-span-2 p-4 bg-white/5 rounded-2xl border border-white/5 text-center text-white/40 text-xs font-bold">
-                        {lang === 'ar' ? '🚗 لم يتم تخصيص سيارة وسائق لهذا المسار بعد.' : '🚗 No vehicle or driver assigned for this shuttle yet.'}
-                      </div>
-                    )}
+                    </div>
                   </div>
-                  {logistics.status && (
+              {logistics.status && (
                     <div className="mt-4 text-center">
                       <span className={`inline-block px-4 py-1.5 border rounded-full text-xs font-black ${
                         logistics.status === 'completed' ? 'bg-emerald-500/25 text-emerald-400 border-emerald-500/40' :
@@ -5008,6 +4968,140 @@ const ParticipantPortal = () => {
                     </div>
                   )}
 
+                  {/* Guests Travel & Shuttle Registry */}
+                  <div className="bg-gradient-to-b from-white/[0.06] to-white/[0.01] border border-white/10 rounded-[35px] p-6 backdrop-blur-3xl relative shadow-xl text-right">
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6 pb-3 border-b border-white/5">
+                      <h4 className="text-lg font-black text-white flex items-center gap-2">
+                        <span>🚗</span>
+                        {lang === 'ar' ? 'سجل وصول وفود الضيوف والنقل الميداني' : 'Guests Arrival & Shuttle Registry'}
+                      </h4>
+                      <div className="w-full sm:w-64">
+                        <Input
+                          value={searchStaffQuery}
+                          onChange={(e) => setSearchStaffQuery(e.target.value)}
+                          placeholder={lang === 'ar' ? '🔍 ابحث باسم الضيف أو تفاصيل الرحلة...' : '🔍 Search guest or flight details...'}
+                          className="w-full bg-[#050B18] border border-white/10 rounded-2xl h-10 text-right text-xs text-white"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1">
+                      {staffLogisticsList
+                        .filter(item => {
+                          if (!searchStaffQuery) return true;
+                          const q = searchStaffQuery.toLowerCase();
+                          return (item.participant_name || '').toLowerCase().includes(q) ||
+                                 (item.flight_number || '').toLowerCase().includes(q) ||
+                                 (item.hotel_name || '').toLowerCase().includes(q) ||
+                                 (item.driver_name || '').toLowerCase().includes(q);
+                        })
+                        .map((item) => {
+                          // Find if this guest has an active transport task
+                          const guestTask = tasksList.find(t => t.participant_id === item.participant_id && t.committee === 'transport' && t.status !== 'cancelled');
+                          const hasTask = !!guestTask;
+                          
+                          return (
+                            <div key={item.id} className="p-5 bg-white/[0.02] border border-white/5 hover:border-white/10 rounded-3xl flex flex-col md:flex-row md:items-center justify-between gap-4 text-right transition-all">
+                              <div className="space-y-2">
+                                <div className="flex items-center gap-2 flex-wrap justify-end md:justify-start" dir="rtl">
+                                  <h5 className="font-black text-sm text-white">{item.participant_name}</h5>
+                                  <span className="text-[9px] px-2 py-0.5 rounded bg-white/5 text-white/40 border border-white/15">
+                                    {item.participant_phone || '---'}
+                                  </span>
+                                </div>
+                                <p className="text-white/40 text-xs font-bold leading-relaxed">
+                                  {item.transport_type === 'plane' ? (
+                                    <span>✈️ {lang === 'ar' ? `رحلة طيران: ${item.flight_number || 'غير محدد'}` : `Flight: ${item.flight_number}`}</span>
+                                  ) : item.transport_type === 'private_car' ? (
+                                    <span>🚗 {lang === 'ar' ? 'وصول بالسيارة الخاصة' : 'Arrival by Private Car'}</span>
+                                  ) : (
+                                    <span>⏳ {lang === 'ar' ? 'لم يحدد تفاصيل النقل بعد' : 'No transport selected'}</span>
+                                  )}
+                                  {item.arrival_time && (
+                                    <span className="mr-2 text-amber-500">
+                                      📅 {lang === 'ar' ? 'الوصول:' : 'Arrival:'} {new Date(item.arrival_time).toLocaleString([], {hour: '2-digit', minute:'2-digit', day:'numeric', month:'short'})}
+                                    </span>
+                                  )}
+                                  {item.arrival_location && (
+                                    <span className="mr-2 text-white/50 block md:inline">
+                                      📍 {item.arrival_location}
+                                    </span>
+                                  )}
+                                </p>
+                                {item.hotel_name && (
+                                  <p className="text-white/40 text-[10px] font-bold">
+                                    🏨 {lang === 'ar' ? `الفندق الموجه إليه: ${item.hotel_name}` : `Target Hotel: ${item.hotel_name}`} {item.room_number ? `(غرفة: ${item.room_number})` : ''}
+                                  </p>
+                                )}
+                                
+                                <div className="mt-2 pt-2 border-t border-white/5 flex flex-wrap gap-4 items-center justify-end md:justify-start text-xs font-black">
+                                  {hasTask ? (
+                                    <div className="text-emerald-400 flex items-center gap-1.5">
+                                      <span>🙋‍♂️</span>
+                                      {lang === 'ar' ? `المستقبل الميداني المكلف: ${guestTask.assigned_to_name}` : `Field Host: ${guestTask.assigned_to_name}`}
+                                      {guestTask.driver_vehicle && (
+                                        <span className="text-white/60 text-[10px] font-bold">
+                                          (🚗 {guestTask.driver_vehicle})
+                                        </span>
+                                      )}
+                                    </div>
+                                  ) : (
+                                    <div className="text-red-400/80 flex items-center gap-1.5">
+                                      <span>⚠️</span>
+                                      {lang === 'ar' ? 'لم يتم تكليف مستقبل ميداني بعد' : 'No field host assigned yet'}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-2.5 self-start md:self-center">
+                                {/* Status Badge */}
+                                <span className={`px-2.5 py-1 rounded-xl text-[10px] font-black ${
+                                  item.status === 'completed' ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400' :
+                                  item.status === 'confirmed' ? 'bg-amber-500/10 border border-amber-500/20 text-amber-400' :
+                                  item.status === 'dispatched' ? 'bg-blue-500/10 border border-blue-500/20 text-blue-400' :
+                                  'bg-white/5 border border-white/10 text-white/40'
+                                }`}>
+                                  {item.status === 'completed' ? (lang === 'ar' ? 'مكتمل ✅' : 'Completed') :
+                                   item.status === 'confirmed' ? (lang === 'ar' ? 'مؤكد 🟢' : 'Confirmed') :
+                                   item.status === 'dispatched' ? (lang === 'ar' ? 'جاري الاستقبال 🚗' : 'Dispatched') :
+                                   (lang === 'ar' ? 'معلق ⏳' : 'Pending')}
+                                </span>
+
+                                {isPresident && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      // Pre-populate new task form with guest details
+                                      setNewTaskForm({
+                                        title: lang === 'ar' ? `استقبال ونقل الضيف ${item.participant_name}` : `Receive and Transport Guest ${item.participant_name}`,
+                                        description: lang === 'ar' ? `الرجاء التنسيق مع الضيف لاستقباله وتوصيله إلى الفندق.` : `Please coordinate with the guest to receive and drop them off at the hotel.`,
+                                        participant_id: item.participant_id.toString(),
+                                        assigned_to_id: '',
+                                        due_time: item.arrival_time ? item.arrival_time.substring(0, 16) : '',
+                                        driver_name: '',
+                                        driver_phone: '',
+                                        driver_vehicle: item.vehicle_details || ''
+                                      });
+                                      setSelectedTaskCommittee('transport');
+                                      setIsCreateTaskModalOpen(true);
+                                    }}
+                                    className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-brand-dark text-xs font-black transition-all flex items-center gap-1 shadow-md shadow-amber-500/10"
+                                  >
+                                    <span>➕</span>
+                                    {hasTask ? (lang === 'ar' ? 'تكليف إضافي' : 'Delegate Additional') : (lang === 'ar' ? 'تكليف استقبال' : 'Assign Host')}
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      {staffLogisticsList.length === 0 && (
+                        <p className="text-white/40 text-xs text-center py-6">{lang === 'ar' ? 'لا يوجد أي وفود مسجلة للوصول حالياً.' : 'No registered guest arrivals yet.'}</p>
+                      )}
+                    </div>
+                  </div>
+
                   {renderCommitteeTasks('transport')}
                 </div>
               )}
@@ -5857,6 +5951,55 @@ const ParticipantPortal = () => {
                               ))}
                           </select>
                         </div>
+
+                        {/* Guest Travel Details Summary */}
+                        {newTaskForm.participant_id && (() => {
+                          const guestArrival = staffLogisticsList.find(l => Number(l.participant_id) === Number(newTaskForm.participant_id));
+                          if (!guestArrival) return null;
+                          return (
+                            <div className="p-4 rounded-2xl bg-amber-500/5 border border-amber-500/10 text-right text-xs space-y-1.5 font-bold">
+                              <div className="text-amber-500 font-black">✈️ {lang === 'ar' ? 'تفاصيل السفر والوصول:' : 'Travel & Arrival Details:'}</div>
+                              <div className="text-white/80">
+                                {guestArrival.transport_type === 'plane' ? (
+                                  <span>✈️ {lang === 'ar' ? `رحلة طيران: ${guestArrival.flight_number || 'غير محدد'}` : `Flight: ${guestArrival.flight_number}`}</span>
+                                ) : guestArrival.transport_type === 'private_car' ? (
+                                  <span>🚗 {lang === 'ar' ? 'وصول بالسيارة الخاصة' : 'Arrival by Private Car'}</span>
+                                ) : (
+                                  <span>⏳ {lang === 'ar' ? 'لم يحدد تفاصيل النقل بعد' : 'No transport details registered yet'}</span>
+                                )}
+                              </div>
+                              {guestArrival.arrival_time && (
+                                <div className="text-white/60">
+                                  📅 {lang === 'ar' ? 'تاريخ ووقت الوصول:' : 'Arrival Time:'} {new Date(guestArrival.arrival_time).toLocaleString([], {hour: '2-digit', minute:'2-digit', day:'numeric', month:'short'})}
+                                </div>
+                              )}
+                              {guestArrival.arrival_location && (
+                                <div className="text-white/60">
+                                  📍 {lang === 'ar' ? 'مكان الوصول:' : 'Arrival Location:'} {guestArrival.arrival_location}
+                                </div>
+                              )}
+                              {guestArrival.hotel_name && (
+                                <div className="text-white/60">
+                                  🏨 {lang === 'ar' ? 'الفندق الموجه إليه:' : 'Target Hotel:'} {guestArrival.hotel_name} {guestArrival.room_number ? `(غرفة: ${guestArrival.room_number})` : ''}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
+
+                        {/* Vehicle details field (only for transport) */}
+                        {(selectedTaskCommittee === 'transport' || selectedTaskCommittee === 'logistics') && (
+                          <div className="space-y-1">
+                            <label className="text-xs font-black text-white/50 block">{lang === 'ar' ? 'تفاصيل السيارة واللوحة المسندة' : 'Assigned Vehicle Details'}</label>
+                            <input
+                              type="text"
+                              placeholder={lang === 'ar' ? 'مثال: تويوتا كورولا بيضاء - لوحة 123-45' : 'e.g. White Toyota Corolla - 123-45'}
+                              value={newTaskForm.driver_vehicle}
+                              onChange={(e) => setNewTaskForm({ ...newTaskForm, driver_vehicle: e.target.value })}
+                              className="w-full bg-[#050B18] border border-white/10 rounded-2xl h-12 px-4 text-xs text-white font-bold outline-none focus:border-amber-500/50 transition-all text-right"
+                            />
+                          </div>
+                        )}
 
                         <div className="space-y-1">
                           <label className="text-xs font-black text-white/50 block">{lang === 'ar' ? 'عضو اللجنة المنفذ' : 'Assignee'}</label>

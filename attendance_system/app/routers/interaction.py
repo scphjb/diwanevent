@@ -551,6 +551,26 @@ async def dispatch_logistics(
         registry.shuttle_time = make_naive(data.shuttle_time)
     if data.status is not None:
         registry.status = data.status
+
+    # مزامنة البيانات عكسياً إلى المهمة الميدانية النشطة إن وجدت
+    try:
+        from app.models.others import CommitteeTask
+        task_stmt = select(CommitteeTask).filter(
+            CommitteeTask.event_id == registry.event_id,
+            CommitteeTask.participant_id == participant_id,
+            CommitteeTask.committee.in_(('transport', 'logistics'))
+        )
+        task_res = await db.execute(task_stmt)
+        task = task_res.scalars().first()
+        if task:
+            if data.driver_name is not None:
+                task.driver_name = data.driver_name
+            if data.driver_phone is not None:
+                task.driver_phone = data.driver_phone
+            if data.vehicle_details is not None:
+                task.driver_vehicle = data.vehicle_details
+    except Exception as sync_err:
+        logger.error(f"Failed to sync dispatch driver details back to CommitteeTask: {sync_err}")
         
     await db.commit()
     await db.refresh(registry)
@@ -1563,6 +1583,59 @@ async def create_committee_task(
     await db.commit()
     await db.refresh(new_task)
 
+    # ── مزامنة تفاصيل النقل الموحدة إلى سجل اللوجستيات (LogisticsRegistry) ──
+    if new_task.participant_id and new_task.committee in ('transport', 'logistics'):
+        try:
+            from app.models.others import LogisticsRegistry
+            from app.models.participant import Participant
+            
+            # جلب هاتف المستقبل الميداني (العضو المكلف)
+            host_phone = None
+            host_name = new_task.assigned_to_name
+            if new_task.assigned_to_id:
+                host_stmt = select(Participant).filter(Participant.id == new_task.assigned_to_id)
+                host_res = await db.execute(host_stmt)
+                host_p = host_res.scalar_one_or_none()
+                if host_p:
+                    host_phone = host_p.phone or host_p.phone_number
+                    if not host_name:
+                        host_name = host_p.full_name
+            
+            # تحديث سجل الضيف
+            log_stmt = select(LogisticsRegistry).filter(
+                LogisticsRegistry.event_id == new_task.event_id,
+                LogisticsRegistry.participant_id == new_task.participant_id
+            )
+            log_res = await db.execute(log_stmt)
+            registry = log_res.scalar_one_or_none()
+            if registry:
+                registry.driver_name = host_name
+                registry.driver_phone = host_phone
+                registry.vehicle_details = new_task.driver_vehicle
+                registry.status = "dispatched"
+                
+                # بث تحديثات الويب سوكت
+                try:
+                    await manager.broadcast_to_event(new_task.event_id, {
+                        "type": "logistics_dispatched",
+                        "participant_id": new_task.participant_id,
+                        "logistics": {
+                            "driver_name": host_name,
+                            "driver_phone": host_phone,
+                            "vehicle_details": new_task.driver_vehicle,
+                            "status": "dispatched"
+                        }
+                    })
+                    await manager.broadcast_to_event(new_task.event_id, {
+                        "type": "logistics_updated",
+                        "participant_id": new_task.participant_id,
+                        "logistics_id": registry.id
+                    })
+                except Exception as ws_err:
+                    logger.warning(f"WebSocket broadcast failed on task creation sync: {ws_err}")
+        except Exception as e:
+            logger.error(f"Failed to sync logistics upon task creation: {e}")
+
     # ── إشعار العضو المسندة إليه المهمة ──
     if new_task.assigned_to_id:
         try:
@@ -1804,6 +1877,60 @@ async def delete_committee_task(
         if not is_allowed:
             raise HTTPException(status_code=403, detail="Only committee presidents or general organizers can delete tasks")
 
+    # If it is a transport task and has a participant associated, reset the LogisticsRegistry entry
+    if task.participant_id and task.committee in ('transport', 'logistics'):
+        try:
+            from app.models.others import LogisticsRegistry
+            log_stmt = select(LogisticsRegistry).filter(
+                LogisticsRegistry.event_id == task.event_id,
+                LogisticsRegistry.participant_id == task.participant_id
+            )
+            log_res = await db.execute(log_stmt)
+            registry = log_res.scalar_one_or_none()
+            if registry:
+                registry.driver_name = None
+                registry.driver_phone = None
+                registry.vehicle_details = None
+                registry.shuttle_time = None
+                registry.status = "pending"
+                
+                # Broadcast updates via WebSocket
+                try:
+                    await manager.broadcast_to_event(task.event_id, {
+                        "type": "logistics_dispatched",
+                        "participant_id": task.participant_id,
+                        "logistics": {
+                            "driver_name": None,
+                            "driver_phone": None,
+                            "vehicle_details": None,
+                            "shuttle_time": None,
+                            "status": "pending"
+                        }
+                    })
+                    await manager.broadcast_to_event(task.event_id, {
+                        "type": "logistics_updated",
+                        "participant_id": task.participant_id,
+                        "logistics_id": registry.id
+                    })
+                except Exception as ws_err:
+                    logger.warning(f"WebSocket broadcast failed on task deletion: {ws_err}")
+                
+                # Send push notification to the guest
+                try:
+                    from app.routers.notifications import send_web_push_notification_to_target
+                    await send_web_push_notification_to_target(
+                        db=db,
+                        title="تحديث في تفاصيل النقل 🚗",
+                        body="تم إلغاء مهمة النقل السابقة. أنت الآن في قائمة الانتظار لتخصيص استقبال جديد.",
+                        url="/dashboard/logistics",
+                        participant_ids=[task.participant_id],
+                        event_id=task.event_id
+                    )
+                except Exception as notif_err:
+                    logger.error(f"Failed to notify participant of task cancellation: {notif_err}")
+        except Exception as e:
+            logger.error(f"Failed to reset logistics status upon task deletion: {e}")
+
     await db.delete(task)
     await db.commit()
     return {"status": "success", "message": "Task deleted"}
@@ -1900,6 +2027,7 @@ async def assign_driver_to_committee_task(
         if not is_allowed:
             raise HTTPException(status_code=403, detail="Only committee presidents, organizers or the assignee can assign drivers")
 
+    # تحديث بيانات السائق/المركبة في جدول المهمة
     task.driver_name = req.driver_name
     task.driver_phone = req.driver_phone
     task.driver_vehicle = req.driver_vehicle
@@ -1907,6 +2035,61 @@ async def assign_driver_to_committee_task(
     
     await db.commit()
     await db.refresh(task)
+
+    # مزامنة التغييرات تلقائياً إلى سجل اللوجستيات الخاص بالضيف
+    if task.participant_id and task.committee in ('transport', 'logistics'):
+        try:
+            from app.models.others import LogisticsRegistry
+            from app.models.participant import Participant
+            
+            # جلب هاتف العضو المكلف
+            host_phone = None
+            host_name = task.assigned_to_name
+            if task.assigned_to_id:
+                host_stmt = select(Participant).filter(Participant.id == task.assigned_to_id)
+                host_res = await db.execute(host_stmt)
+                host_p = host_res.scalar_one_or_none()
+                if host_p:
+                    host_phone = host_p.phone or host_p.phone_number
+                    if not host_name:
+                        host_name = host_p.full_name
+
+            log_stmt = select(LogisticsRegistry).filter(
+                LogisticsRegistry.event_id == task.event_id,
+                LogisticsRegistry.participant_id == task.participant_id
+            )
+            log_res = await db.execute(log_stmt)
+            registry = log_res.scalar_one_or_none()
+            if registry:
+                # المستقبل الميداني هو العضو المكلف، والسيارة هي المسجلة في المهمة
+                registry.driver_name = host_name
+                registry.driver_phone = host_phone
+                registry.vehicle_details = task.driver_vehicle
+                if registry.status == "pending":
+                    registry.status = "dispatched"
+                
+                # بث الويب سوكت
+                try:
+                    await manager.broadcast_to_event(task.event_id, {
+                        "type": "logistics_dispatched",
+                        "participant_id": task.participant_id,
+                        "logistics": {
+                            "driver_name": host_name,
+                            "driver_phone": host_phone,
+                            "vehicle_details": task.driver_vehicle,
+                            "status": registry.status
+                        }
+                    })
+                    await manager.broadcast_to_event(task.event_id, {
+                        "type": "logistics_updated",
+                        "participant_id": task.participant_id,
+                        "logistics_id": registry.id
+                    })
+                except Exception as ws_err:
+                    logger.warning(f"WebSocket broadcast failed on task driver assignment sync: {ws_err}")
+        except Exception as e:
+            logger.error(f"Failed to sync logistics upon task driver assignment: {e}")
+
     return {"status": "success", "message": "Driver assigned successfully"}
 
 @router.patch("/tasks/{task_id}/whatsapp-sent")
