@@ -5819,7 +5819,7 @@ const ParticipantPortal = () => {
                       initial={{ scale: 0.9, y: 20 }}
                       animate={{ scale: 1, y: 0 }}
                       exit={{ scale: 0.9, y: 20 }}
-                      className="w-full max-w-lg bg-gradient-to-b from-[#0D1527] to-[#050B18] border border-white/10 rounded-[40px] p-6 relative shadow-[0_24px_80px_rgba(0,0,0,0.6)] text-right"
+                      className="w-full max-w-lg max-h-[85vh] flex flex-col bg-gradient-to-b from-[#0D1527] to-[#050B18] border border-white/10 rounded-[40px] p-6 relative shadow-[0_24px_80px_rgba(0,0,0,0.6)] text-right"
                     >
                       <div className="flex justify-between items-center pb-4 border-b border-white/5 mb-4">
                         <div className="flex items-center gap-2">
@@ -5837,7 +5837,7 @@ const ParticipantPortal = () => {
                         </button>
                       </div>
 
-                      <div className="space-y-4" dir="rtl">
+                      <div className="space-y-4 overflow-y-auto flex-1 pr-1 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent" dir="rtl">
                         <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
                           <span className="text-[10px] text-white/40 block mb-1 font-bold">{lang === 'ar' ? 'عنوان المهمة' : 'Title'}</span>
                           <h4 className="text-base font-black text-white">{detailedTask.title}</h4>
