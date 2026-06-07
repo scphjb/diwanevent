@@ -5868,7 +5868,11 @@ const ParticipantPortal = () => {
                           </div>
 
                           <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
-                            <span className="text-[10px] text-white/40 block mb-1 font-bold">{lang === 'ar' ? 'تاريخ الاستحقاق' : 'Due Time'}</span>
+                             <span className="text-[10px] text-white/40 block mb-1 font-bold">
+                              {detailedTask.committee === 'transport' || detailedTask.committee === 'logistics'
+                                ? (lang === 'ar' ? 'تاريخ ووقت الوصول' : 'Arrival Time')
+                                : (lang === 'ar' ? 'تاريخ الاستحقاق' : 'Due Time')}
+                            </span>
                             <p className="text-xs text-white font-bold mt-1.5">
                               {(() => {
                                 const targetTime = detailedTask.due_time || staffLogisticsList.find(l => l.participant_id === detailedTask.participant_id)?.arrival_time;
