@@ -221,9 +221,18 @@ const ParticipantPortal = () => {
     description: '',
     participant_id: '',
     assigned_to_id: '',
-    due_time: ''
+    due_time: '',
+    driver_name: '',
+    driver_phone: '',
+    driver_vehicle: ''
   });
   const [selectedTaskCommittee, setSelectedTaskCommittee] = useState('transport');
+  const [editingDriverTaskId, setEditingDriverTaskId] = useState(null);
+  const [taskDriverForm, setTaskDriverForm] = useState({
+    driver_name: '',
+    driver_phone: '',
+    driver_vehicle: ''
+  });
 
   const [polls, setPolls] = useState([]);
   const [votedPolls, setVotedPolls] = useState([]);
@@ -1583,7 +1592,10 @@ const ParticipantPortal = () => {
         participant_id: newTaskForm.participant_id ? parseInt(newTaskForm.participant_id) : null,
         assigned_to_id: newTaskForm.assigned_to_id ? parseInt(newTaskForm.assigned_to_id) : null,
         assigned_to_name: assignedName || null,
-        due_time: newTaskForm.due_time || null
+        due_time: newTaskForm.due_time || null,
+        driver_name: newTaskForm.driver_name || null,
+        driver_phone: newTaskForm.driver_phone || null,
+        driver_vehicle: newTaskForm.driver_vehicle || null
       });
       toast.success(lang === 'ar' ? 'تم إسناد المهمة بنجاح!' : 'Task assigned successfully!');
       setIsCreateTaskModalOpen(false);
@@ -1592,7 +1604,10 @@ const ParticipantPortal = () => {
         description: '',
         participant_id: '',
         assigned_to_id: '',
-        due_time: ''
+        due_time: '',
+        driver_name: '',
+        driver_phone: '',
+        driver_vehicle: ''
       });
       fetchCommitteeTasks();
     } catch (err) {
@@ -1656,6 +1671,58 @@ const ParticipantPortal = () => {
         console.error('Failed to delete task:', err);
         toast.error(lang === 'ar' ? 'فشل حذف المهمة' : 'Failed to delete task');
       }
+    }
+  };
+
+  const handleAssignTaskDriver = async (taskId, driverData) => {
+    try {
+      await interactionService.assignTaskDriver(taskId, driverData);
+      toast.success(lang === 'ar' ? 'تم تعيين السائق للمهمة بنجاح! 🚗' : 'Driver assigned to task successfully! 🚗');
+      setEditingDriverTaskId(null);
+      
+      // Fetch fresh tasks and update detailedTask view if it's currently open
+      const updatedTasks = await interactionService.listTasks(eventId, selectedTaskCommittee);
+      setTasksList(updatedTasks);
+      const freshlyUpdatedTask = updatedTasks.find(t => t.id === taskId);
+      if (freshlyUpdatedTask) {
+        setDetailedTask(freshlyUpdatedTask);
+      }
+    } catch (err) {
+      console.error('Failed to assign driver to task:', err);
+      toast.error(lang === 'ar' ? 'فشل تعيين السائق للمهمة' : 'Failed to assign driver to task');
+    }
+  };
+
+  const handleShareTaskWithDriver = async (task) => {
+    try {
+      const driverPhone = task.driver_phone;
+      if (!driverPhone) {
+        toast.error(lang === 'ar' ? 'يرجى إدخال رقم هاتف السائق أولاً' : 'Please enter driver phone number first');
+        return;
+      }
+      
+      const guestObj = receptionList.find(p => p.id === task.participant_id);
+      const guestName = guestObj ? guestObj.full_name : (lang === 'ar' ? 'غير محدد' : 'Not specified');
+      const taskTitle = task.title;
+      const taskDesc = task.description || '';
+      
+      const text = lang === 'ar'
+        ? `أهلاً بك، تم إسناد المهمة الميدانية التالية إليك:\n\n📋 المهمة: ${taskTitle}\n📝 التفاصيل: ${taskDesc}\n👤 الضيف المستهدف: ${guestName}`
+        : `Hello, the following field task has been assigned to you:\n\n📋 Task: ${taskTitle}\n📝 Details: ${taskDesc}\n👤 Target Guest: ${guestName}`;
+      
+      // Open WhatsApp
+      window.open(`https://wa.me/${driverPhone.replace(/\+/g, '')}?text=${encodeURIComponent(text)}`, '_blank');
+      
+      // Update database status
+      await interactionService.markTaskWhatsAppSent(task.id);
+      
+      // Update local state to reflect WhatsApp sent state
+      setDetailedTask(prev => prev ? { ...prev, whatsapp_sent: true } : null);
+      
+      // Fetch fresh tasks
+      fetchCommitteeTasks();
+    } catch (err) {
+      console.error('Failed to mark task WhatsApp sent:', err);
     }
   };
 
@@ -2226,6 +2293,9 @@ const ParticipantPortal = () => {
                       )}
                       {task.assigned_to_name && (
                         <span className="text-emerald-400">🛡️ {lang === 'ar' ? `المنفذ: ${task.assigned_to_name}` : `Assignee: ${task.assigned_to_name}`}</span>
+                      )}
+                      {task.driver_name && (
+                        <span className="text-blue-400">🚗 {lang === 'ar' ? `السائق: ${task.driver_name}` : `Driver: ${task.driver_name}`}</span>
                       )}
                     </div>
                   </div>
@@ -4560,7 +4630,7 @@ const ParticipantPortal = () => {
                                       className="px-4 py-3 bg-blue-600/80 hover:bg-blue-600 text-white rounded-2xl text-xs font-black transition-all flex items-center gap-1.5"
                                     >
                                       <span>👤</span>
-                                      {lang === 'ar' ? 'إسناد لعضو' : 'Assign Member'}
+                                      {item.host_name ? (lang === 'ar' ? 'إعادة تعيين عضو' : 'Reassign Member') : (lang === 'ar' ? 'إسناد لعضو' : 'Assign Member')}
                                     </button>
                                   )}
                                 </div>
@@ -5664,6 +5734,137 @@ const ParticipantPortal = () => {
                             </div>
                           )}
                         </div>
+
+                        {/* Driver details section for transport / logistics tasks */}
+                        {(detailedTask.committee === 'transport' || detailedTask.committee === 'logistics') && (
+                          <div className="p-4 bg-white/5 rounded-2xl border border-white/5 mt-2 space-y-3">
+                            <div className="flex justify-between items-center">
+                              <span className="text-[10px] text-white/40 font-bold">{lang === 'ar' ? '🚗 السائق والمركبة للمهمة' : '🚗 Assigned Driver & Vehicle'}</span>
+                              {detailedTask.driver_name && (isPresident || detailedTask.assigned_to_id === participant.id) && (
+                                <button
+                                  onClick={() => {
+                                    setEditingDriverTaskId(detailedTask.id);
+                                    setTaskDriverForm({
+                                      driver_name: detailedTask.driver_name || '',
+                                      driver_phone: detailedTask.driver_phone || '',
+                                      driver_vehicle: detailedTask.driver_vehicle || ''
+                                    });
+                                  }}
+                                  className="text-[11px] text-amber-500 font-bold hover:underline"
+                                >
+                                  {lang === 'ar' ? '📝 تعديل السائق' : 'Edit Driver'}
+                                </button>
+                              )}
+                            </div>
+
+                            {/* Case 1: Driver is assigned and not in edit mode */}
+                            {detailedTask.driver_name && editingDriverTaskId !== detailedTask.id ? (
+                              <div className="space-y-2 text-right">
+                                <div className="grid grid-cols-2 gap-2 text-xs font-bold text-white">
+                                  <div>👤 <span className="text-white/60">{lang === 'ar' ? 'السائق:' : 'Driver:'}</span> {detailedTask.driver_name}</div>
+                                  <div>📞 <span className="text-white/60">{lang === 'ar' ? 'الهاتف:' : 'Phone:'}</span> {detailedTask.driver_phone}</div>
+                                  <div className="col-span-2">🚘 <span className="text-white/60">{lang === 'ar' ? 'السيارة:' : 'Vehicle:'}</span> {detailedTask.driver_vehicle || '---'}</div>
+                                </div>
+
+                                {/* WhatsApp Share Button */}
+                                <button
+                                  onClick={() => handleShareTaskWithDriver(detailedTask)}
+                                  className={cn(
+                                    "w-full py-2.5 px-4 rounded-xl border text-xs font-black transition-all flex items-center justify-center gap-2 mt-2",
+                                    detailedTask.whatsapp_sent 
+                                      ? "bg-blue-600/10 border-blue-600/20 text-blue-400 hover:bg-blue-600/20"
+                                      : "bg-[#25D366]/10 border-[#25D366]/20 text-[#25D366] hover:bg-[#25D366]/20"
+                                  )}
+                                >
+                                  <span>💬</span>
+                                  {detailedTask.whatsapp_sent 
+                                    ? (lang === 'ar' ? '✅ تم إعلام السائق (إعادة الإرسال عبر واتساب)' : '✅ Driver Notified (Resend via WhatsApp)')
+                                    : (lang === 'ar' ? 'إرسال تفاصيل المهمة للسائق عبر واتساب' : 'Send Task Details to Driver via WhatsApp')}
+                                </button>
+                              </div>
+                            ) : (
+                              /* Case 2: Assign/Edit driver form */
+                              (isPresident || detailedTask.assigned_to_id === participant.id) ? (
+                                <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
+                                  {/* Select predefined driver */}
+                                  <select
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      if (val) {
+                                        const d = driversList.find(x => x.id === parseInt(val));
+                                        if (d) {
+                                          setTaskDriverForm({
+                                            driver_name: d.name,
+                                            driver_phone: d.phone,
+                                            driver_vehicle: d.vehicle_details || ''
+                                          });
+                                        }
+                                      }
+                                    }}
+                                    className="w-full bg-[#050B18] border border-white/10 rounded-xl h-10 px-3 text-xs text-white font-bold outline-none focus:border-amber-500/50 transition-all text-right"
+                                  >
+                                    <option value="">{lang === 'ar' ? '--- اختر سائقاً من السجل المعتمد ---' : '--- Choose from registry ---'}</option>
+                                    {driversList.map(d => (
+                                      <option key={d.id} value={d.id}>{d.name} ({d.phone})</option>
+                                    ))}
+                                  </select>
+
+                                  {/* Inputs */}
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <input
+                                      type="text"
+                                      placeholder={lang === 'ar' ? 'اسم السائق' : 'Driver Name'}
+                                      value={taskDriverForm.driver_name}
+                                      onChange={(e) => setTaskDriverForm({ ...taskDriverForm, driver_name: e.target.value })}
+                                      className="w-full bg-[#050B18] border border-white/10 rounded-xl h-10 px-3 text-xs text-white font-bold outline-none focus:border-amber-500/50 transition-all text-right"
+                                    />
+                                    <input
+                                      type="text"
+                                      placeholder={lang === 'ar' ? 'رقم هاتف السائق' : 'Phone Number'}
+                                      value={taskDriverForm.driver_phone}
+                                      onChange={(e) => setTaskDriverForm({ ...taskDriverForm, driver_phone: e.target.value })}
+                                      className="w-full bg-[#050B18] border border-white/10 rounded-xl h-10 px-3 text-xs text-white font-bold outline-none focus:border-amber-500/50 transition-all text-right"
+                                    />
+                                  </div>
+                                  <input
+                                    type="text"
+                                    placeholder={lang === 'ar' ? 'تفاصيل المركبة (النوع، اللوحة، اللون)' : 'Vehicle Details'}
+                                    value={taskDriverForm.driver_vehicle}
+                                    onChange={(e) => setTaskDriverForm({ ...taskDriverForm, driver_vehicle: e.target.value })}
+                                    className="w-full bg-[#050B18] border border-white/10 rounded-xl h-10 px-3 text-xs text-white font-bold outline-none focus:border-amber-500/50 transition-all text-right"
+                                  />
+
+                                  <div className="flex gap-2 justify-end">
+                                    {editingDriverTaskId && (
+                                      <button
+                                        onClick={() => setEditingDriverTaskId(null)}
+                                        className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white text-xs font-bold transition-all"
+                                      >
+                                        {lang === 'ar' ? 'إلغاء' : 'Cancel'}
+                                      </button>
+                                    )}
+                                    <button
+                                      onClick={() => {
+                                        if (!taskDriverForm.driver_name || !taskDriverForm.driver_phone) {
+                                          toast.error(lang === 'ar' ? 'يرجى إدخال اسم ورقم هاتف السائق' : 'Please enter name and phone number');
+                                          return;
+                                        }
+                                        handleAssignTaskDriver(detailedTask.id, taskDriverForm);
+                                      }}
+                                      className="px-4 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-brand-dark text-xs font-black transition-all"
+                                    >
+                                      {lang === 'ar' ? 'تأكيد وحفظ السائق' : 'Save Driver'}
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <p className="text-white/40 text-xs py-2 text-center font-bold">
+                                  {lang === 'ar' ? '❌ لم يتم تعيين سائق للمهمة بعد.' : 'No driver assigned to this task.'}
+                                </p>
+                              )
+                            )}
+                          </div>
+                        )}
 
                         {isPresident && detailedTask.status !== 'completed' && detailedTask.status !== 'cancelled' && (
                           <div className="p-4 bg-amber-500/5 rounded-2xl border border-amber-500/10 mt-2 space-y-3">

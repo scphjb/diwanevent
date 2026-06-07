@@ -1460,6 +1460,9 @@ class TaskCreate(BaseModel):
     assigned_to_id: Optional[int] = None
     assigned_to_name: Optional[str] = ""
     due_time: Optional[str] = None
+    driver_name: Optional[str] = None
+    driver_phone: Optional[str] = None
+    driver_vehicle: Optional[str] = None
 
 class TaskStatusUpdate(BaseModel):
     status: str
@@ -1468,6 +1471,11 @@ class TaskStatusUpdate(BaseModel):
 class TaskReassign(BaseModel):
     assigned_to_id: int
     assigned_to_name: Optional[str] = ""
+
+class TaskAssignDriver(BaseModel):
+    driver_name: Optional[str] = None
+    driver_phone: Optional[str] = None
+    driver_vehicle: Optional[str] = None
 
 @router.get("/tasks/{event_id}")
 async def list_committee_tasks(
@@ -1505,7 +1513,11 @@ async def list_committee_tasks(
             "assigned_to_id": task.assigned_to_id,
             "assigned_to_name": task.assigned_to_name,
             "status": task.status,
-            "due_time": task.due_time.isoformat() if task.due_time else None
+            "due_time": task.due_time.isoformat() if task.due_time else None,
+            "driver_name": task.driver_name,
+            "driver_phone": task.driver_phone,
+            "driver_vehicle": task.driver_vehicle,
+            "whatsapp_sent": task.whatsapp_sent
         })
     return output
 
@@ -1541,7 +1553,11 @@ async def create_committee_task(
         assigned_to_id=req.assigned_to_id,
         assigned_to_name=req.assigned_to_name,
         status="pending",
-        due_time=dt
+        due_time=dt,
+        driver_name=req.driver_name,
+        driver_phone=req.driver_phone,
+        driver_vehicle=req.driver_vehicle,
+        whatsapp_sent=False
     )
     db.add(new_task)
     await db.commit()
@@ -1830,8 +1846,64 @@ async def reassign_committee_task(
         "assigned_to_id": task.assigned_to_id,
         "assigned_to_name": task.assigned_to_name,
         "status": task.status,
-        "due_time": task.due_time.isoformat() if task.due_time else None
+        "due_time": task.due_time.isoformat() if task.due_time else None,
+        "driver_name": task.driver_name,
+        "driver_phone": task.driver_phone,
+        "driver_vehicle": task.driver_vehicle,
+        "whatsapp_sent": task.whatsapp_sent
     }
+
+@router.patch("/tasks/{task_id}/assign-driver")
+async def assign_driver_to_committee_task(
+    task_id: int,
+    req: TaskAssignDriver,
+    db: AsyncSession = Depends(get_db),
+    identity = Depends(get_current_user_or_participant)
+):
+    task = await db.get(CommitteeTask, task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    if identity["type"] == "participant":
+        participant = identity["obj"]
+        if participant.event_id != task.event_id:
+            raise HTTPException(status_code=403, detail="Not authorized for this event")
+        role_lower = (participant.role or "").lower()
+        is_allowed = any(x in role_lower for x in ("منظم", "رئيس", "organizer", "president")) or task.assigned_to_id == participant.id
+        if not is_allowed:
+            raise HTTPException(status_code=403, detail="Only committee presidents, organizers or the assignee can assign drivers")
+
+    task.driver_name = req.driver_name
+    task.driver_phone = req.driver_phone
+    task.driver_vehicle = req.driver_vehicle
+    task.whatsapp_sent = False
+    
+    await db.commit()
+    await db.refresh(task)
+    return {"status": "success", "message": "Driver assigned successfully"}
+
+@router.patch("/tasks/{task_id}/whatsapp-sent")
+async def mark_task_whatsapp_sent(
+    task_id: int,
+    db: AsyncSession = Depends(get_db),
+    identity = Depends(get_current_user_or_participant)
+):
+    task = await db.get(CommitteeTask, task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    if identity["type"] == "participant":
+        participant = identity["obj"]
+        if participant.event_id != task.event_id:
+            raise HTTPException(status_code=403, detail="Not authorized for this event")
+        role_lower = (participant.role or "").lower()
+        is_allowed = any(x in role_lower for x in ("منظم", "رئيس", "organizer", "president")) or task.assigned_to_id == participant.id
+        if not is_allowed:
+            raise HTTPException(status_code=403, detail="Not authorized")
+
+    task.whatsapp_sent = True
+    await db.commit()
+    return {"status": "success", "message": "WhatsApp status updated successfully"}
 
 # ── DRIVERS REGISTRY ENDPOINTS ──
 

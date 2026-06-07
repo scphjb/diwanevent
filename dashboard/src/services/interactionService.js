@@ -223,6 +223,16 @@ const interactionService = {
     return res.data;
   },
 
+  assignTaskDriver: async (taskId, driverData) => {
+    const res = await api.patch(`interaction/tasks/${taskId}/assign-driver`, driverData);
+    return res.data;
+  },
+
+  markTaskWhatsAppSent: async (taskId) => {
+    const res = await api.patch(`interaction/tasks/${taskId}/whatsapp-sent`);
+    return res.data;
+  },
+
   assignActivityShuttle: async (shuttleData) => {
     const res = await api.patch('interaction/activities/assign-shuttle', shuttleData);
     return res.data;

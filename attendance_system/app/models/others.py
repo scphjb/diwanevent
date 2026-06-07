@@ -242,6 +242,12 @@ class CommitteeTask(Base, TimestampMixin):
     
     status = Column(String, default="pending") # pending, in_progress, completed, cancelled
     due_time = Column(DateTime, nullable=True)
+    
+    # Driver details for transport committee tasks
+    driver_name = Column(String, nullable=True)
+    driver_phone = Column(String, nullable=True)
+    driver_vehicle = Column(String, nullable=True)
+    whatsapp_sent = Column(Boolean, default=False)
 
 class EventDriver(Base, TimestampMixin):
     __tablename__ = "event_drivers"
