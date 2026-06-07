@@ -255,7 +255,9 @@ const ParticipantPortal = () => {
     bio: '',
     linkedin: '',
     specialties: [],
-    website: ''
+    website: '',
+    phone_number: '',
+    email: ''
   });
   const [tagInput, setTagInput] = useState('');
   const [isOnline, setIsOnline] = useState(true); // managed via window events below
@@ -918,7 +920,9 @@ const ParticipantPortal = () => {
           bio: parsed.custom_values?.bio || '',
           linkedin: parsed.custom_values?.linkedin || '',
           specialties: parsed.custom_values?.specialties || [],
-          website: parsed.custom_values?.website || ''
+          website: parsed.custom_values?.website || '',
+          phone_number: parsed.phone || parsed.phone_number || '',
+          email: parsed.email || ''
         });
         setIsOptedIn(parsed.custom_values?.is_visible || false);
         loadOptionalDataFromCache();
@@ -939,7 +943,9 @@ const ParticipantPortal = () => {
         bio: pRes.data.custom_values?.bio || '',
         linkedin: pRes.data.custom_values?.linkedin || '',
         specialties: pRes.data.custom_values?.specialties || [],
-        website: pRes.data.custom_values?.website || ''
+        website: pRes.data.custom_values?.website || '',
+        phone_number: pRes.data.phone || pRes.data.phone_number || '',
+        email: pRes.data.email || ''
       });
       
       // Save participant to local cache and set last active PWA portal path
@@ -1998,6 +2004,9 @@ const ParticipantPortal = () => {
       // الإصلاح الجذري: نحافظ على avatar_url في state لأن profileData لا يحتوي عليها
       const updatedParticipant = {
         ...participant,
+        phone_number: data.phone_number,
+        email: data.email,
+        phone: data.phone_number,
         custom_values: {
           ...participant.custom_values,
           ...data,
@@ -2027,6 +2036,43 @@ const ParticipantPortal = () => {
   const handleDownloadVCard = (contact) => {
     const url = `${api.defaults.baseURL}networking/vcard/${contact.qr_code}`;
     window.open(url, '_blank');
+  };
+
+  const handleShareCard = async () => {
+    const shareUrl = `${window.location.origin}/p/${eventId}/${participant?.qr_code || participantToken}`;
+    const shareText = lang === 'ar' 
+      ? `بطاقة الأعمال الرقمية للمشارك: ${participant?.full_name}\nالفعالية: ${eventSettings?.event_name || eventSettings?.name}`
+      : `Digital Business Card of: ${participant?.full_name}\nEvent: ${eventSettings?.event_name || eventSettings?.name}`;
+      
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: participant?.full_name,
+          text: shareText,
+          url: shareUrl,
+        });
+        toast.success(lang === 'ar' ? 'تمت المشاركة بنجاح ✅' : 'Shared successfully ✅');
+      } catch (err) {
+        console.log('Share cancelled or failed:', err);
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        toast.success(lang === 'ar' ? 'تم نسخ رابط بطاقة الأعمال إلى الحافظة! 🔗' : 'Business card link copied to clipboard! 🔗');
+      } catch (err) {
+        toast.error(lang === 'ar' ? 'فشل نسخ الرابط' : 'Failed to copy link');
+      }
+    }
+  };
+
+  const handleShareWhatsApp = () => {
+    const shareUrl = `${window.location.origin}/p/${eventId}/${participant?.qr_code || participantToken}`;
+    const shareText = encodeURIComponent(
+      (lang === 'ar' 
+        ? `أهلاً بك، إليك بطاقة أعمالي الرقمية الخاصة بـ ${eventSettings?.event_name || eventSettings?.name}:\n`
+        : `Hello, here is my digital business card for ${eventSettings?.event_name || eventSettings?.name}:\n`) + shareUrl
+    );
+    window.open(`https://wa.me/?text=${shareText}`, '_blank');
   };
 
   const tabs = [
@@ -2945,7 +2991,7 @@ const ParticipantPortal = () => {
                         </button>
                       </div>
 
-                      {/* 3D Glassmorphic Card Container */}
+                      {/* Redesigned Titanium Gold Business Card */}
                       <AnimatePresence>
                         {showPremiumCard && (
                           <motion.div
@@ -2955,44 +3001,116 @@ const ParticipantPortal = () => {
                             transition={{ duration: 0.6, ease: 'easeOut' }}
                             className="mt-6 perspective-[1000px] w-full"
                           >
-                            <div className="relative w-full max-w-sm mx-auto aspect-[1.586/1] rounded-[30px] p-6 bg-gradient-to-br from-amber-500/20 via-[#0D1527]/90 to-[#050B18]/90 border border-amber-500/30 backdrop-blur-3xl overflow-hidden shadow-[0_20px_50px_rgba(245,158,11,0.15)] flex flex-col justify-between text-right relative group/vcard text-right">
-                              {/* Top Right Luxury Chip & Logo */}
-                              <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl pointer-events-none -z-10 group-hover/vcard:bg-amber-500/20 transition-colors duration-500" />
-                              <div className="flex justify-between items-start w-full">
-                                <div className="w-10 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 border border-amber-300/30 flex items-center justify-center font-bold text-brand-dark text-xs shadow-md">
-                                  DIWAN
+                            {/* Card Body */}
+                            <div className="relative w-full max-w-sm mx-auto rounded-[32px] p-6 bg-gradient-to-br from-amber-500/20 via-[#0A0F1D]/98 to-[#02050E]/98 border-2 border-amber-500/40 backdrop-blur-3xl overflow-hidden shadow-[0_25px_60px_rgba(212,175,55,0.25)] flex flex-col justify-between text-right group/vcard relative">
+                              {/* Shiny Metallic Light Effect Overlay */}
+                              <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/[0.04] to-transparent -translate-x-full group-hover/vcard:translate-x-full transition-transform duration-1000 ease-out pointer-events-none" />
+                              
+                              {/* Background Glowing Orb */}
+                              <div className="absolute top-[-20%] right-[-20%] w-48 h-48 bg-amber-500/10 rounded-full blur-[80px] pointer-events-none -z-10 group-hover/vcard:bg-amber-500/15 transition-colors duration-500" />
+                              
+                              {/* Card Header (Chip & Event Logo) */}
+                              <div className="flex justify-between items-center w-full mb-4">
+                                {/* Gold Smart Chip */}
+                                <div className="w-11 h-8 rounded-lg bg-gradient-to-br from-amber-300 via-amber-500 to-amber-600 p-1 flex flex-col justify-between border border-amber-400/40 relative overflow-hidden shadow-md">
+                                  <div className="absolute inset-0 bg-black/10 grid grid-cols-3 gap-0.5 pointer-events-none p-0.5">
+                                    <div className="border border-white/10 rounded-sm"></div>
+                                    <div className="border border-white/10 rounded-sm"></div>
+                                    <div className="border border-white/10 rounded-sm"></div>
+                                    <div className="border border-white/10 rounded-sm"></div>
+                                    <div className="border border-white/10 rounded-sm"></div>
+                                    <div className="border border-white/10 rounded-sm"></div>
+                                  </div>
                                 </div>
+                                
                                 <div className="text-left">
-                                  <span className="text-[8px] font-black uppercase text-amber-500/80 tracking-widest">VIP PASS</span>
+                                  <span className="text-[9px] font-black uppercase text-amber-500 border border-amber-500/30 px-2 py-0.5 rounded-full tracking-widest bg-amber-500/5">
+                                    {participant.role === 'vip' ? 'VIP PASS 👑' : 'EXECUTIVE PASS'}
+                                  </span>
                                 </div>
                               </div>
 
-                              {/* Member info */}
-                              <div className="space-y-1 my-4 text-right">
-                                <h4 className="text-xl font-black text-[#F0F4F2] leading-none tracking-tight">{participant.full_name}</h4>
-                                <p className="text-[10px] text-amber-500/80 font-black tracking-wider uppercase">{participant.organization}</p>
-                                {participant.custom_values?.bio && (
-                                  <p className="text-[9px] text-[#F0F4F2]/50 font-medium line-clamp-2 mt-1 leading-normal">{participant.custom_values.bio}</p>
+                              {/* Card Middle: Split Name & QR code */}
+                              <div className="flex items-center justify-between gap-4 my-3 text-right">
+                                {/* Left: Rounded QR Code for quick scan */}
+                                <div className="flex-shrink-0 bg-white p-1 rounded-2xl border border-amber-500/20 shadow-md">
+                                  <img 
+                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(window.location.origin + '/p/' + eventId + '/' + (participant.qr_code || participantToken))}`}
+                                    alt="vCard QR"
+                                    className="w-16 h-16 rounded-xl object-contain"
+                                  />
+                                </div>
+
+                                {/* Right: Name & Job details */}
+                                <div className="space-y-1 flex-1">
+                                  <h4 className="text-xl font-black text-white leading-tight tracking-tight">{participant.full_name}</h4>
+                                  <p className="text-[10px] text-amber-500 font-bold uppercase tracking-wider">{participant.organization}</p>
+                                  {participant.department && (
+                                    <p className="text-[9px] text-white/50 font-medium">{participant.department}</p>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Card Contact Info Details */}
+                              <div className="space-y-1 py-3 border-t border-white/5 text-right text-[10px] text-white/60 font-medium">
+                                {(participant.phone_number || participant.phone) && (
+                                  <div className="flex items-center justify-end gap-1.5" dir="ltr">
+                                    <span>{participant.phone_number || participant.phone}</span>
+                                    <span>📞</span>
+                                  </div>
+                                )}
+                                {participant.email && (
+                                  <div className="flex items-center justify-end gap-1.5" dir="ltr">
+                                    <span>{participant.email}</span>
+                                    <span>✉️</span>
+                                  </div>
+                                )}
+                                {participant.custom_values?.linkedin && (
+                                  <div className="flex items-center justify-end gap-1.5 text-blue-400" dir="ltr">
+                                    <span>linkedin.com/in/{participant.custom_values.linkedin}</span>
+                                    <span>🔗</span>
+                                  </div>
                                 )}
                               </div>
 
-                              {/* Bottom part: specialty tags & direct vcf download button */}
-                              <div className="flex justify-between items-center w-full pt-4 border-t border-white/5">
-                                <div className="flex gap-1 flex-wrap max-w-[65%] justify-end">
+                              {/* Bottom: Specialties tags & Event Identity */}
+                              <div className="flex justify-between items-center w-full pt-3 border-t border-white/5 text-right">
+                                <div className="text-[8px] font-black text-white/30 tracking-wider">
+                                  {eventSettings?.event_name || 'DIWAN EVENTS'}
+                                </div>
+                                <div className="flex gap-1 flex-wrap justify-end">
                                   {(participant.custom_values?.specialties || []).slice(0, 2).map((s, idx) => (
                                     <span key={idx} className="px-2 py-0.5 bg-amber-500/10 border border-amber-500/20 rounded-full text-[8px] font-black text-amber-500">
                                       #{s}
                                     </span>
                                   ))}
                                 </div>
-                                <button
-                                  onClick={() => handleDownloadVCard(participant)}
-                                  className="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-brand-dark text-[9px] font-black rounded-xl transition-all shadow-[0_4px_15px_rgba(245,158,11,0.3)] flex items-center gap-1.5"
-                                >
-                                  <span>📥</span>
-                                  <span>{lang === 'ar' ? 'حفظ جهة الاتصال' : 'Save Contact'}</span>
-                                </button>
                               </div>
+                            </div>
+
+                            {/* Card Actions Panel */}
+                            <div className="grid grid-cols-3 gap-2 mt-4 max-w-sm mx-auto">
+                              <button
+                                onClick={() => handleDownloadVCard(participant)}
+                                className="py-2.5 px-3 bg-amber-500 hover:bg-amber-600 text-brand-dark text-[10px] font-black rounded-xl transition-all shadow-md shadow-amber-500/10 flex items-center justify-center gap-1"
+                              >
+                                <span>📥</span>
+                                <span>{lang === 'ar' ? 'حفظ جهة الاتصال' : 'Save Contact'}</span>
+                              </button>
+                              <button
+                                onClick={handleShareCard}
+                                className="py-2.5 px-3 bg-white/5 hover:bg-white/10 text-white border border-white/10 text-[10px] font-black rounded-xl transition-all flex items-center justify-center gap-1"
+                              >
+                                <span>🔗</span>
+                                <span>{lang === 'ar' ? 'مشاركة البطاقة' : 'Share Card'}</span>
+                              </button>
+                              <button
+                                onClick={handleShareWhatsApp}
+                                className="py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black rounded-xl transition-all shadow-md shadow-emerald-600/10 flex items-center justify-center gap-1"
+                              >
+                                <span>💬</span>
+                                <span>واتساب</span>
+                              </button>
                             </div>
                           </motion.div>
                         )}
@@ -3021,6 +3139,28 @@ const ParticipantPortal = () => {
                             value={profileData.linkedin}
                             onChange={e => setProfileData({...profileData, linkedin: e.target.value})}
                             className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white text-sm focus:border-amber-500 outline-none"
+                          />
+                       </div>
+                       <div>
+                          <label className="text-[11px] text-white/50 font-bold mb-2 block">{lang === 'ar' ? 'رقم الهاتف (الواتساب)' : 'Phone Number (WhatsApp)'}</label>
+                          <input 
+                            type="text"
+                            value={profileData.phone_number}
+                            onChange={e => setProfileData({...profileData, phone_number: e.target.value})}
+                            className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white text-sm focus:border-amber-500 outline-none text-left"
+                            placeholder="+213XXXXXXXXX"
+                            dir="ltr"
+                          />
+                       </div>
+                       <div>
+                          <label className="text-[11px] text-white/50 font-bold mb-2 block">{lang === 'ar' ? 'البريد الإلكتروني' : 'Email Address'}</label>
+                          <input 
+                            type="email"
+                            value={profileData.email}
+                            onChange={e => setProfileData({...profileData, email: e.target.value})}
+                            className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white text-sm focus:border-amber-500 outline-none text-left"
+                            placeholder="example@mail.com"
+                            dir="ltr"
                           />
                        </div>
                        <div>

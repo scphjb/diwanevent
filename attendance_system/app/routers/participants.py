@@ -150,7 +150,8 @@ async def get_participant_by_token(
         "avatar_url": avatar_url,
         "custom_values": participant.custom_values or {},
         "role": participant.role or "",
-        "phone": participant.phone_number or ""
+        "phone": participant.phone_number or "",
+        "email": participant.email or ""
     }
 
 class PublicRegistrationRequest(BaseModel):
@@ -250,6 +251,13 @@ async def update_participant_profile(
     current_p.custom_values = cv
     from sqlalchemy.orm.attributes import flag_modified
     flag_modified(current_p, "custom_values")
+    
+    # تحديث رقم الهاتف والبريد الإلكتروني الأساسي
+    if "phone_number" in data:
+        current_p.phone_number = data["phone_number"]
+    if "email" in data:
+        current_p.email = data["email"]
+        
     await db.commit()
     
     return {"status": "success", "updated_fields": list(data.keys())}
