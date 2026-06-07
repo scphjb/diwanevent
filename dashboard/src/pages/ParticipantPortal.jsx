@@ -2152,8 +2152,24 @@ const ParticipantPortal = () => {
     
     const filteredTasks = tasksList.filter(t => {
       if (t.committee !== committeeKey) return false;
-      if (isPresident) return true;
-      return Number(t.assigned_to_id) === Number(participant.id);
+      if (!isPresident && Number(t.assigned_to_id) !== Number(participant.id)) return false;
+      
+      if (committeeKey === 'transport' && searchStaffQuery) {
+        const query = searchStaffQuery.toLowerCase();
+        const guest = receptionList.find(p => p.id === t.participant_id);
+        const guestArrival = staffLogisticsList.find(l => l.participant_id === t.participant_id);
+        
+        const guestName = (guest?.full_name || guestArrival?.participant_name || t.title || '').toLowerCase();
+        const driverName = (t.driver_name || '').toLowerCase();
+        const vehicle = (t.driver_vehicle || '').toLowerCase();
+        const flight = (guestArrival?.flight_number || '').toLowerCase();
+        
+        return guestName.includes(query) || 
+               driverName.includes(query) || 
+               vehicle.includes(query) || 
+               flight.includes(query);
+      }
+      return true;
     });
     
     const availableHelpers = receptionList.filter(p => {
@@ -2163,24 +2179,38 @@ const ParticipantPortal = () => {
 
     return (
       <div className="mt-8 pt-8 border-t border-white/5 text-right">
-        <div className="flex items-center justify-between gap-4 mb-6">
-          {isPresident && (
-            <button
-              onClick={() => {
-                setSelectedTaskCommittee(committeeKey);
-                setIsCreateTaskModalOpen(true);
-              }}
-              className="px-4 py-2 rounded-2xl bg-amber-500 hover:bg-amber-400 text-brand-dark text-xs font-black shadow-lg shadow-amber-500/10 flex items-center gap-1.5 transition-all"
-            >
-              <span>➕</span>
-              {lang === 'ar' ? 'إسناد مهمة جديدة' : 'Assign New Task'}
-            </button>
-          )}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6" dir="rtl">
           <div className="flex items-center gap-2">
+            <h4 className="text-lg font-black text-white">
+              {committeeKey === 'transport' 
+                ? (lang === 'ar' ? 'سجل الاستقبال والمهام المسندة' : 'Reception Registry & Tasks')
+                : (lang === 'ar' ? 'المهام الميدانية والتفويض' : 'Field Tasks & Delegation')}
+            </h4>
             <span className="text-[10px] px-2 py-0.5 rounded bg-white/5 text-white/60 font-bold border border-white/10">
-              {isPresident ? (lang === 'ar' ? 'صلاحيات رئيس اللجنة 👑' : 'Committee President 👑') : (lang === 'ar' ? 'عضو اللجنة 🛡️' : 'Committee Member 🛡️')}
+              {isPresident ? (lang === 'ar' ? 'رئيس اللجنة 👑' : 'President 👑') : (lang === 'ar' ? 'عضو 🛡️' : 'Member 🛡️')}
             </span>
-            <h4 className="text-sm font-black text-white">{lang === 'ar' ? 'المهام الميدانية والتفويض' : 'Field Tasks & Delegation'}</h4>
+          </div>
+          <div className="flex items-center gap-3 flex-wrap w-full sm:w-auto justify-end sm:justify-start">
+            {committeeKey === 'transport' && (
+              <Input
+                value={searchStaffQuery}
+                onChange={(e) => setSearchStaffQuery(e.target.value)}
+                placeholder={lang === 'ar' ? '🔍 ابحث باسم الضيف أو السائق...' : '🔍 Search Guest or Driver...'}
+                className="w-full sm:w-64 bg-[#050B18] border border-white/10 rounded-2xl h-10 text-right text-xs text-white"
+              />
+            )}
+            {isPresident && (
+              <button
+                onClick={() => {
+                  setSelectedTaskCommittee(committeeKey);
+                  setIsCreateTaskModalOpen(true);
+                }}
+                className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-brand-dark text-xs font-black shadow-lg shadow-amber-500/10 flex items-center gap-1.5 transition-all"
+              >
+                <span>➕</span>
+                {lang === 'ar' ? 'إسناد مهمة جديدة' : 'Assign New Task'}
+              </button>
+            )}
           </div>
         </div>
 
@@ -2213,9 +2243,13 @@ const ParticipantPortal = () => {
                           <h5 className="font-black text-md text-white">
                             {guest?.full_name || guestArrival?.participant_name || task.title}
                           </h5>
-                          {guestArrival?.transport_type && (
+                          {guestArrival?.transport_type ? (
                             <span className="text-[9px] px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500 font-bold">
                               {guestArrival.transport_type === 'plane' ? '✈️ طيران' : '🚗 سيارة خاصة'}
+                            </span>
+                          ) : (
+                            <span className="text-[9px] px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500 font-bold">
+                              ⏳ {lang === 'ar' ? 'في انتظار تسجيل بيانات الوصول من الضيف' : 'Awaiting arrival details from guest'}
                             </span>
                           )}
                           
@@ -2259,6 +2293,12 @@ const ParticipantPortal = () => {
                           )}
                           {guestArrival?.hotel_name && (
                             <div className="sm:col-span-2">🏨 {lang === 'ar' ? 'فندق الإقامة' : 'Hotel'}: <span className="text-white">{guestArrival.hotel_name} (غرفة {guestArrival.room_number || '---'})</span></div>
+                          )}
+                          {!guestArrival && guest?.organization && (
+                            <div>🏢 {lang === 'ar' ? 'الجهة' : 'Organization'}: <span className="text-white">{guest.organization}</span></div>
+                          )}
+                          {!guestArrival && guestPhone && (
+                            <div dir="ltr" className="text-right">📞 {lang === 'ar' ? 'الهاتف' : 'Phone'}: <span className="text-white">{guestPhone}</span></div>
                           )}
                           {task.description && (
                             <div className="sm:col-span-2 text-white/70 italic mt-1 font-normal bg-white/5 p-2 rounded-xl border border-white/5">
@@ -4758,231 +4798,6 @@ const ParticipantPortal = () => {
                     </div>
                   )}
 
-                  {/* List & Search */}
-                  <div className="bg-gradient-to-b from-white/[0.06] to-white/[0.01] border border-white/10 rounded-[35px] p-6 backdrop-blur-3xl relative shadow-xl">
-                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
-                      <h4 className="text-lg font-black text-white">{lang === 'ar' ? 'سجل وصول الوفود وحالة الاستقبال' : 'Arrival Dispatch Registry'}</h4>
-                      <Input
-                        value={searchStaffQuery}
-                        onChange={(e) => setSearchStaffQuery(e.target.value)}
-                        placeholder={lang === 'ar' ? '🔍 ابحث باسم الضيف أو رقم الرحلة...' : '🔍 Search Guest Name or Flight...'}
-                        className="w-full sm:w-80 bg-[#050B18] border border-white/10 rounded-2xl h-12 text-right text-white"
-                      />
-                    </div>
-
-                    {isLoadingStaffLogistics ? (
-                      <div className="text-center py-12">
-                        <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} className="w-10 h-10 border-4 border-amber-500 border-t-transparent rounded-full mx-auto" />
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        {staffLogisticsList
-                          .filter(item => {
-                            // Non-presidents: filter based on CommitteeTask assignments
-                            if (!isPresident) {
-                              const myTasks = tasksList.filter(t =>
-                                Number(t.assigned_to_id) === Number(participant.id) &&
-                                t.status !== 'cancelled'
-                              );
-                              // No tasks at all → show nothing
-                              if (myTasks.length === 0) return false;
-                              // Has at least one general task (no specific guest) → show all guests
-                              const hasGeneralTask = myTasks.some(t => !t.participant_id);
-                              if (hasGeneralTask) {
-                                // falls through to search filter below
-                              } else {
-                                // Only guest-specific tasks → show only those guests
-                                const hasAssignedTask = myTasks.some(t =>
-                                  t.participant_id === item.participant_id
-                                );
-                                if (!hasAssignedTask) return false;
-                              }
-                            }
-                            // Apply search filter
-                            return (
-                              item.participant_name.toLowerCase().includes(searchStaffQuery.toLowerCase()) ||
-                              (item.flight_number && item.flight_number.toLowerCase().includes(searchStaffQuery.toLowerCase()))
-                            );
-                          })
-                          .map((item) => (
-                            <div key={item.id} className="p-5 rounded-3xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-all relative">
-                              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                <div className="space-y-2">
-                                  <div className="flex items-center gap-2 flex-wrap">
-                                    <h5 className="font-black text-md text-white">{item.participant_name}</h5>
-                                    <span className="text-[9px] px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500 font-bold">
-                                      {item.transport_type === 'plane' ? '✈️ طيران' : '🚗 سيارة خاصة'}
-                                    </span>
-                                    <span className={cn(
-                                      "text-[9px] px-2.5 py-0.5 rounded-full font-bold",
-                                      item.status === 'completed' || item.status === 'arrived' ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400" :
-                                      item.status === 'dispatched' ? "bg-blue-500/10 border border-blue-500/20 text-blue-400" : "bg-red-500/10 border border-red-500/20 text-red-400"
-                                    )}>
-                                      {item.status === 'completed' ? (lang === 'ar' ? 'تم الوصول للوجهة' : 'Completed') :
-                                       item.status === 'arrived' ? (lang === 'ar' ? 'وصل المطار' : 'Arrived') :
-                                       item.status === 'dispatched' ? (lang === 'ar' ? 'تم إرسال السائق' : 'Driver Dispatched') : (lang === 'ar' ? 'قيد الانتظار' : 'Pending')}
-                                    </span>
-                                  </div>
-                                  
-                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5 text-xs text-white/50 font-bold">
-                                    {item.flight_number && <div>✈️ {lang === 'ar' ? 'رحلة رقم' : 'Flight'}: <span className="text-white">{item.flight_number}</span></div>}
-                                    {item.arrival_time && <div>⏰ {lang === 'ar' ? 'موعد الوصول' : 'Arrival'}: <span className="text-white">{new Date(item.arrival_time).toLocaleString()}</span></div>}
-                                    {item.arrival_location && <div className="sm:col-span-2">📍 {lang === 'ar' ? 'موقع الاستقبال' : 'Pickup Location'}: <span className="text-white">{item.arrival_location}</span></div>}
-                                    {item.hotel_name && <div>🏨 {lang === 'ar' ? 'فندق الإقامة' : 'Hotel'}: <span className="text-white">{item.hotel_name} (غرفة {item.room_number || '---'})</span></div>}
-                                  </div>
-
-                                  {item.host_name && (
-                                    <div className="p-3 rounded-2xl bg-blue-500/5 border border-blue-500/10 mt-3 text-xs text-blue-400 font-bold space-y-1">
-                                      <div className="flex items-center gap-1">
-                                        <span>🙋‍♂️</span>
-                                        <span>{lang === 'ar' ? `المستقبل الميداني (عضو اللجنة): ${item.host_name}` : `Welcoming Host (Committee Member): ${item.host_name}`}</span>
-                                      </div>
-                                      {item.host_phone && <div className="text-[10px] text-white/40">📞 {item.host_phone}</div>}
-                                    </div>
-                                  )}
-
-                                  {item.driver_name && (
-                                    <div className="p-3 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 mt-2 text-xs text-emerald-400/90 font-bold space-y-1">
-                                      <div className="flex items-center gap-1">
-                                        <span>🚗</span>
-                                        <span>{lang === 'ar' ? `السائق المخصص: ${item.driver_name} (${item.driver_phone})` : `Driver: ${item.driver_name} (${item.driver_phone})`}</span>
-                                      </div>
-                                      <div className="text-[10px] text-white/40">🚘 {item.vehicle_details}</div>
-                                    </div>
-                                  )}
-                                </div>
-
-                                <div className="flex items-center gap-2 self-end md:self-center">
-                                  {/* WhatsApp Call */}
-                                  {item.participant_phone && (
-                                    <a
-                                      href={`https://wa.me/${item.participant_phone.replace(/\+/g, '')}`}
-                                      target="_blank"
-                                      rel="noreferrer"
-                                      className="p-3 rounded-2xl bg-[#075E54]/10 border border-[#075E54]/20 text-[#25D366] hover:bg-[#075E54]/20 transition-all text-xs font-black flex items-center gap-1.5"
-                                    >
-                                      <span>💬</span>
-                                      {lang === 'ar' ? 'واتساب' : 'WhatsApp'}
-                                    </a>
-                                  )}
-
-                                  {/* Dispatch Button */}
-                                  {(isPresident || tasksList.some(t => t.participant_id === item.participant_id && Number(t.assigned_to_id) === Number(participant.id) && t.status !== 'cancelled')) && (
-                                    <button
-                                      onClick={() => {
-                                        setSelectedStaffParticipant(item);
-                                        setStaffDispatchForm({
-                                          driver_name: item.driver_name || '',
-                                          driver_phone: item.driver_phone || '',
-                                          vehicle_details: item.vehicle_details || '',
-                                          status: item.status || 'pending'
-                                        });
-                                        setIsStaffDispatchModalOpen(true);
-                                      }}
-                                      className="px-4 py-3 bg-amber-500 hover:bg-amber-600 text-brand-dark rounded-2xl text-xs font-black transition-all flex items-center gap-1.5"
-                                    >
-                                      <span>🚗</span>
-                                      {item.driver_name ? (lang === 'ar' ? 'تعديل السائق' : 'Edit Driver') : (lang === 'ar' ? 'تخصيص سائق' : 'Assign Driver')}
-                                    </button>
-                                  )}
-
-                                  {/* Quick Assign Member — presidents only */}
-                                  {isPresident && (
-                                    <button
-                                      onClick={() => {
-                                        setSelectedTaskCommittee('transport');
-                                        setNewTaskForm({
-                                          title: lang === 'ar' ? `استقبال الضيف: ${item.participant_name}` : `Receive Guest: ${item.participant_name}`,
-                                          description: '',
-                                          participant_id: item.participant_id,
-                                          assigned_to_id: '',
-                                          due_time: item.arrival_time ? item.arrival_time.slice(0, 16) : ''
-                                        });
-                                        setIsCreateTaskModalOpen(true);
-                                      }}
-                                      className="px-4 py-3 bg-blue-600/80 hover:bg-blue-600 text-white rounded-2xl text-xs font-black transition-all flex items-center gap-1.5"
-                                    >
-                                      <span>👤</span>
-                                      {item.host_name ? (lang === 'ar' ? 'إعادة تعيين عضو' : 'Reassign Member') : (lang === 'ar' ? 'إسناد لعضو' : 'Assign Member')}
-                                    </button>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                      </div>
-                    )}
-
-                    {/* Non-president: show assigned guests who have NO logistics record yet */}
-                    {!isPresident && (() => {
-                      const myGuestTasks = tasksList.filter(t =>
-                        Number(t.assigned_to_id) === Number(participant.id) &&
-                        t.participant_id &&
-                        t.status !== 'cancelled'
-                      );
-                      const assignedGuestIds = myGuestTasks.map(t => t.participant_id);
-                      const logisticsGuestIds = staffLogisticsList.map(l => l.participant_id);
-                      const missingGuests = assignedGuestIds.filter(id => !logisticsGuestIds.includes(id));
-                      if (missingGuests.length === 0) return null;
-                      return (
-                        <div className="space-y-4 mt-4">
-                          <p className="text-xs text-amber-500/70 font-bold text-right">
-                            ⚠️ {lang === 'ar' ? 'الضيوف التاليون مسندون إليك لكن لم يكملوا بيانات الوصول بعد:' : 'The following guests are assigned to you but have not filled arrival details yet:'}
-                          </p>
-                          {missingGuests.map(guestId => {
-                            const guest = receptionList.find(p => p.id === guestId);
-                            if (!guest) return null;
-                            const task = myGuestTasks.find(t => t.participant_id === guestId);
-                            return (
-                              <div key={guestId} className="p-5 rounded-3xl border border-amber-500/10 bg-amber-500/[0.02] relative">
-                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                  <div className="space-y-2">
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                      <h5 className="font-black text-md text-white">{guest.full_name}</h5>
-                                      <span className="text-[9px] px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500 font-bold">
-                                        ⏳ {lang === 'ar' ? 'في انتظار بيانات الوصول' : 'Awaiting Arrival Data'}
-                                      </span>
-                                    </div>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5 text-xs text-white/50 font-bold">
-                                      {guest.organization && <div>🏢 {guest.organization}</div>}
-                                      {(guest.phone || guest.phone_number) && <div dir="ltr">📞 {guest.phone || guest.phone_number}</div>}
-                                      {task && <div className="sm:col-span-2">📋 {lang === 'ar' ? 'المهمة:' : 'Task:'} <span className="text-amber-400">{task.title}</span></div>}
-                                      {task && task.due_time && (
-                                        <div className="sm:col-span-2">⏰ {lang === 'ar' ? 'وقت الوصول المحدد:' : 'Scheduled Arrival:'} <span className="text-white">{new Date(task.due_time).toLocaleString(lang === 'ar' ? 'ar-DZ' : 'en-US')}</span></div>
-                                      )}
-                                      {task && task.driver_name && (
-                                        <div className="sm:col-span-2 p-3 bg-white/5 rounded-2xl border border-white/5 mt-2 space-y-1 text-white">
-                                          <div className="text-[10px] text-white/40 font-bold">{lang === 'ar' ? '🚗 السائق المعين للمهمة:' : '🚗 Assigned Driver:'}</div>
-                                          <div className="flex justify-between items-center text-xs font-black">
-                                            <span>👤 {task.driver_name}</span>
-                                            {task.driver_phone && <span dir="ltr">📞 {task.driver_phone}</span>}
-                                          </div>
-                                          {task.driver_vehicle && <div className="text-[11px] text-white/60">🚘 {task.driver_vehicle}</div>}
-                                        </div>
-                                      )}
-                                    </div>
-                                  </div>
-                                  <div className="flex items-center gap-2 self-end md:self-center">
-                                    {(guest.phone || guest.phone_number) && (
-                                      <a
-                                        href={`https://wa.me/${(guest.phone || guest.phone_number).replace(/\+/g, '')}`}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="p-3 rounded-2xl bg-[#075E54]/10 border border-[#075E54]/20 text-[#25D366] hover:bg-[#075E54]/20 transition-all text-xs font-black flex items-center gap-1.5"
-                                      >
-                                        <span>💬</span>
-                                        {lang === 'ar' ? 'واتساب' : 'WhatsApp'}
-                                      </a>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      );
-                    })()}
-                  </div>
                   {renderCommitteeTasks('transport')}
                 </div>
               )}
