@@ -607,6 +607,53 @@ const OperationsPage = () => {
   };
 
   // --- Committee Tasks Actions ---
+  const getMemberConflictWarning = () => {
+    if (!newTaskForm.assigned_to_id || !newTaskForm.due_time) return null;
+    
+    const currentMemberId = parseInt(newTaskForm.assigned_to_id);
+    const currentDueTime = new Date(newTaskForm.due_time);
+    const currentGuestId = newTaskForm.participant_id ? parseInt(newTaskForm.participant_id) : null;
+    
+    // Find if the committee member has another task within 2 hours
+    const conflictTask = tasksList.find(t => {
+      if (t.assigned_to_id !== currentMemberId) return false;
+      if (t.status === 'completed' || t.status === 'cancelled') return false;
+      if (!t.due_time) return false;
+      
+      const otherTime = new Date(t.due_time);
+      const diffHours = Math.abs(currentDueTime - otherTime) / (1000 * 60 * 60);
+      return diffHours < 2;
+    });
+    
+    if (conflictTask) {
+      // Look up locations if both tasks are related to guests
+      const currentGuest = currentGuestId ? logisticsList.find(item => item.participant_id === currentGuestId) : null;
+      const conflictGuest = conflictTask.participant_id ? logisticsList.find(item => item.participant_id === conflictTask.participant_id) : null;
+      
+      const currentLoc = currentGuest ? (currentGuest.arrival_location || '').trim().toLowerCase() : '';
+      const conflictLoc = conflictGuest ? (conflictGuest.arrival_location || '').trim().toLowerCase() : '';
+      const currentHotel = currentGuest ? (currentGuest.hotel_name || '').trim().toLowerCase() : '';
+      const conflictHotel = conflictGuest ? (conflictGuest.hotel_name || '').trim().toLowerCase() : '';
+      
+      const locationsDefined = currentLoc || conflictLoc || currentHotel || conflictHotel;
+      
+      if (locationsDefined && (currentLoc !== conflictLoc || currentHotel !== conflictHotel)) {
+        // Different locations/hotels - Real conflict warning
+        const currentLocStr = currentGuest ? `${currentGuest.arrival_location || ''} / ${currentGuest.hotel_name || ''}` : (lang === 'ar' ? 'غير محدد' : 'Not specified');
+        const conflictLocStr = conflictGuest ? `${conflictGuest.arrival_location || ''} / ${conflictGuest.hotel_name || ''}` : (lang === 'ar' ? 'غير محدد' : 'Not specified');
+        return lang === 'ar'
+          ? `⚠️ [تعارض جغرافي]: العضو لديه مهمة أخرى (${conflictTask.title}) بوقت متقارب ولكن في موقع مختلف! (الموقع الحالي: ${currentLocStr}، موقع المهمة الأخرى: ${conflictLocStr}).`
+          : `⚠️ [Geographic Conflict]: Assignee has another task (${conflictTask.title}) with close time but in a different location! (Current: ${currentLocStr}, Other: ${conflictLocStr}).`;
+      } else {
+        // Same location or simple timing conflict
+        return lang === 'ar'
+          ? `⚠️ [تداخل في التوقيت]: العضو لديه مهمة أخرى (${conflictTask.title}) مسندة في وقت متقارب (${new Date(conflictTask.due_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}).`
+          : `⚠️ [Timing Overlap]: Assignee has another task (${conflictTask.title}) assigned around the same time (${new Date(conflictTask.due_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}).`;
+      }
+    }
+    return null;
+  };
+
   const handleSaveTask = async (e) => {
     e.preventDefault();
     if (!newTaskForm.title.trim()) return;
@@ -1878,6 +1925,12 @@ const OperationsPage = () => {
                   />
                 </div>
               </div>
+
+              {getMemberConflictWarning() && (
+                <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-2xl text-xs font-bold text-right">
+                  {getMemberConflictWarning()}
+                </div>
+              )}
 
               <div className="flex gap-4 pt-6">
                 <Button className="flex-1 rounded-2xl h-12" variant="gold" type="submit" disabled={isSavingTask}>
