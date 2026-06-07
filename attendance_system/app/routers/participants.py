@@ -138,6 +138,12 @@ async def get_participant_by_token(
     if not avatar_url and participant.custom_values:
         avatar_url = participant.custom_values.get("avatar_url")
         
+    import hashlib
+    salt = "diwan_secure_card_salt"
+    raw_hash = f"{participant.id}:{participant.qr_code}:{salt}"
+    card_hash = hashlib.sha256(raw_hash.encode("utf-8")).hexdigest()[:16]
+    public_card_token = f"{participant.id}-{card_hash}"
+
     return {
         "id": participant.id,
         "full_name": participant.full_name,
@@ -151,7 +157,58 @@ async def get_participant_by_token(
         "custom_values": participant.custom_values or {},
         "role": participant.role or "",
         "phone": participant.phone_number or "",
-        "email": participant.email or ""
+        "email": participant.email or "",
+        "public_card_token": public_card_token
+    }
+
+@router.get("/public/card/{token}")
+async def get_public_card_by_token(
+    token: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """جلب بيانات بطاقة الأعمال العامة للمشارك باستخدام رمز أمني مشفر لمنع تخمين المعرفات"""
+    try:
+        parts = token.split("-")
+        if len(parts) != 2:
+            raise HTTPException(status_code=404, detail="الرمز غير صالح")
+        p_id = int(parts[0])
+        hash_val = parts[1]
+    except Exception:
+        raise HTTPException(status_code=404, detail="الرمز غير صالح")
+        
+    participant = await db.get(Participant, p_id)
+    if not participant:
+        raise HTTPException(status_code=404, detail="المشارك غير موجود")
+        
+    # التحقق من صحة التوقيع الأمني
+    import hashlib
+    salt = "diwan_secure_card_salt"
+    raw_hash = f"{participant.id}:{participant.qr_code}:{salt}"
+    expected_hash = hashlib.sha256(raw_hash.encode("utf-8")).hexdigest()[:16]
+    
+    if hash_val != expected_hash:
+        raise HTTPException(status_code=404, detail="الرمز غير صالح")
+        
+    avatar_url = participant.profile.avatar_url if participant.profile else None
+    if not avatar_url and participant.custom_values:
+        avatar_url = participant.custom_values.get("avatar_url")
+        
+    return {
+        "id": participant.id,
+        "full_name": participant.full_name,
+        "organization": participant.organization,
+        "department": participant.department,
+        "order_num": participant.order_num,
+        "qr_code": participant.qr_code,
+        "seat_info": participant.seat_info,
+        "seat_number": participant.seat_number,
+        "event_id": participant.event_id,
+        "avatar_url": avatar_url,
+        "custom_values": participant.custom_values or {},
+        "role": participant.role or "",
+        "phone": participant.phone_number or "",
+        "email": participant.email or "",
+        "public_card_token": token
     }
 
 class PublicRegistrationRequest(BaseModel):

@@ -939,7 +939,10 @@ const ParticipantPortal = () => {
     setLoading(true);
     setPortalError(null);
     try {
-      const pRes = await api.get(`participants/public/access/${participantToken}`);
+      const endpoint = isPublicCardOnly 
+        ? `participants/public/card/${participantToken}` 
+        : `participants/public/access/${participantToken}`;
+      const pRes = await api.get(endpoint);
       setParticipant(pRes.data);
       
       setProfileData({
@@ -2049,7 +2052,7 @@ const ParticipantPortal = () => {
   };
 
   const handleShareCard = async () => {
-    const shareUrl = `${window.location.origin}/card/${eventId}/${participant?.qr_code || participantToken}`;
+    const shareUrl = `${window.location.origin}/card/${eventId}/${participant?.public_card_token || participantToken}`;
     const shareText = lang === 'ar' 
       ? `بطاقة الأعمال الرقمية للمشارك: ${participant?.full_name}\nالفعالية: ${eventSettings?.event_name || eventSettings?.name}`
       : `Digital Business Card of: ${participant?.full_name}\nEvent: ${eventSettings?.event_name || eventSettings?.name}`;
@@ -2076,7 +2079,7 @@ const ParticipantPortal = () => {
   };
 
   const handleShareWhatsApp = () => {
-    const shareUrl = `${window.location.origin}/card/${eventId}/${participant?.qr_code || participantToken}`;
+    const shareUrl = `${window.location.origin}/card/${eventId}/${participant?.public_card_token || participantToken}`;
     const shareText = encodeURIComponent(
       (lang === 'ar' 
         ? `أهلاً بك، إليك بطاقة أعمالي الرقمية الخاصة بـ ${eventSettings?.event_name || eventSettings?.name}:\n`
@@ -2856,7 +2859,7 @@ const ParticipantPortal = () => {
                 {/* Left: Rounded QR Code for quick scan */}
                 <div className="flex-shrink-0 bg-white p-1 rounded-2xl border border-amber-500/20 shadow-md">
                   <img 
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(window.location.origin + '/card/' + eventId + '/' + (participant.qr_code || participantToken))}`}
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(window.location.origin + '/card/' + eventId + '/' + (participant.public_card_token || participantToken))}`}
                     alt="vCard QR"
                     className="w-16 h-16 rounded-xl object-contain"
                   />
@@ -3191,7 +3194,7 @@ const ParticipantPortal = () => {
                                 {/* Left: Rounded QR Code for quick scan */}
                                 <div className="flex-shrink-0 bg-white p-1 rounded-2xl border border-amber-500/20 shadow-md">
                                   <img 
-                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(window.location.origin + '/p/' + eventId + '/' + (participant.qr_code || participantToken))}`}
+                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(window.location.origin + '/card/' + eventId + '/' + (participant.public_card_token || participantToken))}`}
                                     alt="vCard QR"
                                     className="w-16 h-16 rounded-xl object-contain"
                                   />
