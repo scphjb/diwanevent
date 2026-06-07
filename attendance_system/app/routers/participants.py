@@ -517,6 +517,13 @@ async def public_register_participant(
     cleaned_phone = re.sub(r'[\s\-\(\)]', '', phone_number)
     if cleaned_phone.startswith('00'):
         cleaned_phone = '+' + cleaned_phone[2:]
+    # إذا بدأ رقم الهاتف بـ 0 وكان متبوعاً بـ 5 أو 6 أو 7 أو 9 وطوله 10 أرقام (الجزائر)، نقوم بتحويله تلقائياً للصيغة الدولية
+    if re.match(r'^0[5679]\d{8}$', cleaned_phone):
+        cleaned_phone = '+213' + cleaned_phone[1:]
+    # وإذا بدأ بـ 5 أو 6 أو 7 أو 9 وطوله 9 أرقام (بدون الصفر البدئي)، نقوم بإضافة رمز الجزائر أيضاً
+    elif re.match(r'^[5679]\d{8}$', cleaned_phone):
+        cleaned_phone = '+213' + cleaned_phone
+        
     if not re.match(r'^\+[1-9]\d{6,14}$', cleaned_phone):
         raise HTTPException(
             status_code=400, 
@@ -1300,6 +1307,13 @@ async def import_participants(
         cleaned_phone = re.sub(r'[\s\-\(\)]', '', raw_phone)
         if cleaned_phone.startswith('00'):
             cleaned_phone = '+' + cleaned_phone[2:]
+        # إذا بدأ رقم الهاتف بـ 0 وكان متبوعاً بـ 5 أو 6 أو 7 أو 9 وطوله 10 أرقام (الجزائر)، نقوم بتحويله تلقائياً للصيغة الدولية
+        if re.match(r'^0[5679]\d{8}$', cleaned_phone):
+            cleaned_phone = '+213' + cleaned_phone[1:]
+        # وإذا بدأ بـ 5 أو 6 أو 7 أو 9 وطوله 9 أرقام (بدون الصفر البدئي)، نقوم بإضافة رمز الجزائر أيضاً
+        elif re.match(r'^[5679]\d{8}$', cleaned_phone):
+            cleaned_phone = '+213' + cleaned_phone
+            
         if not re.match(r'^\+[1-9]\d{6,14}$', cleaned_phone):
             skipped += 1
             skipped_details.append(f"السطر {row_num} ({raw_name}): رقم الهاتف يجب أن يكون بالصيغة الدولية ويبدأ بـ +")
