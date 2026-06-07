@@ -4221,15 +4221,17 @@ const ParticipantPortal = () => {
 
                                 <div className="flex items-center gap-2 self-end md:self-center">
                                   {/* WhatsApp Call */}
-                                  <a
-                                    href={`https://wa.me/${item.participant_phone.replace(/\+/g, '')}`}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="p-3 rounded-2xl bg-[#075E54]/10 border border-[#075E54]/20 text-[#25D366] hover:bg-[#075E54]/20 transition-all text-xs font-black flex items-center gap-1.5"
-                                  >
-                                    <span>💬</span>
-                                    {lang === 'ar' ? 'واتساب' : 'WhatsApp'}
-                                  </a>
+                                  {item.participant_phone && (
+                                    <a
+                                      href={`https://wa.me/${item.participant_phone.replace(/\+/g, '')}`}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="p-3 rounded-2xl bg-[#075E54]/10 border border-[#075E54]/20 text-[#25D366] hover:bg-[#075E54]/20 transition-all text-xs font-black flex items-center gap-1.5"
+                                    >
+                                      <span>💬</span>
+                                      {lang === 'ar' ? 'واتساب' : 'WhatsApp'}
+                                    </a>
+                                  )}
 
                                   {/* Dispatch Button */}
                                   {(isPresident || tasksList.some(t => t.participant_id === item.participant_id && t.assigned_to_id === participant.id && t.status !== 'cancelled')) && (
