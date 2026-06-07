@@ -1661,42 +1661,67 @@ async def update_committee_task_status(
         return task
 
     task.status = req.status
+    if task.participant_id and task.committee == 'transport':
+        try:
+            from app.models.others import LogisticsRegistry
+            log_stmt = select(LogisticsRegistry).filter(
+                LogisticsRegistry.event_id == task.event_id,
+                LogisticsRegistry.participant_id == task.participant_id
+            )
+            log_res = await db.execute(log_stmt)
+            registry = log_res.scalar_one_or_none()
+            if registry:
+                registry.status = req.status
+        except Exception as e:
+            logger.error(f"Failed to sync task status to logistics: {e}")
+
     await db.commit()
     await db.refresh(task)
 
-    # ── إشعار عند بدء المهمة ──
-    if req.status == "in_progress" and old_status != "in_progress":
+    # ── إشعار عند بدء أو تحديث المهمة ──
+    if req.status != old_status:
         try:
             from app.routers.notifications import send_web_push_notification_to_target
             assignee_name = task.assigned_to_name or "أحد الأعضاء"
-            committee_keywords = {
-                'reception': ['استقبال'],
-                'catering': ['إطعام', 'اطعام', 'ضيافة', 'ضيافه'],
-                'accommodation': ['إيواء', 'ايواء', 'تسكين'],
-                'logistics': ['نقل', 'سائق'],
-                'entertainment': ['ترفيه', 'أنشطة', 'انشطه']
+            status_texts = {
+                "confirmed": "تأكيد استلام المهمة",
+                "on_the_way_to_task": "في الطريق إلى المهمة",
+                "awaiting_guest": "في انتظار وصول الضيف",
+                "guest_delayed": "تسجيل تأخر وصول الضيف",
+                "returning_from_task": "في طريق العودة من المهمة",
+                "in_progress": "بدء تنفيذ المهمة",
             }
-            keywords = committee_keywords.get(task.committee, [])
-            p_stmt = select(Participant).filter(Participant.event_id == task.event_id)
-            p_res = await db.execute(p_stmt)
-            participants = p_res.scalars().all()
-            president_ids = []
-            for p in participants:
-                p_role = (p.role or "").lower()
-                if "رئيس" in p_role or "president" in p_role:
-                    if any(kw in p_role for kw in keywords) or "عام" in p_role or "organizer" in p_role:
-                        president_ids.append(p.id)
-            if president_ids:
-                await send_web_push_notification_to_target(
-                    db=db,
-                    title="⚙️ بدء العمل على مهمة في لجنتك",
-                    body=f"بدأ {assignee_name} تنفيذ المهمة: '{task.title}'",
-                    url=f"/portal?section=organizer&task_id={task.id}",
-                    participant_ids=president_ids,
-                    event_id=task.event_id
-                )
+            if req.status in status_texts and req.status != "completed":
+                status_text = status_texts[req.status]
+                committee_keywords = {
+                    'reception': ['استقبال'],
+                    'catering': ['إطعام', 'اطعام', 'ضيافة', 'ضيافه'],
+                    'accommodation': ['إيواء', 'ايواء', 'تسكين'],
+                    'logistics': ['نقل', 'سائق'],
+                    'entertainment': ['ترفيه', 'أنشطة', 'انشطه'],
+                    'transport': ['نقل', 'سائق']
+                }
+                keywords = committee_keywords.get(task.committee, [])
+                p_stmt = select(Participant).filter(Participant.event_id == task.event_id)
+                p_res = await db.execute(p_stmt)
+                participants = p_res.scalars().all()
+                president_ids = []
+                for p in participants:
+                    p_role = (p.role or "").lower()
+                    if "رئيس" in p_role or "president" in p_role:
+                        if any(kw in p_role for kw in keywords) or "عام" in p_role or "organizer" in p_role:
+                            president_ids.append(p.id)
+                if president_ids:
+                    await send_web_push_notification_to_target(
+                        db=db,
+                        title=f"⚙️ تحديث مهمة: {status_text}",
+                        body=f"قام {assignee_name} بتحديث حالة المهمة '{task.title}' إلى: {status_text}",
+                        url=f"/portal?section=organizer&task_id={task.id}",
+                        participant_ids=president_ids,
+                        event_id=task.event_id
+                    )
         except Exception as e:
-            logger.error(f"Failed to send task start notification: {e}")
+            logger.error(f"Failed to send task status update notification: {e}")
 
     # ── إشعار عند إتمام المهمة ──
     if req.status == "completed" and old_status != "completed":

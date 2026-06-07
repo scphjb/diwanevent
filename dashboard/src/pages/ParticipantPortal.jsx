@@ -2153,7 +2153,7 @@ const ParticipantPortal = () => {
     const filteredTasks = tasksList.filter(t => {
       if (t.committee !== committeeKey) return false;
       if (isPresident) return true;
-      return t.assigned_to_id === participant.id;
+      return Number(t.assigned_to_id) === Number(participant.id);
     });
     
     const availableHelpers = receptionList.filter(p => {
@@ -2196,6 +2196,204 @@ const ParticipantPortal = () => {
           <div className="space-y-3">
             {filteredTasks.map(task => {
               const guest = receptionList.find(p => p.id === task.participant_id);
+              
+              if (committeeKey === 'transport') {
+                const guestArrival = staffLogisticsList.find(l => l.participant_id === task.participant_id);
+                const guestPhone = guest?.phone || guest?.phone_number || guestArrival?.participant_phone;
+                
+                return (
+                  <div 
+                    key={task.id} 
+                    onClick={() => setDetailedTask(task)}
+                    className="p-5 rounded-3xl border border-white/5 bg-white/[0.01] hover:bg-white/[0.02] hover:border-amber-500/20 transition-all relative cursor-pointer text-right space-y-4"
+                  >
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <div className="space-y-2 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap justify-end md:justify-start" dir="rtl">
+                          <h5 className="font-black text-md text-white">
+                            {guest?.full_name || guestArrival?.participant_name || task.title}
+                          </h5>
+                          {guestArrival?.transport_type && (
+                            <span className="text-[9px] px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500 font-bold">
+                              {guestArrival.transport_type === 'plane' ? '✈️ طيران' : '🚗 سيارة خاصة'}
+                            </span>
+                          )}
+                          
+                          <span className={cn(
+                            "text-[9px] px-2.5 py-0.5 rounded-full font-bold",
+                            task.status === 'completed' ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400" :
+                            task.status === 'confirmed' ? "bg-amber-500/10 border border-amber-500/20 text-amber-400" :
+                            task.status === 'on_the_way_to_task' ? "bg-blue-500/10 border border-blue-500/20 text-blue-400" :
+                            task.status === 'awaiting_guest' ? "bg-sky-500/10 border border-sky-500/20 text-sky-400" :
+                            task.status === 'guest_delayed' ? "bg-red-500/10 border border-red-500/20 text-red-400" :
+                            task.status === 'returning_from_task' ? "bg-violet-500/10 border border-violet-500/20 text-violet-400" :
+                            task.status === 'in_progress' ? "bg-blue-500/10 border border-blue-500/20 text-blue-400" :
+                            task.status === 'cancelled' ? "bg-red-500/10 border border-red-500/20 text-red-400" :
+                            "bg-amber-500/10 border border-amber-500/20 text-amber-400"
+                          )}>
+                            {task.status === 'completed' ? (lang === 'ar' ? '✅ مكتملة بنجاح' : 'Completed') :
+                             task.status === 'confirmed' ? (lang === 'ar' ? '✔️ تم الاستلام' : 'Confirmed') :
+                             task.status === 'on_the_way_to_task' ? (lang === 'ar' ? '🚗 في الطريق للمهمة' : 'On Way to Task') :
+                             task.status === 'awaiting_guest' ? (lang === 'ar' ? '🕒 في انتظار الضيف' : 'Awaiting Guest') :
+                             task.status === 'guest_delayed' ? (lang === 'ar' ? '⚠️ الضيف متأخر' : 'Guest Delayed') :
+                             task.status === 'returning_from_task' ? (lang === 'ar' ? '🔄 في طريق العودة' : 'Returning') :
+                             task.status === 'in_progress' ? (lang === 'ar' ? '⚙️ جاري العمل' : 'In Progress') :
+                             task.status === 'cancelled' ? (lang === 'ar' ? '❌ ملغاة' : 'Cancelled') :
+                             (lang === 'ar' ? '⏳ قيد الانتظار' : 'Pending')}
+                          </span>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5 text-xs text-white/50 font-bold" dir="rtl">
+                          {guestArrival?.flight_number && (
+                            <div>✈️ {lang === 'ar' ? 'رحلة رقم' : 'Flight'}: <span className="text-white">{guestArrival.flight_number}</span></div>
+                          )}
+                          {(guestArrival?.arrival_time || task.due_time) && (
+                            <div>
+                              ⏰ {lang === 'ar' ? 'موعد الوصول المخطط' : 'Arrival Time'}: <span className="text-white">
+                                {new Date(guestArrival?.arrival_time || task.due_time).toLocaleString(lang === 'ar' ? 'ar-DZ' : 'en-US')}
+                              </span>
+                            </div>
+                          )}
+                          {guestArrival?.arrival_location && (
+                            <div className="sm:col-span-2">📍 {lang === 'ar' ? 'موقع الاستقبال' : 'Pickup Location'}: <span className="text-white">{guestArrival.arrival_location}</span></div>
+                          )}
+                          {guestArrival?.hotel_name && (
+                            <div className="sm:col-span-2">🏨 {lang === 'ar' ? 'فندق الإقامة' : 'Hotel'}: <span className="text-white">{guestArrival.hotel_name} (غرفة {guestArrival.room_number || '---'})</span></div>
+                          )}
+                          {task.description && (
+                            <div className="sm:col-span-2 text-white/70 italic mt-1 font-normal bg-white/5 p-2 rounded-xl border border-white/5">
+                              📋 {lang === 'ar' ? 'الوصف/التوجيهات:' : 'Description:'} {task.description}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Host info if assigned */}
+                        {task.assigned_to_name && (
+                          <div className="p-3 rounded-2xl bg-blue-500/5 border border-blue-500/10 text-xs text-blue-400 font-bold space-y-1 mt-2" dir="rtl">
+                            <div className="flex items-center gap-1">
+                              <span>🙋‍♂️</span>
+                              <span>{lang === 'ar' ? `المستقبل الميداني (العضو المسند إليه): ${task.assigned_to_name}` : `Welcoming Host: ${task.assigned_to_name}`}</span>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Driver & vehicle details */}
+                        {task.driver_name && (
+                          <div className="p-3 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 text-xs text-emerald-400/90 font-bold space-y-1 mt-2" dir="rtl">
+                            <div className="flex items-center gap-1">
+                              <span>🚗</span>
+                              <span>{lang === 'ar' ? `السائق المخصص للمهمة: ${task.driver_name} (${task.driver_phone})` : `Assigned Driver: ${task.driver_name} (${task.driver_phone})`}</span>
+                            </div>
+                            {task.driver_vehicle && <div className="text-[10px] text-white/40">🚘 {task.driver_vehicle}</div>}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex flex-row md:flex-col items-center gap-2 self-end md:self-center justify-end">
+                        {/* Guest Contact Buttons */}
+                        {guestPhone && (
+                          <div className="flex gap-1.5" onClick={(e) => e.stopPropagation()}>
+                            <a
+                              href={`tel:${guestPhone.replace(/\+/g, '').replace(/[^0-9]/g, '')}`}
+                              className="p-3 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 text-white text-xs font-black transition-all flex items-center gap-1.5"
+                            >
+                              <span>📞</span>
+                              {lang === 'ar' ? 'اتصال' : 'Call'}
+                            </a>
+                            <a
+                              href={`https://wa.me/${guestPhone.replace(/\+/g, '').replace(/[^0-9]/g, '')}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="p-3 rounded-2xl bg-[#075E54]/10 border border-[#075E54]/20 hover:bg-[#075E54]/20 text-[#25D366] text-xs font-black transition-all flex items-center gap-1.5"
+                            >
+                              <span>💬</span>
+                              {lang === 'ar' ? 'واتساب' : 'WhatsApp'}
+                            </a>
+                          </div>
+                        )}
+
+                        {/* Action buttons or delete controls */}
+                        <div className="flex items-center gap-1.5 mt-2" onClick={(e) => e.stopPropagation()}>
+                          {isPresident && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleDeleteTask(task.id); }}
+                              className="text-red-400/60 hover:text-red-400 transition-colors p-2 rounded-xl bg-red-500/10 border border-red-500/20"
+                              title={lang === 'ar' ? 'حذف المهمة' : 'Delete Task'}
+                            >
+                              🗑️
+                            </button>
+                          )}
+                          {Number(task.assigned_to_id) === Number(participant.id) && (
+                            task.status === 'pending' ? (
+                              <button
+                                onClick={() => handleUpdateTaskStatus(task.id, 'confirmed')}
+                                className="px-3 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/20 transition-all text-xs font-black"
+                              >
+                                {lang === 'ar' ? 'تأكيد استلام المهمة' : 'Confirm Receipt'}
+                              </button>
+                            ) : task.status === 'confirmed' ? (
+                              <button
+                                onClick={() => handleUpdateTaskStatus(task.id, 'on_the_way_to_task')}
+                                className="px-3 py-2 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 transition-all text-xs font-black"
+                              >
+                                {lang === 'ar' ? 'في الطريق إلى المهمة' : 'On the Way'}
+                              </button>
+                            ) : task.status === 'on_the_way_to_task' ? (
+                              <button
+                                onClick={() => handleUpdateTaskStatus(task.id, 'awaiting_guest')}
+                                className="px-3 py-2 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border border-sky-500/20 transition-all text-xs font-black"
+                              >
+                                {lang === 'ar' ? 'في انتظار وصول الضيف' : 'Awaiting Guest'}
+                              </button>
+                            ) : task.status === 'awaiting_guest' ? (
+                              <div className="flex items-center gap-1.5">
+                                <button
+                                  onClick={() => handleUpdateTaskStatus(task.id, 'guest_delayed')}
+                                  className="px-2.5 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 transition-all text-[11px] font-black"
+                                >
+                                  {lang === 'ar' ? 'تأخر الضيف' : 'Delayed'}
+                                </button>
+                                <button
+                                  onClick={() => handleUpdateTaskStatus(task.id, 'returning_from_task')}
+                                  className="px-2.5 py-2 rounded-xl bg-violet-500/10 hover:bg-violet-500/20 text-violet-400 border border-violet-500/20 transition-all text-[11px] font-black"
+                                >
+                                  {lang === 'ar' ? 'في طريق العودة' : 'Returning'}
+                                </button>
+                              </div>
+                            ) : task.status === 'guest_delayed' ? (
+                              <button
+                                onClick={() => handleUpdateTaskStatus(task.id, 'returning_from_task')}
+                                className="px-3 py-2 rounded-xl bg-violet-500/10 hover:bg-violet-500/20 text-violet-400 border border-violet-500/20 transition-all text-xs font-black"
+                              >
+                                {lang === 'ar' ? 'في طريق العودة' : 'Returning'}
+                              </button>
+                            ) : task.status === 'returning_from_task' ? (
+                              <button
+                                onClick={() => handleUpdateTaskStatus(task.id, 'completed')}
+                                className="px-3 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 transition-all text-xs font-black"
+                              >
+                                {lang === 'ar' ? 'تم إكمال المهمة بنجاح' : 'Completed Successfully'}
+                              </button>
+                            ) : null
+                          )}
+                          {Number(task.assigned_to_id) === Number(participant.id) && (
+                            <button
+                              onClick={() => {
+                                setDetailedTask(task);
+                                setIsApologizing(true);
+                              }}
+                              className="px-3 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/20 transition-all text-xs font-black"
+                            >
+                              {lang === 'ar' ? 'اعتذار' : 'Apologize'}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
               return (
                 <div 
                   key={task.id} 
@@ -2217,11 +2415,21 @@ const ParticipantPortal = () => {
                       <span className={cn(
                         "text-[10px] px-2 py-0.5 rounded font-black",
                         task.status === 'completed' ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" :
+                        task.status === 'confirmed' ? "bg-amber-500/10 text-amber-400 border border-amber-500/20" :
+                        task.status === 'on_the_way_to_task' ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" :
+                        task.status === 'awaiting_guest' ? "bg-sky-500/10 text-sky-400 border border-sky-500/20" :
+                        task.status === 'guest_delayed' ? "bg-red-500/10 text-red-400 border border-red-500/20" :
+                        task.status === 'returning_from_task' ? "bg-violet-500/10 text-violet-400 border border-violet-500/20" :
                         task.status === 'in_progress' ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" :
                         task.status === 'cancelled' ? "bg-red-500/10 text-red-400 border border-red-500/20" :
                         "bg-amber-500/10 text-amber-400 border border-amber-500/20"
                       )}>
-                        {task.status === 'completed' ? (lang === 'ar' ? '✅ اكتملت' : 'Completed') :
+                        {task.status === 'completed' ? (lang === 'ar' ? '✅ اكتملت بنجاح' : 'Completed') :
+                         task.status === 'confirmed' ? (lang === 'ar' ? '✔️ تم الاستلام' : 'Confirmed') :
+                         task.status === 'on_the_way_to_task' ? (lang === 'ar' ? '🚗 في الطريق إلى المهمة' : 'On the Way to Task') :
+                         task.status === 'awaiting_guest' ? (lang === 'ar' ? '🕒 في انتظار وصول الضيف' : 'Awaiting Guest') :
+                         task.status === 'guest_delayed' ? (lang === 'ar' ? '⚠️ تأخر وصول الضيف' : 'Guest Delayed') :
+                         task.status === 'returning_from_task' ? (lang === 'ar' ? '🔄 في طريق العودة' : 'Returning from Task') :
                          task.status === 'in_progress' ? (lang === 'ar' ? '⚙️ جاري العمل' : 'In Progress') :
                          task.status === 'cancelled' ? (lang === 'ar' ? '❌ ملغاة' : 'Cancelled') :
                          (lang === 'ar' ? '⏳ قيد الانتظار' : 'Pending')}
@@ -2239,33 +2447,87 @@ const ParticipantPortal = () => {
                     <div className="flex items-center gap-2">
                       {task.status !== 'completed' && task.status !== 'cancelled' && (
                         <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-                          {/* Start / Complete: only for the assigned member */}
-                          {task.assigned_to_id === participant.id && (
-                            task.status === 'pending' ? (
-                              <button
-                                onClick={() => handleUpdateTaskStatus(task.id, 'in_progress')}
-                                className="px-2 py-0.5 rounded bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 transition-all"
-                              >
-                                {lang === 'ar' ? 'بدء التنفيذ' : 'Start'}
-                              </button>
+                          {/* Start / Complete / Custom States: only for the assigned member */}
+                          {Number(task.assigned_to_id) === Number(participant.id) && (
+                            task.committee === 'transport' ? (
+                              task.status === 'pending' ? (
+                                <button
+                                  onClick={() => handleUpdateTaskStatus(task.id, 'confirmed')}
+                                  className="px-2 py-0.5 rounded bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/20 transition-all text-[10px] font-black"
+                                >
+                                  {lang === 'ar' ? 'تأكيد استلام المهمة' : 'Confirm Receipt'}
+                                </button>
+                              ) : task.status === 'confirmed' ? (
+                                <button
+                                  onClick={() => handleUpdateTaskStatus(task.id, 'on_the_way_to_task')}
+                                  className="px-2 py-0.5 rounded bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 transition-all text-[10px] font-black"
+                                >
+                                  {lang === 'ar' ? 'في الطريق إلى المهمة' : 'On the Way to Task'}
+                                </button>
+                              ) : task.status === 'on_the_way_to_task' ? (
+                                <button
+                                  onClick={() => handleUpdateTaskStatus(task.id, 'awaiting_guest')}
+                                  className="px-2 py-0.5 rounded bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border border-sky-500/20 transition-all text-[10px] font-black"
+                                >
+                                  {lang === 'ar' ? 'في انتظار وصول الضيف' : 'Awaiting Guest'}
+                                </button>
+                              ) : task.status === 'awaiting_guest' ? (
+                                <div className="flex items-center gap-1">
+                                  <button
+                                    onClick={() => handleUpdateTaskStatus(task.id, 'guest_delayed')}
+                                    className="px-2 py-0.5 rounded bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 transition-all text-[10px] font-black"
+                                  >
+                                    {lang === 'ar' ? 'تسجيل تأخر الضيف' : 'Guest Delayed'}
+                                  </button>
+                                  <button
+                                    onClick={() => handleUpdateTaskStatus(task.id, 'returning_from_task')}
+                                    className="px-2 py-0.5 rounded bg-violet-500/10 hover:bg-violet-500/20 text-violet-400 border border-violet-500/20 transition-all text-[10px] font-black"
+                                  >
+                                    {lang === 'ar' ? 'في طريق العودة' : 'On the Way Back'}
+                                  </button>
+                                </div>
+                              ) : task.status === 'guest_delayed' ? (
+                                <button
+                                  onClick={() => handleUpdateTaskStatus(task.id, 'returning_from_task')}
+                                  className="px-2 py-0.5 rounded bg-violet-500/10 hover:bg-violet-500/20 text-violet-400 border border-violet-500/20 transition-all text-[10px] font-black"
+                                >
+                                  {lang === 'ar' ? 'في طريق العودة' : 'On the Way Back'}
+                                </button>
+                              ) : task.status === 'returning_from_task' ? (
+                                <button
+                                  onClick={() => handleUpdateTaskStatus(task.id, 'completed')}
+                                  className="px-2 py-0.5 rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 transition-all text-[10px] font-black"
+                                >
+                                  {lang === 'ar' ? 'تم إكمال المهمة بنجاح' : 'Completed Successfully'}
+                                </button>
+                              ) : null
                             ) : (
-                              <button
-                                onClick={() => handleUpdateTaskStatus(task.id, 'completed')}
-                                className="px-2 py-0.5 rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 transition-all"
-                              >
-                                {lang === 'ar' ? 'إكمال المهمة' : 'Complete'}
-                              </button>
+                              task.status === 'pending' ? (
+                                <button
+                                  onClick={() => handleUpdateTaskStatus(task.id, 'in_progress')}
+                                  className="px-2 py-0.5 rounded bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 transition-all text-[10px] font-black"
+                                >
+                                  {lang === 'ar' ? 'بدء التنفيذ' : 'Start'}
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => handleUpdateTaskStatus(task.id, 'completed')}
+                                  className="px-2 py-0.5 rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 transition-all text-[10px] font-black"
+                                >
+                                  {lang === 'ar' ? 'إكمال المهمة' : 'Complete'}
+                                </button>
+                              )
                             )
                           )}
 
                           {/* Apologize: only for the assigned member */}
-                          {task.assigned_to_id === participant.id && (
+                          {Number(task.assigned_to_id) === Number(participant.id) && (
                             <button
                               onClick={() => {
                                 setDetailedTask(task);
                                 setIsApologizing(true);
                               }}
-                              className="px-2 py-0.5 rounded bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/20 transition-all"
+                              className="px-2 py-0.5 rounded bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/20 transition-all text-[10px] font-black"
                             >
                               {lang === 'ar' ? 'اعتذار' : 'Apologize'}
                             </button>
@@ -2275,7 +2537,7 @@ const ParticipantPortal = () => {
                           {isPresident && (
                             <button
                               onClick={() => handleUpdateTaskStatus(task.id, 'cancelled')}
-                              className="px-2 py-0.5 rounded bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 transition-all"
+                              className="px-2 py-0.5 rounded bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 transition-all text-[10px] font-black"
                             >
                               {lang === 'ar' ? 'إلغاء' : 'Cancel'}
                             </button>
@@ -3612,43 +3874,45 @@ const ParticipantPortal = () => {
 
                     {/* Driver & Car details */}
                     {logistics.driver_name ? (
-                      <>
-                        <div className="bg-white/5 p-4 rounded-2xl border border-white/5 md:col-span-1">
-                          <span className="text-white/40 text-xs block mb-1">{lang === 'ar' ? 'اسم السائق المخصص' : 'Driver Name'}</span>
-                          <span className="text-white text-base font-black">👤 {logistics.driver_name}</span>
+                      <div className="md:col-span-2 p-4 bg-emerald-500/5 rounded-2xl border border-emerald-500/10 space-y-2 mb-2">
+                        <span className="text-emerald-400 text-xs block font-black">
+                          {lang === 'ar' ? '🚗 السائق المخصص لتوصيلك' : '🚗 Assigned Driver Details'}
+                        </span>
+                        <div className="flex flex-wrap items-center justify-between gap-4 mt-1">
+                          <div className="text-right">
+                            <span className="text-white/40 text-[10px] block">{lang === 'ar' ? 'الاسم والسيارة' : 'Name & Vehicle'}</span>
+                            <span className="text-white text-sm font-black">👤 {logistics.driver_name}</span>
+                            {logistics.vehicle_details && (
+                              <span className="text-white/60 text-xs block mt-0.5">🚘 {logistics.vehicle_details}</span>
+                            )}
+                            {logistics.shuttle_time && (
+                              <span className="text-white/40 text-[10px] block mt-1">
+                                ⏳ {lang === 'ar' ? 'وقت التحرك المخطط:' : 'Departure time:'} {formatDateTime(logistics.shuttle_time, { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' })}
+                              </span>
+                            )}
+                          </div>
+                          {logistics.driver_phone && (
+                            <div className="flex gap-2">
+                              <a
+                                href={`tel:${logistics.driver_phone}`}
+                                className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white text-xs font-black transition-all flex items-center gap-1"
+                              >
+                                <span>📞</span>
+                                {lang === 'ar' ? 'اتصال مباشر' : 'Call'}
+                              </a>
+                              <a
+                                href={`https://wa.me/${logistics.driver_phone.replace(/\+/g, '').replace(/[^0-9]/g, '')}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="px-3 py-1.5 rounded-xl bg-[#075E54]/10 border border-[#075E54]/20 hover:bg-[#075E54]/20 text-[#25D366] text-xs font-black transition-all flex items-center gap-1"
+                              >
+                                <span>💬</span>
+                                {lang === 'ar' ? 'واتساب' : 'WhatsApp'}
+                              </a>
+                            </div>
+                          )}
                         </div>
-                         <div className="bg-white/5 p-4 rounded-2xl border border-white/5 md:col-span-1 space-y-2">
-                           <span className="text-white/40 text-xs block mb-1">{lang === 'ar' ? 'رقم هاتف السائق' : 'Driver Phone'}</span>
-                           <span className="text-white text-base font-black block">📞 {logistics.driver_phone}</span>
-                           <div className="flex gap-2 mt-1">
-                             <a
-                               href={`tel:${logistics.driver_phone}`}
-                               className="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-white text-[10px] font-black transition-all flex items-center gap-1"
-                             >
-                               {lang === 'ar' ? 'اتصال مباشر' : 'Call'}
-                             </a>
-                             <a
-                               href={`https://wa.me/${logistics.driver_phone.replace(/\+/g, '').replace(/[^0-9]/g, '')}`}
-                               target="_blank"
-                               rel="noreferrer"
-                               className="px-2.5 py-1 rounded-lg bg-[#075E54]/10 border border-[#075E54]/20 hover:bg-[#075E54]/20 text-[#25D366] text-[10px] font-black transition-all flex items-center gap-1"
-                             >
-                               <span>💬</span>
-                               {lang === 'ar' ? 'واتساب' : 'WhatsApp'}
-                             </a>
-                           </div>
-                         </div>
-                        <div className="bg-white/5 p-4 rounded-2xl border border-white/5 md:col-span-1">
-                          <span className="text-white/40 text-xs block mb-1">{lang === 'ar' ? 'تفاصيل المركبة' : 'Vehicle Details'}</span>
-                          <span className="text-white text-base font-black">🚗 {logistics.vehicle_details}</span>
-                        </div>
-                        <div className="bg-white/5 p-4 rounded-2xl border border-white/5 md:col-span-1">
-                          <span className="text-white/40 text-xs block mb-1">{lang === 'ar' ? 'وقت تحرك السيارة' : 'Shuttle Departure Time'}</span>
-                          <span className="text-white text-base font-black">
-                            ⏳ {logistics.shuttle_time ? formatDateTime(logistics.shuttle_time, { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' }) : '---'}
-                          </span>
-                        </div>
-                      </>
+                      </div>
                     ) : (
                       <div className="md:col-span-2 p-4 bg-white/5 rounded-2xl border border-white/5 text-center text-white/40 text-xs font-bold">
                         {lang === 'ar' ? '🚗 لم يتم تخصيص سيارة وسائق لهذا المسار بعد.' : '🚗 No vehicle or driver assigned for this shuttle yet.'}
@@ -3658,23 +3922,32 @@ const ParticipantPortal = () => {
                   {logistics.status && (
                     <div className="mt-4 text-center">
                       <span className={`inline-block px-4 py-1.5 border rounded-full text-xs font-black ${
-                        logistics.status === 'dispatched' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' :
-                        logistics.status === 'arrived' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' :
                         logistics.status === 'completed' ? 'bg-emerald-500/25 text-emerald-400 border-emerald-500/40' :
+                        logistics.status === 'confirmed' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' :
+                        logistics.status === 'on_the_way_to_task' || logistics.status === 'dispatched' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' :
+                        logistics.status === 'awaiting_guest' || logistics.status === 'arrived' ? 'bg-sky-500/20 text-sky-400 border-sky-500/30' :
+                        logistics.status === 'guest_delayed' ? 'bg-red-500/20 text-red-400 border-red-500/30' :
+                        logistics.status === 'returning_from_task' ? 'bg-violet-500/20 text-violet-400 border-violet-500/30' :
                         'bg-amber-500/20 text-amber-400 border-amber-500/30'
                       }`}>
                         {lang === 'ar'
-                          ? `الحالة الحالية: ${
-                              logistics.status === 'dispatched' ? '🚗 في الطريق إليك' :
-                              logistics.status === 'arrived'   ? '✅ وصل السائق إلى موقعك' :
-                              logistics.status === 'completed' ? '🎉 اكتمل الاستقبال' :
-                              '⏳ قيد التنسيق'
+                          ? `حالة الاستقبال: ${
+                              logistics.status === 'completed' ? '🎉 اكتمل الاستقبال والتوصيل بنجاح' :
+                              logistics.status === 'confirmed' ? '✔️ تم تأكيد استلام المهمة من المستقبل الميداني' :
+                              logistics.status === 'on_the_way_to_task' || logistics.status === 'dispatched' ? '🚗 المستقبل الميداني في طريقه إليك الآن' :
+                              logistics.status === 'awaiting_guest' || logistics.status === 'arrived' ? '🙋‍♂️ المستقبل في انتظاركم الآن في موقع الاستقبال' :
+                              logistics.status === 'guest_delayed' ? '⚠️ تم تسجيل تأخر الوصول - نتابع جدولكم بدقة' :
+                              logistics.status === 'returning_from_task' ? '🚘 جاري نقلكم الآن إلى فندق الإقامة' :
+                              '⏳ قيد التنسيق والترتيب لاستقبالكم'
                             }`
                           : `Status: ${
-                              logistics.status === 'dispatched' ? '🚗 Driver Dispatched' :
-                              logistics.status === 'arrived'   ? '✅ Driver Arrived' :
-                              logistics.status === 'completed' ? '🎉 Completed' :
-                              '⏳ Pending Coordination'
+                              logistics.status === 'completed' ? '🎉 Reception & transport completed' :
+                              logistics.status === 'confirmed' ? '✔️ Task receipt confirmed by host' :
+                              logistics.status === 'on_the_way_to_task' || logistics.status === 'dispatched' ? '🚗 Host is on their way to you' :
+                              logistics.status === 'awaiting_guest' || logistics.status === 'arrived' ? '🙋‍♂️ Host is waiting for you at pickup location' :
+                              logistics.status === 'guest_delayed' ? '⚠️ Delay recorded - monitoring your arrival' :
+                              logistics.status === 'returning_from_task' ? '🚘 Transferring you to the hotel' :
+                              '⏳ Pending coordination'
                             }`
                         }
                       </span>
@@ -4508,7 +4781,7 @@ const ParticipantPortal = () => {
                             // Non-presidents: filter based on CommitteeTask assignments
                             if (!isPresident) {
                               const myTasks = tasksList.filter(t =>
-                                t.assigned_to_id === participant.id &&
+                                Number(t.assigned_to_id) === Number(participant.id) &&
                                 t.status !== 'cancelled'
                               );
                               // No tasks at all → show nothing
@@ -4594,7 +4867,7 @@ const ParticipantPortal = () => {
                                   )}
 
                                   {/* Dispatch Button */}
-                                  {(isPresident || tasksList.some(t => t.participant_id === item.participant_id && t.assigned_to_id === participant.id && t.status !== 'cancelled')) && (
+                                  {(isPresident || tasksList.some(t => t.participant_id === item.participant_id && Number(t.assigned_to_id) === Number(participant.id) && t.status !== 'cancelled')) && (
                                     <button
                                       onClick={() => {
                                         setSelectedStaffParticipant(item);
@@ -4643,7 +4916,7 @@ const ParticipantPortal = () => {
                     {/* Non-president: show assigned guests who have NO logistics record yet */}
                     {!isPresident && (() => {
                       const myGuestTasks = tasksList.filter(t =>
-                        t.assigned_to_id === participant.id &&
+                        Number(t.assigned_to_id) === Number(participant.id) &&
                         t.participant_id &&
                         t.status !== 'cancelled'
                       );
@@ -5753,7 +6026,7 @@ const ParticipantPortal = () => {
                           <div className="p-4 bg-white/5 rounded-2xl border border-white/5 mt-2 space-y-3">
                             <div className="flex justify-between items-center">
                               <span className="text-[10px] text-white/40 font-bold">{lang === 'ar' ? '🚗 السائق والمركبة للمهمة' : '🚗 Assigned Driver & Vehicle'}</span>
-                              {detailedTask.driver_name && (isPresident || detailedTask.assigned_to_id === participant.id) && (
+                              {detailedTask.driver_name && (isPresident || Number(detailedTask.assigned_to_id) === Number(participant.id)) && (
                                 <button
                                   onClick={() => {
                                     setEditingDriverTaskId(detailedTask.id);
@@ -5797,7 +6070,7 @@ const ParticipantPortal = () => {
                               </div>
                             ) : (
                               /* Case 2: Assign/Edit driver form */
-                              (isPresident || detailedTask.assigned_to_id === participant.id) ? (
+                              (isPresident || Number(detailedTask.assigned_to_id) === Number(participant.id)) ? (
                                 <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
                                   {/* Select predefined driver */}
                                   <select
@@ -5940,31 +6213,92 @@ const ParticipantPortal = () => {
 
                         {detailedTask.status !== 'completed' && detailedTask.status !== 'cancelled' && (
                           <div className="flex flex-col gap-2 pt-4 border-t border-white/5 mt-4">
-                            <div className="flex gap-2">
-                              {detailedTask.assigned_to_id === participant.id && (
-                                detailedTask.status === 'pending' ? (
-                                  <button
-                                    onClick={() => handleUpdateTaskStatus(detailedTask.id, 'in_progress')}
-                                    className="flex-1 py-3 rounded-2xl bg-blue-500 hover:bg-blue-400 text-brand-dark text-xs font-black transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-blue-500/10"
-                                  >
-                                    <span>⚙️</span>
-                                    {lang === 'ar' ? 'بدء التنفيذ' : 'Start'}
-                                  </button>
+                            <div className="flex gap-2 flex-wrap">
+                              {Number(detailedTask.assigned_to_id) === Number(participant.id) && (
+                                detailedTask.committee === 'transport' ? (
+                                  detailedTask.status === 'pending' ? (
+                                    <button
+                                      onClick={() => handleUpdateTaskStatus(detailedTask.id, 'confirmed')}
+                                      className="flex-1 py-3 px-4 rounded-2xl bg-amber-500 hover:bg-amber-400 text-brand-dark text-xs font-black transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-amber-500/10 min-w-[120px]"
+                                    >
+                                      <span>✔️</span>
+                                      {lang === 'ar' ? 'تأكيد استلام المهمة' : 'Confirm Receipt'}
+                                    </button>
+                                  ) : detailedTask.status === 'confirmed' ? (
+                                    <button
+                                      onClick={() => handleUpdateTaskStatus(detailedTask.id, 'on_the_way_to_task')}
+                                      className="flex-1 py-3 px-4 rounded-2xl bg-blue-500 hover:bg-blue-400 text-brand-dark text-xs font-black transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-blue-500/10 min-w-[120px]"
+                                    >
+                                      <span>🚗</span>
+                                      {lang === 'ar' ? 'في الطريق إلى المهمة' : 'On the Way to Task'}
+                                    </button>
+                                  ) : detailedTask.status === 'on_the_way_to_task' ? (
+                                    <button
+                                      onClick={() => handleUpdateTaskStatus(detailedTask.id, 'awaiting_guest')}
+                                      className="flex-1 py-3 px-4 rounded-2xl bg-sky-500 hover:bg-sky-400 text-brand-dark text-xs font-black transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-sky-500/10 min-w-[120px]"
+                                    >
+                                      <span>🕒</span>
+                                      {lang === 'ar' ? 'في انتظار وصول الضيف' : 'Awaiting Guest'}
+                                    </button>
+                                  ) : detailedTask.status === 'awaiting_guest' ? (
+                                    <>
+                                      <button
+                                        onClick={() => handleUpdateTaskStatus(detailedTask.id, 'guest_delayed')}
+                                        className="flex-1 py-3 px-3 rounded-2xl bg-red-500 hover:bg-red-400 text-brand-dark text-[11px] font-black transition-all flex items-center justify-center gap-1 shadow-lg shadow-red-500/10 min-w-[100px]"
+                                      >
+                                        <span>⚠️</span>
+                                        {lang === 'ar' ? 'تسجيل تأخر الضيف' : 'Guest Delayed'}
+                                      </button>
+                                      <button
+                                        onClick={() => handleUpdateTaskStatus(detailedTask.id, 'returning_from_task')}
+                                        className="flex-1 py-3 px-3 rounded-2xl bg-violet-500 hover:bg-violet-400 text-white text-[11px] font-black transition-all flex items-center justify-center gap-1 shadow-lg shadow-violet-500/10 min-w-[100px]"
+                                      >
+                                        <span>🔄</span>
+                                        {lang === 'ar' ? 'في طريق العودة' : 'On the Way Back'}
+                                      </button>
+                                    </>
+                                  ) : detailedTask.status === 'guest_delayed' ? (
+                                    <button
+                                      onClick={() => handleUpdateTaskStatus(detailedTask.id, 'returning_from_task')}
+                                      className="flex-1 py-3 px-4 rounded-2xl bg-violet-500 hover:bg-violet-400 text-white text-xs font-black transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-violet-500/10 min-w-[120px]"
+                                    >
+                                      <span>🔄</span>
+                                      {lang === 'ar' ? 'في طريق العودة' : 'On the Way Back'}
+                                    </button>
+                                  ) : detailedTask.status === 'returning_from_task' ? (
+                                    <button
+                                      onClick={() => handleUpdateTaskStatus(detailedTask.id, 'completed')}
+                                      className="flex-1 py-3 px-4 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-brand-dark text-xs font-black transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-500/10 min-w-[120px]"
+                                    >
+                                      <span>✅</span>
+                                      {lang === 'ar' ? 'تم إكمال المهمة بنجاح' : 'Completed Successfully'}
+                                    </button>
+                                  ) : null
                                 ) : (
-                                  <button
-                                    onClick={() => handleUpdateTaskStatus(detailedTask.id, 'completed')}
-                                    className="flex-1 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-brand-dark text-xs font-black transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-500/10"
-                                  >
-                                    <span>✅</span>
-                                    {lang === 'ar' ? 'إكمال المهمة' : 'Complete'}
-                                  </button>
+                                  detailedTask.status === 'pending' ? (
+                                    <button
+                                      onClick={() => handleUpdateTaskStatus(detailedTask.id, 'in_progress')}
+                                      className="flex-1 py-3 px-4 rounded-2xl bg-blue-500 hover:bg-blue-400 text-brand-dark text-xs font-black transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-blue-500/10 min-w-[120px]"
+                                    >
+                                      <span>⚙️</span>
+                                      {lang === 'ar' ? 'بدء التنفيذ' : 'Start'}
+                                    </button>
+                                  ) : (
+                                    <button
+                                      onClick={() => handleUpdateTaskStatus(detailedTask.id, 'completed')}
+                                      className="flex-1 py-3 px-4 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-brand-dark text-xs font-black transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-500/10 min-w-[120px]"
+                                    >
+                                      <span>✅</span>
+                                      {lang === 'ar' ? 'إكمال المهمة' : 'Complete'}
+                                    </button>
+                                  )
                                 )
                               )}
 
-                              {detailedTask.assigned_to_id === participant.id && (
+                              {Number(detailedTask.assigned_to_id) === Number(participant.id) && (
                                 <button
                                   onClick={() => setIsApologizing(true)}
-                                  className="flex-1 py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-brand-dark text-xs font-black transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-amber-500/10"
+                                  className="flex-1 py-3 px-4 rounded-2xl bg-amber-500 hover:bg-amber-400 text-brand-dark text-xs font-black transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-amber-500/10 min-w-[100px]"
                                 >
                                   <span>⚠️</span>
                                   {lang === 'ar' ? 'اعتذار عن المهمة' : 'Apologize'}
