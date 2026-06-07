@@ -4983,7 +4983,7 @@ const ParticipantPortal = () => {
                       );
                     })()}
                   </div>
-                  {isPresident && renderCommitteeTasks('transport')}
+                  {renderCommitteeTasks('transport')}
                 </div>
               )}
 
@@ -5148,7 +5148,7 @@ const ParticipantPortal = () => {
                     )}
                   </div>
 
-                  {isPresident && renderCommitteeTasks('catering')}
+                  {renderCommitteeTasks('catering')}
                 </div>
               )}
 
@@ -5197,7 +5197,7 @@ const ParticipantPortal = () => {
                       ))}
                     </div>
                   </div>
-                  {isPresident && renderCommitteeTasks('accommodation')}
+                  {renderCommitteeTasks('accommodation')}
                 </div>
               )}
 
@@ -5284,7 +5284,7 @@ const ParticipantPortal = () => {
                       </div>
                     )}
                   </div>
-                  {isPresident && renderCommitteeTasks('entertainment')}
+                  {renderCommitteeTasks('entertainment')}
                 </div>
               )}
 
@@ -5408,7 +5408,7 @@ const ParticipantPortal = () => {
                       </div>
                     )}
                   </div>
-                  {isPresident && renderCommitteeTasks('reception')}
+                  {renderCommitteeTasks('reception')}
                 </div>
               )}
 
