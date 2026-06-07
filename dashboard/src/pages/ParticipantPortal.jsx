@@ -4632,8 +4632,8 @@ const ParticipantPortal = () => {
                 <h3 className="text-3xl font-black">{lang === 'ar' ? 'إدارة اللجان والعمليات الميدانية 🛠️' : 'Staff Operations Panel 🛠️'}</h3>
                 <p className="text-brand-secondary/50 font-bold mt-2">
                   {lang === 'ar' 
-                    ? 'لوحة التحكم الموحدة المتكيفة لإدارة النقل، الإيواء، وإحصائيات الإطعام والضيافة الذكية 🌱.'
-                    : 'Unified operations hub for managing field logistics, hotel accommodations, and catering stats 🌱.'}
+                    ? 'لوحة التحكم الموحدة لإدارة لجان الاستقبال والتوجيه، النقل، الايواء، الاطعام، والترفيه 🌱.'
+                    : 'Unified operations hub for managing committees of Reception & Orientation, Transport, Accommodation, Catering, and Entertainment 🌱.'}
                 </p>
               </div>
 
@@ -4648,7 +4648,7 @@ const ParticipantPortal = () => {
                     )}
                   >
                     <span>🚗</span>
-                    {lang === 'ar' ? 'النقل واللوجستيات' : 'Logistics & Transport'}
+                    {lang === 'ar' ? 'لجنة النقل' : 'Transport Committee'}
                   </button>
                 )}
                 
@@ -4661,7 +4661,7 @@ const ParticipantPortal = () => {
                     )}
                   >
                     <span>🍽️</span>
-                    {lang === 'ar' ? 'تجنب الهدر والإطعام والضيافة' : 'Catering & Zero Waste'}
+                    {lang === 'ar' ? 'لجنة الاطعام' : 'Catering Committee'}
                   </button>
                 )}
 
@@ -4674,7 +4674,7 @@ const ParticipantPortal = () => {
                     )}
                   >
                     <span>🏨</span>
-                    {lang === 'ar' ? 'لوحة تسكين الإيواء' : 'Hotel Rooms'}
+                    {lang === 'ar' ? 'لجنة الايواء' : 'Accommodation Committee'}
                   </button>
                 )}
 
@@ -4687,7 +4687,7 @@ const ParticipantPortal = () => {
                     )}
                   >
                     <span>🏕️</span>
-                    {lang === 'ar' ? 'الأنشطة والترفيه' : 'Entertainment & Excursions'}
+                    {lang === 'ar' ? 'لجنة الترفيه' : 'Entertainment Committee'}
                   </button>
                 )}
 
@@ -4700,7 +4700,7 @@ const ParticipantPortal = () => {
                     )}
                   >
                     <span>🎟️</span>
-                    {lang === 'ar' ? 'الاستقبال والتسجيل' : 'Reception & Check-in'}
+                    {lang === 'ar' ? 'لجنة الاستقبال والتوجيه' : 'Reception & Orientation Committee'}
                   </button>
                 )}
               </div>

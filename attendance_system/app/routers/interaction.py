@@ -1569,10 +1569,11 @@ async def create_committee_task(
             from app.routers.notifications import send_web_push_notification_to_target
             committee_names = {
                 'reception': 'الاستقبال والتوجيه',
-                'catering': 'الإطعام والضيافة',
-                'accommodation': 'الإيواء والتسكين',
-                'logistics': 'النقل والخدمات',
-                'entertainment': 'الأنشطة والترفيه'
+                'catering': 'الاطعام',
+                'accommodation': 'الايواء',
+                'logistics': 'النقل',
+                'transport': 'النقل',
+                'entertainment': 'الترفيه'
             }
             c_name = committee_names.get(new_task.committee, new_task.committee)
             await send_web_push_notification_to_target(
@@ -1844,10 +1845,11 @@ async def reassign_committee_task(
         from app.routers.notifications import send_web_push_notification_to_target
         committee_names = {
             'reception': 'الاستقبال والتوجيه',
-            'catering': 'الإطعام والضيافة',
-            'accommodation': 'الإيواء والتسكين',
-            'logistics': 'النقل والخدمات',
-            'entertainment': 'الأنشطة والترفيه'
+            'catering': 'الاطعام',
+            'accommodation': 'الايواء',
+            'logistics': 'النقل',
+            'transport': 'النقل',
+            'entertainment': 'الترفيه'
         }
         c_name = committee_names.get(task.committee, task.committee)
         await send_web_push_notification_to_target(

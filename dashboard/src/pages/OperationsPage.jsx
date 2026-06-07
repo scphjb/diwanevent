@@ -177,10 +177,10 @@ const OperationsPage = () => {
   // --- Committees States ---
   const COMMITTEES = [
     { key: 'reception',      icon: '🎫', nameAr: 'لجنة الاستقبال والتوجيه',  nameEn: 'Reception & Guidance' },
-    { key: 'catering_com',  icon: '🍽️', nameAr: 'لجنة الإطعام والضيافة',  nameEn: 'Catering Committee' },
-    { key: 'accommodation', icon: '🏨', nameAr: 'لجنة الإيواء والتسكين',  nameEn: 'Accommodation' },
-    { key: 'transport',     icon: '🚗', nameAr: 'لجنة النقل والخدمات',  nameEn: 'Transport' },
-    { key: 'entertainment', icon: '🎭', nameAr: 'لجنة الأنشطة والترفيه',  nameEn: 'Entertainment' },
+    { key: 'catering_com',  icon: '🍽️', nameAr: 'لجنة الاطعام',  nameEn: 'Catering Committee' },
+    { key: 'accommodation', icon: '🏨', nameAr: 'لجنة الايواء',  nameEn: 'Accommodation Committee' },
+    { key: 'transport',     icon: '🚗', nameAr: 'لجنة النقل',  nameEn: 'Transport Committee' },
+    { key: 'entertainment', icon: '🎭', nameAr: 'لجنة الترفيه',  nameEn: 'Entertainment Committee' },
   ];
 
   const [selectedCommittee, setSelectedCommittee] = useState(null);

@@ -39,16 +39,16 @@ import templateService from '../services/templateService';
 const PRESET_ROLES = [
   { value: 'VIP', labelAr: 'ضيف شرف / VIP', labelEn: 'VIP Guest' },
   { value: 'organizer', labelAr: 'منظم عام', labelEn: 'General Organizer' },
-  { value: 'رئيس لجنة الاستقبال', labelAr: 'رئيس لجنة الاستقبال والتوجيه', labelEn: 'President of Reception Committee' },
-  { value: 'عضو لجنة الاستقبال', labelAr: 'عضو لجنة الاستقبال والتوجيه', labelEn: 'Member of Reception Committee' },
-  { value: 'رئيس لجنة الإطعام', labelAr: 'رئيس لجنة الإطعام والضيافة', labelEn: 'President of Catering Committee' },
-  { value: 'عضو لجنة الإطعام', labelAr: 'عضو لجنة الإطعام والضيافة', labelEn: 'Member of Catering Committee' },
-  { value: 'رئيس لجنة الإيواء', labelAr: 'رئيس لجنة الإيواء والتسكين', labelEn: 'President of Accommodation Committee' },
-  { value: 'عضو لجنة الإيواء', labelAr: 'عضو لجنة الإيواء والتسكين', labelEn: 'Member of Accommodation Committee' },
-  { value: 'رئيس لجنة النقل', labelAr: 'رئيس لجنة النقل والخدمات', labelEn: 'President of Transport Committee' },
-  { value: 'عضو لجنة النقل', labelAr: 'عضو لجنة النقل والخدمات', labelEn: 'Member of Transport Committee' },
-  { value: 'رئيس لجنة الأنشطة', labelAr: 'رئيس لجنة الأنشطة والترفيه', labelEn: 'President of Activities Committee' },
-  { value: 'عضو لجنة الأنشطة', labelAr: 'عضو لجنة الأنشطة والترفيه', labelEn: 'Member of Activities Committee' },
+  { value: 'رئيس لجنة الاستقبال', labelAr: 'رئيس لجنة الاستقبال والتوجيه', labelEn: 'President of Reception & Orientation Committee' },
+  { value: 'عضو لجنة الاستقبال', labelAr: 'عضو لجنة الاستقبال والتوجيه', labelEn: 'Member of Reception & Orientation Committee' },
+  { value: 'رئيس لجنة الإطعام', labelAr: 'رئيس لجنة الاطعام', labelEn: 'President of Catering Committee' },
+  { value: 'عضو لجنة الإطعام', labelAr: 'عضو لجنة الاطعام', labelEn: 'Member of Catering Committee' },
+  { value: 'رئيس لجنة الإيواء', labelAr: 'رئيس لجنة الايواء', labelEn: 'President of Accommodation Committee' },
+  { value: 'عضو لجنة الإيواء', labelAr: 'عضو لجنة الايواء', labelEn: 'Member of Accommodation Committee' },
+  { value: 'رئيس لجنة النقل', labelAr: 'رئيس لجنة النقل', labelEn: 'President of Transport Committee' },
+  { value: 'عضو لجنة النقل', labelAr: 'عضو لجنة النقل', labelEn: 'Member of Transport Committee' },
+  { value: 'رئيس لجنة الأنشطة', labelAr: 'رئيس لجنة الترفيه', labelEn: 'President of Entertainment Committee' },
+  { value: 'عضو لجنة الأنشطة', labelAr: 'عضو لجنة الترفيه', labelEn: 'Member of Entertainment Committee' },
 ];
 
 const ParticipantsPage = () => {
