@@ -426,7 +426,7 @@ const ParticipantPortal = () => {
       tab_cert: 'الشهادة',
       tab_docs: 'المستندات',
       tab_qa: 'الأسئلة',
-      tab_logistics: 'اللوجستيات 🚗',
+      tab_logistics: 'النقل والإقامة 🚗',
       tab_activities: 'الأنشطة 🏕️',
       tab_catering: 'الإطعام والضيافة 🍽️',
       profile_title: 'البوابة الرقمية للمشارك',
@@ -499,7 +499,7 @@ const ParticipantPortal = () => {
       tab_cert: 'Certificate',
       tab_docs: 'Documents',
       tab_qa: 'Q&A',
-      tab_logistics: 'Logistics 🚗',
+      tab_logistics: 'Transport & Lodging 🚗',
       tab_activities: 'Excursions 🏕️',
       tab_catering: 'Catering 🍽️',
       profile_title: 'Digital Participant Portal',
@@ -3444,8 +3444,8 @@ const ParticipantPortal = () => {
                           <span>✨</span>
                           <span>
                             {showPremiumCard 
-                              ? (lang === 'ar' ? 'إخفاء بطاقة الأعمال الفاخرة' : 'Hide Premium Business Card')
-                              : (lang === 'ar' ? 'عرض بطاقة الأعمال الفاخرة (vCard)' : 'Show Premium Business Card (vCard)')}
+                              ? (lang === 'ar' ? 'إخفاء بطاقة المعلومات المهنية' : 'Hide Professional Info Card')
+                              : (lang === 'ar' ? 'عرض بطاقة المعلومات المهنية' : 'Show Professional Info Card')}
                           </span>
                         </button>
                       </div>
@@ -4625,7 +4625,7 @@ const ParticipantPortal = () => {
             <motion.div key="logistics" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6 text-right">
               <div className="text-center mb-10">
                 <Truck className="w-16 h-16 text-amber-500 mx-auto mb-6 animate-bounce" />
-                <h3 className="text-3xl font-black">{lang === 'ar' ? 'اللوجستيات والإقامة 🚗' : 'Logistics & Lodging 🚗'}</h3>
+                <h3 className="text-3xl font-black">{lang === 'ar' ? 'النقل والإقامة 🚗' : 'Transport & Lodging 🚗'}</h3>
                 <p className="text-brand-secondary/50 font-bold mt-2">
                   {lang === 'ar' 
                     ? 'نظم وصولك ومكان إقامتك لضمان تقديم أفضل تجربة استقبال وضيافة.'
@@ -5097,8 +5097,8 @@ const ParticipantPortal = () => {
                 <h3 className="text-3xl font-black">{lang === 'ar' ? 'الإطعام والضيافة 🍽️' : 'Smart Catering 🍽️'}</h3>
                 <p className="text-brand-secondary/50 font-bold mt-2">
                   {lang === 'ar' 
-                    ? 'أعلم اللجنة المنظمة بنوع حميتك الغذائية، وأكد حضور الوجبات للمساهمة في مبادرة منع الهدر الغذائي 🌱.'
-                    : 'Share your dietary requirements and RSVP for programmed meals to help reduce food waste 🌱.'}
+                    ? 'أعلم اللجنة المنظمة بنوع حميتك الغذائية، وأكد حضور الوجبات.'
+                    : 'Share your dietary requirements and RSVP for programmed meals.'}
                 </p>
               </div>
 
@@ -5174,21 +5174,7 @@ const ParticipantPortal = () => {
                     </form>
                   </div>
 
-                  {/* Sustainability card info */}
-                  <div className="bg-emerald-500/10 border-2 border-emerald-500/40 rounded-[35px] p-6 relative overflow-hidden text-emerald-300 shadow-[0_8px_32px_rgba(16,185,129,0.05)]">
-                    <div className="absolute top-0 left-0 bg-emerald-500/30 px-3 py-1 rounded-br-2xl text-[9px] font-black uppercase tracking-wider text-emerald-200">
-                      {lang === 'ar' ? 'مبادرة خضراء 🍃' : 'GREEN INITIATIVE 🍃'}
-                    </div>
-                    <h5 className="font-black text-sm mb-2 mt-2 flex items-center gap-2 text-emerald-400">
-                      <span>🌱</span>
-                      {lang === 'ar' ? 'لماذا نسألك عن وجباتك؟' : 'Why RSVP for your meals?'}
-                    </h5>
-                    <p className="text-xs font-bold leading-relaxed text-white/90">
-                      {lang === 'ar'
-                        ? 'إن إعلامنا المسبق بحضورك أو عدم حضورك للوجبة يتيح لنا طبخ المقدار المحدد تماماً. هذا يمنع هدر مئات الأطنان من الطعام غير المستهلك ويقلل الانبعاثات الكربونية الناتجة عن النفايات الغذائية.'
-                        : 'By RSVPing, you let the culinary crew prepare the exact quantities needed. This prevents food waste and reduces carbon footprint at the event.'}
-                    </p>
-                  </div>
+
                 </div>
 
                 {/* Left: Programmed Meals RSVP List */}
