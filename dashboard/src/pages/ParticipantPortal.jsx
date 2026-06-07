@@ -4711,88 +4711,156 @@ const ParticipantPortal = () => {
                   {/* Operations & Logistics Stats Panel */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     {/* Card 1: Guest Registration Status */}
-                    <div className="bg-[#0D1527]/60 border border-blue-500/25 hover:border-blue-500/50 rounded-3xl p-5 text-right transition-all duration-300 relative overflow-hidden group shadow-lg shadow-blue-950/10">
+                    <div className={cn(
+                      "rounded-3xl p-5 text-right transition-all duration-300 relative overflow-hidden group shadow-lg",
+                      theme === 'dark' 
+                        ? "bg-[#0D1527]/60 border border-blue-500/25 hover:border-blue-500/50 shadow-blue-950/10" 
+                        : "bg-[#F8FAFC] border border-slate-200 hover:border-blue-400 shadow-slate-200/50"
+                    )}>
                       <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full blur-2xl group-hover:bg-blue-500/10 transition-all"></div>
                       <div className="flex justify-between items-start">
                         <span className="text-2xl">👥</span>
-                        <span className="text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded-full font-bold">
+                        <span className={cn(
+                          "text-[10px] px-2 py-0.5 rounded-full font-bold border",
+                          theme === 'dark'
+                            ? "bg-blue-500/10 text-blue-400 border-blue-500/20"
+                            : "bg-blue-50 text-blue-600 border-blue-200"
+                        )}>
                           {lang === 'ar' ? 'بيانات السفر' : 'Travel Registry'}
                         </span>
                       </div>
-                      <h4 className="text-xs font-black text-white/50 mt-4">{lang === 'ar' ? 'إجمالي الوفود المسجلة' : 'Total Registered Guests'}</h4>
-                      <p className="text-3xl font-black text-white mt-1">{totalLogisticsGuests}</p>
+                      <h4 className={cn("text-xs font-black mt-4", theme === 'dark' ? "text-white/50" : "text-slate-500")}>
+                        {lang === 'ar' ? 'إجمالي الوفود المسجلة' : 'Total Registered Guests'}
+                      </h4>
+                      <p className={cn("text-3xl font-black mt-1", theme === 'dark' ? "text-white" : "text-slate-800")}>
+                        {totalLogisticsGuests}
+                      </p>
                       
-                      <div className="mt-4 pt-3 border-t border-white/5 grid grid-cols-2 gap-2 text-[11px] font-bold">
+                      <div className={cn(
+                        "mt-4 pt-3 border-t grid grid-cols-2 gap-2 text-[11px] font-bold",
+                        theme === 'dark' ? "border-white/5" : "border-slate-200/60"
+                      )}>
                         <div>
-                          <span className="text-emerald-400">✔️ {lang === 'ar' ? 'سجلوا:' : 'Filled:'}</span>{' '}
-                          <span className="text-white">{registeredLogisticsGuests}</span>
+                          <span className="text-emerald-500">✔️ {lang === 'ar' ? 'سجلوا:' : 'Filled:'}</span>{' '}
+                          <span className={theme === 'dark' ? "text-white" : "text-slate-700"}>{registeredLogisticsGuests}</span>
                         </div>
                         <div>
                           <span className="text-amber-500">⏳ {lang === 'ar' ? 'معلق:' : 'Pending:'}</span>{' '}
-                          <span className="text-white">{awaitingLogisticsGuests}</span>
+                          <span className={theme === 'dark' ? "text-white" : "text-slate-700"}>{awaitingLogisticsGuests}</span>
                         </div>
                       </div>
                     </div>
 
                     {/* Card 2: Field Tasks Overview */}
-                    <div className="bg-[#0D1527]/60 border border-violet-500/25 hover:border-violet-500/50 rounded-3xl p-5 text-right transition-all duration-300 relative overflow-hidden group shadow-lg shadow-violet-950/10">
+                    <div className={cn(
+                      "rounded-3xl p-5 text-right transition-all duration-300 relative overflow-hidden group shadow-lg",
+                      theme === 'dark' 
+                        ? "bg-[#0D1527]/60 border border-violet-500/25 hover:border-violet-500/50 shadow-violet-950/10" 
+                        : "bg-[#F8FAFC] border border-slate-200 hover:border-violet-400 shadow-slate-200/50"
+                    )}>
                       <div className="absolute top-0 right-0 w-24 h-24 bg-violet-500/5 rounded-full blur-2xl group-hover:bg-violet-500/10 transition-all"></div>
                       <div className="flex justify-between items-start">
                         <span className="text-2xl">📋</span>
-                        <span className="text-[10px] bg-violet-500/10 text-violet-400 border border-violet-500/20 px-2 py-0.5 rounded-full font-bold">
+                        <span className={cn(
+                          "text-[10px] px-2 py-0.5 rounded-full font-bold border",
+                          theme === 'dark'
+                            ? "bg-violet-500/10 text-violet-400 border-violet-500/20"
+                            : "bg-violet-50 text-violet-600 border-violet-200"
+                        )}>
                           {lang === 'ar' ? 'المهام الميدانية' : 'Field Tasks'}
                         </span>
                       </div>
-                      <h4 className="text-xs font-black text-white/50 mt-4">{lang === 'ar' ? 'إجمالي المهام المسندة' : 'Total Field Tasks'}</h4>
-                      <p className="text-3xl font-black text-white mt-1">{totalTransportTasksCount}</p>
+                      <h4 className={cn("text-xs font-black mt-4", theme === 'dark' ? "text-white/50" : "text-slate-500")}>
+                        {lang === 'ar' ? 'إجمالي المهام المسندة' : 'Total Field Tasks'}
+                      </h4>
+                      <p className={cn("text-3xl font-black mt-1", theme === 'dark' ? "text-white" : "text-slate-800")}>
+                        {totalTransportTasksCount}
+                      </p>
                       
-                      <div className="mt-4 pt-3 border-t border-white/5 grid grid-cols-2 gap-2 text-[11px] font-bold">
+                      <div className={cn(
+                        "mt-4 pt-3 border-t grid grid-cols-2 gap-2 text-[11px] font-bold",
+                        theme === 'dark' ? "border-white/5" : "border-slate-200/60"
+                      )}>
                         <div>
-                          <span className="text-blue-400">⚙️ {lang === 'ar' ? 'نشطة:' : 'Active:'}</span>{' '}
-                          <span className="text-white">{activeTransportTasksCount}</span>
+                          <span className="text-blue-500">⚙️ {lang === 'ar' ? 'نشطة:' : 'Active:'}</span>{' '}
+                          <span className={theme === 'dark' ? "text-white" : "text-slate-700"}>{activeTransportTasksCount}</span>
                         </div>
                         <div>
-                          <span className="text-amber-400">⏳ {lang === 'ar' ? 'بانتظار البدء:' : 'Pending:'}</span>{' '}
-                          <span className="text-white">{pendingTransportTasksCount}</span>
+                          <span className="text-amber-500">⏳ {lang === 'ar' ? 'معلق:' : 'Pending:'}</span>{' '}
+                          <span className={theme === 'dark' ? "text-white" : "text-slate-700"}>{pendingTransportTasksCount}</span>
                         </div>
                       </div>
                     </div>
 
                     {/* Card 3: Completion Rate */}
-                    <div className="bg-[#0D1527]/60 border border-emerald-500/25 hover:border-emerald-500/50 rounded-3xl p-5 text-right transition-all duration-300 relative overflow-hidden group shadow-lg shadow-emerald-950/10">
+                    <div className={cn(
+                      "rounded-3xl p-5 text-right transition-all duration-300 relative overflow-hidden group shadow-lg",
+                      theme === 'dark' 
+                        ? "bg-[#0D1527]/60 border border-emerald-500/25 hover:border-emerald-500/50 shadow-emerald-950/10" 
+                        : "bg-[#F8FAFC] border border-slate-200 hover:border-emerald-400 shadow-slate-200/50"
+                    )}>
                       <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full blur-2xl group-hover:bg-emerald-500/10 transition-all"></div>
                       <div className="flex justify-between items-start">
                         <span className="text-2xl">✅</span>
-                        <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full font-bold">
+                        <span className={cn(
+                          "text-[10px] px-2 py-0.5 rounded-full font-bold border",
+                          theme === 'dark'
+                            ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                            : "bg-emerald-50 text-emerald-600 border-emerald-200"
+                        )}>
                           {lang === 'ar' ? 'معدل الإنجاز' : 'Completion Rate'}
                         </span>
                       </div>
-                      <h4 className="text-xs font-black text-white/50 mt-4">{lang === 'ar' ? 'المهام المنجزة بنجاح' : 'Completed Tasks'}</h4>
-                      <p className="text-3xl font-black text-emerald-400 mt-1">
+                      <h4 className={cn("text-xs font-black mt-4", theme === 'dark' ? "text-white/50" : "text-slate-500")}>
+                        {lang === 'ar' ? 'المهام المنجزة بنجاح' : 'Completed Tasks'}
+                      </h4>
+                      <p className="text-3xl font-black text-emerald-500 mt-1">
                         {completedTransportTasksCount}{' '}
-                        <span className="text-xs text-white/40 font-bold">({completionPercentage}%)</span>
+                        <span className={cn("text-xs font-bold", theme === 'dark' ? "text-white/40" : "text-slate-400")}>
+                          ({completionPercentage}%)
+                        </span>
                       </p>
                       
-                      <div className="mt-4 pt-3 border-t border-white/5 text-[11px] font-bold text-white/60">
+                      <div className={cn(
+                        "mt-4 pt-3 border-t text-[11px] font-bold",
+                        theme === 'dark' ? "border-white/5 text-white/40" : "border-slate-200/60 text-slate-500"
+                      )}>
                         <span>🎯 {lang === 'ar' ? 'نسبة إكمال مهام النقل الإجمالية' : 'Total transport tasks completion'}</span>
                       </div>
                     </div>
 
                     {/* Card 4: Driver Assignments Coverage */}
-                    <div className="bg-[#0D1527]/60 border border-red-500/25 hover:border-red-500/50 rounded-3xl p-5 text-right transition-all duration-300 relative overflow-hidden group shadow-lg shadow-red-950/10">
+                    <div className={cn(
+                      "rounded-3xl p-5 text-right transition-all duration-300 relative overflow-hidden group shadow-lg",
+                      theme === 'dark' 
+                        ? "bg-[#0D1527]/60 border border-red-500/25 hover:border-red-500/50 shadow-red-950/10" 
+                        : "bg-[#F8FAFC] border border-slate-200 hover:border-red-400 shadow-slate-200/50"
+                    )}>
                       <div className="absolute top-0 right-0 w-24 h-24 bg-red-500/5 rounded-full blur-2xl group-hover:bg-red-500/10 transition-all"></div>
                       <div className="flex justify-between items-start">
                         <span className="text-2xl">🚗</span>
-                        <span className="text-[10px] bg-red-500/10 text-red-400 border border-red-500/20 px-2 py-0.5 rounded-full font-bold">
+                        <span className={cn(
+                          "text-[10px] px-2 py-0.5 rounded-full font-bold border",
+                          theme === 'dark'
+                            ? "bg-red-500/10 text-red-400 border-red-500/20"
+                            : "bg-red-50 text-red-600 border-red-200"
+                        )}>
                           {lang === 'ar' ? 'تغطية السائقين' : 'Driver Coverage'}
                         </span>
                       </div>
-                      <h4 className="text-xs font-black text-white/50 mt-4">{lang === 'ar' ? 'مهام بدون سائق' : 'Tasks Awaiting Driver'}</h4>
-                      <p className="text-3xl font-black text-red-400 mt-1">{unassignedDriverTasksCount}</p>
+                      <h4 className={cn("text-xs font-black mt-4", theme === 'dark' ? "text-white/50" : "text-slate-500")}>
+                        {lang === 'ar' ? 'مهام بدون سائق' : 'Tasks Awaiting Driver'}
+                      </h4>
+                      <p className="text-3xl font-black text-red-500 mt-1">{unassignedDriverTasksCount}</p>
                       
-                      <div className="mt-4 pt-3 border-t border-white/5 text-[11px] font-bold text-emerald-400">
+                      <div className={cn(
+                        "mt-4 pt-3 border-t text-[11px] font-bold text-emerald-500",
+                        theme === 'dark' ? "border-white/5" : "border-slate-200/60"
+                      )}>
                         <span>🚘 {lang === 'ar' ? 'تم تعيين سائق لـ:' : 'Assigned:'}</span>{' '}
-                        <span className="text-white">{assignedDriverTasksCount} {lang === 'ar' ? 'مهمة' : 'tasks'}</span>
+                        <span className={theme === 'dark' ? "text-white" : "text-slate-700"}>
+                          {assignedDriverTasksCount} {lang === 'ar' ? 'مهمة' : 'tasks'}
+                        </span>
                       </div>
                     </div>
                   </div>
