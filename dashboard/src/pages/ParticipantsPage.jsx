@@ -308,8 +308,11 @@ const ParticipantsPage = () => {
   };
 
   const handleExecuteImport = async () => {
-    if (!mapping.full_name) {
-      showError(t('participants.import_modal.name_required', "يجب ربط حقل 'الاسم الكامل' على الأقل"));
+    if (!mapping.full_name || !mapping.organization || !mapping.email || !mapping.phone) {
+      showError(
+        t('participants.import_modal.fields_required', 'تنبيه'),
+        t('participants.import_modal.fields_required_desc', "يجب ربط حقول 'الاسم واللقب'، 'الصفة المهنية'، 'البريد الإلكتروني' و 'رقم الهاتف' للتمكن من الاستيراد.")
+      );
       return;
     }
 
@@ -318,7 +321,15 @@ const ParticipantsPage = () => {
       const result = await participantService.importExcel(eventId, selectedFile, mapping);
       setShowMappingModal(false);
       fetchParticipants();
-      showSuccess(t('participants.import_modal.success', 'تم الاستيراد بنجاح'), t('participants.import_modal.detail', `✅ تمت إضافة: ${result.added}\nمكررون: ${result.skipped}`));
+      
+      const errorMsg = result.errors && result.errors.length > 0 
+        ? `\n\n⚠️ تم تخطي بعض الأسطر لمشاكل في البيانات:\n${result.errors.slice(0, 5).join('\n')}${result.errors.length > 5 ? '\n...' : ''}`
+        : '';
+      
+      showSuccess(
+        t('participants.import_modal.success', 'تم الاستيراد بنجاح'), 
+        `✅ تمت إضافة: ${result.added}\n❌ تخطي/أخطاء: ${result.skipped}${errorMsg}`
+      );
     } catch (err) {
       showError(t('participants.import_modal.error', "فشل الاستيراد"));
     } finally {
@@ -816,12 +827,12 @@ const ParticipantsPage = () => {
 
               <div className="p-8 space-y-6 overflow-y-auto flex-1 custom-scrollbar">
                 {[
-                  { id: 'full_name',  label: 'الاسم الكامل *',         icon: Users },
-                  { id: 'organization',    label: 'الجهة / المؤسسة',         icon: LayoutDashboard },
-                  { id: 'department', label: 'القسم / التخصص',          icon: MoreVertical },
-                  { id: 'role',       label: 'الصفة / المنصب',          icon: Award },
-                  { id: 'email',      label: 'البريد الإلكتروني',        icon: Send },
-                  { id: 'phone',      label: 'رقم الهاتف',              icon: FileUp },
+                  { id: 'full_name',  label: 'الاسم واللقب *',         icon: Users },
+                  { id: 'organization',    label: 'الصفة المهنية *',         icon: LayoutDashboard },
+                  { id: 'email',      label: 'البريد الإلكتروني *',        icon: Send },
+                  { id: 'phone',      label: 'رقم الهاتف *',              icon: FileUp },
+                  { id: 'department', label: 'الاختصاص (القسم/التخصص)',          icon: MoreVertical },
+                  { id: 'role',       label: 'العنوان المهني (الصفة/الدور)',          icon: Award },
                   { id: 'seat_number', label: 'رقم المقعد',             icon: Award }
                 ].map(field => (
                   <div key={field.id} className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center p-4 bg-white/5 rounded-2xl border border-white/5">

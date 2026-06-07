@@ -214,9 +214,10 @@ async def get_public_card_by_token(
 class PublicRegistrationRequest(BaseModel):
     event_id: int
     full_name: str
-    email: Optional[str] = None
-    organization: str = "مشارك"
-    department: str = "عام"
+    email: str
+    organization: str
+    phone_number: str
+    department: Optional[str] = None
     role: Optional[str] = None
     custom_values: Optional[dict] = None
     verification_code: Optional[str] = None
@@ -499,12 +500,28 @@ async def public_register_participant(
     يدعم دمج الحسابات (Claiming) إذا كان مسجلاً مسبقاً (Imported) ولا يملك بريداً.
     """
     event_id = body.event_id
-    full_name = body.full_name
-    email = body.email
-    organization = body.organization
-    department = body.department
+    full_name = body.full_name.strip()
+    email = body.email.strip().lower()
+    organization = body.organization.strip()
+    phone_number = body.phone_number.strip()
+    department = body.department.strip() if body.department else None
     role = body.role
-    custom_values = body.custom_values
+    custom_values = body.custom_values or {}
+
+    # التحقق من صحة البريد الإلكتروني
+    if '@' not in email or '.' not in email:
+        raise HTTPException(status_code=400, detail="البريد الإلكتروني غير صالح")
+
+    # التحقق وتطهير رقم الهاتف بالصيغة الدولية
+    import re
+    cleaned_phone = re.sub(r'[\s\-\(\)]', '', phone_number)
+    if cleaned_phone.startswith('00'):
+        cleaned_phone = '+' + cleaned_phone[2:]
+    if not re.match(r'^\+[1-9]\d{6,14}$', cleaned_phone):
+        raise HTTPException(
+            status_code=400, 
+            detail="رقم الهاتف يجب أن يكون بالصيغة الدولية ويبدأ برمز البلد (مثال: +966500000000)"
+        )
 
     # تحقق من وجود الفعالية وفتح التسجيل
     from app.models.event import Event
@@ -544,16 +561,24 @@ async def public_register_participant(
     # جلب المنظم للتحقق من الرصيد
     organizer = await db.get(User, event.created_by)
     has_credits = organizer and (organizer.credits > 0 or organizer.role == 'super_admin')
-    # تحقق من التكرار بالبريد (فقط إذا أدخل بريداً)
-    if email:
-        stmt = select(Participant).filter(
-            Participant.event_id == event_id,
-            Participant.email == email
-        )
-        res = await db.execute(stmt)
-        existing_by_email = res.scalars().first()
-        if existing_by_email:
-            raise HTTPException(status_code=409, detail="البريد الإلكتروني مسجل مسبقاً")
+    
+    # تحقق من تكرار البريد الإلكتروني
+    stmt = select(Participant).filter(
+        Participant.event_id == event_id,
+        Participant.email == email
+    )
+    res = await db.execute(stmt)
+    if res.scalars().first():
+        raise HTTPException(status_code=409, detail="البريد الإلكتروني مسجل مسبقاً")
+
+    # تحقق من تكرار رقم الهاتف
+    stmt = select(Participant).filter(
+        Participant.event_id == event_id,
+        Participant.phone_number == cleaned_phone
+    )
+    res = await db.execute(stmt)
+    if res.scalars().first():
+        raise HTTPException(status_code=409, detail="رقم الهاتف مسجل مسبقاً")
 
     # محاولة المطابقة والدمج (Merge) لمشارك مستورد مسبقاً بدون بريد
     stmt = select(Participant).filter(
@@ -643,11 +668,12 @@ async def public_register_participant(
         organization=organization,
         department=department,
         role=role,
+        phone_number=cleaned_phone,
         order_num=order_num,
         qr_code=qr_code,
         payment_status='pending',
         entry_type='self_registered',
-        custom_values=custom_values or {}
+        custom_values=custom_values
     )
     
     db.add(participant)
@@ -1231,22 +1257,62 @@ async def import_participants(
     participants_to_insert = []
     skipped = 0
     added = 0
+    skipped_details = []
     
     # ── 3. تجميع السجلات وتطهيرها محلياً ────────────────────────────
     for idx, row in df.iterrows():
+        row_num = idx + 2 # 1-based + header row
+        
+        # 1. الاسم واللقب
         raw_name = str(row.get(field_mapping.get('full_name'), '')).strip()
         if not raw_name or raw_name.lower() == 'nan':
+            skipped += 1
+            skipped_details.append(f"السطر {row_num}: الاسم واللقب مطلوب")
             continue
             
-        raw_email = str(row.get(field_mapping.get('email'), '')).strip().lower() or None
-        raw_phone = str(row.get(field_mapping.get('phone'), '')).strip() or None
-        
-        # كشف التكرار الفوري محلياً دون استعلامات
-        if raw_email and raw_email in existing_emails:
+        # 2. الصفة المهنية / الجهة
+        raw_org = str(row.get(field_mapping.get('organization'), '')).strip()
+        if not raw_org or raw_org.lower() == 'nan':
             skipped += 1
+            skipped_details.append(f"السطر {row_num} ({raw_name}): الصفة المهنية مطلوبة")
             continue
-        if raw_phone and raw_phone in existing_phones:
+            
+        # 3. الايميل
+        raw_email = str(row.get(field_mapping.get('email'), '')).strip().lower()
+        if not raw_email or raw_email.lower() == 'nan':
             skipped += 1
+            skipped_details.append(f"السطر {row_num} ({raw_name}): البريد الإلكتروني مطلوب")
+            continue
+        if '@' not in raw_email or '.' not in raw_email:
+            skipped += 1
+            skipped_details.append(f"السطر {row_num} ({raw_name}): البريد الإلكتروني غير صالح")
+            continue
+            
+        # 4. رقم الهاتف بالصيغة الدولية
+        raw_phone = str(row.get(field_mapping.get('phone'), '')).strip()
+        if not raw_phone or raw_phone.lower() == 'nan':
+            skipped += 1
+            skipped_details.append(f"السطر {row_num} ({raw_name}): رقم الهاتف مطلوب")
+            continue
+            
+        # تطهير رقم الهاتف والتحقق من الصيغة الدولية
+        import re
+        cleaned_phone = re.sub(r'[\s\-\(\)]', '', raw_phone)
+        if cleaned_phone.startswith('00'):
+            cleaned_phone = '+' + cleaned_phone[2:]
+        if not re.match(r'^\+[1-9]\d{6,14}$', cleaned_phone):
+            skipped += 1
+            skipped_details.append(f"السطر {row_num} ({raw_name}): رقم الهاتف يجب أن يكون بالصيغة الدولية ويبدأ بـ +")
+            continue
+            
+        # كشف التكرار الفوري محلياً دون استعلامات
+        if raw_email in existing_emails:
+            skipped += 1
+            skipped_details.append(f"السطر {row_num} ({raw_name}): البريد الإلكتروني مكرر")
+            continue
+        if cleaned_phone in existing_phones:
+            skipped += 1
+            skipped_details.append(f"السطر {row_num} ({raw_name}): رقم الهاتف مكرر")
             continue
             
         order_num = f"DWN-{uuid.uuid4().hex[:8].upper()}"
@@ -1264,12 +1330,12 @@ async def import_participants(
         participants_to_insert.append({
             "event_id": event_id,
             "full_name": raw_name,
-            "organization": str(row.get(field_mapping.get('organization'), 'مشارك')).strip(),
+            "organization": raw_org,
             "department": str(row.get(field_mapping.get('department'), 'عام')).strip(),
             "role": str(row.get(field_mapping.get('role'), '')).strip() or None,
             "seat_number": str(row.get(field_mapping.get('seat_number'), '')).strip() or None,
             "email": raw_email,
-            "phone_number": raw_phone,
+            "phone_number": cleaned_phone,
             "payment_status": payment_status,
             "entry_type": "imported",
             "order_num": order_num,
@@ -1356,7 +1422,7 @@ async def import_participants(
                         delay_between_batches=1.0
                     )
                     
-    return {"status": "success", "added": added, "skipped": skipped}
+    return {"status": "success", "added": added, "skipped": skipped, "errors": skipped_details}
 
 
 async def _send_welcome_emails_batch(recipients: list, batch_size: int = 10, delay_between_batches: float = 1.0):

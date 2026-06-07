@@ -61,7 +61,9 @@ const AttendeeRegistrationPage = () => {
     full_name: '',
     email: '',
     phone_number: '',
-    council: '',
+    organization: '',
+    department: '',
+    professional_address: '',
     role: 'attendee',
   });
   const [customValues, setCustomValues] = useState({});
@@ -125,10 +127,12 @@ const AttendeeRegistrationPage = () => {
       const regResponse = await api.post(`participants/public/register`, {
         event_id: parseInt(eventId),
         full_name: formData.full_name,
-        email: formData.email || null,
-        council: formData.council || 'عضو خارجي',
+        email: formData.email,
+        organization: formData.organization,
+        phone_number: formData.phone_number,
+        department: formData.department || null,
         verification_code: event.verify_email_on_register ? verificationCode : null,
-        custom_values: { ...customValues, role: formData.role, phone_number: formData.phone_number }
+        custom_values: { ...customValues, role: formData.role, professional_address: formData.professional_address }
       });
 
       const result = regResponse.data;
@@ -467,29 +471,47 @@ const AttendeeRegistrationPage = () => {
                 </div>
               </div>
 
-              {/* الجهة */}
+              {/* الصفة المهنية */}
               <div className="space-y-2">
-                <label className="text-xs font-black uppercase tracking-widest text-white/30">الجهة / المؤسسة *</label>
+                <label className="text-xs font-black uppercase tracking-widest text-white/30">الصفة المهنية / المؤسسة *</label>
                 <div className="relative group">
                   <Building className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-amber-500" size={18} />
-                  <input required type="text" value={formData.council} onChange={e => setFormData({ ...formData, council: e.target.value })} placeholder="اسم الجهة أو المؤسسة..." className="w-full bg-white/5 border border-white/10 rounded-2xl pr-12 pl-6 py-4 outline-none focus:border-amber-500 transition-all font-bold text-right" />
+                  <input required type="text" value={formData.organization} onChange={e => setFormData({ ...formData, organization: e.target.value })} placeholder="الصفة المهنية أو المؤسسة..." className="w-full bg-white/5 border border-white/10 rounded-2xl pr-12 pl-6 py-4 outline-none focus:border-amber-500 transition-all font-bold text-right" />
                 </div>
               </div>
 
-              {/* البريد والهاتف */}
+              {/* البريد والهاتف (بيانات إلزامية) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-xs font-black uppercase tracking-widest text-white/30">البريد الإلكتروني {event?.verify_email_on_register ? '*' : ''}</label>
+                  <label className="text-xs font-black uppercase tracking-widest text-white/30">البريد الإلكتروني *</label>
                   <div className="relative group">
                     <Mail className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-amber-500" size={16} />
-                    <input required={event?.verify_email_on_register} type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} placeholder="email@example.com" className="w-full bg-white/5 border border-white/10 rounded-2xl pr-11 pl-4 py-4 outline-none focus:border-amber-500 transition-all font-bold text-right text-sm" />
+                    <input required type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} placeholder="email@example.com" className="w-full bg-white/5 border border-white/10 rounded-2xl pr-11 pl-4 py-4 outline-none focus:border-amber-500 transition-all font-bold text-right text-sm" />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs font-black uppercase tracking-widest text-white/30">رقم الهاتف</label>
+                  <label className="text-xs font-black uppercase tracking-widest text-white/30">رقم الهاتف (بالصيغة الدولية) *</label>
                   <div className="relative group">
                     <Phone className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-amber-500" size={16} />
-                    <input type="tel" value={formData.phone_number} onChange={e => setFormData({ ...formData, phone_number: e.target.value })} placeholder="+213..." className="w-full bg-white/5 border border-white/10 rounded-2xl pr-11 pl-4 py-4 outline-none focus:border-amber-500 transition-all font-bold text-right text-sm" />
+                    <input required type="tel" value={formData.phone_number} onChange={e => setFormData({ ...formData, phone_number: e.target.value })} placeholder="+966500000000" className="w-full bg-white/5 border border-white/10 rounded-2xl pr-11 pl-4 py-4 outline-none focus:border-amber-500 transition-all font-bold text-right text-sm" />
+                  </div>
+                </div>
+              </div>
+
+              {/* الاختصاص والعنوان المهني (بيانات إضافية اختيارية) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-black uppercase tracking-widest text-white/30">الاختصاص (اختياري)</label>
+                  <div className="relative group">
+                    <Sparkles className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-amber-500" size={16} />
+                    <input type="text" value={formData.department} onChange={e => setFormData({ ...formData, department: e.target.value })} placeholder="التخصص أو مجال العمل..." className="w-full bg-white/5 border border-white/10 rounded-2xl pr-11 pl-4 py-4 outline-none focus:border-amber-500 transition-all font-bold text-right text-sm" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-black uppercase tracking-widest text-white/30">العنوان المهني (اختياري)</label>
+                  <div className="relative group">
+                    <MapPin className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-amber-500" size={16} />
+                    <input type="text" value={formData.professional_address} onChange={e => setFormData({ ...formData, professional_address: e.target.value })} placeholder="مقر العمل أو العنوان المهني..." className="w-full bg-white/5 border border-white/10 rounded-2xl pr-11 pl-4 py-4 outline-none focus:border-amber-500 transition-all font-bold text-right text-sm" />
                   </div>
                 </div>
               </div>
@@ -502,15 +524,7 @@ const AttendeeRegistrationPage = () => {
                 </div>
               ))}
 
-              {/* تنبيه بيانات التواصل */}
-              {!formData.email && !formData.phone_number && (
-                <div className="flex items-start gap-3 px-4 py-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl">
-                  <span className="text-amber-500 mt-0.5 shrink-0">⚠️</span>
-                  <p className="text-amber-400/80 text-xs font-bold leading-relaxed">
-                    يُنصح بإدخال البريد أو الهاتف لاستلام رمز الدخول لبوابة المشاركين
-                  </p>
-                </div>
-              )}
+
 
               {showOtpVerification && (
                 <motion.div 
