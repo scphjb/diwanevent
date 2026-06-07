@@ -2813,6 +2813,48 @@ const ParticipantPortal = () => {
           {activeTab === 'home' && (
             <motion.div key="home" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-6">
                
+               {/* Event Information Banner */}
+               {(eventSettings?.event_name || eventSettings?.name || eventSettings?.event_date || eventSettings?.location) && (
+                 <div className="bg-gradient-to-r from-amber-500/10 to-amber-500/5 border border-amber-500/20 rounded-3xl p-5 text-right relative overflow-hidden shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-4">
+                   <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-3xl pointer-events-none"></div>
+                   <div className="space-y-1.5 z-10">
+                     <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20 font-black uppercase">
+                       {lang === 'ar' ? '📅 تفاصيل الفعالية' : '📅 Event Details'}
+                     </span>
+                     <h3 className="text-base font-black text-white mt-1">
+                       {eventSettings?.event_name || eventSettings?.name}
+                     </h3>
+                     <div className="flex flex-wrap items-center gap-4 text-xs text-white/60 font-bold mt-2" dir="rtl">
+                       {eventSettings?.event_date && (
+                         <span className="flex items-center gap-1.5">
+                           <span>📅</span>
+                           <span>{new Date(eventSettings.event_date).toLocaleDateString(lang === 'ar' ? 'ar-DZ' : 'en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                         </span>
+                       )}
+                       {eventSettings?.location && (
+                         <span className="flex items-center gap-1.5">
+                           <span>📍</span>
+                           <span>{eventSettings.location}</span>
+                         </span>
+                       )}
+                     </div>
+                   </div>
+                   
+                   {/* Map URL Quick Link if available */}
+                   {eventSettings?.map_url && (
+                     <a
+                       href={eventSettings.map_url}
+                       target="_blank"
+                       rel="noreferrer"
+                       className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-brand-dark text-xs font-black transition-all flex items-center justify-center gap-1.5 shadow-md shadow-amber-500/10 z-10 self-start md:self-center"
+                     >
+                       <span>📍</span>
+                       {lang === 'ar' ? 'عرض خريطة الموقع' : 'View Venue Map'}
+                     </a>
+                   )}
+                 </div>
+               )}
+               
                {/* 1. Profile Card (Luxury Golden Styling) */}
                <div className="bg-gradient-to-b from-white/[0.06] to-white/[0.01] border border-white/10 rounded-[40px] p-8 backdrop-blur-3xl text-center relative shadow-[0_24px_80px_rgba(0,0,0,0.4)]">
                   <div className="relative w-32 h-32 mx-auto mb-6 group/avatar">
