@@ -102,9 +102,10 @@ const COMMITTEE_TASK_PRESETS = {
     { titleAr: 'تسوية النزاعات والطلبات الخاصة بالفندق', titleEn: 'Resolve lodging issues and requests', descAr: 'متابعة أي طلبات أو شكاوى خاصة بالغرف وحلها فوراً', descEn: 'Resolve any guest requests/complaints with hotel' }
   ],
   logistics: [
-    { titleAr: 'تنسيق استقبال الضيوف من المطار', titleEn: 'Coordinate airport guest reception', descAr: 'متابعة توقيت هبوط الطائرة وتوجيه السائق المخصص للانتظار', descEn: 'Monitor flight landing and dispatch driver' },
-    { titleAr: 'توجيه سيارة النقل لنقل وفد محدد', titleEn: 'Dispatch shuttle for delegation', descAr: 'إرسال سائق محدد بالسيارة لتوصيل وفد من أو إلى الفعالية', descEn: 'Dispatch a driver to transport delegation' },
-    { titleAr: 'توصيل الضيوف من الفندق إلى مقر الفعالية', titleEn: 'Shuttle guests from hotel to venue', descAr: 'تأمين نقل الضيوف صباحاً لمقر الفعالية والتأكد من المواعيد', descEn: 'Coordinate morning shuttle from hotel to venue' }
+    { titleAr: 'استقبل ونقل الضيوف للفندق', titleEn: 'Welcome and transfer guests to hotel', descAr: 'استقبال الضيوف من المطار أو محطة النقل وتوصيلهم إلى الفندق', descEn: 'Welcome guests at the airport/station and transfer to hotel' },
+    { titleAr: 'مرافقة ونقل الضيوف للفعالية', titleEn: 'Accompany and transfer guests to event', descAr: 'توصيل الضيوف من مقر إقامتهم إلى مكان انعقاد الفعالية', descEn: 'Transfer guests from hotel/lodging to the event venue' },
+    { titleAr: 'مرافقة ونقل الضيوف للأنشطة', titleEn: 'Accompany and transfer guests to activities', descAr: 'نقل ومرافقة الضيوف إلى مواقع الأنشطة والرحلات المصاحبة', descEn: 'Transfer and accompany guests to activities/excursions' },
+    { titleAr: 'مرافقة ونقل شخصيات هامة', titleEn: 'Accompany and transfer VIP guests', descAr: 'تأمين النقل المخصص لكبار الشخصيات والشخصيات الهامة', descEn: 'Provide VIP guest transportation and accompaniment' }
   ],
   entertainment: [
     { titleAr: 'تنظيم ومرافقة جولة سياحية ترفيهية', titleEn: 'Accompany recreation/sightseeing tour', descAr: 'التنسيق مع حافلة النقل ومرافقة الوفود في الجولة السياحية', descEn: 'Coordinate sightseeing tour bus and accompany delegates' },
@@ -1417,7 +1418,7 @@ const ParticipantPortal = () => {
       if (attending) {
         toast.success(lang === 'ar' ? 'تم تأكيد حضورك الوجبة بنجاح! 🍽️' : 'Meal attendance confirmed successfully! 🍽️');
       } else {
-        toast(lang === 'ar' ? 'تم إلغاء حضور الوجبة (شكراً لمساهمتك في منع الهدر الغذائي 🍃)' : 'Opted out of meal (Thank you for reducing food waste 🍃)', { icon: '🌱' });
+        toast(lang === 'ar' ? 'نأسف لعدم حضورك ونشكرك على المساهمة في الحد من تضييع الطعام' : 'We are sorry for your absence and thank you for contributing to reducing food waste', { icon: '🌱' });
       }
     } catch (err) {
       console.error('Failed to toggle meal RSVP:', err);
@@ -3312,9 +3313,22 @@ const ParticipantPortal = () => {
                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20 font-black uppercase">
                        {lang === 'ar' ? '📅 تفاصيل الفعالية' : '📅 Event Details'}
                      </span>
-                     <h3 className="text-base font-black text-white mt-1">
-                       {eventSettings?.event_name || eventSettings?.name}
-                     </h3>
+                     {eventSettings?.map_url ? (
+                       <a
+                         href={eventSettings.map_url}
+                         target="_blank"
+                         rel="noreferrer"
+                         className="hover:underline"
+                       >
+                         <h3 className="text-base font-black text-white mt-1 hover:text-amber-400 transition-colors cursor-pointer">
+                           {eventSettings?.event_name || eventSettings?.name}
+                         </h3>
+                       </a>
+                     ) : (
+                       <h3 className="text-base font-black text-white mt-1">
+                         {eventSettings?.event_name || eventSettings?.name}
+                       </h3>
+                     )}
                      <div className="flex flex-wrap items-center gap-4 text-xs text-white/60 font-bold mt-2" dir="rtl">
                        {eventSettings?.event_date && (
                          <span className="flex items-center gap-1.5">
@@ -4909,10 +4923,17 @@ const ParticipantPortal = () => {
                       <div 
                         key={activity.id}
                         className={cn(
-                          "bg-[#0D1527] border rounded-[35px] p-6 relative overflow-hidden transition-all duration-300 shadow-xl",
+                          theme === 'light' 
+                            ? "bg-white border-slate-200" 
+                            : "bg-[#0D1527] border-white/10",
+                          "border rounded-[35px] p-6 relative overflow-hidden transition-all duration-300 shadow-xl",
                           activity.is_registered 
-                            ? "border-emerald-500/30 bg-gradient-to-br from-emerald-500/5 via-[#0D1527] to-[#050B18]" 
-                            : "border-white/10 hover:border-white/20"
+                            ? (theme === 'light'
+                                ? "border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 via-white to-slate-50"
+                                : "border-emerald-500/30 bg-gradient-to-br from-emerald-500/5 via-[#0D1527] to-[#050B18]")
+                            : (theme === 'light'
+                                ? "hover:border-slate-300"
+                                : "hover:border-white/20")
                         )}
                       >
                         {/* Registered Ribbon */}
@@ -5073,7 +5094,7 @@ const ParticipantPortal = () => {
               {/* Header block */}
               <div className="text-center mb-8">
                 <Utensils className="w-16 h-16 text-amber-500 mx-auto mb-6 animate-pulse" />
-                <h3 className="text-3xl font-black">{lang === 'ar' ? 'الإطعام والضيافة والوجبات المستدامة 🍽️' : 'Smart Catering & Sustainable Meals 🍽️'}</h3>
+                <h3 className="text-3xl font-black">{lang === 'ar' ? 'الإطعام والضيافة 🍽️' : 'Smart Catering 🍽️'}</h3>
                 <p className="text-brand-secondary/50 font-bold mt-2">
                   {lang === 'ar' 
                     ? 'أعلم اللجنة المنظمة بنوع حميتك الغذائية، وأكد حضور الوجبات للمساهمة في مبادرة منع الهدر الغذائي 🌱.'
@@ -5106,10 +5127,8 @@ const ParticipantPortal = () => {
                         >
                           <option value="none">{lang === 'ar' ? 'لا توجد حمية خاصة (نظام عادي) 🥩' : 'No Special Diet (Standard) 🥩'}</option>
                           <option value="vegetarian">{lang === 'ar' ? 'نباتي (Vegetarian) 🥦' : 'Vegetarian 🥦'}</option>
-                          <option value="vegan">{lang === 'ar' ? 'نباتي صرف (Vegan) 🌿' : 'Vegan 🌿'}</option>
                           <option value="gluten_free">{lang === 'ar' ? 'خالي من الجلوتين (Gluten-Free) 🌾' : 'Gluten-Free 🌾'}</option>
                           <option value="diabetic">{lang === 'ar' ? 'حمية السكري (Diabetic-Friendly) 🍬' : 'Diabetic Friendly 🍬'}</option>
-                          <option value="lactose_free">{lang === 'ar' ? 'خالي من اللاكتوز (Lactose-Free) 🥛' : 'Lactose-Free 🥛'}</option>
                           <option value="custom">{lang === 'ar' ? 'أخرى / حساسية مخصصة ⚠️' : 'Custom / Specific Allergies ⚠️'}</option>
                         </select>
                       </div>
@@ -5180,9 +5199,6 @@ const ParticipantPortal = () => {
                         <span>🥐</span>
                         {lang === 'ar' ? 'تأكيد حضور الوجبات المبرمجة' : 'Programmed Meals RSVP'}
                       </div>
-                      <span className="text-[10px] bg-amber-500/10 text-amber-500 px-3 py-1 rounded-full border border-amber-500/20 font-black">
-                        {lang === 'ar' ? 'منع الهدر الغذائي 🍃' : 'Zero Waste 🍃'}
-                      </span>
                     </h4>
 
                     {eventMeals.length === 0 ? (
@@ -5248,7 +5264,7 @@ const ParticipantPortal = () => {
                                     )}
                                   >
                                     <span>🌱</span>
-                                    {lang === 'ar' ? 'اعتذار (منع الهدر)' : 'No, skip waste'}
+                                    {lang === 'ar' ? 'لن أستطيع الحضور' : 'I will not be able to attend'}
                                   </button>
                                 </div>
                               </div>
@@ -5856,15 +5872,6 @@ const ParticipantPortal = () => {
                               {lang === 'ar' ? 'نباتي (Vegetarian)' : 'Vegetarian'}
                             </td>
                             <td className="py-3 text-center">8 وجبات</td>
-                            <td className="py-3 text-center text-white/30">---</td>
-                            <td className="py-3 text-left text-amber-500">👨‍🍳 {lang === 'ar' ? 'تحت الطهي المخصص' : 'In prep'}</td>
-                          </tr>
-                          <tr>
-                            <td className="py-3 flex items-center gap-2">
-                              <span>🌿</span>
-                              {lang === 'ar' ? 'نباتي صرف (Vegan)' : 'Vegan'}
-                            </td>
-                            <td className="py-3 text-center">4 وجبات</td>
                             <td className="py-3 text-center text-white/30">---</td>
                             <td className="py-3 text-left text-amber-500">👨‍🍳 {lang === 'ar' ? 'تحت الطهي المخصص' : 'In prep'}</td>
                           </tr>
@@ -6554,7 +6561,7 @@ const ParticipantPortal = () => {
                       initial={{ scale: 0.9, y: 20 }}
                       animate={{ scale: 1, y: 0 }}
                       exit={{ scale: 0.9, y: 20 }}
-                      className="w-full max-w-lg bg-gradient-to-b from-[#0D1527] to-[#050B18] border border-white/10 rounded-[40px] p-6 relative shadow-[0_24px_80px_rgba(0,0,0,0.6)] text-right"
+                      className="w-full max-w-lg max-h-[85vh] flex flex-col bg-gradient-to-b from-[#0D1527] to-[#050B18] border border-white/10 rounded-[40px] p-6 relative shadow-[0_24px_80px_rgba(0,0,0,0.6)] text-right"
                     >
                       <div className="flex justify-between items-center pb-4 border-b border-white/5 mb-4">
                         <div className="flex items-center gap-2">
@@ -6569,7 +6576,7 @@ const ParticipantPortal = () => {
                         </button>
                       </div>
 
-                      <form onSubmit={handleCreateTask} className="space-y-4" dir="rtl">
+                      <form onSubmit={handleCreateTask} className="space-y-4 flex-1 overflow-y-auto pr-1" dir="rtl">
                         <div className="space-y-1">
                           <label className="text-xs font-black text-white/50 block">{lang === 'ar' ? 'اختر مهمة مقترحة جاهزة للجنة' : 'Select Suggested Task Preset'}</label>
                           <select
@@ -7628,7 +7635,7 @@ const ParticipantPortal = () => {
                   <div className="text-center py-12">
                     <span className="text-4xl block mb-2">📋</span>
                     <p className="text-white/40 text-xs font-bold">{lang === 'ar' ? 'مفكرتك فارغة حالياً.' : 'Your notebook is currently empty.'}</p>
-                    <p className="text-amber-500/40 text-[10px] mt-1">{lang === 'ar' ? 'اكتب ملاحظاتك في تفاصيل الجلسات داخل الجدول لتظهر هنا.' : 'Write notes in session details in the Agenda tab to see them here.'}</p>
+                    <p className="text-amber-500 text-xs mt-1.5 font-bold">{lang === 'ar' ? 'اكتب ملاحظاتك في تفاصيل الجلسات داخل الجدول لتظهر هنا.' : 'Write notes in session details in the Agenda tab to see them here.'}</p>
                   </div>
                 ) : (
                   agenda.filter(item => sessionNotes[item.id]).map(item => (

@@ -37,8 +37,6 @@ import { showSuccess, showError, showConfirm, showToast } from '../utils/swal';
 import templateService from '../services/templateService';
 
 const PRESET_ROLES = [
-  { value: 'attendee', labelAr: 'مشارك', labelEn: 'Attendee' },
-  { value: 'مشارك', labelAr: 'مشارك', labelEn: 'Attendee' },
   { value: 'VIP', labelAr: 'ضيف شرف / VIP', labelEn: 'VIP Guest' },
   { value: 'organizer', labelAr: 'منظم عام', labelEn: 'General Organizer' },
   { value: 'رئيس لجنة الاستقبال', labelAr: 'رئيس لجنة الاستقبال والتوجيه', labelEn: 'President of Reception & Orientation Committee' },
@@ -52,6 +50,11 @@ const PRESET_ROLES = [
   { value: 'رئيس لجنة الأنشطة', labelAr: 'رئيس لجنة الترفيه', labelEn: 'President of Entertainment Committee' },
   { value: 'عضو لجنة الأنشطة', labelAr: 'عضو لجنة الترفيه', labelEn: 'Member of Entertainment Committee' },
 ];
+
+const getNormalizedRole = (role) => {
+  if (!role || role === 'attendee' || role === 'مشارك') return 'attendee';
+  return role;
+};
 
 const ParticipantsPage = () => {
   const fileInputRef = useRef(null);
@@ -384,7 +387,7 @@ const ParticipantsPage = () => {
       });
       // Check if it's custom
       const roleVal = details.role || '';
-      const foundPreset = roleVal === '' || PRESET_ROLES.some(r => r.value === roleVal);
+      const foundPreset = roleVal === '' || roleVal === 'attendee' || roleVal === 'مشارك' || PRESET_ROLES.some(r => r.value === roleVal);
       setIsCustomRole(!foundPreset);
     } catch (err) {
       showError('فشل جلب بيانات المشارك للتعديل');
@@ -643,7 +646,7 @@ const ParticipantsPage = () => {
                       </td>
                       <td className="px-8 py-6">
                         <select
-                          value={p.role || ''}
+                          value={getNormalizedRole(p.role)}
                           onChange={async (e) => {
                             const newRole = e.target.value;
                             try {
@@ -656,7 +659,7 @@ const ParticipantsPage = () => {
                           }}
                           className="bg-white/5 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-brand-secondary outline-none focus:border-brand-primary transition-all cursor-pointer font-bold"
                         >
-                          <option value="" className="bg-[#050B18]">{i18n.language.startsWith('ar') ? 'مشارك عادي' : 'Participant'}</option>
+                          <option value="attendee" className="bg-[#050B18]">{i18n.language.startsWith('ar') ? 'مشارك' : 'Attendee'}</option>
                           <option value="press" className="bg-[#050B18]">{i18n.language.startsWith('ar') ? 'صحافة وإعلام' : 'Press'}</option>
                           <option value="exhibitor" className="bg-[#050B18]">{i18n.language.startsWith('ar') ? 'عارض / جناح' : 'Exhibitor'}</option>
                           {PRESET_ROLES.map(r => (
@@ -943,7 +946,7 @@ const ParticipantsPage = () => {
                       <label className="text-sm font-bold text-brand-secondary">{t('participants.role_label', 'الصفة / الدور')}</label>
                       <select
                         className="w-full bg-white/5 border border-white/10 rounded-xl h-12 px-4 outline-none text-brand-secondary font-medium focus:border-brand-primary transition-all"
-                        value={isCustomRole ? 'custom' : editForm.role}
+                        value={isCustomRole ? 'custom' : getNormalizedRole(editForm.role)}
                         onChange={(e) => {
                           const val = e.target.value;
                           if (val === 'custom') {
@@ -955,7 +958,7 @@ const ParticipantsPage = () => {
                           }
                         }}
                       >
-                        <option value="" className="bg-[#050B18]">{i18n.language.startsWith('ar') ? '-- بدون دور --' : '-- No Role --'}</option>
+                        <option value="attendee" className="bg-[#050B18]">{i18n.language.startsWith('ar') ? 'مشارك' : 'Attendee'}</option>
                         {PRESET_ROLES.map(r => (
                           <option key={r.value} value={r.value} className="bg-[#050B18]">
                             {i18n.language.startsWith('ar') ? r.labelAr : r.labelEn}

@@ -217,8 +217,8 @@ body {
   border-color: rgba(15, 23, 42, 0.08) !important;
   box-shadow: 0 20px 50px rgba(15, 23, 42, 0.06) !important;
 }
-.light-theme button.text-white:not(.bg-amber-500, .bg-amber-600, .bg-brand-primary, .bg-emerald-500, .bg-red-500, .bg-gradient-to-r, .bg-gradient-to-br),
-.light-theme button:not(.bg-amber-500, .bg-amber-600, .bg-brand-primary, .bg-emerald-500, .bg-red-500, .bg-gradient-to-r, .bg-gradient-to-br) .text-white {
+.light-theme button.text-white:not(.bg-amber-500, .bg-amber-600, .bg-brand-primary, .bg-emerald-500, .bg-red-500, .bg-gradient-to-r, .bg-gradient-to-br, .bg-slate-900),
+.light-theme button:not(.bg-amber-500, .bg-amber-600, .bg-brand-primary, .bg-emerald-500, .bg-red-500, .bg-gradient-to-r, .bg-gradient-to-br, .bg-slate-900) .text-white {
   color: #0F172A !important;
 }
 .light-theme .bg-\[\#050B18\]\/80 {
@@ -263,4 +263,13 @@ body {
 }
 .light-theme .placeholder\:text-white\/10::placeholder {
   color: #94A3B8 !important;
+}
+.light-theme .bg-\[\#0D1527\] {
+  background-color: #FFFFFF !important;
+}
+.light-theme .bg-\[\#0D1527\]\/60 {
+  background-color: rgba(255, 255, 255, 0.8) !important;
+}
+.light-theme .bg-\[\#0D1527\]\/40 {
+  background-color: rgba(255, 255, 255, 0.4) !important;
 }

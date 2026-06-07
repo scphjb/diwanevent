@@ -386,7 +386,7 @@ const CheckInPage = () => {
               <label className="text-xs font-bold text-brand-secondary/50 uppercase tracking-widest mb-3 block">نوع الحضور</label>
               <div className="grid grid-cols-2 gap-2">
                 {[
-                  { value: 'attendee', label: '👤 مشارك عادي', color: 'emerald' },
+                  { value: 'attendee', label: '👤 مشارك', color: 'emerald' },
                   { value: 'vip', label: '⭐ ضيف VIP', color: 'amber' },
                   { value: 'press', label: '📰 صحافة وإعلام', color: 'blue' },
                   { value: 'speaker', label: '🎤 متحدث', color: 'purple' },

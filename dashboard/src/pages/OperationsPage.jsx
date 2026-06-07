@@ -51,9 +51,10 @@ const COMMITTEE_TASK_PRESETS = {
     { titleAr: 'تسوية النزاعات والطلبات الخاصة بالفندق', titleEn: 'Resolve lodging issues and requests', descAr: 'متابعة أي طلبات أو شكاوى خاصة بالغرف وحلها فوراً', descEn: 'Resolve any guest requests/complaints with hotel' }
   ],
   logistics: [
-    { titleAr: 'تنسيق استقبال الضيوف من المطار', titleEn: 'Coordinate airport guest reception', descAr: 'متابعة توقيت هبوط الطائرة وتوجيه السائق المخصص للانتظار', descEn: 'Monitor flight landing and dispatch driver' },
-    { titleAr: 'توجيه سيارة النقل لنقل وفد محدد', titleEn: 'Dispatch shuttle for delegation', descAr: 'إرسال سائق محدد بالسيارة لتوصيل وفد من أو إلى الفعالية', descEn: 'Dispatch a driver to transport delegation' },
-    { titleAr: 'توصيل الضيوف من الفندق إلى مقر الفعالية', titleEn: 'Shuttle guests from hotel to venue', descAr: 'تأمين نقل الضيوف صباحاً لمقر الفعالية والتأكد من المواعيد', descEn: 'Coordinate morning shuttle from hotel to venue' }
+    { titleAr: 'استقبل ونقل الضيوف للفندق', titleEn: 'Welcome and transfer guests to hotel', descAr: 'استقبل ونقل الضيوف للفندق', descEn: 'Welcome and transfer guests to hotel' },
+    { titleAr: 'مرافقة ونقل الضيوف للفعالية', titleEn: 'Accompany and transfer guests to event', descAr: 'مرافقة ونقل الضيوف للفعالية', descEn: 'Accompany and transfer guests to event' },
+    { titleAr: 'مرافقة ونقل الضيوف للأنشطة', titleEn: 'Accompany and transfer guests to activities', descAr: 'مرافقة ونقل الضيوف للأنشطة', descEn: 'Accompany and transfer guests to activities' },
+    { titleAr: 'مرافقة ونقل شخصيات هامة', titleEn: 'Accompany and transfer VIP guests', descAr: 'مرافقة ونقل شخصيات هامة', descEn: 'Accompany and transfer VIP guests' }
   ],
   entertainment: [
     { titleAr: 'تنظيم ومرافقة جولة سياحية ترفيهية', titleEn: 'Accompany recreation/sightseeing tour', descAr: 'التنسيق مع حافلة النقل ومرافقة الوفود في الجولة السياحية', descEn: 'Coordinate sightseeing tour bus and accompany delegates' },
@@ -61,6 +62,7 @@ const COMMITTEE_TASK_PRESETS = {
     { titleAr: 'تنظيم الفعالية الترفيهية المسائية', titleEn: 'Organize evening entertainment event', descAr: 'الإشراف على التجمع المسائي وتأمين متطلبات الضيافة فيه', descEn: 'Supervise evening gathering and catering requirements' }
   ]
 };
+COMMITTEE_TASK_PRESETS.transport = COMMITTEE_TASK_PRESETS.logistics;
 
 const OperationsPage = () => {
   const { selectedEventId: eventId } = useEvent();
@@ -1491,7 +1493,7 @@ const OperationsPage = () => {
               ) : (
                 <div className="space-y-6">
                   {/* Committee Detail Header */}
-                  <div className="bg-[#0D1527]/60 border border-white/10 rounded-[35px] p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+                  <div className="bg-transparent border-0 p-0 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
                     <div className="flex items-center gap-4">
                       <span className="text-5xl">{selectedCommittee.icon}</span>
                       <div>
