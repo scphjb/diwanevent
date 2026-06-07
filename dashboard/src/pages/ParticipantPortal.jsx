@@ -2678,6 +2678,22 @@ const ParticipantPortal = () => {
     localStorage.getItem('diwan_force_organizer') === 'true';
   const isPresident = roleLower.includes('رئيس') || roleLower.includes('president') || isGeneral;
 
+  const totalLogisticsGuests = staffLogisticsList.length;
+  const registeredLogisticsGuests = staffLogisticsList.filter(l => l.transport_type && l.transport_type !== 'none').length;
+  const awaitingLogisticsGuests = totalLogisticsGuests - registeredLogisticsGuests;
+
+  const transportTasks = tasksList.filter(t => t.committee === 'transport');
+  const totalTransportTasksCount = transportTasks.length;
+  const completedTransportTasksCount = transportTasks.filter(t => t.status === 'completed').length;
+  const activeTransportTasksCount = transportTasks.filter(t => ['in_progress', 'confirmed', 'on_the_way_to_task', 'awaiting_guest', 'returning_from_task', 'guest_delayed'].includes(t.status)).length;
+  const pendingTransportTasksCount = transportTasks.filter(t => t.status === 'pending').length;
+  const unassignedDriverTasksCount = transportTasks.filter(t => !t.driver_name).length;
+  const assignedDriverTasksCount = totalTransportTasksCount - unassignedDriverTasksCount;
+
+  const completionPercentage = totalTransportTasksCount > 0 
+    ? Math.round((completedTransportTasksCount / totalTransportTasksCount) * 100) 
+    : 0;
+
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(participant?.qr_code || '')}`;
 
   return (
@@ -4692,22 +4708,92 @@ const ParticipantPortal = () => {
               {/* Sub-Tab 1: Logistics & Transport */}
               {staffActiveSubTab === 'logistics' && hasLogisticsStaffAccess && (
                 <div className="space-y-6">
-                  {/* Stats Row */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="bg-gradient-to-br from-amber-500/10 to-amber-500/5 border border-amber-500/20 rounded-[30px] p-6 text-right">
-                      <span className="text-3xl block mb-2">🚗</span>
-                      <h4 className="text-sm font-black text-white/50">{lang === 'ar' ? 'إجمالي الوفود المسجلة للنقل' : 'Total Registered Guests'}</h4>
-                      <p className="text-3xl font-black text-white mt-1">{staffLogisticsList.length}</p>
+                  {/* Operations & Logistics Stats Panel */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {/* Card 1: Guest Registration Status */}
+                    <div className="bg-[#0D1527]/60 border border-blue-500/25 hover:border-blue-500/50 rounded-3xl p-5 text-right transition-all duration-300 relative overflow-hidden group shadow-lg shadow-blue-950/10">
+                      <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full blur-2xl group-hover:bg-blue-500/10 transition-all"></div>
+                      <div className="flex justify-between items-start">
+                        <span className="text-2xl">👥</span>
+                        <span className="text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded-full font-bold">
+                          {lang === 'ar' ? 'بيانات السفر' : 'Travel Registry'}
+                        </span>
+                      </div>
+                      <h4 className="text-xs font-black text-white/50 mt-4">{lang === 'ar' ? 'إجمالي الوفود المسجلة' : 'Total Registered Guests'}</h4>
+                      <p className="text-3xl font-black text-white mt-1">{totalLogisticsGuests}</p>
+                      
+                      <div className="mt-4 pt-3 border-t border-white/5 grid grid-cols-2 gap-2 text-[11px] font-bold">
+                        <div>
+                          <span className="text-emerald-400">✔️ {lang === 'ar' ? 'سجلوا:' : 'Filled:'}</span>{' '}
+                          <span className="text-white">{registeredLogisticsGuests}</span>
+                        </div>
+                        <div>
+                          <span className="text-amber-500">⏳ {lang === 'ar' ? 'معلق:' : 'Pending:'}</span>{' '}
+                          <span className="text-white">{awaitingLogisticsGuests}</span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="bg-gradient-to-br from-red-500/10 to-red-500/5 border border-red-500/20 rounded-[30px] p-6 text-right">
-                      <span className="text-3xl block mb-2">⏳</span>
-                      <h4 className="text-sm font-black text-white/50">{lang === 'ar' ? 'بانتظار تعيين سائق' : 'Awaiting Drivers'}</h4>
-                      <p className="text-3xl font-black text-red-400 mt-1">{staffLogisticsList.filter(l => !l.driver_name).length}</p>
+
+                    {/* Card 2: Field Tasks Overview */}
+                    <div className="bg-[#0D1527]/60 border border-violet-500/25 hover:border-violet-500/50 rounded-3xl p-5 text-right transition-all duration-300 relative overflow-hidden group shadow-lg shadow-violet-950/10">
+                      <div className="absolute top-0 right-0 w-24 h-24 bg-violet-500/5 rounded-full blur-2xl group-hover:bg-violet-500/10 transition-all"></div>
+                      <div className="flex justify-between items-start">
+                        <span className="text-2xl">📋</span>
+                        <span className="text-[10px] bg-violet-500/10 text-violet-400 border border-violet-500/20 px-2 py-0.5 rounded-full font-bold">
+                          {lang === 'ar' ? 'المهام الميدانية' : 'Field Tasks'}
+                        </span>
+                      </div>
+                      <h4 className="text-xs font-black text-white/50 mt-4">{lang === 'ar' ? 'إجمالي المهام المسندة' : 'Total Field Tasks'}</h4>
+                      <p className="text-3xl font-black text-white mt-1">{totalTransportTasksCount}</p>
+                      
+                      <div className="mt-4 pt-3 border-t border-white/5 grid grid-cols-2 gap-2 text-[11px] font-bold">
+                        <div>
+                          <span className="text-blue-400">⚙️ {lang === 'ar' ? 'نشطة:' : 'Active:'}</span>{' '}
+                          <span className="text-white">{activeTransportTasksCount}</span>
+                        </div>
+                        <div>
+                          <span className="text-amber-400">⏳ {lang === 'ar' ? 'بانتظار البدء:' : 'Pending:'}</span>{' '}
+                          <span className="text-white">{pendingTransportTasksCount}</span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 border border-emerald-500/20 rounded-[30px] p-6 text-right">
-                      <span className="text-3xl block mb-2">🟢</span>
-                      <h4 className="text-sm font-black text-white/50">{lang === 'ar' ? 'تم التوصيل / جاري النقل' : 'Dispatched / Completed'}</h4>
-                      <p className="text-3xl font-black text-emerald-400 mt-1">{staffLogisticsList.filter(l => l.driver_name).length}</p>
+
+                    {/* Card 3: Completion Rate */}
+                    <div className="bg-[#0D1527]/60 border border-emerald-500/25 hover:border-emerald-500/50 rounded-3xl p-5 text-right transition-all duration-300 relative overflow-hidden group shadow-lg shadow-emerald-950/10">
+                      <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full blur-2xl group-hover:bg-emerald-500/10 transition-all"></div>
+                      <div className="flex justify-between items-start">
+                        <span className="text-2xl">✅</span>
+                        <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full font-bold">
+                          {lang === 'ar' ? 'معدل الإنجاز' : 'Completion Rate'}
+                        </span>
+                      </div>
+                      <h4 className="text-xs font-black text-white/50 mt-4">{lang === 'ar' ? 'المهام المنجزة بنجاح' : 'Completed Tasks'}</h4>
+                      <p className="text-3xl font-black text-emerald-400 mt-1">
+                        {completedTransportTasksCount}{' '}
+                        <span className="text-xs text-white/40 font-bold">({completionPercentage}%)</span>
+                      </p>
+                      
+                      <div className="mt-4 pt-3 border-t border-white/5 text-[11px] font-bold text-white/60">
+                        <span>🎯 {lang === 'ar' ? 'نسبة إكمال مهام النقل الإجمالية' : 'Total transport tasks completion'}</span>
+                      </div>
+                    </div>
+
+                    {/* Card 4: Driver Assignments Coverage */}
+                    <div className="bg-[#0D1527]/60 border border-red-500/25 hover:border-red-500/50 rounded-3xl p-5 text-right transition-all duration-300 relative overflow-hidden group shadow-lg shadow-red-950/10">
+                      <div className="absolute top-0 right-0 w-24 h-24 bg-red-500/5 rounded-full blur-2xl group-hover:bg-red-500/10 transition-all"></div>
+                      <div className="flex justify-between items-start">
+                        <span className="text-2xl">🚗</span>
+                        <span className="text-[10px] bg-red-500/10 text-red-400 border border-red-500/20 px-2 py-0.5 rounded-full font-bold">
+                          {lang === 'ar' ? 'تغطية السائقين' : 'Driver Coverage'}
+                        </span>
+                      </div>
+                      <h4 className="text-xs font-black text-white/50 mt-4">{lang === 'ar' ? 'مهام بدون سائق' : 'Tasks Awaiting Driver'}</h4>
+                      <p className="text-3xl font-black text-red-400 mt-1">{unassignedDriverTasksCount}</p>
+                      
+                      <div className="mt-4 pt-3 border-t border-white/5 text-[11px] font-bold text-emerald-400">
+                        <span>🚘 {lang === 'ar' ? 'تم تعيين سائق لـ:' : 'Assigned:'}</span>{' '}
+                        <span className="text-white">{assignedDriverTasksCount} {lang === 'ar' ? 'مهمة' : 'tasks'}</span>
+                      </div>
                     </div>
                   </div>
 
