@@ -3547,10 +3547,27 @@ const ParticipantPortal = () => {
                           <span className="text-white/40 text-xs block mb-1">{lang === 'ar' ? 'اسم السائق المخصص' : 'Driver Name'}</span>
                           <span className="text-white text-base font-black">👤 {logistics.driver_name}</span>
                         </div>
-                        <div className="bg-white/5 p-4 rounded-2xl border border-white/5 md:col-span-1">
-                          <span className="text-white/40 text-xs block mb-1">{lang === 'ar' ? 'رقم هاتف السائق' : 'Driver Phone'}</span>
-                          <a href={`tel:${logistics.driver_phone}`} className="text-amber-500 text-base font-black block">📞 {logistics.driver_phone}</a>
-                        </div>
+                         <div className="bg-white/5 p-4 rounded-2xl border border-white/5 md:col-span-1 space-y-2">
+                           <span className="text-white/40 text-xs block mb-1">{lang === 'ar' ? 'رقم هاتف السائق' : 'Driver Phone'}</span>
+                           <span className="text-white text-base font-black block">📞 {logistics.driver_phone}</span>
+                           <div className="flex gap-2 mt-1">
+                             <a
+                               href={`tel:${logistics.driver_phone}`}
+                               className="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-white text-[10px] font-black transition-all flex items-center gap-1"
+                             >
+                               {lang === 'ar' ? 'اتصال مباشر' : 'Call'}
+                             </a>
+                             <a
+                               href={`https://wa.me/${logistics.driver_phone.replace(/\+/g, '').replace(/[^0-9]/g, '')}`}
+                               target="_blank"
+                               rel="noreferrer"
+                               className="px-2.5 py-1 rounded-lg bg-[#075E54]/10 border border-[#075E54]/20 hover:bg-[#075E54]/20 text-[#25D366] text-[10px] font-black transition-all flex items-center gap-1"
+                             >
+                               <span>💬</span>
+                               {lang === 'ar' ? 'واتساب' : 'WhatsApp'}
+                             </a>
+                           </div>
+                         </div>
                         <div className="bg-white/5 p-4 rounded-2xl border border-white/5 md:col-span-1">
                           <span className="text-white/40 text-xs block mb-1">{lang === 'ar' ? 'تفاصيل المركبة' : 'Vehicle Details'}</span>
                           <span className="text-white text-base font-black">🚗 {logistics.vehicle_details}</span>

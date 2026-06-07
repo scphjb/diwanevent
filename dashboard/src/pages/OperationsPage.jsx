@@ -135,6 +135,7 @@ const OperationsPage = () => {
     status: 'pending'
   });
   const [isSavingDispatch, setIsSavingDispatch] = useState(false);
+  const [driversList, setDriversList] = useState([]);
 
   // --- Catering States ---
   const [eventMeals, setEventMeals] = useState([]);
@@ -244,8 +245,12 @@ const OperationsPage = () => {
     setLoading(true);
     try {
       if (activeTab === 'logistics') {
-        const data = await interactionService.listEventLogistics(eventId);
-        setLogisticsList(data || []);
+        const [logisticsData, driversData] = await Promise.all([
+          interactionService.listEventLogistics(eventId).catch(() => []),
+          interactionService.listDrivers(eventId).catch(() => [])
+        ]);
+        setLogisticsList(logisticsData || []);
+        setDriversList(driversData || []);
       } else if (activeTab === 'catering') {
         const [meals, profiles] = await Promise.all([
           interactionService.listEventMeals(eventId),
@@ -259,16 +264,18 @@ const OperationsPage = () => {
       } else if (activeTab === 'committees') {
         setLoadingExtraCommitteeData(true);
         try {
-          const [logistics, tasks, parts, activities] = await Promise.all([
+          const [logistics, tasks, parts, activities, driversData] = await Promise.all([
             interactionService.listEventLogistics(eventId).catch(() => []),
             interactionService.listTasks(eventId).catch(() => []),
             participantService.getParticipants(eventId, { limit: 1000 }).catch(() => ({ items: [] })),
-            interactionService.listActivities(eventId).catch(() => [])
+            interactionService.listActivities(eventId).catch(() => []),
+            interactionService.listDrivers(eventId).catch(() => [])
           ]);
           setLogisticsList(logistics || []);
           setTasksList(tasks || []);
           setReceptionList(parts?.items || []);
           setActivitiesList(activities || []);
+          setDriversList(driversData || []);
         } catch (err) {
           console.error("Failed to load committees tab data:", err);
         } finally {
@@ -278,9 +285,9 @@ const OperationsPage = () => {
     } catch (err) {
       console.error('Failed to fetch operations data:', err);
       showError(
-        lang === 'ar' 
-          ? 'عذراً، فشل الاتصال بالسيرفر لجلب البيانات الحقيقية. تم تشغيل الوضع الاحتياطي والبيانات المعروضة حالياً تجريبية فقط.' 
-          : 'Server connection failed. Switched to fallback mode (displaying mock data).'
+          lang === 'ar'
+              ? 'عذراً، فشل الاتصال بالسيرفر لجلب البيانات الحقيقية. تم تشغيل الوضع الاحتياطي والبيانات المعروضة حالياً تجريبية فقط.'
+              : 'Server connection failed. Switched to fallback mode (displaying mock data).'
       );
       injectMockData();
     } finally {
@@ -290,6 +297,10 @@ const OperationsPage = () => {
 
   const injectMockData = () => {
     if (activeTab === 'logistics') {
+      setDriversList([
+        { id: 1, name: 'رشيد بوعلام', phone: '+213661122334', vehicle_details: lang === 'ar' ? 'مرسيدس الفئة S - سوداء' : 'Mercedes S-Class - Black' },
+        { id: 2, name: 'مراد حمدي', phone: '+213552334455', vehicle_details: lang === 'ar' ? 'تويوتا كامري - رمادي' : 'Toyota Camry - Grey' }
+      ]);
       setLogisticsList([
         {
           id: 1,
@@ -654,6 +665,50 @@ const OperationsPage = () => {
     return null;
   };
 
+  const getDriverConflictWarning = () => {
+    if (!selectedParticipant) return null;
+    const currentPhone = (dispatchForm.driver_phone || '').trim();
+    if (!currentPhone) return null;
+    
+    const currentGuestId = selectedParticipant.participant_id;
+    const currentArrivalTime = selectedParticipant.arrival_time ? new Date(selectedParticipant.arrival_time) : null;
+    if (!currentArrivalTime) return null;
+    
+    const conflict = logisticsList.find(item => {
+      if (item.participant_id === currentGuestId) return false;
+      if (!item.driver_phone || item.driver_phone.trim() !== currentPhone) return false;
+      if (!item.arrival_time) return false;
+      
+      const otherTime = new Date(item.arrival_time);
+      const diffHours = Math.abs(currentArrivalTime - otherTime) / (1000 * 60 * 60);
+      return diffHours < 2;
+    });
+    
+    if (conflict) {
+      const currentLoc = (selectedParticipant.arrival_location || '').trim().toLowerCase();
+      const conflictLoc = (conflict.arrival_location || '').trim().toLowerCase();
+      const currentHotel = (selectedParticipant.hotel_name || '').trim().toLowerCase();
+      const conflictHotel = (conflict.hotel_name || '').trim().toLowerCase();
+      
+      const isSameLoc = currentLoc && conflictLoc && currentLoc === conflictLoc;
+      const isSameHotel = currentHotel && conflictHotel && currentHotel === conflictHotel;
+      
+      if (isSameLoc && isSameHotel) {
+        return lang === 'ar'
+          ? `💡 [اقتراح تشارك الرحلة]: هذا السائق مخصص أيضاً للضيف (${conflict.participant_name}) بوقت وصول متقارب، وحيث أنهما يشتركان في نفس موقع الاستقبال (${conflict.arrival_location}) وفندق الإقامة (${conflict.hotel_name})، يمكنك التنسيق لمشاركتهما نفس السيارة.`
+          : `💡 [Carpooling Suggestion]: This driver is also assigned to guest (${conflict.participant_name}) with a close arrival time. Since they share the same pickup location (${conflict.arrival_location}) and hotel (${conflict.hotel_name}), they can share this ride.`;
+      } else {
+        const otherHostName = conflict.host_name || (lang === 'ar' ? 'غير محدد' : 'Not assigned');
+        const otherHostPhone = conflict.host_phone || '';
+        const hostContactStr = otherHostPhone ? `${otherHostName} (${otherHostPhone})` : otherHostName;
+        return lang === 'ar'
+          ? `⚠️ [تعارض ميداني]: السائق مخصص للضيف (${conflict.participant_name}) بوقت وصول متقارب ولكن بموقع استقبال أو فندق مختلف! يرجى التنسيق مع عضو اللجنة المسؤول عن الضيف الآخر: ${hostContactStr}.`
+          : `⚠️ [Field Conflict]: Driver is assigned to guest (${conflict.participant_name}) with close arrival time but different pickup or hotel! Please coordinate with the other guest's host: ${hostContactStr}.`;
+      }
+    }
+    return null;
+  };
+
   const handleSaveTask = async (e) => {
     e.preventDefault();
     if (!newTaskForm.title.trim()) return;
@@ -952,7 +1007,28 @@ const OperationsPage = () => {
                         <tr key={item.id} className="hover:bg-white/[0.02] transition-colors">
                           <td className="px-6 py-5">
                             <div className="text-sm font-black">{item.participant_name}</div>
-                            <div className="text-[10px] text-white/40 mt-1">{item.participant_email} · {item.participant_phone}</div>
+                            <div className="text-[10px] text-white/40 mt-1">{item.participant_email}</div>
+                            {item.participant_phone && (
+                              <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                                <span className="text-[10px] text-white/40">{item.participant_phone}</span>
+                                <a
+                                  href={`tel:${item.participant_phone}`}
+                                  className="text-[9px] px-1.5 py-0.5 rounded bg-white/5 border border-white/10 hover:bg-white/10 text-white transition-all"
+                                  title={lang === 'ar' ? 'اتصال مباشر' : 'Call'}
+                                >
+                                  📞
+                                </a>
+                                <a
+                                  href={`https://wa.me/${item.participant_phone.replace(/\+/g, '').replace(/[^0-9]/g, '')}`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20 text-[#25D366] transition-all"
+                                  title={lang === 'ar' ? 'واتساب' : 'WhatsApp'}
+                                >
+                                  💬
+                                </a>
+                              </div>
+                            )}
                           </td>
                           <td className="px-6 py-5">
                             <div className="flex items-center gap-2">
@@ -978,7 +1054,13 @@ const OperationsPage = () => {
                             {item.host_name ? (
                               <div className="pb-2 border-b border-white/5">
                                 <div className="text-xs text-blue-400 font-black">🙋‍♂️ {lang === 'ar' ? 'المستقبل:' : 'Host:'} {item.host_name}</div>
-                                {item.host_phone && <div className="text-[10px] text-white/30 mt-0.5">📞 {item.host_phone}</div>}
+                                {item.host_phone && (
+                                  <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                                    <span className="text-[10px] text-white/30">{item.host_phone}</span>
+                                    <a href={`tel:${item.host_phone}`} className="text-[10px] hover:text-amber-500" title={lang === 'ar' ? 'اتصال مباشر' : 'Call'}>📞</a>
+                                    <a href={`https://wa.me/${item.host_phone.replace(/\+/g, '').replace(/[^0-9]/g, '')}`} target="_blank" rel="noreferrer" className="text-[10px] hover:text-emerald-500" title={lang === 'ar' ? 'واتساب' : 'WhatsApp'}>💬</a>
+                                  </div>
+                                )}
                               </div>
                             ) : (
                               <div className="pb-2 border-b border-white/5">
@@ -990,7 +1072,13 @@ const OperationsPage = () => {
                             {item.driver_name ? (
                               <div>
                                 <div className="text-xs text-amber-500 font-black">🚗 {lang === 'ar' ? 'السائق:' : 'Driver:'} {item.driver_name}</div>
-                                <div className="text-[10px] text-white/30 mt-0.5">{item.driver_phone}</div>
+                                {item.driver_phone && (
+                                  <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                                    <span className="text-[10px] text-white/30">{item.driver_phone}</span>
+                                    <a href={`tel:${item.driver_phone}`} className="text-[10px] hover:text-amber-500" title={lang === 'ar' ? 'اتصال مباشر' : 'Call'}>📞</a>
+                                    <a href={`https://wa.me/${item.driver_phone.replace(/\+/g, '').replace(/[^0-9]/g, '')}`} target="_blank" rel="noreferrer" className="text-[10px] hover:text-emerald-500" title={lang === 'ar' ? 'واتساب' : 'WhatsApp'}>💬</a>
+                                  </div>
+                                )}
                                 <div className="text-[9px] text-white/20 mt-0.5">{item.vehicle_details}</div>
                               </div>
                             ) : (
@@ -1962,41 +2050,69 @@ const OperationsPage = () => {
       {showDispatchModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 backdrop-blur-xl bg-brand-dark/40" dir="rtl">
           <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-[#050B18] border border-white/10 rounded-[40px] p-10 w-full max-w-lg shadow-2xl text-right text-white">
-            <h2 className="text-2xl font-black text-white mb-6 pb-2 border-b border-white/5">🚗 {lang === 'ar' ? 'تخصيص مرافق وتفاصيل استقبال الضيف' : 'Dispatch Coordinator & Driver'}</h2>
+            <h2 className="text-2xl font-black text-white mb-6 pb-2 border-b border-white/5">🚗 {lang === 'ar' ? 'تخصيص السائق وتفاصيل النقل للضيف' : 'Assign Driver & Transport Details'}</h2>
             <form onSubmit={handleSaveDispatch} className="space-y-5 font-bold text-white">
               <div className="space-y-1.5">
-                <label className="text-xs text-white/50">{lang === 'ar' ? 'اسم المرافق / المنسق الميداني' : 'Assigned Companion Name'}</label>
+                <label className="text-xs text-white/50">{lang === 'ar' ? 'اختر سائقاً من السجل المعتمد' : 'Select Driver from Registry'}</label>
                 <select
-                  value={dispatchForm.driver_name}
                   onChange={(e) => {
-                    const selectedName = e.target.value;
-                    const cleanName = selectedName.split(' (')[0];
-                    const selectedOrg = receptionList.find(p => p.full_name === cleanName);
-                    setDispatchForm(prev => ({
-                      ...prev,
-                      driver_name: cleanName,
-                      driver_phone: selectedOrg ? (selectedOrg.phone || selectedOrg.phone_number || '') : prev.driver_phone
-                    }));
+                    const val = e.target.value;
+                    if (val === 'manual') {
+                      setDispatchForm(prev => ({
+                        ...prev,
+                        driver_name: '',
+                        driver_phone: '',
+                        vehicle_details: ''
+                      }));
+                    } else {
+                      const d = driversList.find(x => x.id === parseInt(val));
+                      if (d) {
+                        setDispatchForm(prev => ({
+                          ...prev,
+                          driver_name: d.name,
+                          driver_phone: d.phone,
+                          vehicle_details: d.vehicle_details || ''
+                        }));
+                      }
+                    }
                   }}
                   className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3.5 text-sm font-bold text-white outline-none focus:border-amber-500 transition-all appearance-none"
-                  required
                 >
-                  <option className="bg-[#050B18]" value="">{lang === 'ar' ? '-- اختر مرافقاً من المنظمين --' : '-- Choose companion from staff --'}</option>
-                  {receptionList
-                    .filter(p => {
-                      const role = (p.role || '').toLowerCase();
-                      return role.includes('organizer') || role.includes('helper') || role.includes('منظم') || role.includes('مساعد') || role.includes('رئيس');
-                    })
-                    .map(org => (
-                      <option key={org.id} className="bg-[#050B18]" value={org.full_name}>
-                        {org.full_name} {org.role ? `(${org.role})` : ''}
+                  <option value="manual" className="bg-[#050B18]">{lang === 'ar' ? '✍️ إدخال يدوي حر...' : '✍️ Manual Custom Entry...'}</option>
+                  {driversList.map(d => {
+                    // Check if driver has a conflict warning
+                    const hasConflict = logisticsList.some(item => {
+                      if (!selectedParticipant) return false;
+                      if (item.participant_id === selectedParticipant.participant_id) return false;
+                      if (!item.driver_phone || item.driver_phone.trim() !== d.phone.trim()) return false;
+                      if (!item.arrival_time || !selectedParticipant.arrival_time) return false;
+                      const diffHours = Math.abs(new Date(selectedParticipant.arrival_time) - new Date(item.arrival_time)) / (1000 * 60 * 60);
+                      return diffHours < 2;
+                    });
+                    const statusText = hasConflict
+                      ? (lang === 'ar' ? '⚠️ لديه تداخل' : '⚠️ Has overlap')
+                      : (lang === 'ar' ? '🟢 متاح' : '🟢 Available');
+                    return (
+                      <option key={d.id} className="bg-[#050B18]" value={d.id}>
+                        {d.name} ({d.vehicle_details || 'سيارة'}) - {statusText}
                       </option>
-                    ))}
+                    );
+                  })}
                 </select>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs text-white/50">{lang === 'ar' ? 'رقم هاتف المرافق' : 'Companion Phone Number'}</label>
+                <label className="text-xs text-white/50">{lang === 'ar' ? 'اسم السائق' : 'Driver Name'}</label>
+                <Input
+                  required
+                  placeholder={lang === 'ar' ? 'اسم السائق' : 'Driver Name'}
+                  value={dispatchForm.driver_name}
+                  onChange={(e) => setDispatchForm(prev => ({ ...prev, driver_name: e.target.value }))}
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs text-white/50">{lang === 'ar' ? 'رقم هاتف السائق' : 'Driver Phone Number'}</label>
                 <Input
                   required
                   placeholder="+213..."
@@ -2021,11 +2137,17 @@ const OperationsPage = () => {
                   onChange={(e) => setDispatchForm(prev => ({ ...prev, status: e.target.value }))}
                   className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3.5 text-sm font-bold text-white outline-none focus:border-amber-500 transition-all appearance-none"
                 >
-                  <option className="bg-[#050B18]" value="pending">{lang === 'ar' ? 'قيد الانتظار (Pending)' : 'Pending'}</option>
-                  <option className="bg-[#050B18]" value="dispatched">{lang === 'ar' ? 'تم الانطلاق (Dispatched)' : 'Dispatched'}</option>
-                  <option className="bg-[#050B18]" value="arrived">{lang === 'ar' ? 'وصل للوجهة (Arrived)' : 'Arrived'}</option>
+                  <option className="bg-[#050B18]" value="pending">{lang === 'ar' ? '⏳ قيد التنسيق (Pending)' : 'Pending'}</option>
+                  <option className="bg-[#050B18]" value="dispatched">{lang === 'ar' ? '🚗 في الطريق إليك (Dispatched)' : 'Dispatched'}</option>
+                  <option className="bg-[#050B18]" value="arrived">{lang === 'ar' ? '✅ وصل السائق للموقع (Arrived)' : 'Arrived'}</option>
                 </select>
               </div>
+
+              {getDriverConflictWarning() && (
+                <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-2xl text-xs font-bold text-right leading-relaxed">
+                  {getDriverConflictWarning()}
+                </div>
+              )}
 
               <div className="flex gap-4 pt-6">
                 <Button className="flex-1 rounded-2xl h-12" variant="gold" type="submit" disabled={isSavingDispatch}>
