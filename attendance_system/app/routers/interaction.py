@@ -632,6 +632,27 @@ async def list_event_logistics(
         if not any(kw in role for kw in keywords) and "عام" not in role:
             raise HTTPException(status_code=403, detail="Not authorized for logistics")
     
+    # Fetch all active CommitteeTask to resolve hosts/committee members
+    from app.models.others import CommitteeTask
+    from app.models.participant import Participant as HostParticipant
+    
+    tasks_stmt = select(CommitteeTask, HostParticipant).outerjoin(
+        HostParticipant, CommitteeTask.assigned_to_id == HostParticipant.id
+    ).filter(
+        CommitteeTask.event_id == event_id,
+        CommitteeTask.status != 'cancelled'
+    )
+    tasks_res = await db.execute(tasks_stmt)
+    tasks_results = tasks_res.all()
+    
+    host_map = {}
+    for task, host in tasks_results:
+        if task.participant_id and host:
+            host_map[task.participant_id] = {
+                "name": host.full_name,
+                "phone": host.phone_number or ""
+            }
+
     stmt = select(LogisticsRegistry, Participant).join(
         Participant, LogisticsRegistry.participant_id == Participant.id
     ).filter(LogisticsRegistry.event_id == event_id)
@@ -641,6 +662,7 @@ async def list_event_logistics(
     
     output = []
     for reg, part in results:
+        host_info = host_map.get(reg.participant_id, {"name": "", "phone": ""})
         output.append({
             "id": reg.id,
             "participant_id": reg.participant_id,
@@ -660,7 +682,9 @@ async def list_event_logistics(
             "driver_phone": reg.driver_phone,
             "vehicle_details": reg.vehicle_details,
             "shuttle_time": reg.shuttle_time.isoformat() if reg.shuttle_time else None,
-            "status": reg.status
+            "status": reg.status,
+            "host_name": host_info["name"],
+            "host_phone": host_info["phone"]
         })
     return output
 

@@ -200,6 +200,8 @@ const ParticipantPortal = () => {
     vehicle_details: ''
   });
   const [isSavingNewDriver, setIsSavingNewDriver] = useState(false);
+  const [showDriversRegistryPanel, setShowDriversRegistryPanel] = useState(false);
+  const [isDeletingDriverId, setIsDeletingDriverId] = useState(null);
   const [selectedActivityForList, setSelectedActivityForList] = useState(null);
   const [activityRegistrationsList, setActivityRegistrationsList] = useState([]);
   const [isActivityRegistrationsOpen, setIsActivityRegistrationsOpen] = useState(false);
@@ -1677,9 +1679,29 @@ const ParticipantPortal = () => {
     });
     
     if (conflict) {
-      return lang === 'ar'
-        ? `⚠️ السائق مخصص للضيف (${conflict.participant_name}) بوقت وصول متقارب (${new Date(conflict.arrival_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})!`
-        : `⚠️ Driver is already assigned to guest (${conflict.participant_name}) with close arrival time (${new Date(conflict.arrival_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})!`;
+      // Check if same pickup location and same hotel
+      const currentLoc = (selectedStaffParticipant.arrival_location || '').trim().toLowerCase();
+      const conflictLoc = (conflict.arrival_location || '').trim().toLowerCase();
+      const currentHotel = (selectedStaffParticipant.hotel_name || '').trim().toLowerCase();
+      const conflictHotel = (conflict.hotel_name || '').trim().toLowerCase();
+      
+      const isSameLoc = currentLoc && conflictLoc && currentLoc === conflictLoc;
+      const isSameHotel = currentHotel && conflictHotel && currentHotel === conflictHotel;
+      
+      if (isSameLoc && isSameHotel) {
+        // Suggest Carpooling
+        return lang === 'ar'
+          ? `💡 [اقتراح تشارك الرحلة]: هذا السائق مخصص أيضاً للضيف (${conflict.participant_name}) بوقت وصول متقارب، وحيث أنهما يشتركان في نفس موقع الاستقبال (${conflict.arrival_location}) وفندق الإقامة (${conflict.hotel_name})، يمكنك التنسيق لمشاركتهما نفس السيارة.`
+          : `💡 [Carpooling Suggestion]: This driver is also assigned to guest (${conflict.participant_name}) with a close arrival time. Since they share the same pickup location (${conflict.arrival_location}) and hotel (${conflict.hotel_name}), they can share this ride.`;
+      } else {
+        // Real conflict - show warning and host coordinates
+        const otherHostName = conflict.host_name || (lang === 'ar' ? 'غير محدد' : 'Not assigned');
+        const otherHostPhone = conflict.host_phone || '';
+        const hostContactStr = otherHostPhone ? `${otherHostName} (${otherHostPhone})` : otherHostName;
+        return lang === 'ar'
+          ? `⚠️ [تعارض ميداني]: السائق مخصص للضيف (${conflict.participant_name}) بوقت وصول متقارب ولكن بموقع استقبال أو فندق مختلف! يرجى التنسيق مع عضو اللجنة المسؤول عن الضيف الآخر: ${hostContactStr}.`
+          : `⚠️ [Field Conflict]: Driver is assigned to guest (${conflict.participant_name}) with close arrival time but different pickup or hotel! Please coordinate with the other guest's host: ${hostContactStr}.`;
+      }
     }
     return null;
   };
@@ -1699,7 +1721,7 @@ const ParticipantPortal = () => {
           shuttle_time: new Date().toISOString()
         }
       );
-      toast.success(lang === 'ar' ? 'تم تعيين المرافق وإرسال التفاصيل للمشارك بنجاح! 🚗' : 'Companion assigned and details dispatched successfully! 🚗');
+      toast.success(lang === 'ar' ? 'تم تعيين السائق وتفاصيل السيارة بنجاح! 🚗' : 'Driver assigned and details dispatched successfully! 🚗');
       setIsStaffDispatchModalOpen(false);
       fetchStaffLogistics();
     } catch (err) {
@@ -3437,11 +3459,11 @@ const ParticipantPortal = () => {
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm font-bold text-right" dir="rtl">
                     <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-                      <span className="text-white/40 text-xs block mb-1">{lang === 'ar' ? 'اسم المرافق' : 'Companion Name'}</span>
+                      <span className="text-white/40 text-xs block mb-1">{lang === 'ar' ? 'اسم السائق' : 'Driver Name'}</span>
                       <span className="text-white text-base font-black">👤 {logistics.driver_name}</span>
                     </div>
                     <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-                      <span className="text-white/40 text-xs block mb-1">{lang === 'ar' ? 'رقم جوال المرافق' : 'Companion Phone'}</span>
+                      <span className="text-white/40 text-xs block mb-1">{lang === 'ar' ? 'رقم هاتف السائق' : 'Driver Phone'}</span>
                       <a href={`tel:${logistics.driver_phone}`} className="text-amber-500 text-base font-black block">📞 {logistics.driver_phone}</a>
                     </div>
                     <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
@@ -3492,7 +3514,7 @@ const ParticipantPortal = () => {
                   {logistics.status && (
                     <div className="mt-4 text-center">
                        <span className="inline-block px-4 py-1.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-full text-xs font-black">
-                        {lang === 'ar' ? `الحالة الحالية: ${logistics.status === 'dispatched' ? 'في الطريق إليك' : logistics.status === 'arrived' ? 'وصل المرافق' : 'مكتمل'}` : `Status: ${logistics.status}`}
+                        {lang === 'ar' ? `الحالة الحالية: ${logistics.status === 'dispatched' ? 'في الطريق إليك' : logistics.status === 'arrived' ? 'وصل السائق' : 'مكتمل'}` : `Status: ${logistics.status === 'dispatched' ? 'Driver Dispatched' : logistics.status === 'arrived' ? 'Driver Arrived' : 'Completed'}`}
                        </span>
                     </div>
                   )}
@@ -4148,7 +4170,7 @@ const ParticipantPortal = () => {
                     </div>
                     <div className="bg-gradient-to-br from-red-500/10 to-red-500/5 border border-red-500/20 rounded-[30px] p-6 text-right">
                       <span className="text-3xl block mb-2">⏳</span>
-                      <h4 className="text-sm font-black text-white/50">{lang === 'ar' ? 'بانتظار تعيين مرافق' : 'Awaiting Companions'}</h4>
+                      <h4 className="text-sm font-black text-white/50">{lang === 'ar' ? 'بانتظار تعيين سائق' : 'Awaiting Drivers'}</h4>
                       <p className="text-3xl font-black text-red-400 mt-1">{staffLogisticsList.filter(l => !l.driver_name).length}</p>
                     </div>
                     <div className="bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 border border-emerald-500/20 rounded-[30px] p-6 text-right">
@@ -4157,6 +4179,149 @@ const ParticipantPortal = () => {
                       <p className="text-3xl font-black text-emerald-400 mt-1">{staffLogisticsList.filter(l => l.driver_name).length}</p>
                     </div>
                   </div>
+
+                  {/* Centralized Drivers Registry Panel */}
+                  {(isPresident || roleLower.includes('رئيس') || roleLower.includes('منظم')) && (
+                    <div className="bg-gradient-to-r from-white/[0.04] to-white/[0.01] border border-white/10 rounded-[30px] p-6 shadow-md text-right">
+                      <div className="flex items-center justify-between flex-wrap gap-4">
+                        <div>
+                          <h4 className="text-md font-black text-white flex items-center gap-2">
+                            <span>🚗</span>
+                            {lang === 'ar' ? 'سجل السائقين المعتمد للفعالية' : 'Event Drivers Registry'}
+                          </h4>
+                          <p className="text-xs text-white/40 mt-1 font-bold">
+                            {lang === 'ar'
+                              ? 'قم بإدارة قائمة السائقين والسيارات المتاحة لإعادة استخدامها وتفادي التضارب.'
+                              : 'Manage list of active drivers and vehicles for quick assignments and conflict warnings.'}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setShowDriversRegistryPanel(!showDriversRegistryPanel)}
+                          className="px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-2xl text-xs font-black transition-all flex items-center gap-1.5"
+                        >
+                          <span>{showDriversRegistryPanel ? (lang === 'ar' ? 'إغلاق السجل ❌' : 'Close Registry ❌') : (lang === 'ar' ? 'فتح وإدارة السجل ⚙️' : 'Open & Manage ⚙️')}</span>
+                        </button>
+                      </div>
+
+                      {showDriversRegistryPanel && (
+                        <div className="mt-6 border-t border-white/5 pt-6 space-y-6">
+                          {/* Add New Driver Form */}
+                          <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 space-y-4">
+                            <h5 className="text-xs font-black text-amber-500">{lang === 'ar' ? '➕ إضافة سائق جديد للسجل' : 'Add New Driver to Registry'}</h5>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              <input
+                                value={newDriverForm.name}
+                                onChange={(e) => setNewDriverForm({ ...newDriverForm, name: e.target.value })}
+                                placeholder={lang === 'ar' ? 'اسم السائق' : 'Driver Name'}
+                                className="w-full bg-[#050B18] border border-white/10 rounded-xl h-12 px-4 text-xs text-white text-right"
+                                dir="rtl"
+                              />
+                              <input
+                                value={newDriverForm.phone}
+                                onChange={(e) => setNewDriverForm({ ...newDriverForm, phone: e.target.value })}
+                                placeholder={lang === 'ar' ? 'رقم الهاتف' : 'Phone Number'}
+                                className="w-full bg-[#050B18] border border-white/10 rounded-xl h-12 px-4 text-xs text-white text-right"
+                                dir="rtl"
+                              />
+                              <input
+                                value={newDriverForm.vehicle_details}
+                                onChange={(e) => setNewDriverForm({ ...newDriverForm, vehicle_details: e.target.value })}
+                                placeholder={lang === 'ar' ? 'تفاصيل السيارة (النوع، اللون، اللوحة)' : 'Vehicle Make, Model & Plate'}
+                                className="w-full bg-[#050B18] border border-white/10 rounded-xl h-12 px-4 text-xs text-white text-right"
+                                dir="rtl"
+                              />
+                            </div>
+                            <button
+                              type="button"
+                              disabled={isSavingNewDriver || !newDriverForm.name || !newDriverForm.phone}
+                              onClick={async () => {
+                                setIsSavingNewDriver(true);
+                                try {
+                                  const newD = await interactionService.createDriver({
+                                    event_id: eventId,
+                                    name: newDriverForm.name,
+                                    phone: newDriverForm.phone,
+                                    vehicle_details: newDriverForm.vehicle_details
+                                  });
+                                  toast.success(lang === 'ar' ? 'تمت إضافة السائق للسجل بنجاح! 🚗' : 'Driver added successfully! 🚗');
+                                  setDriversList(prev => [...prev, newD]);
+                                  setNewDriverForm({ name: '', phone: '', vehicle_details: '' });
+                                } catch (err) {
+                                  console.error('Failed to save driver:', err);
+                                  toast.error(lang === 'ar' ? 'فشل حفظ السائق' : 'Failed to save driver');
+                                } finally {
+                                  setIsSavingNewDriver(false);
+                                }
+                              }}
+                              className="w-full md:w-auto px-6 h-10 bg-amber-500 hover:bg-amber-600 text-brand-dark rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5"
+                            >
+                              {isSavingNewDriver && <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} className="w-3.5 h-3.5 border border-brand-dark border-t-transparent rounded-full" />}
+                              {lang === 'ar' ? 'حفظ في السجل المعتمد' : 'Save Driver'}
+                            </button>
+                          </div>
+
+                          {/* Drivers List */}
+                          <div className="space-y-3">
+                            <h5 className="text-xs font-black text-white/50">{lang === 'ar' ? '📋 السائقون المعتمدون حالياً:' : 'Active Registered Drivers:'}</h5>
+                            {driversList.length === 0 ? (
+                              <p className="text-xs text-white/30 text-center py-4">{lang === 'ar' ? 'لا يوجد سائقون مسجلون في السجل حالياً.' : 'No drivers registered yet.'}</p>
+                            ) : (
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                {driversList.map(driver => {
+                                  // Find if driver has any active transport task
+                                  const activeMissions = staffLogisticsList.filter(item => 
+                                    item.driver_phone && item.driver_phone.trim() === driver.phone.trim() && 
+                                    item.status !== 'completed'
+                                  );
+                                  return (
+                                    <div key={driver.id} className="p-4 rounded-xl border border-white/5 bg-white/[0.01] flex items-center justify-between gap-4">
+                                      <div className="text-right space-y-1">
+                                        <div className="font-black text-xs text-white">{driver.name}</div>
+                                        <div className="text-[10px] text-amber-500 font-bold">{driver.phone}</div>
+                                        {driver.vehicle_details && <div className="text-[9px] text-white/40">{driver.vehicle_details}</div>}
+                                        {activeMissions.length > 0 ? (
+                                          <div className="text-[9px] text-red-400 font-bold">
+                                            🔴 {lang === 'ar' ? `مشغول حالياً مع: ${activeMissions.map(m => m.participant_name).join(', ')}` : `Busy with: ${activeMissions.map(m => m.participant_name).join(', ')}`}
+                                          </div>
+                                        ) : (
+                                          <div className="text-[9px] text-emerald-400 font-bold">
+                                            🟢 {lang === 'ar' ? 'متوفر' : 'Available'}
+                                          </div>
+                                        )}
+                                      </div>
+                                      <button
+                                        type="button"
+                                        disabled={isDeletingDriverId === driver.id}
+                                        onClick={async () => {
+                                          if (window.confirm(lang === 'ar' ? `هل أنت متأكد من حذف السائق ${driver.name}؟` : `Are you sure you want to delete ${driver.name}?`)) {
+                                            setIsDeletingDriverId(driver.id);
+                                            try {
+                                              await interactionService.deleteDriver(driver.id);
+                                              toast.success(lang === 'ar' ? 'تم حذف السائق بنجاح' : 'Driver deleted successfully');
+                                              setDriversList(prev => prev.filter(x => x.id !== driver.id));
+                                            } catch (err) {
+                                              console.error('Delete driver failed:', err);
+                                              toast.error(lang === 'ar' ? 'فشل حذف السائق' : 'Failed to delete driver');
+                                            } finally {
+                                              setIsDeletingDriverId(null);
+                                            }
+                                          }
+                                        }}
+                                        className="p-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 text-[10px] transition-all"
+                                      >
+                                        {isDeletingDriverId === driver.id ? '...' : (lang === 'ar' ? 'حذف' : 'Delete')}
+                                      </button>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* List & Search */}
                   <div className="bg-gradient-to-b from-white/[0.06] to-white/[0.01] border border-white/10 rounded-[35px] p-6 backdrop-blur-3xl relative shadow-xl">
@@ -4197,7 +4362,7 @@ const ParticipantPortal = () => {
                                     )}>
                                       {item.status === 'completed' ? (lang === 'ar' ? 'تم الوصول للوجهة' : 'Completed') :
                                        item.status === 'arrived' ? (lang === 'ar' ? 'وصل المطار' : 'Arrived') :
-                                       item.status === 'dispatched' ? (lang === 'ar' ? 'تم إرسال المرافق' : 'Companion Dispatched') : (lang === 'ar' ? 'قيد الانتظار' : 'Pending')}
+                                       item.status === 'dispatched' ? (lang === 'ar' ? 'تم إرسال السائق' : 'Driver Dispatched') : (lang === 'ar' ? 'قيد الانتظار' : 'Pending')}
                                     </span>
                                   </div>
                                   
@@ -4212,7 +4377,7 @@ const ParticipantPortal = () => {
                                     <div className="p-3 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 mt-3 text-xs text-emerald-400/90 font-bold space-y-1">
                                       <div className="flex items-center gap-1">
                                         <span>🚗</span>
-                                        <span>{lang === 'ar' ? `المرافق المخصص: ${item.driver_name} (${item.driver_phone})` : `Companion: ${item.driver_name} (${item.driver_phone})`}</span>
+                                        <span>{lang === 'ar' ? `السائق المخصص: ${item.driver_name} (${item.driver_phone})` : `Driver: ${item.driver_name} (${item.driver_phone})`}</span>
                                       </div>
                                       <div className="text-[10px] text-white/40">🚘 {item.vehicle_details}</div>
                                     </div>
@@ -4249,7 +4414,7 @@ const ParticipantPortal = () => {
                                       className="px-4 py-3 bg-amber-500 hover:bg-amber-600 text-brand-dark rounded-2xl text-xs font-black transition-all flex items-center gap-1.5"
                                     >
                                       <span>🚗</span>
-                                      {item.driver_name ? (lang === 'ar' ? 'تعديل المرافق' : 'Edit Companion') : (lang === 'ar' ? 'تخصيص مرافق' : 'Assign Companion')}
+                                      {item.driver_name ? (lang === 'ar' ? 'تعديل السائق' : 'Edit Driver') : (lang === 'ar' ? 'تخصيص سائق' : 'Assign Driver')}
                                     </button>
                                   )}
                                 </div>
@@ -4701,7 +4866,7 @@ const ParticipantPortal = () => {
                         <div className="flex justify-between items-center pb-4 border-b border-white/5 mb-4">
                           <div className="flex items-center gap-2">
                             <span>🚗</span>
-                            <h3 className="text-lg font-black">{lang === 'ar' ? 'تخصيص مرافق وإرسال تفاصيل النقل' : 'Assign Companion & Dispatch Details'}</h3>
+                            <h3 className="text-lg font-black">{lang === 'ar' ? 'تخصيص السائق وتفاصيل المركبة 🚗' : 'Assign Driver & Vehicle Details 🚗'}</h3>
                           </div>
                           <button
                             onClick={() => setIsStaffDispatchModalOpen(false)}
@@ -4749,11 +4914,20 @@ const ParticipantPortal = () => {
                               dir="rtl"
                             >
                               <option value="manual">{lang === 'ar' ? '✍️ إدخال يدوي حر...' : '✍️ Manual Custom Entry...'}</option>
-                              {driversList.map(d => (
-                                <option key={d.id} value={d.id}>
-                                  👤 {d.name} ({d.phone}) {d.vehicle_details ? `[${d.vehicle_details}]` : ''}
-                                </option>
-                              ))}
+                              {driversList.map(d => {
+                                const activeMissions = staffLogisticsList.filter(item => 
+                                  item.driver_phone && item.driver_phone.trim() === d.phone.trim() && 
+                                  item.status !== 'completed'
+                                );
+                                const statusStr = activeMissions.length > 0 
+                                  ? (lang === 'ar' ? `🔴 مشغول مع ${activeMissions.map(m => m.participant_name).join(', ')}` : `🔴 Busy with ${activeMissions.map(m => m.participant_name).join(', ')}`)
+                                  : (lang === 'ar' ? '🟢 متوفر' : '🟢 Available');
+                                return (
+                                  <option key={d.id} value={d.id}>
+                                    👤 {d.name} ({d.phone}) - {statusStr} {d.vehicle_details ? `[${d.vehicle_details}]` : ''}
+                                  </option>
+                                );
+                              })}
                             </select>
                             
                             {/* Driver conflict alert */}
@@ -4845,7 +5019,7 @@ const ParticipantPortal = () => {
 
                           {/* Driver Name */}
                           <div className="space-y-2">
-                            <label className="text-xs font-black text-white/50 block">{lang === 'ar' ? 'اسم المرافق' : 'Companion Name'}</label>
+                            <label className="text-xs font-black text-white/50 block">{lang === 'ar' ? 'اسم السائق' : 'Driver Name'}</label>
                             <Input
                               required
                               value={staffDispatchForm.driver_name}
@@ -4857,7 +5031,7 @@ const ParticipantPortal = () => {
 
                           {/* Driver Phone */}
                           <div className="space-y-2">
-                            <label className="text-xs font-black text-white/50 block">{lang === 'ar' ? 'رقم هاتف المرافق' : 'Companion Phone Number'}</label>
+                            <label className="text-xs font-black text-white/50 block">{lang === 'ar' ? 'رقم هاتف السائق' : 'Driver Phone Number'}</label>
                             <Input
                               required
                               value={staffDispatchForm.driver_phone}
@@ -4889,7 +5063,7 @@ const ParticipantPortal = () => {
                               dir="rtl"
                             >
                               <option value="pending">{lang === 'ar' ? '⏳ قيد الانتظار' : 'Pending'}</option>
-                              <option value="dispatched">{lang === 'ar' ? '🚗 تم إرسال المرافق للموقع' : 'Dispatched'}</option>
+                              <option value="dispatched">{lang === 'ar' ? '🚗 تم إرسال السائق للموقع' : 'Driver Dispatched'}</option>
                               <option value="arrived">{lang === 'ar' ? '✈️ وصل لمكان اللقاء' : 'Arrived at pickup location'}</option>
                               <option value="completed">{lang === 'ar' ? '✅ تم التوصيل بنجاح' : 'Completed'}</option>
                             </select>
