@@ -4650,7 +4650,14 @@ const ParticipantPortal = () => {
               </div>
 
               {/* Operations Sub-Tabs Navigation */}
-              <div className="flex items-center justify-center gap-2 p-1.5 bg-[#0D1527]/60 border border-white/5 rounded-2xl max-w-2xl mx-auto overflow-x-auto">
+              <div 
+                className="flex items-center justify-start md:justify-center gap-2 p-1.5 bg-[#0D1527]/60 border border-white/5 rounded-2xl max-w-2xl mx-auto overflow-x-auto scrollbar-none"
+                style={{
+                  scrollbarWidth: 'none',
+                  msOverflowStyle: 'none',
+                  WebkitOverflowScrolling: 'touch'
+                }}
+              >
                 {hasLogisticsStaffAccess && (
                   <button
                     onClick={() => setStaffActiveSubTab('logistics')}
