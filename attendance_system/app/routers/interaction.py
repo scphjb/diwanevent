@@ -1721,23 +1721,39 @@ async def update_committee_task_status(
         # Send notification to committee presidents
         try:
             from app.routers.notifications import send_web_push_notification_to_target
+            
+            def normalize_arabic(text: str) -> str:
+                if not text:
+                    return ""
+                text = text.lower()
+                text = text.replace("أ", "ا").replace("إ", "ا").replace("آ", "ا")
+                text = text.replace("ة", "ه")
+                return text
+
             committee_keywords = {
                 'reception': ['استقبال', 'تسجيل', 'reception'],
                 'catering': ['اطعام', 'ضيافه', 'catering', 'food'],
-                'accommodation': ['ايواء', 'تسكين', 'accommodation', 'hotel', 'lodging'],
+                'accommodation': ['ايواء', 'تسكين', 'سكن', 'accommodation', 'hotel', 'lodging'],
                 'logistics': ['نقل', 'لوجست', 'transport', 'logistics'],
+                'transport': ['نقل', 'لوجست', 'transport', 'logistics'],
                 'entertainment': ['ترفيه', 'نشاط', 'انشطه', 'excursion', 'activity']
             }
-            keywords = committee_keywords.get(task.committee, [])
+            raw_kws = committee_keywords.get(task.committee, [])
+            keywords = [normalize_arabic(kw) for kw in raw_kws]
+            
             p_stmt = select(Participant).filter(Participant.event_id == task.event_id)
             p_res = await db.execute(p_stmt)
             participants = p_res.scalars().all()
             
             presidents = []
             for p in participants:
-                role_p = (p.role or "").lower()
+                role_p = normalize_arabic(p.role or "")
+                # Notify the specific committee president
                 is_pres = ('رئيس' in role_p or 'president' in role_p) and any(kw in role_p for kw in keywords)
-                if is_pres:
+                # Fallback: also notify general organizers/managers so the apology isn't lost
+                is_org = any(x in role_p for x in ('منظم', 'organizer', 'منسق', 'coordinator'))
+                
+                if is_pres or is_org:
                     presidents.append(p.id)
             
             if presidents:
