@@ -201,6 +201,7 @@ const ParticipantPortal = () => {
     : 0;
   const [isLoadingStaffCatering, setIsLoadingStaffCatering] = useState(false);
   const [searchStaffCatering, setSearchStaffCatering] = useState('');
+  const [showCateringList, setShowCateringList] = useState(false);
   const [isLoadingStaffLogistics, setIsLoadingStaffLogistics] = useState(false);
   const [searchStaffQuery, setSearchStaffQuery] = useState('');
   const [selectedStaffParticipant, setSelectedStaffParticipant] = useState(null);
@@ -5954,53 +5955,91 @@ const ParticipantPortal = () => {
                       <div className="flex justify-center py-10">
                         <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full" />
                       </div>
-                    ) : staffCateringList.length === 0 ? (
-                      <div className="text-center py-12 text-white/30 font-bold">
-                        <span className="text-4xl block mb-2">🥗</span>
-                        {lang === 'ar' ? 'لا يوجد مشاركون سجّلوا حمية خاصة بعد.' : 'No participants have registered dietary preferences yet.'}
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        {staffCateringList
-                          .filter(p => !searchStaffCatering || p.participant_name?.toLowerCase().includes(searchStaffCatering.toLowerCase()))
-                          .map((profile) => {
-                            const dietLabels = {
-                              none: { ar: 'عادية', en: 'Standard', color: 'text-white/40 bg-white/5 border-white/10' },
-                              vegetarian: { ar: 'نباتية', en: 'Vegetarian', color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
-                              vegan: { ar: 'نباتية صرفة', en: 'Vegan', color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
-                              gluten_free: { ar: 'خالية من الغلوتين', en: 'Gluten-Free', color: 'text-amber-400 bg-amber-500/10 border-amber-500/20' },
-                              diabetic: { ar: 'حمية السكري', en: 'Diabetic', color: 'text-blue-400 bg-blue-500/10 border-blue-500/20' },
-                              lactose_free: { ar: 'خالية من اللاكتوز', en: 'Lactose-Free', color: 'text-purple-400 bg-purple-500/10 border-purple-500/20' },
-                              custom: { ar: 'مخصصة', en: 'Custom', color: 'text-rose-400 bg-rose-500/10 border-rose-500/20' },
-                            };
-                            const diet = dietLabels[profile.dietary_type] || dietLabels['none'];
-                            return (
-                              <div key={profile.id} className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-right">
-                                <div className="flex items-center gap-3">
-                                  <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 font-black text-sm">
-                                    {profile.participant_name?.charAt(0) || '?'}
-                                  </div>
-                                  <div>
-                                    <h5 className="font-black text-sm text-white">{profile.participant_name}</h5>
-                                    <p className="text-white/40 text-xs font-bold mt-0.5">📞 {profile.participant_phone || '---'}</p>
-                                  </div>
-                                </div>
-                                <div className="flex flex-wrap items-center gap-3">
-                                  <span className={`px-3 py-1 rounded-full text-xs font-black border ${diet.color}`}>
-                                    {lang === 'ar' ? diet.ar : diet.en}
-                                  </span>
-                                  {(profile.allergies || profile.notes) && (
-                                    <div className="text-xs text-white/50 font-bold max-w-xs bg-white/5 p-2.5 rounded-xl border border-white/5">
-                                      {profile.allergies && <div>⚠️ <span className="text-rose-400">{lang === 'ar' ? 'حساسية: ' : 'Allergies: '}</span>{profile.allergies}</div>}
-                                      {profile.notes && <div className="mt-1 text-white/60">📝 {profile.notes}</div>}
+                    ) : (() => {
+                      const specialDietsOnly = staffCateringList.filter(p => p.dietary_type && p.dietary_type !== 'none');
+                      const filteredSpecialDiets = specialDietsOnly.filter(p => !searchStaffCatering || p.participant_name?.toLowerCase().includes(searchStaffCatering.toLowerCase()));
+                      const isListVisible = showCateringList || searchStaffCatering;
+
+                      if (specialDietsOnly.length === 0) {
+                        return (
+                          <div className="text-center py-12 text-white/30 font-bold">
+                            <span className="text-4xl block mb-2">🥗</span>
+                            {lang === 'ar' ? 'لا يوجد مشاركون سجّلوا حمية خاصة بعد.' : 'No participants have registered dietary preferences yet.'}
+                          </div>
+                        );
+                      }
+
+                      if (!isListVisible) {
+                        return (
+                          <div className="text-center py-8">
+                            <button
+                              onClick={() => setShowCateringList(true)}
+                              className="px-6 py-3 rounded-2xl bg-amber-500 hover:bg-amber-400 text-brand-dark text-xs font-black transition-all flex items-center justify-center gap-2 mx-auto shadow-lg shadow-amber-500/10"
+                            >
+                              <span>👁️</span>
+                              {lang === 'ar' ? `إظهار قائمة الحميات الخاصة (${specialDietsOnly.length})` : `Show Special Diets List (${specialDietsOnly.length})`}
+                            </button>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div className="space-y-4">
+                          <div className="flex justify-center mb-4">
+                            <button
+                              onClick={() => setShowCateringList(false)}
+                              className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white/70 text-xs font-bold transition-all flex items-center gap-1.5"
+                            >
+                              <span>👁️‍🗨️</span>
+                              {lang === 'ar' ? 'إخفاء القائمة' : 'Hide List'}
+                            </button>
+                          </div>
+
+                          {filteredSpecialDiets.length === 0 ? (
+                            <div className="text-center py-8 text-white/30 font-bold text-xs">
+                              {lang === 'ar' ? 'لا توجد نتائج مطابقة للبحث' : 'No matching results found'}
+                            </div>
+                          ) : (
+                            filteredSpecialDiets.map((profile) => {
+                              const dietLabels = {
+                                none: { ar: 'عادية', en: 'Standard', color: 'text-white/40 bg-white/5 border-white/10' },
+                                vegetarian: { ar: 'نباتية', en: 'Vegetarian', color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
+                                vegan: { ar: 'نباتية صرفة', en: 'Vegan', color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
+                                gluten_free: { ar: 'خالية من الغلوتين', en: 'Gluten-Free', color: 'text-amber-400 bg-amber-500/10 border-amber-500/20' },
+                                diabetic: { ar: 'حمية السكري', en: 'Diabetic', color: 'text-blue-400 bg-blue-500/10 border-blue-500/20' },
+                                lactose_free: { ar: 'خالية من اللاكتوز', en: 'Lactose-Free', color: 'text-purple-400 bg-purple-500/10 border-purple-500/20' },
+                                custom: { ar: 'مخصصة', en: 'Custom', color: 'text-rose-400 bg-rose-500/10 border-rose-500/20' },
+                              };
+                              const diet = dietLabels[profile.dietary_type] || dietLabels['none'];
+                              return (
+                                <div key={profile.id} className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-right">
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 font-black text-sm">
+                                      {profile.participant_name?.charAt(0) || '?'}
                                     </div>
-                                  )}
+                                    <div>
+                                      <h5 className="font-black text-sm text-white">{profile.participant_name}</h5>
+                                      <p className="text-white/40 text-xs font-bold mt-0.5">📞 {profile.participant_phone || '---'}</p>
+                                    </div>
+                                  </div>
+                                  <div className="flex flex-wrap items-center gap-3">
+                                    <span className={`px-3 py-1 rounded-full text-xs font-black border ${diet.color}`}>
+                                      {lang === 'ar' ? diet.ar : diet.en}
+                                    </span>
+                                    {(profile.allergies || profile.notes) && (
+                                      <div className="text-xs text-white/50 font-bold max-w-xs bg-white/5 p-2.5 rounded-xl border border-white/5">
+                                        {profile.allergies && <div>⚠️ <span className="text-rose-400">{lang === 'ar' ? 'حساسية: ' : 'Allergies: '}</span>{profile.allergies}</div>}
+                                        {profile.notes && <div className="mt-1 text-white/60">📝 {profile.notes}</div>}
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
-                              </div>
-                            );
-                          })}
-                      </div>
-                    )}
+                              );
+                            })
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   {renderCommitteeTasks('catering')}
