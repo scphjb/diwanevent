@@ -182,29 +182,6 @@ const ParticipantPortal = () => {
   const [staffLogisticsList, setStaffLogisticsList] = useState([]);
   const [staffCateringList, setStaffCateringList] = useState([]);
 
-  const getNextMeal = () => {
-    if (!eventMeals || eventMeals.length === 0) return null;
-    const now = new Date();
-    const futureMeals = eventMeals
-      .map(meal => {
-        const date = meal.date_time ? new Date(meal.date_time) : null;
-        return { ...meal, date };
-      })
-      .filter(m => m.date && m.date > now)
-      .sort((a, b) => a.date - b.date);
-
-    if (futureMeals.length > 0) return futureMeals[0];
-    return eventMeals[0];
-  };
-
-  const nextMeal = getNextMeal();
-  const nextMealTitle = nextMeal ? (
-    nextMeal.meal_type === 'lunch' ? (lang === 'ar' ? 'غداء' : 'Lunch') :
-    nextMeal.meal_type === 'dinner' ? (lang === 'ar' ? 'عشاء' : 'Dinner') :
-    nextMeal.meal_type === 'breakfast' ? (lang === 'ar' ? 'فطور الصباح' : 'Breakfast') :
-    nextMeal.title
-  ) : (lang === 'ar' ? 'غداء/عشاء' : 'Lunch/Dinner');
-
   // Catering stats computations
   const totalOptOuts = eventMeals.reduce((acc, meal) => acc + (meal.opt_out_count || 0), 0);
   const specialDietsCount = staffCateringList.filter(p => p.dietary_type && p.dietary_type !== 'none').length;
@@ -381,6 +358,29 @@ const ParticipantPortal = () => {
       localStorage.setItem(`diwan_lang_${eventId}`, lang);
     } catch (e) {}
   }, [lang, eventId]);
+
+  const getNextMeal = () => {
+    if (!eventMeals || eventMeals.length === 0) return null;
+    const now = new Date();
+    const futureMeals = eventMeals
+      .map(meal => {
+        const date = meal.date_time ? new Date(meal.date_time) : null;
+        return { ...meal, date };
+      })
+      .filter(m => m.date && m.date > now)
+      .sort((a, b) => a.date - b.date);
+
+    if (futureMeals.length > 0) return futureMeals[0];
+    return eventMeals[0];
+  };
+
+  const nextMeal = getNextMeal();
+  const nextMealTitle = nextMeal ? (
+    nextMeal.meal_type === 'lunch' ? (lang === 'ar' ? 'غداء' : 'Lunch') :
+    nextMeal.meal_type === 'dinner' ? (lang === 'ar' ? 'عشاء' : 'Dinner') :
+    nextMeal.meal_type === 'breakfast' ? (lang === 'ar' ? 'فطور الصباح' : 'Breakfast') :
+    nextMeal.title
+  ) : (lang === 'ar' ? 'غداء/عشاء' : 'Lunch/Dinner');
 
   const formatDateTime = (dateObj, options = {}) => {
     if (!dateObj) return '---';
