@@ -3022,7 +3022,11 @@ const ParticipantPortal = () => {
                           {/* Cancel: only for the president */}
                           {isPresident && (
                             <button
-                              onClick={() => handleUpdateTaskStatus(task.id, 'cancelled')}
+                              onClick={() => {
+                                if (window.confirm(lang === 'ar' ? 'هل أنت متأكد من إلغاء هذه المهمة؟' : 'Are you sure you want to cancel this task?')) {
+                                  handleUpdateTaskStatus(task.id, 'cancelled');
+                                }
+                              }}
                               className="px-2 py-0.5 rounded bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 transition-all text-[10px] font-black"
                             >
                               {lang === 'ar' ? 'إلغاء' : 'Cancel'}
