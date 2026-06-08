@@ -189,6 +189,16 @@ const ParticipantPortal = () => {
   const optOutRate = (totalParticipants > 0 && eventMeals.length > 0)
     ? ((totalOptOuts / (totalParticipants * eventMeals.length)) * 100).toFixed(1)
     : "0";
+
+  const noneCount = staffCateringList.filter(p => !p.dietary_type || p.dietary_type === 'none').length;
+  const vegCount = staffCateringList.filter(p => p.dietary_type === 'vegetarian').length;
+  const gfCount = staffCateringList.filter(p => p.dietary_type === 'gluten_free').length;
+  const diabeticCount = staffCateringList.filter(p => p.dietary_type === 'diabetic').length;
+  const customCount = staffCateringList.filter(p => p.dietary_type === 'custom').length;
+
+  const standardOptOutPct = (noneCount > 0 && eventMeals.length > 0)
+    ? Math.min(100, Math.round((totalOptOuts / (totalParticipants * eventMeals.length)) * 100))
+    : 0;
   const [isLoadingStaffCatering, setIsLoadingStaffCatering] = useState(false);
   const [searchStaffCatering, setSearchStaffCatering] = useState('');
   const [isLoadingStaffLogistics, setIsLoadingStaffLogistics] = useState(false);
@@ -5856,28 +5866,62 @@ const ParticipantPortal = () => {
                               <span>🥩</span>
                               {lang === 'ar' ? 'حمية عادية (Standard)' : 'Standard Meal'}
                             </td>
-                            <td className="py-3 text-center">125 وجبة</td>
-                            <td className="py-3 text-center text-emerald-400">⬇️ -25% {lang === 'ar' ? '(اعتذار مسبق)' : '(Opt-outs)'}</td>
-                            <td className="py-3 text-left text-emerald-500">✅ {lang === 'ar' ? 'تم التأكيد للمطبخ' : 'Confirmed'}</td>
+                            <td className="py-3 text-center">{noneCount} {lang === 'ar' ? 'وجبة' : 'Meals'}</td>
+                            <td className="py-3 text-center text-emerald-400">
+                              {standardOptOutPct > 0 ? `⬇️ -${standardOptOutPct}% ${lang === 'ar' ? '(اعتذار مسبق)' : '(Opt-outs)'}` : '---'}
+                            </td>
+                            <td className="py-3 text-left text-emerald-500">
+                              {noneCount > 0 ? (lang === 'ar' ? '✅ تم التأكيد للمطبخ' : 'Confirmed') : '---'}
+                            </td>
                           </tr>
                           <tr>
                             <td className="py-3 flex items-center gap-2">
                               <span>🥦</span>
                               {lang === 'ar' ? 'نباتي (Vegetarian)' : 'Vegetarian'}
                             </td>
-                            <td className="py-3 text-center">8 وجبات</td>
+                            <td className="py-3 text-center">{vegCount} {lang === 'ar' ? 'وجبة' : 'Meals'}</td>
                             <td className="py-3 text-center text-white/30">---</td>
-                            <td className="py-3 text-left text-amber-500">👨‍🍳 {lang === 'ar' ? 'تحت الطهي المخصص' : 'In prep'}</td>
+                            <td className="py-3 text-left text-amber-500">
+                              {vegCount > 0 ? (lang === 'ar' ? '👨‍🍳 تحت الطهي المخصص' : 'In prep') : '---'}
+                            </td>
                           </tr>
                           <tr>
                             <td className="py-3 flex items-center gap-2">
                               <span>🌾</span>
                               {lang === 'ar' ? 'خالي من الجلوتين (Gluten-Free)' : 'Gluten-Free'}
                             </td>
-                            <td className="py-3 text-center">2 وجبة</td>
+                            <td className="py-3 text-center">{gfCount} {lang === 'ar' ? 'وجبة' : 'Meals'}</td>
                             <td className="py-3 text-center text-white/30">---</td>
-                            <td className="py-3 text-left text-amber-500">👨‍🍳 {lang === 'ar' ? 'طلب طازج عاجل' : 'Fresh order'}</td>
+                            <td className="py-3 text-left text-amber-500">
+                              {gfCount > 0 ? (lang === 'ar' ? '👨‍🍳 طلب طازج عاجل' : 'Fresh order') : '---'}
+                            </td>
                           </tr>
+                          {diabeticCount > 0 && (
+                            <tr>
+                              <td className="py-3 flex items-center gap-2">
+                                <span>🍎</span>
+                                {lang === 'ar' ? 'حمية السكري (Diabetic)' : 'Diabetic'}
+                              </td>
+                              <td className="py-3 text-center">{diabeticCount} {lang === 'ar' ? 'وجبة' : 'Meals'}</td>
+                              <td className="py-3 text-center text-white/30">---</td>
+                              <td className="py-3 text-left text-amber-500">
+                                {lang === 'ar' ? '👨‍🍳 طهي منخفض السكر' : 'Low sugar prep'}
+                              </td>
+                            </tr>
+                          )}
+                          {customCount > 0 && (
+                            <tr>
+                              <td className="py-3 flex items-center gap-2">
+                                <span>🍽️</span>
+                                {lang === 'ar' ? 'مخصصة (Custom)' : 'Custom'}
+                              </td>
+                              <td className="py-3 text-center">{customCount} {lang === 'ar' ? 'وجبة' : 'Meals'}</td>
+                              <td className="py-3 text-center text-white/30">---</td>
+                              <td className="py-3 text-left text-amber-500">
+                                {lang === 'ar' ? '👨‍🍳 مراجعة ملاحظات الطاهي' : 'Review notes'}
+                              </td>
+                            </tr>
+                          )}
                         </tbody>
                       </table>
                     </div>
