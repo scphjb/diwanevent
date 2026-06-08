@@ -182,6 +182,29 @@ const ParticipantPortal = () => {
   const [staffLogisticsList, setStaffLogisticsList] = useState([]);
   const [staffCateringList, setStaffCateringList] = useState([]);
 
+  const getNextMeal = () => {
+    if (!eventMeals || eventMeals.length === 0) return null;
+    const now = new Date();
+    const futureMeals = eventMeals
+      .map(meal => {
+        const date = meal.date_time ? new Date(meal.date_time) : null;
+        return { ...meal, date };
+      })
+      .filter(m => m.date && m.date > now)
+      .sort((a, b) => a.date - b.date);
+
+    if (futureMeals.length > 0) return futureMeals[0];
+    return eventMeals[0];
+  };
+
+  const nextMeal = getNextMeal();
+  const nextMealTitle = nextMeal ? (
+    nextMeal.meal_type === 'lunch' ? (lang === 'ar' ? 'غداء' : 'Lunch') :
+    nextMeal.meal_type === 'dinner' ? (lang === 'ar' ? 'عشاء' : 'Dinner') :
+    nextMeal.meal_type === 'breakfast' ? (lang === 'ar' ? 'فطور الصباح' : 'Breakfast') :
+    nextMeal.title
+  ) : (lang === 'ar' ? 'غداء/عشاء' : 'Lunch/Dinner');
+
   // Catering stats computations
   const totalOptOuts = eventMeals.reduce((acc, meal) => acc + (meal.opt_out_count || 0), 0);
   const specialDietsCount = staffCateringList.filter(p => p.dietary_type && p.dietary_type !== 'none').length;
@@ -5852,7 +5875,7 @@ const ParticipantPortal = () => {
                   <div className="bg-gradient-to-b from-white/[0.06] to-white/[0.01] border border-white/10 rounded-[35px] p-6 backdrop-blur-3xl relative shadow-xl">
                     <h4 className="text-lg font-black text-white mb-6 pb-3 border-b border-white/5 flex items-center gap-2">
                       <span>🍽️</span>
-                      {lang === 'ar' ? 'إحصائيات تفضيلات المطبخ التنبؤية (يوم الغد)' : 'Predictive Kitchen Prep Sheet (Tomorrow)'}
+                      {lang === 'ar' ? `إحصائيات تفضيلات المطبخ التنبؤية (الوجبة التالية: ${nextMealTitle})` : `Predictive Kitchen Prep Sheet (Next Meal: ${nextMealTitle})`}
                     </h4>
 
                     <div className="overflow-x-auto">
@@ -5866,67 +5889,117 @@ const ParticipantPortal = () => {
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5 text-white font-bold">
-                          <tr>
-                            <td className="py-3 flex items-center gap-2">
-                              <span>🥩</span>
-                              {lang === 'ar' ? 'حمية عادية (Standard)' : 'Standard Meal'}
-                            </td>
-                            <td className="py-3 text-center">{noneCount} {lang === 'ar' ? 'وجبة' : 'Meals'}</td>
-                            <td className="py-3 text-center text-emerald-400">
-                              {standardOptOutPct > 0 ? `⬇️ -${standardOptOutPct}% ${lang === 'ar' ? '(اعتذار مسبق)' : '(Opt-outs)'}` : '---'}
-                            </td>
-                            <td className="py-3 text-left text-emerald-500">
-                              {noneCount > 0 ? (lang === 'ar' ? '✅ تم التأكيد للمطبخ' : 'Confirmed') : '---'}
-                            </td>
-                          </tr>
-                          <tr>
-                            <td className="py-3 flex items-center gap-2">
-                              <span>🥦</span>
-                              {lang === 'ar' ? 'نباتي (Vegetarian)' : 'Vegetarian'}
-                            </td>
-                            <td className="py-3 text-center">{vegCount} {lang === 'ar' ? 'وجبة' : 'Meals'}</td>
-                            <td className="py-3 text-center text-white/30">---</td>
-                            <td className="py-3 text-left text-amber-500">
-                              {vegCount > 0 ? (lang === 'ar' ? '👨‍🍳 تحت الطهي المخصص' : 'In prep') : '---'}
-                            </td>
-                          </tr>
-                          <tr>
-                            <td className="py-3 flex items-center gap-2">
-                              <span>🌾</span>
-                              {lang === 'ar' ? 'خالي من الجلوتين (Gluten-Free)' : 'Gluten-Free'}
-                            </td>
-                            <td className="py-3 text-center">{gfCount} {lang === 'ar' ? 'وجبة' : 'Meals'}</td>
-                            <td className="py-3 text-center text-white/30">---</td>
-                            <td className="py-3 text-left text-amber-500">
-                              {gfCount > 0 ? (lang === 'ar' ? '👨‍🍳 طلب طازج عاجل' : 'Fresh order') : '---'}
-                            </td>
-                          </tr>
-                          {diabeticCount > 0 && (
-                            <tr>
-                              <td className="py-3 flex items-center gap-2">
-                                <span>🍎</span>
-                                {lang === 'ar' ? 'حمية السكري (Diabetic)' : 'Diabetic'}
-                              </td>
-                              <td className="py-3 text-center">{diabeticCount} {lang === 'ar' ? 'وجبة' : 'Meals'}</td>
-                              <td className="py-3 text-center text-white/30">---</td>
-                              <td className="py-3 text-left text-amber-500">
-                                {lang === 'ar' ? '👨‍🍳 طهي منخفض السكر' : 'Low sugar prep'}
-                              </td>
-                            </tr>
-                          )}
-                          {customCount > 0 && (
-                            <tr>
-                              <td className="py-3 flex items-center gap-2">
-                                <span>🍽️</span>
-                                {lang === 'ar' ? 'مخصصة (Custom)' : 'Custom'}
-                              </td>
-                              <td className="py-3 text-center">{customCount} {lang === 'ar' ? 'وجبة' : 'Meals'}</td>
-                              <td className="py-3 text-center text-white/30">---</td>
-                              <td className="py-3 text-left text-amber-500">
-                                {lang === 'ar' ? '👨‍🍳 مراجعة ملاحظات الطاهي' : 'Review notes'}
-                              </td>
-                            </tr>
-                          )}
+                          {(() => {
+                            const vegCount = staffCateringList.filter(p => p.dietary_type === 'vegetarian').length;
+                            const veganCount = staffCateringList.filter(p => p.dietary_type === 'vegan').length;
+                            const gfCount = staffCateringList.filter(p => p.dietary_type === 'gluten_free').length;
+                            const diabeticCount = staffCateringList.filter(p => p.dietary_type === 'diabetic').length;
+                            const lactoseFreeCount = staffCateringList.filter(p => p.dietary_type === 'lactose_free').length;
+                            const customCount = staffCateringList.filter(p => p.dietary_type === 'custom').length;
+
+                            const specialDietsTotal = vegCount + veganCount + gfCount + diabeticCount + lactoseFreeCount + customCount;
+                            const totalAttending = nextMeal ? nextMeal.attending_count : totalParticipants;
+                            const standardQty = Math.max(0, totalAttending - specialDietsTotal);
+                            const nextMealOptOutPct = (nextMeal && totalParticipants > 0)
+                              ? Math.round((nextMeal.opt_out_count / totalParticipants) * 100)
+                              : 0;
+
+                            const diets = [
+                              {
+                                icon: '🥩',
+                                key: 'standard',
+                                labelAr: 'حمية عادية (Standard)',
+                                labelEn: 'Standard Meal',
+                                qty: standardQty,
+                                waste: nextMealOptOutPct > 0 ? `⬇️ -${nextMealOptOutPct}% ${lang === 'ar' ? '(اعتذار مسبق)' : '(Opt-outs)'}` : '---',
+                                wasteColor: 'text-emerald-400',
+                                statusAr: '👨‍🍳 طهي القائمة الرئيسية',
+                                statusEn: 'Cooking Main Menu'
+                              },
+                              {
+                                icon: '🥦',
+                                key: 'vegetarian',
+                                labelAr: 'نباتي (Vegetarian)',
+                                labelEn: 'Vegetarian',
+                                qty: vegCount,
+                                waste: '---',
+                                wasteColor: 'text-white/30',
+                                statusAr: '👨‍🍳 تحت الطهي المخصص',
+                                statusEn: 'In custom prep'
+                              },
+                              {
+                                icon: '🌱',
+                                key: 'vegan',
+                                labelAr: 'نباتي صرف (Vegan)',
+                                labelEn: 'Vegan',
+                                qty: veganCount,
+                                waste: '---',
+                                wasteColor: 'text-white/30',
+                                statusAr: '👨‍🍳 تحت الطهي المخصص',
+                                statusEn: 'In custom prep'
+                              },
+                              {
+                                icon: '🌾',
+                                key: 'gluten_free',
+                                labelAr: 'خالي من الجلوتين (Gluten-Free)',
+                                labelEn: 'Gluten-Free',
+                                qty: gfCount,
+                                waste: '---',
+                                wasteColor: 'text-white/30',
+                                statusAr: '👨‍🍳 طلب طازج عاجل',
+                                statusEn: 'Fresh order'
+                              },
+                              {
+                                icon: '🍎',
+                                key: 'diabetic',
+                                labelAr: 'حمية السكري (Diabetic)',
+                                labelEn: 'Diabetic',
+                                qty: diabeticCount,
+                                waste: '---',
+                                wasteColor: 'text-white/30',
+                                statusAr: '🍎 طهي منخفض السكر',
+                                statusEn: 'Low sugar prep'
+                              },
+                              {
+                                icon: '🥛',
+                                key: 'lactose_free',
+                                labelAr: 'خالي من اللاكتوز (Lactose-Free)',
+                                labelEn: 'Lactose-Free',
+                                qty: lactoseFreeCount,
+                                waste: '---',
+                                wasteColor: 'text-white/30',
+                                statusAr: '🥛 خالي من الألبان',
+                                statusEn: 'Dairy-free prep'
+                              },
+                              {
+                                icon: '🍽️',
+                                key: 'custom',
+                                labelAr: 'مخصصة (Custom)',
+                                labelEn: 'Custom',
+                                qty: customCount,
+                                waste: '---',
+                                wasteColor: 'text-white/30',
+                                statusAr: '👨‍🍳 مراجعة ملاحظات الطاهي',
+                                statusEn: 'Review notes'
+                              }
+                            ];
+
+                            return diets.map(diet => (
+                              <tr key={diet.key}>
+                                <td className="py-3 flex items-center gap-2 text-right">
+                                  <span>{diet.icon}</span>
+                                  {lang === 'ar' ? diet.labelAr : diet.labelEn}
+                                </td>
+                                <td className="py-3 text-center">{diet.qty} {lang === 'ar' ? 'وجبة' : 'Meals'}</td>
+                                <td className={`py-3 text-center ${diet.qty > 0 && diet.key === 'standard' ? diet.wasteColor : 'text-white/30'}`}>
+                                  {diet.qty > 0 ? diet.waste : '---'}
+                                </td>
+                                <td className={`py-3 text-left ${diet.qty > 0 ? (diet.key === 'standard' ? 'text-emerald-500' : 'text-amber-500') : 'text-white/30'}`}>
+                                  {diet.qty > 0 ? (lang === 'ar' ? diet.statusAr : diet.statusEn) : '---'}
+                                </td>
+                              </tr>
+                            ));
+                          })()}
                         </tbody>
                       </table>
                     </div>
