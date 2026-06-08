@@ -1277,10 +1277,8 @@ const OperationsPage = () => {
                             const dietLabels = {
                               none: { ar: 'عادية', en: 'Standard', color: 'text-white/40' },
                               vegetarian: { ar: 'نباتية', en: 'Vegetarian', color: 'text-emerald-400' },
-                              vegan: { ar: 'نباتية صرفة', en: 'Vegan', color: 'text-emerald-400' },
                               gluten_free: { ar: 'خالية من الغلوتين', en: 'Gluten-Free', color: 'text-amber-400' },
                               diabetic: { ar: 'حمية السكري', en: 'Diabetic', color: 'text-blue-400' },
-                              lactose_free: { ar: 'خالية من اللاكتوز', en: 'Lactose-Free', color: 'text-purple-400' },
                               custom: { ar: 'مخصصة', en: 'Custom', color: 'text-rose-400' },
                             };
                             const diet = dietLabels[profile.dietary_type] || dietLabels['none'];

@@ -5891,13 +5891,11 @@ const ParticipantPortal = () => {
                         <tbody className="divide-y divide-white/5 text-white font-bold">
                           {(() => {
                             const vegCount = staffCateringList.filter(p => p.dietary_type === 'vegetarian').length;
-                            const veganCount = staffCateringList.filter(p => p.dietary_type === 'vegan').length;
                             const gfCount = staffCateringList.filter(p => p.dietary_type === 'gluten_free').length;
                             const diabeticCount = staffCateringList.filter(p => p.dietary_type === 'diabetic').length;
-                            const lactoseFreeCount = staffCateringList.filter(p => p.dietary_type === 'lactose_free').length;
                             const customCount = staffCateringList.filter(p => p.dietary_type === 'custom').length;
 
-                            const specialDietsTotal = vegCount + veganCount + gfCount + diabeticCount + lactoseFreeCount + customCount;
+                            const specialDietsTotal = vegCount + gfCount + diabeticCount + customCount;
                             const totalAttending = nextMeal ? nextMeal.attending_count : totalParticipants;
                             const standardQty = Math.max(0, totalAttending - specialDietsTotal);
                             const nextMealOptOutPct = (nextMeal && totalParticipants > 0)
@@ -5928,17 +5926,6 @@ const ParticipantPortal = () => {
                                 statusEn: 'In custom prep'
                               },
                               {
-                                icon: '🌱',
-                                key: 'vegan',
-                                labelAr: 'نباتي صرف (Vegan)',
-                                labelEn: 'Vegan',
-                                qty: veganCount,
-                                waste: '---',
-                                wasteColor: 'text-white/30',
-                                statusAr: '👨‍🍳 تحت الطهي المخصص',
-                                statusEn: 'In custom prep'
-                              },
-                              {
                                 icon: '🌾',
                                 key: 'gluten_free',
                                 labelAr: 'خالي من الجلوتين (Gluten-Free)',
@@ -5959,17 +5946,6 @@ const ParticipantPortal = () => {
                                 wasteColor: 'text-white/30',
                                 statusAr: '🍎 طهي منخفض السكر',
                                 statusEn: 'Low sugar prep'
-                              },
-                              {
-                                icon: '🥛',
-                                key: 'lactose_free',
-                                labelAr: 'خالي من اللاكتوز (Lactose-Free)',
-                                labelEn: 'Lactose-Free',
-                                qty: lactoseFreeCount,
-                                waste: '---',
-                                wasteColor: 'text-white/30',
-                                statusAr: '🥛 خالي من الألبان',
-                                statusEn: 'Dairy-free prep'
                               },
                               {
                                 icon: '🍽️',
@@ -6077,10 +6053,8 @@ const ParticipantPortal = () => {
                               const dietLabels = {
                                 none: { ar: 'عادية', en: 'Standard', color: 'text-white/40 bg-white/5 border-white/10' },
                                 vegetarian: { ar: 'نباتية', en: 'Vegetarian', color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
-                                vegan: { ar: 'نباتية صرفة', en: 'Vegan', color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
                                 gluten_free: { ar: 'خالية من الغلوتين', en: 'Gluten-Free', color: 'text-amber-400 bg-amber-500/10 border-amber-500/20' },
                                 diabetic: { ar: 'حمية السكري', en: 'Diabetic', color: 'text-blue-400 bg-blue-500/10 border-blue-500/20' },
-                                lactose_free: { ar: 'خالية من اللاكتوز', en: 'Lactose-Free', color: 'text-purple-400 bg-purple-500/10 border-purple-500/20' },
                                 custom: { ar: 'مخصصة', en: 'Custom', color: 'text-rose-400 bg-rose-500/10 border-rose-500/20' },
                               };
                               const diet = dietLabels[profile.dietary_type] || dietLabels['none'];
