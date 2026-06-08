@@ -767,7 +767,7 @@ const OperationsPage = () => {
       lang === 'ar' ? 'حذف المهمة' : 'Delete Task',
       lang === 'ar' ? 'هل أنت متأكد من حذف هذه المهمة نهائياً؟' : 'Are you sure you want to delete this task?'
     );
-    if (!confirmed) return;
+    if (!confirmed || !confirmed.isConfirmed) return;
     
     try {
       await interactionService.deleteTask(taskId);
