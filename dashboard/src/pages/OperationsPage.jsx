@@ -179,10 +179,10 @@ const OperationsPage = () => {
   // --- Committees States ---
   const COMMITTEES = [
     { key: 'reception',      icon: '🎫', nameAr: 'لجنة الاستقبال والتوجيه',  nameEn: 'Reception & Guidance' },
-    { key: 'catering_com',  icon: '🍽️', nameAr: 'لجنة الاطعام',  nameEn: 'Catering Committee' },
-    { key: 'accommodation', icon: '🏨', nameAr: 'لجنة الايواء',  nameEn: 'Accommodation Committee' },
-    { key: 'transport',     icon: '🚗', nameAr: 'لجنة النقل',  nameEn: 'Transport Committee' },
-    { key: 'entertainment', icon: '🎭', nameAr: 'لجنة الترفيه',  nameEn: 'Entertainment Committee' },
+    { key: 'catering',      icon: '🍽️', nameAr: 'لجنة الإطعام',             nameEn: 'Catering Committee' },
+    { key: 'accommodation', icon: '🏨', nameAr: 'لجنة الإيواء',             nameEn: 'Accommodation Committee' },
+    { key: 'transport',     icon: '🚗', nameAr: 'لجنة النقل',              nameEn: 'Transport Committee' },
+    { key: 'entertainment', icon: '🎭', nameAr: 'لجنة الترفيه',            nameEn: 'Entertainment Committee' },
   ];
 
   const [selectedCommittee, setSelectedCommittee] = useState(null);
@@ -1450,7 +1450,7 @@ const OperationsPage = () => {
                                   : '• Register participants • Badge scanning • Gate entry management'}
                               </p>
                             )}
-                            {com.key === 'catering_com' && (
+                            {com.key === 'catering' && (
                               <p className="text-white/40 text-xs font-bold leading-relaxed">
                                 {lang === 'ar'
                                   ? '• متابعة تسجيل الوجبات • إدارة الحميات الخاصة • التنسيق مع المطبخ'
@@ -1980,7 +1980,7 @@ const OperationsPage = () => {
                       if (committeeKey === 'accommodation') {
                         return normRole.includes('ايواء') || normRole.includes('تسكين') || normRole.includes('accommodation') || normRole.includes('hotel') || normRole.includes('lodging');
                       }
-                      if (committeeKey === 'logistics') {
+                      if (committeeKey === 'logistics' || committeeKey === 'transport') {
                         return normRole.includes('نقل') || normRole.includes('لوجست') || normRole.includes('سائق') || normRole.includes('transport') || normRole.includes('driver') || normRole.includes('logistics');
                       }
                       if (committeeKey === 'entertainment') {

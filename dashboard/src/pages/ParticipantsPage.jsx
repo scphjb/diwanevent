@@ -41,14 +41,14 @@ const PRESET_ROLES = [
   { value: 'organizer', labelAr: 'منظم عام', labelEn: 'General Organizer' },
   { value: 'رئيس لجنة الاستقبال', labelAr: 'رئيس لجنة الاستقبال والتوجيه', labelEn: 'President of Reception & Orientation Committee' },
   { value: 'عضو لجنة الاستقبال', labelAr: 'عضو لجنة الاستقبال والتوجيه', labelEn: 'Member of Reception & Orientation Committee' },
-  { value: 'رئيس لجنة الإطعام', labelAr: 'رئيس لجنة الاطعام', labelEn: 'President of Catering Committee' },
-  { value: 'عضو لجنة الإطعام', labelAr: 'عضو لجنة الاطعام', labelEn: 'Member of Catering Committee' },
-  { value: 'رئيس لجنة الإيواء', labelAr: 'رئيس لجنة الايواء', labelEn: 'President of Accommodation Committee' },
-  { value: 'عضو لجنة الإيواء', labelAr: 'عضو لجنة الايواء', labelEn: 'Member of Accommodation Committee' },
+  { value: 'رئيس لجنة الاطعام', labelAr: 'رئيس لجنة الاطعام', labelEn: 'President of Catering Committee' },
+  { value: 'عضو لجنة الاطعام', labelAr: 'عضو لجنة الاطعام', labelEn: 'Member of Catering Committee' },
+  { value: 'رئيس لجنة الايواء', labelAr: 'رئيس لجنة الايواء', labelEn: 'President of Accommodation Committee' },
+  { value: 'عضو لجنة الايواء', labelAr: 'عضو لجنة الايواء', labelEn: 'Member of Accommodation Committee' },
   { value: 'رئيس لجنة النقل', labelAr: 'رئيس لجنة النقل', labelEn: 'President of Transport Committee' },
   { value: 'عضو لجنة النقل', labelAr: 'عضو لجنة النقل', labelEn: 'Member of Transport Committee' },
-  { value: 'رئيس لجنة الأنشطة', labelAr: 'رئيس لجنة الترفيه', labelEn: 'President of Entertainment Committee' },
-  { value: 'عضو لجنة الأنشطة', labelAr: 'عضو لجنة الترفيه', labelEn: 'Member of Entertainment Committee' },
+  { value: 'رئيس لجنة الانشطة', labelAr: 'رئيس لجنة الانشطة والترفيه', labelEn: 'President of Entertainment Committee' },
+  { value: 'عضو لجنة الانشطة', labelAr: 'عضو لجنة الانشطة والترفيه', labelEn: 'Member of Entertainment Committee' },
 ];
 
 const getNormalizedRole = (role) => {

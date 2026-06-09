@@ -40,6 +40,36 @@ async def verify_event_access(event_id: int, db: AsyncSession, user: User):
         raise HTTPException(status_code=403, detail="Not authorized")
     return event
 
+# ── دالة توحيد النصوص العربية ─────────────────────────────────────────────
+# تُستخدم لضمان تطابق أسماء اللجان بغض النظر عن الهمزات/التاء المربوطة
+def normalize_arabic(text: str) -> str:
+    """Normalize Arabic text: unify alef forms, convert tah marbuta → ha."""
+    if not text:
+        return ""
+    t = text.lower()
+    for ch in ("أ", "إ", "آ", "ٱ"):
+        t = t.replace(ch, "ا")
+    t = t.replace("ة", "ه").replace("ى", "ي")
+    return t
+
+# مفاتيح اللجان الموحدة وكلماتها المفتاحية (بعد التوحيد)
+COMMITTEE_ROLE_KEYWORDS: dict[str, list[str]] = {
+    "reception":     ["استقبال", "تسجيل", "reception"],
+    "catering":      ["اطعام", "ضيافه", "catering", "food"],
+    "accommodation": ["ايواء", "تسكين", "سكن", "accommodation", "hotel", "lodging"],
+    "transport":     ["نقل", "لوجست", "سائق", "transport", "driver", "logistics"],
+    "entertainment": ["ترفيه", "نشاط", "انشطه", "excursion", "activity"],
+}
+
+# أسماء اللجان العربية للإشعارات
+COMMITTEE_AR_NAMES: dict[str, str] = {
+    "reception":     "الاستقبال والتوجيه",
+    "catering":      "الاطعام",
+    "accommodation": "الايواء",
+    "transport":     "النقل",
+    "entertainment": "الترفيه",
+}
+
 # --- Social Wall (Legacy Wall Adoption) ---
 class PostCreate(BaseModel):
     event_id: int
@@ -1661,15 +1691,7 @@ async def create_committee_task(
     if new_task.assigned_to_id:
         try:
             from app.routers.notifications import send_web_push_notification_to_target
-            committee_names = {
-                'reception': 'الاستقبال والتوجيه',
-                'catering': 'الاطعام',
-                'accommodation': 'الايواء',
-                'logistics': 'النقل',
-                'transport': 'النقل',
-                'entertainment': 'الترفيه'
-            }
-            c_name = committee_names.get(new_task.committee, new_task.committee)
+            c_name = COMMITTEE_AR_NAMES.get(new_task.committee, new_task.committee)
             await send_web_push_notification_to_target(
                 db=db,
                 title="📋 مهمة جديدة مسندة إليك",
@@ -1718,27 +1740,13 @@ async def update_committee_task_status(
         await db.commit()
         await db.refresh(task)
         
-        # Send notification to committee presidents
+        # إرسال إشعار لرؤساء اللجان
         try:
             from app.routers.notifications import send_web_push_notification_to_target
-            
-            def normalize_arabic(text: str) -> str:
-                if not text:
-                    return ""
-                text = text.lower()
-                text = text.replace("أ", "ا").replace("إ", "ا").replace("آ", "ا")
-                text = text.replace("ة", "ه")
-                return text
-
-            committee_keywords = {
-                'reception': ['استقبال', 'تسجيل', 'reception'],
-                'catering': ['اطعام', 'ضيافه', 'catering', 'food'],
-                'accommodation': ['ايواء', 'تسكين', 'سكن', 'accommodation', 'hotel', 'lodging'],
-                'logistics': ['نقل', 'لوجست', 'transport', 'logistics'],
-                'transport': ['نقل', 'لوجست', 'transport', 'logistics'],
-                'entertainment': ['ترفيه', 'نشاط', 'انشطه', 'excursion', 'activity']
-            }
-            raw_kws = committee_keywords.get(task.committee, [])
+            # استخدام COMMITTEE_ROLE_KEYWORDS الموحد
+            # transport يغطي logistics أيضاً
+            comm_key = task.committee if task.committee in COMMITTEE_ROLE_KEYWORDS else 'transport'
+            raw_kws = COMMITTEE_ROLE_KEYWORDS.get(comm_key, [])
             keywords = [normalize_arabic(kw) for kw in raw_kws]
             
             p_stmt = select(Participant).filter(Participant.event_id == task.event_id)
@@ -1748,11 +1756,8 @@ async def update_committee_task_status(
             presidents = []
             for p in participants:
                 role_p = normalize_arabic(p.role or "")
-                # Notify the specific committee president
                 is_pres = ('رئيس' in role_p or 'president' in role_p) and any(kw in role_p for kw in keywords)
-                # Fallback: also notify general organizers/managers so the apology isn't lost
                 is_org = any(x in role_p for x in ('منظم', 'organizer', 'منسق', 'coordinator'))
-                
                 if is_pres or is_org:
                     presidents.append(p.id)
             
@@ -1772,7 +1777,7 @@ async def update_committee_task_status(
         return task
 
     task.status = req.status
-    if task.participant_id and task.committee == 'transport':
+    if task.participant_id and task.committee in ('transport', 'logistics'):
         try:
             from app.models.others import LogisticsRegistry
             log_stmt = select(LogisticsRegistry).filter(
@@ -1804,21 +1809,16 @@ async def update_committee_task_status(
             }
             if req.status in status_texts and req.status != "completed":
                 status_text = status_texts[req.status]
-                committee_keywords = {
-                    'reception': ['استقبال'],
-                    'catering': ['إطعام', 'اطعام', 'ضيافة', 'ضيافه'],
-                    'accommodation': ['إيواء', 'ايواء', 'تسكين'],
-                    'logistics': ['نقل', 'سائق'],
-                    'entertainment': ['ترفيه', 'أنشطة', 'انشطه'],
-                    'transport': ['نقل', 'سائق']
-                }
-                keywords = committee_keywords.get(task.committee, [])
+                # استخدام COMMITTEE_ROLE_KEYWORDS الموحد
+                comm_key = task.committee if task.committee in COMMITTEE_ROLE_KEYWORDS else 'transport'
+                raw_kws = COMMITTEE_ROLE_KEYWORDS.get(comm_key, [])
+                keywords = [normalize_arabic(kw) for kw in raw_kws]
                 p_stmt = select(Participant).filter(Participant.event_id == task.event_id)
                 p_res = await db.execute(p_stmt)
                 participants = p_res.scalars().all()
                 president_ids = []
                 for p in participants:
-                    p_role = (p.role or "").lower()
+                    p_role = normalize_arabic(p.role or "")
                     if "رئيس" in p_role or "president" in p_role:
                         if any(kw in p_role for kw in keywords) or "عام" in p_role or "organizer" in p_role:
                             president_ids.append(p.id)
@@ -1856,14 +1856,8 @@ async def update_committee_task_status(
                     logger.error(f"Failed to notify main event creator: {ex}")
 
             # 2. إخطار رئيس اللجنة
-            committee_keywords = {
-                'reception': ['استقبال'],
-                'catering': ['إطعام', 'اطعام', 'ضيافة', 'ضيافه'],
-                'accommodation': ['إيواء', 'ايواء', 'تسكين'],
-                'logistics': ['نقل', 'سائق'],
-                'entertainment': ['ترفيه', 'أنشطة', 'انشطه']
-            }
-            keywords = committee_keywords.get(task.committee, [])
+            comm_key = task.committee if task.committee in COMMITTEE_ROLE_KEYWORDS else 'transport'
+            kws_for_completion = [normalize_arabic(k) for k in COMMITTEE_ROLE_KEYWORDS.get(comm_key, [])]
             
             p_stmt = select(Participant).filter(Participant.event_id == task.event_id)
             p_res = await db.execute(p_stmt)
@@ -1871,9 +1865,9 @@ async def update_committee_task_status(
             
             president_ids = []
             for p in participants:
-                p_role = (p.role or "").lower()
+                p_role = normalize_arabic(p.role or "")
                 if "رئيس" in p_role or "president" in p_role:
-                    if any(kw in p_role for kw in keywords) or "عام" in p_role or "organizer" in p_role:
+                    if any(kw in p_role for kw in kws_for_completion) or "عام" in p_role or "organizer" in p_role:
                         president_ids.append(p.id)
             
             if president_ids:
@@ -2007,15 +2001,7 @@ async def reassign_committee_task(
 
     try:
         from app.routers.notifications import send_web_push_notification_to_target
-        committee_names = {
-            'reception': 'الاستقبال والتوجيه',
-            'catering': 'الاطعام',
-            'accommodation': 'الايواء',
-            'logistics': 'النقل',
-            'transport': 'النقل',
-            'entertainment': 'الترفيه'
-        }
-        c_name = committee_names.get(task.committee, task.committee)
+        c_name = COMMITTEE_AR_NAMES.get(task.committee, task.committee)
         await send_web_push_notification_to_target(
             db=db,
             title="📋 مهمة جديدة مسندة إليك",
