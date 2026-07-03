@@ -415,7 +415,12 @@ const SettingsPage = () => {
                               </div>
                               <div>
                                 <div className="font-bold text-white text-sm">{field.display_label}</div>
-                                <div className="text-xs text-brand-secondary/40">{field.field_name} • {field.field_type} • {field.is_required ? 'إلزامي' : 'اختياري'}</div>
+                                <div className="text-xs text-brand-secondary/40">
+                                  {field.field_name} • {field.field_type} • {field.is_required ? 'إلزامي' : 'اختياري'}
+                                  {['full_name', 'email', 'phone_number', 'organization'].includes(field.field_name) && (
+                                    <span className="bg-brand-primary/10 text-brand-primary px-1.5 py-0.5 rounded text-[10px] font-black mr-2">حقل أساسي</span>
+                                  )}
+                                </div>
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
@@ -427,10 +432,16 @@ const SettingsPage = () => {
                                 className="p-2 text-brand-secondary/30 hover:text-brand-secondary hover:bg-white/5 rounded-xl transition-all">
                                 ✎
                               </button>
-                              <button onClick={() => handleDeleteField(field.id)}
-                                className="p-2 text-red-400/30 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all">
-                                <Trash2 size={16} />
-                              </button>
+                              {!['full_name', 'email', 'phone_number', 'organization'].includes(field.field_name) ? (
+                                <button onClick={() => handleDeleteField(field.id)}
+                                  className="p-2 text-red-400/30 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all">
+                                  <Trash2 size={16} />
+                                </button>
+                              ) : (
+                                <span className="p-2 text-white/10 text-xs select-none" title="لا يمكن حذف الحقول الأساسية، يمكنك إخفاؤها">
+                                  🔒
+                                </span>
+                              )}
                             </div>
                           </div>
                           {/* نموذج التعديل المضمّن */}
@@ -470,9 +481,9 @@ const SettingsPage = () => {
                       ))}
                     </div>
 
-                    <div className="flex items-start gap-3 p-4 bg-amber-500/5 border border-amber-500/20 rounded-2xl text-amber-500 text-xs">
-                      <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                      <p>الحقول الأساسية (الاسم، البريد، الهاتف، المؤسسة) مدمجة في النظام. استخدم هذه الحقول لبيانات إضافية خاصة بفعاليتك.</p>
+                    <div className="flex items-start gap-3 p-4 bg-brand-primary/5 border border-brand-primary/10 rounded-2xl text-brand-secondary/70 text-xs">
+                      <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-brand-primary" />
+                      <p>💡 يمكنك تعديل مسميات الحقول الأساسية (الاسم، البريد، الهاتف، المؤسسة) وتعيينها كإلزامية/اختيارية، أو إخفاؤها تماماً من نموذج التسجيل حسب رغبتك.</p>
                     </div>
                   </div>
                 </SettingsSection>

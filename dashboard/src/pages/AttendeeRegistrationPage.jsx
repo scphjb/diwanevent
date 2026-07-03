@@ -535,67 +535,79 @@ const AttendeeRegistrationPage = () => {
                 </div>
               </div>
 
-              {/* الاسم */}
-              <div className="space-y-2">
-                <label className="text-xs font-black uppercase tracking-widest text-white/30">الاسم الكامل *</label>
-                <div className="relative group">
-                  <User className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-amber-500" size={18} />
-                  <input required type="text" value={formData.full_name} onChange={e => setFormData({ ...formData, full_name: e.target.value })} placeholder="الاسم الثلاثي..." className="w-full bg-white/5 border border-white/10 rounded-2xl pr-12 pl-6 py-4 outline-none focus:border-amber-500 transition-all font-bold text-right" />
-                </div>
-              </div>
+              {/* الحقول الديناميكية (الأساسية والمخصصة) مرتبة */}
+              {customFields.map(field => {
+                let IconComponent = Sparkles;
+                if (field.field_name === 'full_name') IconComponent = User;
+                else if (field.field_name === 'email') IconComponent = Mail;
+                else if (field.field_name === 'phone_number') IconComponent = Phone;
+                else if (field.field_name === 'organization') IconComponent = Building;
 
-              {/* الصفة المهنية */}
-              <div className="space-y-2">
-                <label className="text-xs font-black uppercase tracking-widest text-white/30">الصفة المهنية / المؤسسة *</label>
-                <div className="relative group">
-                  <Building className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-amber-500" size={18} />
-                  <input required type="text" value={formData.organization} onChange={e => setFormData({ ...formData, organization: e.target.value })} placeholder="الصفة المهنية أو المؤسسة..." className="w-full bg-white/5 border border-white/10 rounded-2xl pr-12 pl-6 py-4 outline-none focus:border-amber-500 transition-all font-bold text-right" />
-                </div>
-              </div>
+                const isSystemField = ['full_name', 'email', 'phone_number', 'organization'].includes(field.field_name);
+                const val = isSystemField ? (formData[field.field_name] || '') : (customValues[field.field_name] || '');
 
-              {/* البريد والهاتف (بيانات إلزامية) */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-xs font-black uppercase tracking-widest text-white/30">البريد الإلكتروني *</label>
-                  <div className="relative group">
-                    <Mail className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-amber-500" size={16} />
-                    <input required type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} placeholder="email@example.com" className="w-full bg-white/5 border border-white/10 rounded-2xl pr-11 pl-4 py-4 outline-none focus:border-amber-500 transition-all font-bold text-right text-sm" />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-black uppercase tracking-widest text-white/30">رقم الهاتف (بالصيغة الدولية) *</label>
-                  <div className="relative group">
-                    <Phone className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-amber-500" size={16} />
-                    <input required type="tel" value={formData.phone_number} onChange={e => setFormData({ ...formData, phone_number: e.target.value })} placeholder="+966500000000" className="w-full bg-white/5 border border-white/10 rounded-2xl pr-11 pl-4 py-4 outline-none focus:border-amber-500 transition-all font-bold text-right text-sm" />
-                  </div>
-                </div>
-              </div>
+                const handleValChange = (e) => {
+                  const value = e.target.value;
+                  if (isSystemField) {
+                    setFormData(prev => ({ ...prev, [field.field_name]: value }));
+                  } else {
+                    setCustomValues(prev => ({ ...prev, [field.field_name]: value }));
+                  }
+                };
 
-              {/* الاختصاص والعنوان المهني (بيانات إضافية اختيارية) */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-xs font-black uppercase tracking-widest text-white/30">الاختصاص (اختياري)</label>
-                  <div className="relative group">
-                    <Sparkles className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-amber-500" size={16} />
-                    <input type="text" value={formData.department} onChange={e => setFormData({ ...formData, department: e.target.value })} placeholder="التخصص أو مجال العمل..." className="w-full bg-white/5 border border-white/10 rounded-2xl pr-11 pl-4 py-4 outline-none focus:border-amber-500 transition-all font-bold text-right text-sm" />
+                return (
+                  <div key={field.id} className="space-y-2">
+                    <label className="text-xs font-black uppercase tracking-widest text-white/30">
+                      {field.display_label} {field.is_required ? '*' : ''}
+                    </label>
+                    <div className="relative group">
+                      <IconComponent className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-amber-500" size={16} />
+                      
+                      {field.field_type === 'select' ? (
+                        <select
+                          required={field.is_required}
+                          value={val}
+                          onChange={handleValChange}
+                          className="w-full bg-white/5 border border-white/10 rounded-2xl pr-11 pl-4 py-4 outline-none focus:border-amber-500 transition-all font-bold text-right text-sm appearance-none cursor-pointer"
+                        >
+                          <option value="" className="bg-[#050B18] text-white/40">اختر من القائمة...</option>
+                          {(field.options || []).map((opt, i) => (
+                            <option key={i} value={opt} className="bg-[#050B18] text-white">
+                              {opt}
+                            </option>
+                          ))}
+                        </select>
+                      ) : field.field_type === 'boolean' ? (
+                        <div className="w-full bg-white/5 border border-white/10 rounded-2xl pr-11 pl-4 py-4 flex items-center justify-between">
+                          <span className="font-bold text-sm text-white/70">نعم</span>
+                          <input
+                            type="checkbox"
+                            checked={!!val}
+                            onChange={(e) => {
+                              const value = e.target.checked;
+                              if (isSystemField) {
+                                setFormData(prev => ({ ...prev, [field.field_name]: value }));
+                              } else {
+                                setCustomValues(prev => ({ ...prev, [field.field_name]: value }));
+                              }
+                            }}
+                            className="w-5 h-5 rounded border-white/10 accent-amber-500"
+                          />
+                        </div>
+                      ) : (
+                        <input
+                          required={field.is_required}
+                          type={field.field_type === 'email' ? 'email' : field.field_type === 'number' ? 'number' : field.field_type === 'date' ? 'date' : 'text'}
+                          value={val}
+                          onChange={handleValChange}
+                          placeholder={field.placeholder || `أدخل ${field.display_label}...`}
+                          className="w-full bg-white/5 border border-white/10 rounded-2xl pr-11 pl-4 py-4 outline-none focus:border-amber-500 transition-all font-bold text-right text-sm"
+                        />
+                      )}
+                    </div>
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-black uppercase tracking-widest text-white/30">العنوان المهني (اختياري)</label>
-                  <div className="relative group">
-                    <MapPin className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-amber-500" size={16} />
-                    <input type="text" value={formData.professional_address} onChange={e => setFormData({ ...formData, professional_address: e.target.value })} placeholder="مقر العمل أو العنوان المهني..." className="w-full bg-white/5 border border-white/10 rounded-2xl pr-11 pl-4 py-4 outline-none focus:border-amber-500 transition-all font-bold text-right text-sm" />
-                  </div>
-                </div>
-              </div>
-
-              {/* الحقول المخصصة */}
-              {customFields.map(field => (
-                <div key={field.id} className="space-y-2">
-                  <label className="text-xs font-black uppercase tracking-widest text-white/30">{field.display_label} {field.is_required ? '*' : ''}</label>
-                  <input required={field.is_required} type={field.field_type} value={customValues[field.field_name] || ''} onChange={e => setCustomValues({ ...customValues, [field.field_name]: e.target.value })} placeholder={`أدخل ${field.display_label}...`} className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 outline-none focus:border-amber-500 transition-all font-bold text-right" />
-                </div>
-              ))}
+                );
+              })}
 
 
 

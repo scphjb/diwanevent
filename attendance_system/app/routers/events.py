@@ -383,6 +383,62 @@ async def change_display_scene(
     
     return {"status": "success", "scene": scene}
 
+async def ensure_default_fields(event_id: int, db: AsyncSession):
+    from app.models.rbac import CustomFieldDefinition
+    stmt = select(CustomFieldDefinition).filter(CustomFieldDefinition.event_id == event_id)
+    res = await db.execute(stmt)
+    existing = res.scalars().all()
+    if not existing:
+        defaults = [
+            CustomFieldDefinition(
+                event_id=event_id,
+                field_name="full_name",
+                display_label="الاسم الكامل",
+                field_type="text",
+                is_required=True,
+                is_visible=True,
+                placeholder="أدخل اسمك الكامل...",
+                sort_order=1
+            ),
+            CustomFieldDefinition(
+                event_id=event_id,
+                field_name="email",
+                display_label="البريد الإلكتروني",
+                field_type="email",
+                is_required=True,
+                is_visible=True,
+                placeholder="example@domain.com",
+                sort_order=2
+            ),
+            CustomFieldDefinition(
+                event_id=event_id,
+                field_name="phone_number",
+                display_label="رقم الهاتف",
+                field_type="text",
+                is_required=True,
+                is_visible=True,
+                placeholder="0XXXXXXXXX",
+                sort_order=3
+            ),
+            CustomFieldDefinition(
+                event_id=event_id,
+                field_name="organization",
+                display_label="المؤسسة / جهة العمل",
+                field_type="text",
+                is_required=False,
+                is_visible=True,
+                placeholder="الشركة، الجامعة، إلخ...",
+                sort_order=4
+            )
+        ]
+        db.add_all(defaults)
+        await db.commit()
+        # Re-fetch
+        stmt = select(CustomFieldDefinition).filter(CustomFieldDefinition.event_id == event_id).order_by(CustomFieldDefinition.sort_order)
+        res = await db.execute(stmt)
+        existing = res.scalars().all()
+    return existing
+
 @router.get("/{event_id}/registration-fields")
 async def get_registration_fields(
     event_id: int,
@@ -392,13 +448,10 @@ async def get_registration_fields(
     جلب حقول التسجيل المرئية فقط (للعموم — بدون مصادقة).
     يرجع فقط الحقول ذات is_visible=True مرتبة حسب sort_order.
     """
-    from app.models.rbac import CustomFieldDefinition
-    stmt = select(CustomFieldDefinition).filter(
-        CustomFieldDefinition.event_id == event_id,
-        CustomFieldDefinition.is_visible == True
-    ).order_by(CustomFieldDefinition.sort_order)
-    result = await db.execute(stmt)
-    fields = result.scalars().all()
+    fields = await ensure_default_fields(event_id, db)
+    visible_fields = [f for f in fields if f.is_visible]
+    # Sort by sort_order
+    visible_fields.sort(key=lambda x: x.sort_order or 0)
 
     return [
         {
@@ -412,7 +465,7 @@ async def get_registration_fields(
             "placeholder":   f.placeholder,
             "sort_order":    f.sort_order,
         }
-        for f in fields
+        for f in visible_fields
     ]
 
 
@@ -425,16 +478,14 @@ async def get_registration_fields_admin(
     """
     جلب جميع حقول التسجيل (مرئية ومخفية) لوحة الإدارة.
     """
-    from app.models.rbac import CustomFieldDefinition
     event = await db.get(Event, event_id)
     if not event or (current_user.role != "super_admin" and event.created_by != current_user.id):
         raise HTTPException(status_code=403, detail="Not authorized")
 
-    stmt = select(CustomFieldDefinition).filter(
-        CustomFieldDefinition.event_id == event_id
-    ).order_by(CustomFieldDefinition.sort_order)
-    result = await db.execute(stmt)
-    fields = result.scalars().all()
+    fields = await ensure_default_fields(event_id, db)
+    # Sort by sort_order
+    fields_list = list(fields)
+    fields_list.sort(key=lambda x: x.sort_order or 0)
 
     return [
         {
@@ -450,7 +501,7 @@ async def get_registration_fields_admin(
             "sort_order":     f.sort_order,
             "validation_regex": f.validation_regex,
         }
-        for f in fields
+        for f in fields_list
     ]
 
 
@@ -606,6 +657,12 @@ async def delete_registration_field(
     event = await db.get(Event, event_id)
     if not event or (current_user.role != "super_admin" and event.created_by != current_user.id):
         raise HTTPException(status_code=403, detail="Not authorized")
+
+    if field.field_name in ["full_name", "email", "phone_number", "organization"]:
+        raise HTTPException(
+            status_code=400,
+            detail="لا يمكن حذف الحقول الأساسية للنظام. يمكنك إخفاؤها من العرض بدلاً من ذلك."
+        )
 
     await db.delete(field)
     await db.commit()
