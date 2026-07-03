@@ -108,15 +108,21 @@ async def get_public_event(
     # بيانات إضافية للتسجيل — فقط إذا كان مفتوحاً
     if event.registration_enabled:
         public_info.update({
-            "require_payment": event.require_payment,
-            "ticket_price": float(event.ticket_price or 0),
-            "currency": event.currency or "DZD",
-            "payment_gateway": event.payment_gateway,
-            "welcome_title": event.welcome_title,
-            "welcome_subtitle": event.welcome_subtitle,
-            "show_countdown": event.show_countdown,
-            "event_timestamp": event.event_timestamp,
-            "organizer_text": event.organizer_text,
+            "require_payment":        event.require_payment,
+            "ticket_price":           float(event.ticket_price or 0),
+            "currency":               event.currency or "DZD",
+            "payment_gateway":        event.payment_gateway,
+            "allow_transfer_payment": getattr(event, "allow_transfer_payment", False) or False,
+            "bank_name":              getattr(event, "bank_name", None),
+            "bank_account_number":    getattr(event, "bank_account_number", None),
+            "bank_account_name":      getattr(event, "bank_account_name", None),
+            "bank_instructions":      getattr(event, "bank_instructions", None),
+            "welcome_title":          event.welcome_title,
+            "welcome_subtitle":       event.welcome_subtitle,
+            "show_countdown":         event.show_countdown,
+            "event_timestamp":        event.event_timestamp,
+            "organizer_text":         event.organizer_text,
+            "verify_email_on_register": event.verify_email_on_register,
         })
 
     return public_info
@@ -382,25 +388,71 @@ async def get_registration_fields(
     event_id: int,
     db: AsyncSession = Depends(get_db)
 ):
-    """جلب الحقول المخصصة المطلوبة للتسجيل في فعالية معينة (مفتوح للعموم)"""
+    """
+    جلب حقول التسجيل المرئية فقط (للعموم — بدون مصادقة).
+    يرجع فقط الحقول ذات is_visible=True مرتبة حسب sort_order.
+    """
     from app.models.rbac import CustomFieldDefinition
     stmt = select(CustomFieldDefinition).filter(
-        CustomFieldDefinition.event_id == event_id
-    )
+        CustomFieldDefinition.event_id == event_id,
+        CustomFieldDefinition.is_visible == True
+    ).order_by(CustomFieldDefinition.sort_order)
     result = await db.execute(stmt)
     fields = result.scalars().all()
-    
+
     return [
         {
-            "id": f.id,
-            "field_name": f.field_name,
+            "id":            f.id,
+            "field_name":    f.field_name,
             "display_label": f.display_label,
-            "field_type": f.field_type,
-            "is_required": f.is_required,
-            "options": f.options
+            "field_type":    f.field_type,
+            "is_required":   f.is_required,
+            "options":        f.options,
+            "default_value": f.default_value,
+            "placeholder":   f.placeholder,
+            "sort_order":    f.sort_order,
         }
         for f in fields
     ]
+
+
+@router.get("/{event_id}/registration-fields/admin")
+async def get_registration_fields_admin(
+    event_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    جلب جميع حقول التسجيل (مرئية ومخفية) لوحة الإدارة.
+    """
+    from app.models.rbac import CustomFieldDefinition
+    event = await db.get(Event, event_id)
+    if not event or (current_user.role != "super_admin" and event.created_by != current_user.id):
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    stmt = select(CustomFieldDefinition).filter(
+        CustomFieldDefinition.event_id == event_id
+    ).order_by(CustomFieldDefinition.sort_order)
+    result = await db.execute(stmt)
+    fields = result.scalars().all()
+
+    return [
+        {
+            "id":             f.id,
+            "field_name":     f.field_name,
+            "display_label":  f.display_label,
+            "field_type":     f.field_type,
+            "is_required":    f.is_required,
+            "is_visible":     f.is_visible,
+            "options":         f.options,
+            "default_value":  f.default_value,
+            "placeholder":    f.placeholder,
+            "sort_order":     f.sort_order,
+            "validation_regex": f.validation_regex,
+        }
+        for f in fields
+    ]
+
 
 @router.post("/{event_id}/registration-fields")
 async def create_registration_field(
@@ -414,19 +466,123 @@ async def create_registration_field(
     event = await db.get(Event, event_id)
     if not event or (current_user.role != "super_admin" and event.created_by != current_user.id):
         raise HTTPException(status_code=403, detail="Not authorized")
-    
+
+    # تحديد sort_order تلقائياً (آخر حقل + 1)
+    from sqlalchemy import func as sql_func
+    max_stmt = select(sql_func.max(CustomFieldDefinition.sort_order)).filter(
+        CustomFieldDefinition.event_id == event_id
+    )
+    max_res = await db.execute(max_stmt)
+    max_order = max_res.scalar_one() or 0
+
     new_field = CustomFieldDefinition(
         event_id=event_id,
         field_name=data.get("field_name"),
         display_label=data.get("display_label"),
         field_type=data.get("field_type", "text"),
         is_required=data.get("is_required", False),
-        options=data.get("options")
+        is_visible=data.get("is_visible", True),
+        options=data.get("options"),
+        default_value=data.get("default_value"),
+        placeholder=data.get("placeholder"),
+        sort_order=max_order + 1,
+        validation_regex=data.get("validation_regex"),
     )
     db.add(new_field)
     await db.commit()
     await db.refresh(new_field)
-    return new_field
+    return {
+        "id":             new_field.id,
+        "field_name":     new_field.field_name,
+        "display_label":  new_field.display_label,
+        "field_type":     new_field.field_type,
+        "is_required":    new_field.is_required,
+        "is_visible":     new_field.is_visible,
+        "options":         new_field.options,
+        "default_value":  new_field.default_value,
+        "placeholder":    new_field.placeholder,
+        "sort_order":     new_field.sort_order,
+    }
+
+
+@router.put("/{event_id}/registration-fields/{field_id}")
+async def update_registration_field(
+    event_id: int,
+    field_id: int,
+    data: dict,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """تحديث حقل تسجيل (اسم، نوع، إلزامي، إظهار، خيارات...) """
+    from app.models.rbac import CustomFieldDefinition
+    event = await db.get(Event, event_id)
+    if not event or (current_user.role != "super_admin" and event.created_by != current_user.id):
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    stmt = select(CustomFieldDefinition).filter(
+        CustomFieldDefinition.id == field_id,
+        CustomFieldDefinition.event_id == event_id
+    )
+    res = await db.execute(stmt)
+    field = res.scalars().first()
+    if not field:
+        raise HTTPException(status_code=404, detail="الحقل غير موجود")
+
+    updatable = ["display_label", "field_name", "field_type", "is_required",
+                 "is_visible", "options", "default_value", "placeholder", "validation_regex"]
+    for key in updatable:
+        if key in data:
+            setattr(field, key, data[key])
+
+    await db.commit()
+    await db.refresh(field)
+    return {
+        "id":             field.id,
+        "field_name":     field.field_name,
+        "display_label":  field.display_label,
+        "field_type":     field.field_type,
+        "is_required":    field.is_required,
+        "is_visible":     field.is_visible,
+        "options":         field.options,
+        "default_value":  field.default_value,
+        "placeholder":    field.placeholder,
+        "sort_order":     field.sort_order,
+    }
+
+
+@router.put("/{event_id}/registration-fields/reorder")
+async def reorder_registration_fields(
+    event_id: int,
+    data: dict,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    إعادة ترتيب حقول التسجيل بعد drag & drop.
+    يستقبل {"order": [id1, id2, id3, ...]} بترتيب الظهور المطلوب.
+    """
+    from app.models.rbac import CustomFieldDefinition
+    event = await db.get(Event, event_id)
+    if not event or (current_user.role != "super_admin" and event.created_by != current_user.id):
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    ordered_ids = data.get("order", [])
+    if not isinstance(ordered_ids, list):
+        raise HTTPException(status_code=400, detail="يجب أن تكون قائمة IDs")
+
+    for idx, field_id in enumerate(ordered_ids):
+        stmt = select(CustomFieldDefinition).filter(
+            CustomFieldDefinition.id == field_id,
+            CustomFieldDefinition.event_id == event_id
+        )
+        res = await db.execute(stmt)
+        field = res.scalars().first()
+        if field:
+            field.sort_order = idx
+
+    await db.commit()
+    return {"status": "success", "reordered": len(ordered_ids)}
+
 
 @router.delete("/{event_id}/registration-fields/{field_id}")
 async def delete_registration_field(
@@ -437,22 +593,20 @@ async def delete_registration_field(
 ):
     """حذف حقل من نموذج التسجيل"""
     from app.models.rbac import CustomFieldDefinition
-    
+
     stmt = select(CustomFieldDefinition).filter(
         CustomFieldDefinition.id == field_id,
         CustomFieldDefinition.event_id == event_id
     )
     res = await db.execute(stmt)
     field = res.scalars().first()
-    
     if not field:
         raise HTTPException(status_code=404, detail="Field not found")
-    
-    # تحقق من الصلاحية عبر الفعالية
+
     event = await db.get(Event, event_id)
     if not event or (current_user.role != "super_admin" and event.created_by != current_user.id):
         raise HTTPException(status_code=403, detail="Not authorized")
-    
+
     await db.delete(field)
     await db.commit()
     return {"status": "success"}

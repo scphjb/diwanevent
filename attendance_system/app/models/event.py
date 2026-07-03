@@ -78,6 +78,13 @@ class Event(Base, TimestampMixin):
     announcement_text = Column(Text, default='')
     registration_enabled = Column(Boolean, default=False)
     verify_email_on_register = Column(Boolean, default=False)
+
+    # Bank Transfer Payment
+    allow_transfer_payment = Column(Boolean, default=False)   # السماح بالدفع عبر الحوالة
+    bank_name              = Column(String,  nullable=True)   # اسم البنك
+    bank_account_number    = Column(String,  nullable=True)   # رقم الحساب البنكي
+    bank_account_name      = Column(String,  nullable=True)   # اسم صاحب الحساب
+    bank_instructions      = Column(Text,    nullable=True)   # تعليمات للمسجّلين
     
     # Relationships
     participants = relationship("Participant", back_populates="event", cascade="all, delete-orphan")

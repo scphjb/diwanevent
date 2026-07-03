@@ -70,6 +70,7 @@ const AttendeeRegistrationPage = () => {
   const [error, setError] = useState(null);
   const [registrationResult, setRegistrationResult] = useState(null);
   const [showRolePicker, setShowRolePicker] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('online'); // 'online' | 'transfer'
 
   useEffect(() => {
     const fetchData = async () => {
@@ -84,7 +85,8 @@ const AttendeeRegistrationPage = () => {
           const fieldsRes = await api.get(`events/${eventId}/registration-fields`).catch(() => ({ data: [] }));
           setCustomFields(fieldsRes.data);
           const initialCustom = {};
-          fieldsRes.data.forEach(f => initialCustom[f.field_name] = '');
+          // تعبئة القيم الافتراضية تلقائياً
+          fieldsRes.data.forEach(f => { initialCustom[f.field_name] = f.default_value || ''; });
           setCustomValues(initialCustom);
         }
       } catch (err) {
@@ -132,33 +134,37 @@ const AttendeeRegistrationPage = () => {
         phone_number: formData.phone_number,
         department: formData.department || null,
         verification_code: event.verify_email_on_register ? verificationCode : null,
+        payment_method: paymentMethod,
         custom_values: { ...customValues, role: formData.role, professional_address: formData.professional_address }
       });
 
       const result = regResponse.data;
       setRegistrationResult(result);
 
-      // 2. إذا مدفوع → توجيه للدفع
-      if (event.require_payment && event.ticket_price > 0 && event.payment_gateway && event.payment_gateway !== 'none') {
-        const payResponse = await api.post('payments/create-session', {
-          event_id: parseInt(eventId),
-          participant_id: result.participant_id,
-          success_url: `${window.location.origin}/p/${eventId}/${result.participant_id}?status=paid`,
-          cancel_url: window.location.href
-        });
-        if (payResponse.data.checkout_url) {
-          window.location.href = payResponse.data.checkout_url;
+      // 2. منطق الدفع
+      if (event.require_payment && event.ticket_price > 0) {
+        // الحوالة البنكية — تسجيل بحالة مقيدة
+        if (paymentMethod === 'transfer' && event.allow_transfer_payment) {
+          setStep('transfer_registered');
           return;
+        }
+        // الدفع الإلكتروني
+        if (event.payment_gateway && event.payment_gateway !== 'none') {
+          const payResponse = await api.post('payments/create-session', {
+            event_id: parseInt(eventId),
+            participant_id: result.participant_id,
+            success_url: `${window.location.origin}/p/${eventId}/${result.participant_id}?status=paid`,
+            cancel_url: window.location.href
+          });
+          if (payResponse.data.checkout_url) {
+            window.location.href = payResponse.data.checkout_url;
+            return;
+          }
         }
       }
 
-      // 3. التحقق مما إذا كان المشارك مسجلاً مسبقاً (تم تأكيده) أو يحتاج موافقة
       if (result.merged) {
-        if (formData.email) {
-          setStep('otp_sent');
-        } else {
-          setStep('success');
-        }
+        setStep(formData.email ? 'otp_sent' : 'success');
       } else {
         setStep('pending_approval');
       }
@@ -229,7 +235,74 @@ const AttendeeRegistrationPage = () => {
     );
   }
 
-  // ─── شاشة النجاح ─────────────────────────────────────────────────
+  // ─── شاشة الحوالة البنكية ─────────────────────────────────────────
+  if (step === 'transfer_registered') {
+    return (
+      <div className="min-h-screen bg-[#050B18] flex items-center justify-center p-6" dir="rtl">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-white/5 border border-white/10 rounded-[40px] p-10 max-w-lg w-full text-center"
+        >
+          <div className="text-6xl mb-5">🏦</div>
+          <h1 className="text-3xl font-black text-white mb-2">أكمل عملية التسديد</h1>
+          <p className="text-brand-secondary/60 mb-6 text-sm leading-relaxed">
+            تم استلام طلب تسجيلك. يرجى تحويل مبلغ الاشتراك إلى الحساب أدناه ثم رفع صورة وصل التحويل من بوابتك.
+          </p>
+
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-3xl p-6 mb-6 text-right space-y-3">
+            {event.bank_name && (
+              <div className="flex justify-between items-center">
+                <span className="text-white/40 text-sm">البنك</span>
+                <span className="font-bold text-white">{event.bank_name}</span>
+              </div>
+            )}
+            {event.bank_account_name && (
+              <div className="flex justify-between items-center">
+                <span className="text-white/40 text-sm">اسم الحساب</span>
+                <span className="font-bold text-white">{event.bank_account_name}</span>
+              </div>
+            )}
+            {event.bank_account_number && (
+              <div className="flex justify-between items-center">
+                <span className="text-white/40 text-sm">رقم الحساب (RIB)</span>
+                <span className="font-black text-amber-400 font-mono text-sm tracking-widest">{event.bank_account_number}</span>
+              </div>
+            )}
+            <div className="flex justify-between items-center border-t border-white/10 pt-3">
+              <span className="text-white/40 text-sm">المبلغ</span>
+              <span className="font-black text-amber-400 text-xl">{event.ticket_price} {event.currency || 'DZD'}</span>
+            </div>
+          </div>
+
+          {event.bank_instructions && (
+            <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4 mb-6 text-right">
+              <p className="text-blue-300/80 text-sm leading-relaxed">💡 {event.bank_instructions}</p>
+            </div>
+          )}
+
+          {registrationResult && (
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 mb-6">
+              <p className="text-white/40 text-xs mb-1">رقم مشاركتك (اذكره في وصل التحويل)</p>
+              <p className="font-mono font-black text-white text-2xl tracking-widest">{registrationResult.order_num}</p>
+            </div>
+          )}
+
+          <p className="text-white/40 text-xs mb-6">
+            بعد التحويل، سجّل دخولك للبوابة برقمك وارفع صورة الوصل. سيتم مراجعتها وتفعيل حسابك خلال 24 ساعة.
+          </p>
+          <button
+            onClick={() => navigate('/')}
+            className="w-full h-12 rounded-2xl bg-white/5 hover:bg-white/10 text-white font-bold text-sm transition-all border border-white/10"
+          >
+            العودة للصفحة الرئيسية
+          </button>
+        </motion.div>
+      </div>
+    );
+  }
+
+
   if (step === 'success' || step === 'otp_sent') {
     return (
       <div className="min-h-screen bg-[#050B18] flex items-center justify-center p-6" dir="rtl">
@@ -575,10 +648,38 @@ const AttendeeRegistrationPage = () => {
                 <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400 text-sm font-bold text-center">{error}</div>
               )}
 
+              {/* اختيار طريقة الدفع */}
+              {event.require_payment && event.ticket_price > 0 && event.allow_transfer_payment && (
+                <div className="space-y-3">
+                  <p className="text-sm font-bold text-brand-secondary/50">طريقة التسديد</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    {event.payment_gateway && event.payment_gateway !== 'none' && (
+                      <button type="button"
+                        onClick={() => setPaymentMethod('online')}
+                        className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 font-bold transition-all text-sm ${paymentMethod === 'online' ? 'border-amber-500 bg-amber-500/10 text-amber-400' : 'border-white/10 bg-white/3 text-white/40 hover:bg-white/8'}`}>
+                        <span className="text-2xl">💳</span>
+                        <span>دفع إلكتروني</span>
+                      </button>
+                    )}
+                    <button type="button"
+                      onClick={() => setPaymentMethod('transfer')}
+                      className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 font-bold transition-all text-sm ${paymentMethod === 'transfer' ? 'border-amber-500 bg-amber-500/10 text-amber-400' : 'border-white/10 bg-white/3 text-white/40 hover:bg-white/8'}`}>
+                      <span className="text-2xl">🏦</span>
+                      <span>حوالة بنكية</span>
+                    </button>
+                  </div>
+                  {paymentMethod === 'transfer' && (
+                    <p className="text-xs text-amber-500/60 bg-amber-500/5 border border-amber-500/10 rounded-xl p-3">
+                      ستُسجَّل بحالة مؤقتة. بعد التسجيل، حوّل المبلغ وارفع صورة الوصل من بوابتك لتفعيل حسابك.
+                    </p>
+                  )}
+                </div>
+              )}
+
               <Button type="submit" disabled={submitting || sendingOtp || !event.registration_enabled} className="w-full h-16 bg-amber-500 hover:bg-amber-600 text-brand-dark rounded-[24px] text-lg font-black flex items-center justify-center gap-3 shadow-2xl shadow-amber-500/20 mt-2">
                 {submitting || sendingOtp
                   ? <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} className="w-6 h-6 border-4 border-brand-dark/20 border-t-brand-dark rounded-full" />
-                  : <>{showOtpVerification ? 'تأكيد الرمز وإتمام التسجيل 🎟' : (event.require_payment ? '💳 تأكيد التسجيل والانتقال للدفع' : '🎟 إتمام التسجيل مجاناً')}</>
+                  : <>{showOtpVerification ? 'تأكيد الرمز وإتمام التسجيل 🎟' : (event.require_payment && paymentMethod === 'transfer' ? '🏦 تسجيل والانتقال للحوالة' : event.require_payment ? '💳 تأكيد التسجيل والانتقال للدفع' : '🎟 إتمام التسجيل مجاناً')}</>
                 }
               </Button>
 

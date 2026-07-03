@@ -63,19 +63,15 @@ const SettingsPage = () => {
   const [loading, setLoading] = useState(true);
   const { selectedEventId: eventId } = useEvent();
 
-  // State for new field
-  const [newField, setNewField] = useState({
-    display_label: '',
-    field_type: 'text',
-    is_required: false
-  });
+  const [newField, setNewField] = useState({ display_label: '', field_name: '', field_type: 'text', is_required: true, is_visible: true, placeholder: '', default_value: '', options: '' });
+  const [editingField, setEditingField] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const [settingsData, fieldsData, hallsData] = await Promise.all([
           eventService.getEventSettings(eventId),
-          api.get(`events/${eventId}/registration-fields`),
+          api.get(`events/${eventId}/registration-fields/admin`),
           api.get(`events/${eventId}/halls`)
         ]);
         setSettings(settingsData);
@@ -111,32 +107,36 @@ const SettingsPage = () => {
   const handleAddField = async () => {
     if (!newField.display_label) return;
     try {
-      const field_name = `custom_${Math.random().toString(36).substr(2, 9)}`;
-      const res = await api.post(`events/${eventId}/registration-fields`, {
-        ...newField,
-        field_name
-      });
+      const field_name = newField.field_name.trim() || `field_${Math.random().toString(36).substr(2,7)}`;
+      const payload = { ...newField, field_name, options: newField.field_type === 'select' && newField.options ? newField.options.split(',').map(o => o.trim()) : undefined };
+      const res = await api.post(`events/${eventId}/registration-fields`, payload);
       setCustomFields([...customFields, res.data]);
-      setNewField({ display_label: '', field_type: 'text', is_required: false });
-      showToast(t('settings.registration.add_success', 'تم إضافة الحقل'));
-    } catch (err) {
-      showError(t('settings.registration.add_error', "فشل إضافة الحقل"));
-    }
+      setNewField({ display_label: '', field_name: '', field_type: 'text', is_required: true, is_visible: true, placeholder: '', default_value: '', options: '' });
+      showToast('تم إضافة الحقل');
+    } catch (err) { showError('فشل إضافة الحقل'); }
+  };
+
+  const handleUpdateField = async (fieldId, data) => {
+    try {
+      const res = await api.put(`events/${eventId}/registration-fields/${fieldId}`, data);
+      setCustomFields(customFields.map(f => f.id === fieldId ? res.data : f));
+      setEditingField(null);
+      showToast('تم حفظ التعديلات');
+    } catch (err) { showError('فشل حفظ التعديلات'); }
+  };
+
+  const handleToggleVisibility = async (field) => {
+    await handleUpdateField(field.id, { is_visible: !field.is_visible });
   };
 
   const handleDeleteField = async (fieldId) => {
-    const result = await showConfirm(
-      t('settings.registration.delete_confirm', "هل أنت متأكد من حذف هذا الحقل؟"),
-      t('settings.registration.delete_desc', "سيؤدي هذا لحذف البيانات المرتبطة بهذا الحقل لجميع المشاركين.")
-    );
+    const result = await showConfirm('هل أنت متأكد من حذف هذا الحقل؟', 'سيُحذف نهائياً ولا يمكن التراجع.');
     if (!result.isConfirmed) return;
     try {
       await api.delete(`events/${eventId}/registration-fields/${fieldId}`);
       setCustomFields(customFields.filter(f => f.id !== fieldId));
-      showToast(t('settings.registration.delete_success', 'تم حذف الحقل'));
-    } catch (err) {
-      showError(t('settings.registration.delete_error', "فشل حذف الحقل"));
-    }
+      showToast('تم حذف الحقل');
+    } catch (err) { showError('فشل حذف الحقل'); }
   };
 
   const handleAddHall = async () => {
@@ -344,77 +344,135 @@ const SettingsPage = () => {
               )}
 
               {activeTab === 'registration' && (
-                <SettingsSection title={t('settings.registration.title', 'بناء نموذج التسجيل')} description={t('settings.registration.desc', 'حدد البيانات التي تطلبها من المشاركين عند التسجيل الذاتي.')} icon={ListPlus}>
+                <SettingsSection title="بناء نموذج التسجيل" description="أضف الحقول وتحكم في ما يظهر للمسجّلين." icon={ListPlus}>
                   <div className="space-y-6">
-                    {/* New Field Form */}
-                    <div className="bg-brand-primary/5 border border-brand-primary/10 p-6 rounded-3xl grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-                      <div className="md:col-span-1">
-                        <label className="text-xs font-bold text-brand-secondary/50 mb-2 block">{t('settings.registration.new_field_label', 'اسم الحقل (مثلاً: رقم الهاتف)')}</label>
-                        <Input 
-                          placeholder={t('settings.registration.placeholder', 'الاسم المعروض...')} 
-                          value={newField.display_label}
-                          onChange={e => setNewField({...newField, display_label: e.target.value})}
-                        />
+
+                    {/* نموذج إضافة حقل جديد */}
+                    <div className="bg-brand-primary/5 border border-brand-primary/10 p-5 rounded-3xl space-y-4">
+                      <p className="text-xs font-black text-brand-secondary/40 uppercase tracking-widest">إضافة حقل جديد</p>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div>
+                          <label className="text-xs font-bold text-brand-secondary/50 mb-1 block">التسمية الظاهرة *</label>
+                          <Input placeholder="مثال: رقم الهوية" value={newField.display_label} onChange={e => setNewField({...newField, display_label: e.target.value})} />
+                        </div>
+                        <div>
+                          <label className="text-xs font-bold text-brand-secondary/50 mb-1 block">المعرّف الداخلي</label>
+                          <Input placeholder="مثال: national_id (اختياري)" value={newField.field_name} onChange={e => setNewField({...newField, field_name: e.target.value})} />
+                        </div>
+                        <div>
+                          <label className="text-xs font-bold text-brand-secondary/50 mb-1 block">نوع الحقل</label>
+                          <select className="w-full bg-white/5 border border-white/10 rounded-xl h-12 px-4 outline-none text-brand-secondary" value={newField.field_type} onChange={e => setNewField({...newField, field_type: e.target.value})}>
+                            <option value="text">نص</option>
+                            <option value="number">رقم</option>
+                            <option value="email">بريد إلكتروني</option>
+                            <option value="date">تاريخ</option>
+                            <option value="select">قائمة منسدلة</option>
+                            <option value="boolean">نعم / لا</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-xs font-bold text-brand-secondary/50 mb-1 block">نص توجيهي (placeholder)</label>
+                          <Input placeholder="مثال: أدخل رقم هويتك..." value={newField.placeholder} onChange={e => setNewField({...newField, placeholder: e.target.value})} />
+                        </div>
+                        <div>
+                          <label className="text-xs font-bold text-brand-secondary/50 mb-1 block">قيمة افتراضية (اختياري)</label>
+                          <Input placeholder="تُملأ تلقائياً" value={newField.default_value} onChange={e => setNewField({...newField, default_value: e.target.value})} />
+                        </div>
+                        {newField.field_type === 'select' && (
+                          <div>
+                            <label className="text-xs font-bold text-brand-secondary/50 mb-1 block">خيارات القائمة (مفصولة بفاصلة)</label>
+                            <Input placeholder="الجزائر, وهران, قسنطينة" value={newField.options} onChange={e => setNewField({...newField, options: e.target.value})} />
+                          </div>
+                        )}
                       </div>
-                      <div>
-                        <label className="text-xs font-bold text-brand-secondary/50 mb-2 block">{t('settings.registration.field_type', 'نوع الحقل')}</label>
-                        <select 
-                          className="w-full bg-white/5 border border-white/10 rounded-xl h-12 px-4 outline-none text-brand-secondary"
-                          value={newField.field_type}
-                          onChange={e => setNewField({...newField, field_type: e.target.value})}
-                        >
-                          <option value="text">{t('settings.registration.types.text', 'نص (Text)')}</option>
-                          <option value="number">{t('settings.registration.types.number', 'رقم (Number)')}</option>
-                          <option value="date">{t('settings.registration.types.date', 'تاريخ (Date)')}</option>
-                        </select>
+                      <div className="flex items-center gap-6">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input type="checkbox" checked={newField.is_required} onChange={e => setNewField({...newField, is_required: e.target.checked})} className="w-4 h-4 accent-brand-primary" />
+                          <span className="text-sm font-bold">إلزامي</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input type="checkbox" checked={newField.is_visible} onChange={e => setNewField({...newField, is_visible: e.target.checked})} className="w-4 h-4 accent-brand-primary" />
+                          <span className="text-sm font-bold">ظاهر في النموذج</span>
+                        </label>
+                        <Button onClick={handleAddField} className="h-10 px-6 bg-brand-primary text-brand-dark mr-auto">
+                          <Plus className="w-4 h-4 ml-1" /> إضافة
+                        </Button>
                       </div>
-                      <div className="flex items-center gap-3 h-12">
-                        <input 
-                          type="checkbox" 
-                          id="is_req" 
-                          checked={newField.is_required}
-                          onChange={e => setNewField({...newField, is_required: e.target.checked})}
-                          className="w-5 h-5 accent-brand-primary"
-                        />
-                        <label htmlFor="is_req" className="text-sm font-bold">{t('settings.registration.is_required', 'إجباري؟')}</label>
-                      </div>
-                      <Button onClick={handleAddField} className="h-12 bg-brand-primary hover:bg-brand-primary text-brand-dark">
-                        <Plus className="w-5 h-5 mr-2" /> {t('settings.registration.add_field', 'إضافة حقل')}
-                      </Button>
                     </div>
 
-                    {/* Fields List */}
-                    <div className="space-y-3">
+                    {/* قائمة الحقول */}
+                    <div className="space-y-2">
                       {customFields.length === 0 ? (
                         <div className="p-12 text-center border-2 border-dashed border-white/5 rounded-[32px] text-brand-secondary/20 italic">
-                          {t('settings.registration.no_custom_fields', 'لا توجد حقول مخصصة حالياً. الحقول الافتراضية هي (الاسم، البريد، الجهة).')}
+                          لا توجد حقول مخصصة. أضف حقلاً من الأعلى.
                         </div>
-                      ) : (
-                        customFields.map(field => (
-                          <div key={field.id} className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-colors">
-                            <div className="flex items-center gap-4">
-                              <div className="w-10 h-10 rounded-xl bg-brand-primary/10 flex items-center justify-center text-brand-primary font-bold">
-                                {field.field_type === 'text' ? 'T' : field.field_type === 'number' ? '#' : 'D'}
+                      ) : customFields.map(field => (
+                        <div key={field.id}>
+                          <div className={`flex items-center justify-between p-4 border rounded-2xl transition-all ${ field.is_visible ? 'bg-white/5 border-white/10' : 'bg-white/2 border-white/5 opacity-50'}`}>
+                            <div className="flex items-center gap-3">
+                              <div className="w-9 h-9 rounded-lg bg-brand-primary/10 flex items-center justify-center text-brand-primary text-xs font-black">
+                                {field.field_type === 'text' ? 'Aa' : field.field_type === 'number' ? '123' : field.field_type === 'select' ? '☰' : field.field_type === 'date' ? '📅' : field.field_type === 'boolean' ? '☑' : '@'}
                               </div>
                               <div>
-                                <div className="font-bold text-white">{field.display_label}</div>
-                                <div className="text-xs text-brand-secondary/40">{field.is_required ? 'حقل إجباري' : 'حقل اختياري'} • {field.field_type}</div>
+                                <div className="font-bold text-white text-sm">{field.display_label}</div>
+                                <div className="text-xs text-brand-secondary/40">{field.field_name} • {field.field_type} • {field.is_required ? 'إلزامي' : 'اختياري'}</div>
                               </div>
                             </div>
-                            <button 
-                              onClick={() => handleDeleteField(field.id)}
-                              className="p-3 text-red-400/40 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all"
-                            >
-                              <Trash2 size={20} />
-                            </button>
+                            <div className="flex items-center gap-2">
+                              <button onClick={() => handleToggleVisibility(field)} title={field.is_visible ? 'إخفاء من النموذج' : 'إظهار في النموذج'}
+                                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${ field.is_visible ? 'bg-green-500/10 text-green-400 hover:bg-red-500/10 hover:text-red-400' : 'bg-white/5 text-white/30 hover:bg-green-500/10 hover:text-green-400'}`}>
+                                {field.is_visible ? '👁 ظاهر' : '🙈 مخفي'}
+                              </button>
+                              <button onClick={() => setEditingField(editingField?.id === field.id ? null : {...field, options: Array.isArray(field.options) ? field.options.join(', ') : ''})}
+                                className="p-2 text-brand-secondary/30 hover:text-brand-secondary hover:bg-white/5 rounded-xl transition-all">
+                                ✎
+                              </button>
+                              <button onClick={() => handleDeleteField(field.id)}
+                                className="p-2 text-red-400/30 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all">
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
                           </div>
-                        ))
-                      )}
+                          {/* نموذج التعديل المضمّن */}
+                          {editingField?.id === field.id && (
+                            <div className="mt-1 p-4 bg-brand-primary/5 border border-brand-primary/20 rounded-2xl grid grid-cols-2 gap-3">
+                              <div>
+                                <label className="text-xs font-bold text-brand-secondary/50 mb-1 block">التسمية</label>
+                                <Input value={editingField.display_label} onChange={e => setEditingField({...editingField, display_label: e.target.value})} />
+                              </div>
+                              <div>
+                                <label className="text-xs font-bold text-brand-secondary/50 mb-1 block">النص التوجيهي</label>
+                                <Input value={editingField.placeholder || ''} onChange={e => setEditingField({...editingField, placeholder: e.target.value})} />
+                              </div>
+                              <div>
+                                <label className="text-xs font-bold text-brand-secondary/50 mb-1 block">القيمة الافتراضية</label>
+                                <Input value={editingField.default_value || ''} onChange={e => setEditingField({...editingField, default_value: e.target.value})} />
+                              </div>
+                              {editingField.field_type === 'select' && (
+                                <div>
+                                  <label className="text-xs font-bold text-brand-secondary/50 mb-1 block">خيارات القائمة</label>
+                                  <Input value={editingField.options || ''} onChange={e => setEditingField({...editingField, options: e.target.value})} placeholder="خيار1, خيار2" />
+                                </div>
+                              )}
+                              <div className="col-span-2 flex items-center gap-4">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                  <input type="checkbox" checked={editingField.is_required} onChange={e => setEditingField({...editingField, is_required: e.target.checked})} className="w-4 h-4 accent-brand-primary" />
+                                  <span className="text-sm font-bold">إلزامي</span>
+                                </label>
+                                <Button onClick={() => handleUpdateField(field.id, { ...editingField, options: editingField.field_type === 'select' && editingField.options ? editingField.options.split(',').map(o=>o.trim()) : editingField.options })} className="h-9 px-5 bg-brand-primary text-brand-dark text-sm">
+                                  حفظ
+                                </Button>
+                                <button onClick={() => setEditingField(null)} className="text-white/30 text-sm hover:text-white/60">إلغاء</button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
                     </div>
 
-                    <div className="flex items-start gap-4 p-4 bg-amber-500/5 border border-amber-500/20 rounded-2xl text-amber-500 text-xs leading-relaxed">
-                      <AlertCircle className="w-5 h-5 shrink-0" />
-                      <p>{t('settings.registration.note', 'ملاحظة: الحقول الأساسية (الاسم الكامل، البريد الإلكتروني، الجهة) هي حقول ثابتة في النظام لضمان عمل التقارير والبطاقات بشكل صحيح. الحقول التي تضيفها هنا ستظهر كبيانات إضافية في ملف المشارك.')}</p>
+                    <div className="flex items-start gap-3 p-4 bg-amber-500/5 border border-amber-500/20 rounded-2xl text-amber-500 text-xs">
+                      <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                      <p>الحقول الأساسية (الاسم، البريد، الهاتف، المؤسسة) مدمجة في النظام. استخدم هذه الحقول لبيانات إضافية خاصة بفعاليتك.</p>
                     </div>
                   </div>
                 </SettingsSection>
@@ -544,23 +602,63 @@ const SettingsPage = () => {
               )}
 
               {activeTab === 'payments' && (
-                <SettingsSection title={t('settings.payments.title', 'الدفع والاشتراكات')} description={t('settings.payments.desc', 'إعدادات بوابة الدفع وتذاكر الفعالية.')} icon={CreditCard}>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="flex items-center gap-3 bg-white/5 p-4 rounded-2xl md:col-span-2">
-                      <input type="checkbox" id="require_payment" checked={settings.require_payment} onChange={(e) => handleChange('require_payment', e.target.checked)} className="w-5 h-5 accent-brand-primary" />
-                      <label htmlFor="require_payment" className="font-bold">{t('settings.payments.require_payment', 'تفعيل الدفع الإلزامي للتسجيل')}</label>
+                <SettingsSection title="الدفع والاشتراكات" description="إعدادات بوابة الدفع وطرق التسديد المقبولة." icon={CreditCard}>
+                  <div className="space-y-8">
+                    {/* الدفع الإلكتروني */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="flex items-center gap-3 bg-white/5 p-4 rounded-2xl md:col-span-2">
+                        <input type="checkbox" id="require_payment" checked={settings.require_payment || false} onChange={(e) => handleChange('require_payment', e.target.checked)} className="w-5 h-5 accent-brand-primary" />
+                        <label htmlFor="require_payment" className="font-bold">تفعيل الدفع الإلزامي للتسجيل</label>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-bold text-brand-secondary/50">مبلغ الاشتراك</label>
+                        <Input type="number" value={settings.ticket_price || 0} onChange={(e) => handleChange('ticket_price', e.target.value)} />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-bold text-brand-secondary/50">العملة</label>
+                        <Input value={settings.currency || 'DZD'} onChange={(e) => handleChange('currency', e.target.value)} />
+                      </div>
+                      <div className="space-y-2 md:col-span-2">
+                        <label className="text-sm font-bold text-brand-secondary/50">مفتاح Chargily Pay API</label>
+                        <Input type="password" value={settings.chargily_api_key || ''} onChange={(e) => handleChange('chargily_api_key', e.target.value)} />
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-bold text-brand-secondary/50">{t('settings.payments.ticket_price', 'مبلغ الاشتراك')}</label>
-                      <Input type="number" value={settings.ticket_price} onChange={(e) => handleChange('ticket_price', e.target.value)} />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-bold text-brand-secondary/50">{t('settings.payments.currency', 'العملة')}</label>
-                      <Input value={settings.currency} onChange={(e) => handleChange('currency', e.target.value)} />
-                    </div>
-                    <div className="space-y-2 md:col-span-2">
-                      <label className="text-sm font-bold text-brand-secondary/50">{t('settings.payments.chargily_api_key', 'مفتاح API الخاص بـ Chargily Pay')}</label>
-                      <Input type="password" value={settings.chargily_api_key} onChange={(e) => handleChange('chargily_api_key', e.target.value)} />
+
+                    {/* فاصل */}
+                    <div className="border-t border-white/10" />
+
+                    {/* الحوالة البنكية */}
+                    <div className="space-y-5">
+                      <div className="flex items-center gap-3 bg-amber-500/10 border border-amber-500/20 p-4 rounded-2xl">
+                        <input type="checkbox" id="allow_transfer_payment"
+                          checked={settings.allow_transfer_payment || false}
+                          onChange={(e) => handleChange('allow_transfer_payment', e.target.checked)}
+                          className="w-5 h-5 accent-amber-500" />
+                        <div>
+                          <label htmlFor="allow_transfer_payment" className="font-bold text-amber-400 block">🏦 السماح بالدفع عبر الحوالة البنكية</label>
+                          <span className="text-xs text-amber-500/60">سيتم التحقق يدوياً من كل حوالة قبل تفعيل الاشتراك</span>
+                        </div>
+                      </div>
+                      {settings.allow_transfer_payment && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-5 bg-white/3 border border-white/10 rounded-2xl">
+                          <div className="space-y-2">
+                            <label className="text-xs font-bold text-brand-secondary/50 uppercase tracking-widest">اسم البنك</label>
+                            <Input placeholder="مثال: بنك الجزائر الخارجي BEA" value={settings.bank_name || ''} onChange={(e) => handleChange('bank_name', e.target.value)} />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-xs font-bold text-brand-secondary/50 uppercase tracking-widest">رقم الحساب البنكي (RIB)</label>
+                            <Input placeholder="00799 00000 12345678901 23" value={settings.bank_account_number || ''} onChange={(e) => handleChange('bank_account_number', e.target.value)} />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-xs font-bold text-brand-secondary/50 uppercase tracking-widest">اسم صاحب الحساب</label>
+                            <Input placeholder="الاسم الكامل أو اسم المؤسسة" value={settings.bank_account_name || ''} onChange={(e) => handleChange('bank_account_name', e.target.value)} />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-xs font-bold text-brand-secondary/50 uppercase tracking-widest">تعليمات إضافية للمسجّلين</label>
+                            <Input placeholder="مثال: اذكر رقمك المرجعي في خانة التعليق" value={settings.bank_instructions || ''} onChange={(e) => handleChange('bank_instructions', e.target.value)} />
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </SettingsSection>

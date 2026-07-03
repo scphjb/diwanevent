@@ -59,6 +59,10 @@ class CustomFieldDefinition(Base, TimestampMixin):
     field_type = Column(String(20), nullable=False) # text, number, date, select, boolean
     is_required = Column(Boolean, default=False)
     options = Column(JSON, nullable=True) # للحقول من نوع 'select'
+    sort_order    = Column(Integer, default=0)     # ترتيب الظهور (drag & drop)
+    is_visible    = Column(Boolean, default=True)  # إظهار/إخفاء الحقل في نموذج التسجيل
+    default_value = Column(Text,    nullable=True) # قيمة افتراضية أو تعبئة تلقائية
+    placeholder   = Column(String,  nullable=True) # نص توجيهي داخل الحقل
     
     validation_regex = Column(String(255), nullable=True) # للتحقق المتقدم
     

@@ -18,7 +18,10 @@ class Participant(Base, TimestampMixin):
     id_number = Column(String)
     email = Column(String)
     phone_number = Column(String)
-    payment_status = Column(String, default='pending')
+    payment_status = Column(String, default='pending')  # pending | paid | free | transfer_pending | transfer_rejected
+    transfer_proof_url     = Column(Text,     nullable=True)  # رابط صورة وصل التحويل
+    transfer_submitted_at  = Column(DateTime, nullable=True)  # توقيت إرسال الإثبات
+    payment_notes          = Column(Text,     nullable=True)  # ملاحظات المنظّم عند الموافقة/الرفض
     entry_type = Column(String, default='imported')
     original_name = Column(String)
     correction_note = Column(Text)

@@ -221,6 +221,7 @@ class PublicRegistrationRequest(BaseModel):
     role: Optional[str] = None
     custom_values: Optional[dict] = None
     verification_code: Optional[str] = None
+    payment_method: Optional[str] = 'online'
 
 @router.get("/public/info/{participant_id}")
 async def get_public_participant_info(
@@ -487,7 +488,158 @@ async def send_public_verification_otp(
     if not success:
         raise HTTPException(status_code=500, detail="فشل إرسال رمز التحقق. يرجى التأكد من صحة البريد أو تجربة محاولة أخرى.")
         
-    return {"message": "تم إرسال رمز التحقق بنجاح إلى بريدك الإلكتروني."}
+    async def send_transfer_instruction_email(
+    email: str,
+    participant_name: str,
+    event_name: str,
+    order_num: str,
+    amount: float,
+    currency: str,
+    bank_name: str,
+    bank_account_name: str,
+    bank_account_number: str,
+    bank_instructions: Optional[str] = None
+) -> bool:
+    """إرسال إيميل يحتوي على معلومات الحساب البنكي والتعليمات للمسجّلين بالحوالة"""
+    try:
+        from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
+        from app.core.config import settings
+
+        if not settings.SMTP_PASSWORD or not settings.EMAILS_FROM_EMAIL:
+            return False
+
+        conf = ConnectionConfig(
+            MAIL_USERNAME=settings.SMTP_USERNAME or settings.EMAILS_FROM_EMAIL,
+            MAIL_PASSWORD=settings.SMTP_PASSWORD,
+            MAIL_FROM=settings.EMAILS_FROM_EMAIL,
+            MAIL_PORT=settings.SMTP_PORT,
+            MAIL_SERVER=settings.SMTP_SERVER,
+            MAIL_FROM_NAME=settings.EMAILS_FROM_NAME or "Diwan Event",
+            MAIL_STARTTLS=True,
+            MAIL_SSL_TLS=False,
+            USE_CREDENTIALS=True,
+            VALIDATE_CERTS=True,
+        )
+
+        instructions_html = f"""
+        <div style="background:#EFF6FF; border:1px solid #BFDBFE; border-radius:12px; padding:16px; margin-top:16px; text-align:right;">
+            <p style="color:#1E40AF; font-size:13px; font-weight:bold; margin:0 0 6px 0;">💡 تعليمات الدفع:</p>
+            <p style="color:#1E3A8A; font-size:12.5px; margin:0; line-height:1.6;">{bank_instructions}</p>
+        </div>
+        """ if bank_instructions else ""
+
+        html = f"""<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
+    body, table, td, a {{ font-family: 'Cairo', Arial, sans-serif !important; }}
+    @media screen and (max-width: 600px) {{
+      .email-container {{ width: 100% !important; border-radius: 0px !important; box-shadow: none !important; }}
+      .header-pad {{ padding: 35px 20px !important; }}
+      .body-pad {{ padding: 30px 20px !important; }}
+    }}
+  </style>
+</head>
+<body style="margin:0;padding:0;background-color:#F4F6F9;direction:rtl;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F4F6F9;padding:20px 0;">
+    <tr>
+      <td align="center">
+        <table class="email-container" width="600" cellpadding="0" cellspacing="0" border="0" style="background-color:#ffffff;border-radius:24px;overflow:hidden;box-shadow:0 10px 30px rgba(5,11,24,0.04);border:1px solid rgba(5,11,24,0.02); max-width:600px; width:100%;">
+          
+          <!-- Header -->
+          <tr>
+            <td class="header-pad" style="background:linear-gradient(135deg,#050B18 0%,#0F1E36 100%);padding:40px;text-align:center;">
+              <div style="width:56px;height:56px;background:linear-gradient(135deg,#F0C040 0%,#D4AF37 100%);border-radius:16px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:15px;box-shadow:0 8px 20px rgba(212,175,55,0.2);">
+                <span style="color:#050B18;font-size:24px;font-weight:900;font-family:sans-serif;line-height:56px;text-align:center;display:block;width:100%;">🏦</span>
+              </div>
+              <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:900;line-height:1.4;">{event_name}</h1>
+              <p style="margin:6px 0 0;color:rgba(255,255,255,0.5);font-size:11px;font-weight:bold;text-transform:uppercase;">طلب التسجيل بالحوالة البنكية</p>
+            </td>
+          </tr>
+          
+          <!-- Body -->
+          <tr>
+            <td class="body-pad" style="padding:40px;text-align:right;direction:rtl;">
+              <h2 style="color:#050B18;font-size:18px;font-weight:900;margin:0 0 10px;">مرحباً {participant_name} 👋</h2>
+              <p style="color:#475569;font-size:13px;line-height:1.7;margin:0 0 25px;">
+                تم استلام طلب تسجيلك بنجاح في الفعالية. يرجى إتمام عملية تحويل مبلغ الاشتراك للحساب البنكي التالي وتزويدنا بوصل التحويل لتفعيل حسابك بالكامل.
+              </p>
+
+              <!-- Bank Account Details Card -->
+              <div style="background:#FFFDF5; border:1px solid #FCD34D; border-radius:20px; padding:24px; margin-bottom:25px;">
+                <span style="display:block; color:#854D0E; font-size:11px; font-weight:900; margin-bottom:12px; text-align:right; text-transform:uppercase;">🏦 معلومات الحساب البنكي للتحويل</span>
+                
+                <div style="padding: 10px 0; border-bottom: 1px solid #FEF3C7; display: flex; justify-content: space-between; align-items: center; direction: rtl;">
+                  <span style="color:#854D0E; font-size:12px; font-weight: bold; width:35%; text-align:right;">اسم البنك</span>
+                  <span style="color:#050B18; font-size:13px; font-weight:700; width:65%; text-align:left;">{bank_name}</span>
+                </div>
+                
+                <div style="padding: 10px 0; border-bottom: 1px solid #FEF3C7; display: flex; justify-content: space-between; align-items: center; direction: rtl;">
+                  <span style="color:#854D0E; font-size:12px; font-weight: bold; width:35%; text-align:right;">صاحب الحساب</span>
+                  <span style="color:#050B18; font-size:13px; font-weight:700; width:65%; text-align:left;">{bank_account_name}</span>
+                </div>
+
+                <div style="padding: 10px 0; border-bottom: 1px solid #FEF3C7; display: flex; justify-content: space-between; align-items: center; direction: rtl;">
+                  <span style="color:#854D0E; font-size:12px; font-weight: bold; width:35%; text-align:right;">رقم الحساب (RIB)</span>
+                  <span style="color:#050B18; font-size:13px; font-weight:900; font-family:monospace; width:65%; text-align:left; direction: ltr;">{bank_account_number}</span>
+                </div>
+
+                <div style="padding: 10px 0; display: flex; justify-content: space-between; align-items: center; direction: rtl;">
+                  <span style="color:#854D0E; font-size:12px; font-weight: bold; width:35%; text-align:right;">المبلغ المطلوب</span>
+                  <span style="color:#B45309; font-size:16px; font-weight:900; width:65%; text-align:left;">{amount} {currency}</span>
+                </div>
+
+                {instructions_html}
+              </div>
+
+              <!-- Registration details for transfer identification -->
+              <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:18px; padding:20px; margin-bottom:20px; text-align:right;">
+                <span style="display:block; color:#64748B; font-size:11px; font-weight:900; margin-bottom:8px; text-transform:uppercase;">🎫 المرجع الخاص بك (يرجى إرفاقه أو ذكره في عملية التحويل)</span>
+                <p style="margin:0 0 5px 0; color:#D4AF37; font-size:20px; font-weight:900; font-family:monospace; direction:ltr; text-align:right;">{order_num}</p>
+                <p style="margin:0; color:#64748B; font-size:12px;">استخدم هذا الرمز السريع أو رقم المشاركة لتسجيل الدخول إلى بوابتك ورفع صورة الوصل.</p>
+              </div>
+
+              <!-- CTA to upload receipt -->
+              <div style="text-align:center; margin:30px 0;">
+                <p style="margin:0 0 10px; color:#475569; font-size:12.5px;">بعد إتمام الحوالة، ارفع الوصل لتسريع عملية التفعيل:</p>
+                <a href="{settings.FRONTEND_URL}/participant-login?order_num={order_num}&email={email}" target="_blank" style="background:linear-gradient(135deg,#050B18 0%,#0F1E36 100%); color:#ffffff; padding:14px 28px; border-radius:12px; text-decoration:none; font-weight:bold; font-size:13px; display:inline-block; box-shadow:0 8px 20px rgba(5,11,24,0.15);">
+                  رفع إثبات الدفع (الوصل) ←
+                </a>
+              </div>
+
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="background:#F8FAFC;padding:25px;text-align:center;border-top:1px solid #E2E8F0;color:#94A3B8;font-size:10.5px;font-weight:bold;">
+              <p style="margin:0 0 5px;">© 2026 {event_name}. جميع الحقوق محفوظة.</p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+"""
+        message = MessageSchema(
+            subject=f"⚠️ تفاصيل الحوالة البنكية لإتمام اشتراكك في {event_name}",
+            recipients=[email],
+            body=html,
+            subtype=MessageType.html,
+        )
+
+        fm = FastMail(conf)
+        await fm.send_message(message)
+        return True
+    except Exception as e:
+        logger.error("Failed to send transfer instruction email: %s", e)
+        return False
 
 @router.post("/public/register")
 async def public_register_participant(
@@ -668,6 +820,14 @@ async def public_register_participant(
     order_num = f"DWN-{_uuid.uuid4().hex[:8].upper()}"
     qr_code = order_num
     
+    initial_payment_status = 'pending'
+    is_transfer = False
+    
+    if event.require_payment and event.ticket_price > 0:
+        if body.payment_method == 'transfer' and event.allow_transfer_payment:
+            initial_payment_status = 'transfer_pending'
+            is_transfer = True
+
     participant = Participant(
         event_id=event_id,
         full_name=full_name,
@@ -678,7 +838,7 @@ async def public_register_participant(
         phone_number=cleaned_phone,
         order_num=order_num,
         qr_code=qr_code,
-        payment_status='pending',
+        payment_status=initial_payment_status,
         entry_type='self_registered',
         custom_values=custom_values
     )
@@ -687,8 +847,21 @@ async def public_register_participant(
     await db.commit()
     await db.refresh(participant)
     
-    # لا نقوم بتفعيل المشارك الجديد تلقائياً أو إرسال الإيميل حتى يقوم المنظم بالموافقة اليدوية (Pending Approval)
-    # سيظل الحقل payment_status = 'pending' ولن يخصم رصيد حتى يتم التفعيل من لوحة التحكم
+    # إذا كان دفعاً بالحوالة، نرسل له إيميل بالتعليمات فوراً
+    if is_transfer and participant.email:
+        background_tasks.add_task(
+            send_transfer_instruction_email,
+            email=participant.email,
+            participant_name=participant.full_name,
+            event_name=event.event_name,
+            order_num=participant.order_num,
+            amount=float(event.ticket_price),
+            currency=event.currency or 'DZD',
+            bank_name=event.bank_name or '',
+            bank_account_name=event.bank_account_name or '',
+            bank_account_number=event.bank_account_number or '',
+            bank_instructions=event.bank_instructions
+        )
     
     return {"status": "success", "participant_id": participant.id, "order_num": participant.order_num, "merged": False, "active": False}
 

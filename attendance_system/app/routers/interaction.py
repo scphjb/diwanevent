@@ -10,16 +10,21 @@ from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import func, select, update, delete
 from typing import List, Optional
-from app.core.database import get_db
-from app.models.others import SocialPost, PostLike, Question, Document, LogisticsRegistry, EventActivity, ActivityRegistration, CateringProfile, EventMeal, MealAttendance, CommitteeTask
-from app.models.engagement import GamificationEvent
-from app.models.participant import Participant
-from app.core.websockets import manager
+from app.core.database import get_db  # type: ignore[import]
+from app.models.others import SocialPost, PostLike, Question, Document, LogisticsRegistry, EventActivity, ActivityRegistration, CateringProfile, EventMeal, MealAttendance, CommitteeTask  # type: ignore[import]
+from app.models.engagement import GamificationEvent  # type: ignore[import]
+from app.models.participant import Participant  # type: ignore[import]
+from app.models.participant import Participant as HostParticipant  # type: ignore[import]
+from app.core.websockets import manager  # type: ignore[import]
 from pydantic import BaseModel
-from app.core.auth_deps import get_current_active_user
-from app.models.user import User
-from app.models.event import Event
-from app.routers.notifications import get_current_user_or_participant
+from app.core.auth_deps import get_current_active_user  # type: ignore[import]
+from app.models.user import User  # type: ignore[import]
+from app.models.event import Event  # type: ignore[import]
+from app.routers.notifications import get_current_user_or_participant  # type: ignore[import]
+from app.routers.notifications import send_web_push_notification_to_target  # type: ignore[import]
+from app.models.others import EventDriver  # type: ignore[import]
+from app.services.cloud_storage import StorageService  # type: ignore[import]
+
 
 router = APIRouter()
 
@@ -359,12 +364,11 @@ async def upload_document_file(
     except HTTPException:
         raise
     except Exception as e:
-        # python-magic اختياري أو قد يفشل بسبب نقص ملفات النظام (libmagic)
-        # الامتداد كافٍ كحد أدنى لحفظ الملف بأمان
-        pass
+        # python-magic اختياري — يُتجاهل إذا لم يكن مثبتاً (libmagic غير موجود في البيئة)
+        # الامتداد المسموح به كافٍ كحد أدنى للأمان
+        logger.debug(f"MIME check skipped (python-magic unavailable): {e}")
     
     # 4. حفظ الملف
-    from app.services.cloud_storage import StorageService
     storage = StorageService()
     file_url = storage.upload_image_or_file(
         file_content=content,
@@ -410,8 +414,6 @@ async def get_logistics(participant_id: int, db: AsyncSession = Depends(get_db))
     host_name = ""
     host_phone = ""
     try:
-        from app.models.others import CommitteeTask
-        from app.models.participant import Participant
         task_stmt = select(CommitteeTask).filter(
             CommitteeTask.participant_id == participant_id,
             CommitteeTask.status != 'cancelled'
@@ -532,7 +534,6 @@ async def save_logistics(data: LogisticsRegistryCreate, db: AsyncSession = Depen
         
         event = await db.get(Event, data.event_id)
         if event and event.created_by:
-            from app.routers.notifications import send_web_push_notification_to_target
             await send_web_push_notification_to_target(
                 db=db,
                 title="طلب نقل وإيواء جديد 🚗",
@@ -566,9 +567,11 @@ async def dispatch_logistics(
         participant = identity["obj"]
         if participant.event_id != registry.event_id:
             raise HTTPException(status_code=403, detail="Not authorized for this event")
-        role = (participant.role or "").lower()
-        keywords = ["نقل", "لوجست", "سائق", "transport", "logistics", "driver", "organizer", "منظم"]
-        if not any(kw in role for kw in keywords) and "عام" not in role:
+        role_norm = normalize_arabic(participant.role or "")
+        transport_kws = COMMITTEE_ROLE_KEYWORDS.get("transport", [])
+        is_transport_staff = any(normalize_arabic(kw) in role_norm for kw in transport_kws)
+        is_general = any(x in role_norm for x in ("عام", "organizer", "منظم"))
+        if not is_transport_staff and not is_general:
             raise HTTPException(status_code=403, detail="Not authorized for logistics")
     
     if data.driver_name is not None:
@@ -584,7 +587,6 @@ async def dispatch_logistics(
 
     # مزامنة البيانات عكسياً إلى المهمة الميدانية النشطة إن وجدت
     try:
-        from app.models.others import CommitteeTask
         task_stmt = select(CommitteeTask).filter(
             CommitteeTask.event_id == registry.event_id,
             CommitteeTask.participant_id == participant_id,
@@ -620,14 +622,13 @@ async def dispatch_logistics(
     
     # Send push/db notification to the participant and presidents
     try:
-        from app.routers.notifications import send_web_push_notification_to_target
-        from app.models.participant import Participant
-        # Get participant (guest) name
+        # جلب اسم المشارك (الضيف)
         p_stmt = select(Participant).filter(Participant.id == participant_id)
         p_res = await db.execute(p_stmt)
         part = p_res.scalars().first()
         p_name = part.full_name if part else "مشارك"
 
+        # إشعار المشارك نفسه
         msg = f"تم تحديث حالة النقل الخاصة بك إلى: {registry.status}."
         if registry.driver_name:
             msg = f"تم تعيين المرافق {registry.driver_name} ({registry.driver_phone or ''}). السيارة: {registry.vehicle_details or ''}."
@@ -635,19 +636,27 @@ async def dispatch_logistics(
             db=db,
             title="تحديث في تفاصيل النقل والوصول 🚗",
             body=msg,
-            url="/dashboard/logistics",
+            url="/portal",
             participant_ids=[participant_id],
             event_id=registry.event_id
         )
 
-        # Notify committee presidents of logistics (transport)
-        president_stmt = select(Participant).filter(
-            Participant.event_id == registry.event_id,
-            (Participant.role.like("%رئيس%") | Participant.role.like("%president%") | Participant.role.like("%organizer%") | Participant.role.like("%منظم%"))
-        )
-        pres_res = await db.execute(president_stmt)
-        presidents = pres_res.scalars().all()
-        pres_ids = [p.id for p in presidents if p.id != participant_id]
+        # إشعار رئيس لجنة النقل تحديداً (بالكلمات المفتاحية الموحدة)
+        transport_kws = [normalize_arabic(k) for k in COMMITTEE_ROLE_KEYWORDS.get("transport", [])]
+        all_stmt = select(Participant).filter(Participant.event_id == registry.event_id)
+        all_res = await db.execute(all_stmt)
+        all_participants = all_res.scalars().all()
+
+        pres_ids = []
+        for p in all_participants:
+            if p.id == participant_id:
+                continue
+            p_role_norm = normalize_arabic(p.role or "")
+            is_president = "رئيس" in p_role_norm or "president" in p_role_norm
+            is_transport = any(kw in p_role_norm for kw in transport_kws)
+            is_general = "عام" in p_role_norm or "organizer" in p_role_norm or "منظم" in p_role_norm
+            if is_president and (is_transport or is_general):
+                pres_ids.append(p.id)
 
         if pres_ids:
             pres_msg = f"تم تأمين نقل الضيف {p_name} مع السائق {registry.driver_name or '---'}. الحالة: {registry.status}"
@@ -655,7 +664,7 @@ async def dispatch_logistics(
                 db=db,
                 title="تحديث ميداني في حالة النقل 🚗",
                 body=pres_msg,
-                url="/dashboard/logistics",
+                url="/portal?section=organizer",
                 participant_ids=pres_ids,
                 event_id=registry.event_id
             )
@@ -677,14 +686,14 @@ async def list_event_logistics(
         participant = identity["obj"]
         if participant.event_id != event_id:
             raise HTTPException(status_code=403, detail="Not authorized for this event")
-        role = (participant.role or "").lower()
-        keywords = ["نقل", "لوجست", "سائق", "transport", "logistics", "driver", "organizer", "منظم"]
-        if not any(kw in role for kw in keywords) and "عام" not in role:
+        role_norm = normalize_arabic(participant.role or "")
+        transport_kws = COMMITTEE_ROLE_KEYWORDS.get("transport", [])
+        is_transport_staff = any(normalize_arabic(kw) in role_norm for kw in transport_kws)
+        is_general = any(x in role_norm for x in ("عام", "organizer", "منظم"))
+        if not is_transport_staff and not is_general:
             raise HTTPException(status_code=403, detail="Not authorized for logistics")
     
     # Fetch all active CommitteeTask to resolve hosts/committee members
-    from app.models.others import CommitteeTask
-    from app.models.participant import Participant as HostParticipant
     
     tasks_stmt = select(CommitteeTask, HostParticipant).outerjoin(
         HostParticipant, CommitteeTask.assigned_to_id == HostParticipant.id
@@ -842,7 +851,6 @@ async def list_activity_registrations(
     activity_id: int,
     db: AsyncSession = Depends(get_db)
 ):
-    from app.models.participant import Participant
     stmt = select(Participant, ActivityRegistration).join(
         ActivityRegistration,
         ActivityRegistration.participant_id == Participant.id
@@ -917,7 +925,6 @@ async def register_activity(
             p_name = participant.full_name if participant else "مشارك"
             event = await db.get(Event, activity.event_id)
             if event and event.created_by:
-                from app.routers.notifications import send_web_push_notification_to_target
                 await send_web_push_notification_to_target(
                     db=db,
                     title="طلب نقل لنشاط ترفيهي 🏕️",
@@ -1008,7 +1015,6 @@ async def update_activity_registration(
             p_name = participant.full_name if participant else "مشارك"
             event = await db.get(Event, event_id)
             if event and event.created_by:
-                from app.routers.notifications import send_web_push_notification_to_target
                 await send_web_push_notification_to_target(
                     db=db,
                     title="طلب نقل لنشاط ترفيهي 🏕️",
@@ -1064,27 +1070,27 @@ async def assign_activity_shuttle(
     
     await db.commit()
     await db.refresh(reg)
-    
+
+    # جلب النشاط مرة واحدة فقط — يُستخدم في الإشعار والـ WebSocket معاً
+    activity = await db.get(EventActivity, req.activity_id)
+    event_id = activity.event_id if activity else 0
+    act_title = activity.title if activity else "النشاط الترفيهي"
+
     # Send Web Push notification to the participant
     try:
-        activity = await db.get(EventActivity, req.activity_id)
-        act_title = activity.title if activity else "النشاط الترفيهي"
-        from app.routers.notifications import send_web_push_notification_to_target
         await send_web_push_notification_to_target(
             db=db,
             title="تم تعيين المرافق وتأكيد النقل 🚍",
             body=f"تم تعيين المرافق {req.driver_name} لنقلكم لنشاط: {act_title}. رقم الهاتف: {req.driver_phone}.",
             url="/portal/activities",
             user_ids=[],
-            event_id=activity.event_id if activity else 0,
-            participant_id=req.participant_id
+            event_id=event_id,
+            participant_ids=[req.participant_id]
         )
     except Exception as notif_err:
         logger.error(f"Failed to notify participant about activity companion assignment: {notif_err}")
 
     # Broadcast websocket update
-    activity = await db.get(EventActivity, req.activity_id)
-    event_id = activity.event_id if activity else 0
     if event_id:
         try:
             await manager.broadcast_to_event(event_id, {
@@ -1126,7 +1132,6 @@ async def create_activity(
     await db.refresh(new_act)
     
     try:
-        from app.routers.notifications import send_web_push_notification_to_target
         await send_web_push_notification_to_target(
             db=db,
             title="نشاط ترفيهي جديد! 🏕️",
@@ -1189,7 +1194,6 @@ async def update_activity(
     await db.refresh(act)
 
     try:
-        from app.routers.notifications import send_web_push_notification_to_target
         # 1. جلب المشتركين المسجلين في هذا النشاط
         reg_stmt = select(ActivityRegistration.participant_id).filter(ActivityRegistration.activity_id == act.id)
         reg_res = await db.execute(reg_stmt)
@@ -1368,7 +1372,6 @@ async def list_event_meals(
     meals = res.scalars().all()
     
     # Fetch total participants for the event to compute attending_count
-    from app.models.participant import Participant
     total_stmt = select(func.count(Participant.id)).filter(Participant.event_id == event_id)
     total_res = await db.execute(total_stmt)
     total_participants = total_res.scalar() or 0
@@ -1637,8 +1640,6 @@ async def create_committee_task(
     # ── مزامنة تفاصيل النقل الموحدة إلى سجل اللوجستيات (LogisticsRegistry) ──
     if new_task.participant_id and new_task.committee in ('transport', 'logistics'):
         try:
-            from app.models.others import LogisticsRegistry
-            from app.models.participant import Participant
             
             # جلب هاتف المستقبل الميداني (العضو المكلف)
             host_phone = None
@@ -1690,7 +1691,6 @@ async def create_committee_task(
     # ── إشعار العضو المسندة إليه المهمة ──
     if new_task.assigned_to_id:
         try:
-            from app.routers.notifications import send_web_push_notification_to_target
             c_name = COMMITTEE_AR_NAMES.get(new_task.committee, new_task.committee)
             await send_web_push_notification_to_target(
                 db=db,
@@ -1742,7 +1742,6 @@ async def update_committee_task_status(
         
         # إرسال إشعار لرؤساء اللجان
         try:
-            from app.routers.notifications import send_web_push_notification_to_target
             # استخدام COMMITTEE_ROLE_KEYWORDS الموحد
             # transport يغطي logistics أيضاً
             comm_key = task.committee if task.committee in COMMITTEE_ROLE_KEYWORDS else 'transport'
@@ -1779,7 +1778,6 @@ async def update_committee_task_status(
     task.status = req.status
     if task.participant_id and task.committee in ('transport', 'logistics'):
         try:
-            from app.models.others import LogisticsRegistry
             log_stmt = select(LogisticsRegistry).filter(
                 LogisticsRegistry.event_id == task.event_id,
                 LogisticsRegistry.participant_id == task.participant_id
@@ -1797,7 +1795,6 @@ async def update_committee_task_status(
     # ── إشعار عند بدء أو تحديث المهمة ──
     if req.status != old_status:
         try:
-            from app.routers.notifications import send_web_push_notification_to_target
             assignee_name = task.assigned_to_name or "أحد الأعضاء"
             status_texts = {
                 "confirmed": "تأكيد استلام المهمة",
@@ -1837,7 +1834,6 @@ async def update_committee_task_status(
     # ── إشعار عند إتمام المهمة ──
     if req.status == "completed" and old_status != "completed":
         try:
-            from app.routers.notifications import send_web_push_notification_to_target
             assignee_name = task.assigned_to_name or "أحد الأعضاء"
             
             # 1. إخطار المنظم العام للفعالية
@@ -1911,7 +1907,6 @@ async def delete_committee_task(
     # If it is a transport task and has a participant associated, reset the LogisticsRegistry entry
     if task.participant_id and task.committee in ('transport', 'logistics'):
         try:
-            from app.models.others import LogisticsRegistry
             log_stmt = select(LogisticsRegistry).filter(
                 LogisticsRegistry.event_id == task.event_id,
                 LogisticsRegistry.participant_id == task.participant_id
@@ -1948,7 +1943,6 @@ async def delete_committee_task(
                 
                 # Send push notification to the guest
                 try:
-                    from app.routers.notifications import send_web_push_notification_to_target
                     await send_web_push_notification_to_target(
                         db=db,
                         title="تحديث في تفاصيل النقل 🚗",
@@ -2000,7 +1994,6 @@ async def reassign_committee_task(
     await db.refresh(task)
 
     try:
-        from app.routers.notifications import send_web_push_notification_to_target
         c_name = COMMITTEE_AR_NAMES.get(task.committee, task.committee)
         await send_web_push_notification_to_target(
             db=db,
@@ -2062,8 +2055,6 @@ async def assign_driver_to_committee_task(
     # مزامنة التغييرات تلقائياً إلى سجل اللوجستيات الخاص بالضيف
     if task.participant_id and task.committee in ('transport', 'logistics'):
         try:
-            from app.models.others import LogisticsRegistry
-            from app.models.participant import Participant
             
             # جلب هاتف العضو المكلف
             host_phone = None
@@ -2160,7 +2151,6 @@ async def list_event_drivers(
         if participant.event_id != event_id:
             raise HTTPException(status_code=403, detail="Not authorized for this event")
             
-    from app.models.others import EventDriver
     stmt = select(EventDriver).filter(EventDriver.event_id == event_id, EventDriver.is_active == True)
     res = await db.execute(stmt)
     drivers = res.scalars().all()
@@ -2181,7 +2171,6 @@ async def create_event_driver(
         if not is_allowed:
             raise HTTPException(status_code=403, detail="Only organizers can add drivers")
             
-    from app.models.others import EventDriver
     driver = EventDriver(
         event_id=req.event_id,
         name=req.name,
@@ -2200,7 +2189,6 @@ async def delete_event_driver(
     db: AsyncSession = Depends(get_db),
     identity = Depends(get_current_user_or_participant)
 ):
-    from app.models.others import EventDriver
     driver = await db.get(EventDriver, driver_id)
     if not driver:
         raise HTTPException(status_code=404, detail="Driver not found")
