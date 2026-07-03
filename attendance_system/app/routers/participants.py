@@ -487,8 +487,9 @@ async def send_public_verification_otp(
     
     if not success:
         raise HTTPException(status_code=500, detail="فشل إرسال رمز التحقق. يرجى التأكد من صحة البريد أو تجربة محاولة أخرى.")
-        
-    async def send_transfer_instruction_email(
+    return {"message": "تم إرسال رمز التحقق بنجاح إلى بريدك الإلكتروني."}
+
+async def send_transfer_instruction_email(
     email: str,
     participant_name: str,
     event_name: str,
