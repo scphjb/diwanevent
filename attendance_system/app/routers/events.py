@@ -1,7 +1,8 @@
-# type: ignore
+# pyright: reportGeneralTypeIssues=false
+# pyright: reportAttributeAccessIssue=false
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List
+from typing import List, Optional
 import os
 import time
 from datetime import date, datetime
