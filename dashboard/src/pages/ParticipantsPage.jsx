@@ -56,6 +56,13 @@ const getNormalizedRole = (role) => {
   return role;
 };
 
+const getFullProofUrl = (url) => {
+  if (!url) return '';
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  const backendBase = import.meta.env.VITE_API_URL?.replace(/\/api\/v1\/?$/, '') || 'http://localhost:8000';
+  return `${backendBase.replace(/\/$/, '')}${url}`;
+};
+
 const ParticipantsPage = () => {
   const fileInputRef = useRef(null);
   const { selectedEventId: eventId, searchQuery: search, setSearchQuery: setSearch } = useEvent();
@@ -65,6 +72,9 @@ const ParticipantsPage = () => {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('all');
   const [activeTemplate, setActiveTemplate] = useState(null);
+  const [reviewingTransfer, setReviewingTransfer] = useState(null);
+  const [rejectReason, setRejectReason] = useState('');
+  const [isProcessingTransfer, setIsProcessingTransfer] = useState(false);
 
   // Real-time Updates via WebSocket
   useAttendanceSocket(eventId, (data) => {
@@ -176,6 +186,54 @@ const ParticipantsPage = () => {
     setActiveMenu(null);
   };
 
+  const handleApproveTransfer = async (id) => {
+    try {
+      setIsProcessingTransfer(true);
+      await api.post(`payments/approve-transfer/${id}`);
+      showSuccess(
+        i18n.language.startsWith('ar') ? 'تم تأكيد الاشتراك وتفعيل الحساب' : 'Subscription confirmed and account activated',
+        i18n.language.startsWith('ar') ? 'تم إرسال بريد إلكتروني للمشترك بتفعيل حسابه.' : 'An activation email has been sent to the participant.'
+      );
+      setReviewingTransfer(null);
+      fetchParticipants();
+    } catch (err) {
+      showError(
+        i18n.language.startsWith('ar') ? 'فشل تأكيد التحويل' : 'Failed to approve transfer',
+        err.response?.data?.detail || (i18n.language.startsWith('ar') ? 'حدث خطأ أثناء معالجة الطلب.' : 'An error occurred while processing.')
+      );
+    } finally {
+      setIsProcessingTransfer(false);
+    }
+  };
+
+  const handleRejectTransfer = async (id) => {
+    if (!rejectReason.trim()) {
+      showError(
+        i18n.language.startsWith('ar') ? 'يرجى إدخال سبب الرفض' : 'Please enter rejection reason',
+        i18n.language.startsWith('ar') ? 'يجب كتابة سبب الرفض ليتم إرساله للمشترك.' : 'Rejection reason is required to notify the participant.'
+      );
+      return;
+    }
+    try {
+      setIsProcessingTransfer(true);
+      await api.post(`payments/reject-transfer/${id}`, { reason: rejectReason });
+      showSuccess(
+        i18n.language.startsWith('ar') ? 'تم رفض الوصل بنجاح' : 'Receipt rejected successfully',
+        i18n.language.startsWith('ar') ? 'تم إخطار المشترك بالبريد الإلكتروني لإعادة رفع الوصل.' : 'Participant has been notified to re-upload proof.'
+      );
+      setReviewingTransfer(null);
+      setRejectReason('');
+      fetchParticipants();
+    } catch (err) {
+      showError(
+        i18n.language.startsWith('ar') ? 'فشل رفض التحويل' : 'Failed to reject transfer',
+        err.response?.data?.detail || (i18n.language.startsWith('ar') ? 'حدث خطأ أثناء معالجة الطلب.' : 'An error occurred while processing.')
+      );
+    } finally {
+      setIsProcessingTransfer(false);
+    }
+  };
+
 
   const fetchParticipants = async () => {
     if (!eventId) {
@@ -225,7 +283,8 @@ const ParticipantsPage = () => {
     const matchesStatus = statusFilter === 'all' || 
                          (statusFilter === 'checked_in' && p.check_in_time) ||
                          (statusFilter === 'paid' && p.payment_status === 'paid' && !p.check_in_time) ||
-                         (statusFilter === 'pending' && p.payment_status !== 'paid');
+                         (statusFilter === 'transfer_pending' && p.payment_status === 'transfer_pending') ||
+                         (statusFilter === 'pending' && p.payment_status !== 'paid' && p.payment_status !== 'transfer_pending');
     return matchesSearch && matchesStatus;
   });
 
@@ -567,6 +626,7 @@ const ParticipantsPage = () => {
               { id: 'all', label: t('common.all', 'الكل') },
               { id: 'checked_in', label: 'حاضر الآن (بالداخل)' },
               { id: 'paid', label: 'مفعل (في انتظار الحضور)' },
+              { id: 'transfer_pending', label: i18n.language.startsWith('ar') ? 'طلبات التحويل البنكي 🏦' : 'Bank Transfers 🏦' },
               { id: 'pending', label: 'غير مفعل' }
             ].map(tab => (
               <button
@@ -676,14 +736,31 @@ const ParticipantsPage = () => {
                             ? "bg-brand-primary/10 text-brand-secondary border border-brand-primary/20" 
                             : p.payment_status === 'paid'
                               ? "bg-blue-500/10 text-blue-400 border border-blue-500/20"
-                              : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                              : p.payment_status === 'transfer_pending'
+                                ? "bg-amber-500/15 text-amber-400 border border-amber-500/30 animate-pulse"
+                                : p.payment_status === 'transfer_rejected'
+                                  ? "bg-red-500/10 text-red-400 border border-red-500/20"
+                                  : "bg-white/5 text-white/40 border border-white/10"
                         )}>
-                          {p.check_in_time ? <Award className="w-3 h-3" /> : p.payment_status === 'paid' ? <Zap className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
                           {p.check_in_time 
-                            ? "حاضر الآن (داخل القاعة)" 
+                            ? <Award className="w-3 h-3" /> 
                             : p.payment_status === 'paid' 
-                              ? "مفعل (في انتظار الحضور)" 
-                              : "غير مفعل (لم يخصم رصيد)"
+                              ? <Zap className="w-3 h-3" /> 
+                              : p.payment_status === 'transfer_pending'
+                                ? <Clock className="w-3 h-3 text-amber-400" />
+                                : p.payment_status === 'transfer_rejected'
+                                  ? <XCircle className="w-3 h-3 text-red-400" />
+                                  : <Clock className="w-3 h-3" />
+                          }
+                          {p.check_in_time 
+                            ? (i18n.language.startsWith('ar') ? "حاضر الآن (داخل القاعة)" : "Checked In")
+                            : p.payment_status === 'paid' 
+                              ? (i18n.language.startsWith('ar') ? "مفعل (في انتظار الحضور)" : "Active (Pending Check-in)")
+                              : p.payment_status === 'transfer_pending'
+                                ? (i18n.language.startsWith('ar') ? "تحت المراجعة 🏦" : "Review Pending 🏦")
+                                : p.payment_status === 'transfer_rejected'
+                                  ? (i18n.language.startsWith('ar') ? "تحويل مرفوض ❌" : "Transfer Rejected ❌")
+                                  : (i18n.language.startsWith('ar') ? "غير مفعل (لم يخصم رصيد)" : "Inactive")
                           }
                         </span>
                       </td>
@@ -723,6 +800,19 @@ const ParticipantsPage = () => {
                                   onClick={e => e.stopPropagation()}
                                   className="absolute left-0 mt-2 w-48 bg-[#050B18] border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden py-2"
                                 >
+                                  {(p.transfer_proof_url || p.payment_status === 'transfer_pending' || p.payment_status === 'transfer_rejected') && (
+                                    <button 
+                                      onClick={() => {
+                                        setReviewingTransfer(p);
+                                        setRejectReason(p.payment_notes || '');
+                                        setActiveMenu(null);
+                                      }}
+                                      className="w-full text-right px-4 py-3 text-sm text-amber-400 font-bold hover:bg-amber-500/10 flex items-center gap-3 transition-colors border-b border-white/5"
+                                    >
+                                      <Clock className="w-4 h-4 text-amber-400" />
+                                      {i18n.language.startsWith('ar') ? 'عرض ومراجعة الوصل 🏦' : 'Review Transfer 🏦'}
+                                    </button>
+                                  )}
                                   {p.payment_status !== 'paid' ? (
                                     <button 
                                       onClick={() => handleSingleActivate(p.id)}
@@ -1043,6 +1133,165 @@ const ParticipantsPage = () => {
                   </Button>
                 </div>
               </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Review Transfer Modal */}
+      <AnimatePresence>
+        {reviewingTransfer && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-brand-dark/95 backdrop-blur-xl"
+              onClick={() => {
+                if (!isProcessingTransfer) {
+                  setReviewingTransfer(null);
+                  setRejectReason('');
+                }
+              }}
+            />
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="bg-[#050B18] border border-white/10 w-full max-w-3xl rounded-[40px] shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh]"
+            >
+              <div className="p-8 border-b border-white/5 shrink-0 flex justify-between items-start">
+                <div>
+                  <h2 className="text-2xl font-black text-white flex items-center gap-3">
+                    <span className="text-amber-400">🏦</span>
+                    {i18n.language.startsWith('ar') ? 'مراجعة وصل الدفع البنكي' : 'Review Bank Transfer'}
+                  </h2>
+                  <p className="text-brand-secondary/40 text-sm mt-2">
+                    {i18n.language.startsWith('ar') 
+                      ? `المشترك: ${reviewingTransfer.full_name} (${reviewingTransfer.order_num})` 
+                      : `Participant: ${reviewingTransfer.full_name} (${reviewingTransfer.order_num})`}
+                  </p>
+                </div>
+                <span className={cn(
+                  "px-3 py-1.5 rounded-full text-xs font-bold shrink-0",
+                  reviewingTransfer.payment_status === 'transfer_pending' 
+                    ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                    : reviewingTransfer.payment_status === 'transfer_rejected'
+                      ? "bg-red-500/10 text-red-400 border border-red-500/20"
+                      : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                )}>
+                  {reviewingTransfer.payment_status === 'transfer_pending' 
+                    ? (i18n.language.startsWith('ar') ? "قيد المراجعة" : "Pending")
+                    : reviewingTransfer.payment_status === 'transfer_rejected'
+                      ? (i18n.language.startsWith('ar') ? "مرفوض مسبقاً" : "Rejected")
+                      : (i18n.language.startsWith('ar') ? "مقبول" : "Approved")
+                  }
+                </span>
+              </div>
+
+              <div className="p-8 space-y-6 overflow-y-auto flex-1 custom-scrollbar">
+                {/* Proof Document Viewer */}
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-brand-secondary">
+                    {i18n.language.startsWith('ar') ? 'وثيقة الإثبات المرفوعة:' : 'Uploaded Proof Document:'}
+                  </label>
+                  <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex flex-col items-center justify-center min-h-[300px] overflow-hidden relative group">
+                    {reviewingTransfer.transfer_proof_url ? (
+                      reviewingTransfer.transfer_proof_url.toLowerCase().endsWith('.pdf') ? (
+                        <div className="flex flex-col items-center justify-center gap-4 py-8 w-full">
+                          <span className="text-6xl">📄</span>
+                          <span className="text-sm text-brand-secondary/60">
+                            {i18n.language.startsWith('ar') ? 'وصل تحويل بصيغة PDF' : 'PDF Receipt File'}
+                          </span>
+                          <a 
+                            href={getFullProofUrl(reviewingTransfer.transfer_proof_url)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-brand-primary hover:bg-brand-primary-light text-white font-bold px-6 py-3 rounded-xl flex items-center gap-2 transition-all"
+                          >
+                            <span>{i18n.language.startsWith('ar') ? 'فتح ملف الـ PDF في علامة تبويب جديدة ↗' : 'Open PDF in New Tab ↗'}</span>
+                          </a>
+                          
+                          {/* Embedded iframe preview for PDF */}
+                          <iframe 
+                            src={getFullProofUrl(reviewingTransfer.transfer_proof_url)} 
+                            className="w-full h-80 rounded-xl mt-4 border border-white/5 bg-white/5" 
+                            title="PDF Preview"
+                          />
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center w-full">
+                          <img 
+                            src={getFullProofUrl(reviewingTransfer.transfer_proof_url)} 
+                            alt="Transfer Proof" 
+                            className="max-h-[450px] object-contain rounded-xl shadow-lg border border-white/5"
+                          />
+                          <a 
+                            href={getFullProofUrl(reviewingTransfer.transfer_proof_url)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-4 text-xs text-brand-primary hover:underline"
+                          >
+                            {i18n.language.startsWith('ar') ? 'فتح الصورة بحجمها الكامل في نافذة جديدة ↗' : 'Open full image in new window ↗'}
+                          </a>
+                        </div>
+                      )
+                    ) : (
+                      <div className="text-red-400 font-bold">
+                        {i18n.language.startsWith('ar') ? '⚠️ لم يتم رفع أي ملف بعد!' : '⚠️ No file uploaded yet!'}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Reject Reason input */}
+                <div className="space-y-2 border-t border-white/5 pt-6">
+                  <label className="text-sm font-bold text-brand-secondary">
+                    {i18n.language.startsWith('ar') ? 'سبب الرفض (مطلوب فقط في حالة الرفض):' : 'Rejection Reason (required only if rejecting):'}
+                  </label>
+                  <textarea
+                    placeholder={i18n.language.startsWith('ar') ? "مثال: صورة الوصل غير واضحة، يرجى إعادة تصوير الوصل وإرفاق رقم الحوالة الصحيح." : "Example: The receipt image is blurry, please re-upload a clearer image."}
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 h-24 text-white placeholder-white/20 outline-none focus:border-brand-primary transition-all text-sm resize-none"
+                    value={rejectReason}
+                    onChange={(e) => setRejectReason(e.target.value)}
+                    disabled={isProcessingTransfer}
+                  />
+                </div>
+              </div>
+
+              <div className="p-8 border-t border-white/5 bg-black/20 flex gap-4 shrink-0">
+                <Button 
+                  type="button"
+                  variant="outline" 
+                  className="flex-1 h-14 rounded-2xl"
+                  onClick={() => {
+                    setReviewingTransfer(null);
+                    setRejectReason('');
+                  }}
+                  disabled={isProcessingTransfer}
+                >
+                  {t('common.cancel')}
+                </Button>
+                
+                <Button 
+                  type="button"
+                  onClick={() => handleRejectTransfer(reviewingTransfer.id)}
+                  className="flex-1 h-14 rounded-2xl text-red-400 border border-red-500/20 bg-red-500/5 hover:bg-red-500/10"
+                  disabled={isProcessingTransfer || !reviewingTransfer.transfer_proof_url}
+                >
+                  {isProcessingTransfer ? '...' : (i18n.language.startsWith('ar') ? 'رفض وإخطار المشترك ❌' : 'Reject & Notify ❌')}
+                </Button>
+
+                <Button 
+                  type="button"
+                  variant="gold"
+                  onClick={() => handleApproveTransfer(reviewingTransfer.id)}
+                  className="flex-[2] h-14 rounded-2xl text-lg"
+                  disabled={isProcessingTransfer || !reviewingTransfer.transfer_proof_url}
+                >
+                  {isProcessingTransfer ? '...' : (i18n.language.startsWith('ar') ? 'قبول وتفعيل الاشتراك ✅' : 'Approve & Activate ✅')}
+                </Button>
+              </div>
             </motion.div>
           </div>
         )}
