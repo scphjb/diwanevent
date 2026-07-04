@@ -56,8 +56,9 @@ async def update_session(
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
         
+    ignored_keys = {"id", "event_id", "created_at", "updated_at"}
     for key, value in data.items():
-        if hasattr(session, key):
+        if key not in ignored_keys and hasattr(session, key):
             setattr(session, key, value)
             
     await db.commit()

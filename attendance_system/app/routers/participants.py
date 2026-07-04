@@ -1152,8 +1152,9 @@ async def update_participant(
                 detail=f"تم تعيين رئيس لهذه اللجنة مسبقاً: {existing_pres.full_name}"
             )
     
+    ignored_keys = {"id", "event_id", "created_at", "updated_at"}
     for key, value in data.items():
-        if hasattr(participant, key):
+        if key not in ignored_keys and hasattr(participant, key):
             setattr(participant, key, value)
             
     await db.commit()
