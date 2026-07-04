@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useParams } from 'react-router-dom';
-import { 
-  Calendar, 
-  MessageSquare, 
-  BarChart2, 
-  Award, 
-  User, 
+import {
+  Calendar,
+  MessageSquare,
+  BarChart2,
+  Award,
+  User,
   Send,
   Camera,
   Download,
@@ -14,10 +14,10 @@ import {
   X,
   Heart,
   MessageCircle,
-  Search, 
+  Search,
   Users,
   Users as NetworkingIcon,
-  Shield, 
+  Shield,
   Eye,
   EyeOff,
   Link as LinkIcon,
@@ -53,7 +53,7 @@ import PushNotificationManager from '../components/pwa/PushNotificationManager';
 const getFullUrl = (url) => {
   if (!url) return '#';
   if (url.startsWith('http')) return url;
-  
+
   let baseApi = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1/';
   // In production, fallback to the current dynamic domain origin if no custom VITE_API_URL is supplied or it points to localhost
   if (!import.meta.env.DEV && (!import.meta.env.VITE_API_URL || baseApi.includes('localhost'))) {
@@ -120,14 +120,14 @@ const ParticipantPortal = () => {
   const { eid, token } = useParams();
   const eventId = eid;
   const participantToken = token;
-  
+
   const [activeTab, setActiveTab] = useState('home');
 
   // فتح التاب الصحيح عند الضغط على إشعار Push (يحمل ?section=...)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const section = params.get('section');
-    const validTabs = ['home','notifications','agenda','polls','social','networking','cert','docs','ai','logistics','activities','catering'];
+    const validTabs = ['home', 'notifications', 'agenda', 'polls', 'social', 'networking', 'cert', 'docs', 'ai', 'logistics', 'activities', 'catering'];
     if (section && validTabs.includes(section)) {
       setActiveTab(section);
       // مسح الـ param من الـ URL دون إعادة تحميل الصفحة
@@ -172,11 +172,11 @@ const ParticipantPortal = () => {
   const [isSavingCatering, setIsSavingCatering] = useState(false);
   const [eventMeals, setEventMeals] = useState([]);
   const [isTogglingMealRsvp, setIsTogglingMealRsvp] = useState(false);
-  
+
   const [notifications, setNotifications] = useState([]);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
-  
+
   // Organizer Staff Panel States
   const [staffActiveSubTab, setStaffActiveSubTab] = useState('logistics'); // logistics, catering, accommodation, qr_scan
   const [staffLogisticsList, setStaffLogisticsList] = useState([]);
@@ -292,7 +292,7 @@ const ParticipantPortal = () => {
   });
   const [agendaFilter, setAgendaFilter] = useState('all');
   const [expandedSessionId, setExpandedSessionId] = useState(null);
-  
+
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
   const [isUploadingImage, setIsUploadingImage] = useState(false);
@@ -356,7 +356,7 @@ const ParticipantPortal = () => {
   useEffect(() => {
     try {
       localStorage.setItem(`diwan_lang_${eventId}`, lang);
-    } catch (e) {}
+    } catch (e) { }
   }, [lang, eventId]);
 
   const getNextMeal = () => {
@@ -377,9 +377,9 @@ const ParticipantPortal = () => {
   const nextMeal = getNextMeal();
   const nextMealTitle = nextMeal ? (
     nextMeal.meal_type === 'lunch' ? (lang === 'ar' ? 'غداء' : 'Lunch') :
-    nextMeal.meal_type === 'dinner' ? (lang === 'ar' ? 'عشاء' : 'Dinner') :
-    nextMeal.meal_type === 'breakfast' ? (lang === 'ar' ? 'فطور الصباح' : 'Breakfast') :
-    nextMeal.title
+      nextMeal.meal_type === 'dinner' ? (lang === 'ar' ? 'عشاء' : 'Dinner') :
+        nextMeal.meal_type === 'breakfast' ? (lang === 'ar' ? 'فطور الصباح' : 'Breakfast') :
+          nextMeal.title
   ) : (lang === 'ar' ? 'غداء/عشاء' : 'Lunch/Dinner');
 
   const formatDateTime = (dateObj, options = {}) => {
@@ -416,7 +416,7 @@ const ParticipantPortal = () => {
     if (cleaned === '1 hour') return 'ساعة واحدة';
     if (cleaned === '30 minutes') return '30 دقيقة';
     if (cleaned === '1.5 hours' || cleaned === '1 hour 30 minutes' || cleaned === '1 hour and 30 minutes') return 'ساعة ونصف';
-    
+
     const hoursMatch = cleaned.match(/^(\d+)\s*hours?$/);
     if (hoursMatch) {
       const num = parseInt(hoursMatch[1]);
@@ -425,7 +425,7 @@ const ParticipantPortal = () => {
       if (num >= 3 && num <= 10) return `${num} ساعات`;
       return `${num} ساعة`;
     }
-    
+
     const minutesMatch = cleaned.match(/^(\d+)\s*minutes?$/);
     if (minutesMatch) {
       const num = parseInt(minutesMatch[1]);
@@ -468,7 +468,7 @@ const ParticipantPortal = () => {
         }
       });
       toast.success(lang === 'ar' ? 'تم رفع وصل الدفع بنجاح! سيتم مراجعته' : 'Payment proof uploaded successfully! It will be reviewed.');
-      
+
       setParticipant(prev => ({
         ...prev,
         payment_status: 'transfer_pending',
@@ -477,7 +477,7 @@ const ParticipantPortal = () => {
       }));
       setProofFile(null);
       setProofPreview(null);
-      
+
       fetchInitialData();
     } catch (err) {
       console.error(err);
@@ -492,7 +492,7 @@ const ParticipantPortal = () => {
     setSessionNotes(updated);
     try {
       localStorage.setItem(`diwan_notes_${eventId}`, JSON.stringify(updated));
-    } catch (e) {}
+    } catch (e) { }
   };
 
   const translations = {
@@ -657,11 +657,11 @@ const ParticipantPortal = () => {
     const now = new Date();
     const currentHHMM = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
     const activeSessions = agenda.filter(s => s.is_active !== false);
-    
+
     let current = null;
     let next = null;
     let minDiff = Infinity;
-    
+
     for (const session of activeSessions) {
       if (session.start_time <= currentHHMM && session.end_time >= currentHHMM) {
         current = session;
@@ -675,7 +675,7 @@ const ParticipantPortal = () => {
         }
       }
     }
-    
+
     // Fallback simulation: if no current or next sessions based on real time,
     // we simulate using the first two sessions so the user always sees the glowing live status bar!
     if (!current && !next && activeSessions.length > 0) {
@@ -684,14 +684,14 @@ const ParticipantPortal = () => {
         next = { session: activeSessions[1], minutesLeft: 15 };
       }
     }
-    
+
     return { current, next };
   };
 
   const renderLiveStatusBar = () => {
     const { current, next } = getCurrentAndNextSession();
     if (!current && !next) return null;
-    
+
     return (
       <div className="mx-6 mb-6 p-4 bg-gradient-to-r from-amber-500/10 via-amber-600/5 to-transparent border border-amber-500/20 rounded-3xl backdrop-blur-xl flex flex-col md:flex-row items-center justify-between gap-4 animate-fade-in relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-amber-500/5 to-transparent animate-pulse pointer-events-none" />
@@ -713,7 +713,7 @@ const ParticipantPortal = () => {
             </span>
           )}
           {current && (
-            <button 
+            <button
               onClick={() => {
                 setActiveTab('agenda');
                 setAgendaFilter('all');
@@ -782,17 +782,17 @@ const ParticipantPortal = () => {
       // Conflict Detection Engine
       const sessionToAdd = agenda.find(s => s.id === sessionId);
       if (sessionToAdd && sessionToAdd.start_time && sessionToAdd.end_time) {
-        const overlap = agenda.find(s => 
+        const overlap = agenda.find(s =>
           favorites.includes(s.id) &&
           s.id !== sessionId &&
           ((s.start_time >= sessionToAdd.start_time && s.start_time < sessionToAdd.end_time) ||
-           (s.end_time > sessionToAdd.start_time && s.end_time <= sessionToAdd.end_time) ||
-           (s.start_time <= sessionToAdd.start_time && s.end_time >= sessionToAdd.end_time))
+            (s.end_time > sessionToAdd.start_time && s.end_time <= sessionToAdd.end_time) ||
+            (s.start_time <= sessionToAdd.start_time && s.end_time >= sessionToAdd.end_time))
         );
-        
+
         if (overlap) {
           toast.error(
-            lang === 'ar' 
+            lang === 'ar'
               ? `تنبيه تداخل مواعيد: هذه الجلسة تتعارض في الوقت مع: "${overlap.title}"!`
               : `Time conflict: This session overlaps with: "${overlap.title}"!`,
             { duration: 5000 }
@@ -811,16 +811,16 @@ const ParticipantPortal = () => {
         toast.error(lang === 'ar' ? 'جدول مفضلتك فارغ لتصديره!' : 'Your favorites schedule is empty!');
         return;
       }
-      
+
       const dateStr = eventSettings.event_date ? eventSettings.event_date.split('T')[0] : new Date().toISOString().split('T')[0];
       const dateFormatted = dateStr.replace(/-/g, '');
-      
+
       const icsEvents = favoritedSessions.map(session => {
         const startTime = session.start_time || '09:00';
         const endTime = session.end_time || '10:00';
         const startISO = `${dateFormatted}T${startTime.replace(/:/g, '')}00`;
         const endISO = `${dateFormatted}T${endTime.replace(/:/g, '')}00`;
-        
+
         return [
           'BEGIN:VEVENT',
           `SUMMARY:${session.title}`,
@@ -831,14 +831,14 @@ const ParticipantPortal = () => {
           'END:VEVENT'
         ].join('\n');
       }).join('\n');
-      
+
       const icsContent = [
         'BEGIN:VCALENDAR',
         'VERSION:2.0',
         icsEvents,
         'END:VCALENDAR'
       ].join('\n');
-      
+
       const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -906,7 +906,7 @@ const ParticipantPortal = () => {
       if (wakeLock) {
         try {
           await wakeLock.release();
-        } catch (e) {}
+        } catch (e) { }
         setWakeLock(null);
       }
     }
@@ -915,19 +915,19 @@ const ParticipantPortal = () => {
   useEffect(() => {
     return () => {
       if (wakeLock) {
-        wakeLock.release().catch(() => {});
+        wakeLock.release().catch(() => { });
       }
     };
   }, [wakeLock]);
 
   // مراقبة حالة الشبكة
   useEffect(() => {
-    const handleOnline  = () => { setIsOnline(true);  toast.success('تم استعادة الاتصال ✅'); };
+    const handleOnline = () => { setIsOnline(true); toast.success('تم استعادة الاتصال ✅'); };
     const handleOffline = () => { setIsOnline(false); toast.error('انقطع الاتصال بالإنترنت'); };
-    window.addEventListener('online',  handleOnline);
+    window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
     return () => {
-      window.removeEventListener('online',  handleOnline);
+      window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
   }, []);
@@ -937,7 +937,7 @@ const ParticipantPortal = () => {
       if (!isPublicCardOnly) {
         try {
           localStorage.setItem('participant_token', participantToken);
-        } catch (e) {}
+        } catch (e) { }
       }
       fetchInitialData();
     }
@@ -1023,14 +1023,14 @@ const ParticipantPortal = () => {
     setLoading(true);
     setPortalError(null);
     try {
-      const endpoint = isPublicCardOnly 
-        ? `participants/public/card/${participantToken}` 
+      const endpoint = isPublicCardOnly
+        ? `participants/public/card/${participantToken}`
         : `participants/public/access/${participantToken}`;
       const pRes = await api.get(endpoint);
       setParticipant(pRes.data);
       setAvatarError(false);
       setAvatarError2(false);
-      
+
       setProfileData({
         bio: pRes.data.custom_values?.bio || '',
         linkedin: pRes.data.custom_values?.linkedin || '',
@@ -1039,7 +1039,7 @@ const ParticipantPortal = () => {
         phone_number: pRes.data.phone || pRes.data.phone_number || pRes.data.custom_values?.phone_number || '',
         email: pRes.data.email || pRes.data.custom_values?.email || ''
       });
-      
+
       if (!isPublicCardOnly) {
         // Save participant to local cache and set last active PWA portal path
         try {
@@ -1054,9 +1054,9 @@ const ParticipantPortal = () => {
           api.defaults.headers.common['Authorization'] = `Bearer ${participantToken}`;
         }
       }
-      
+
       setIsOptedIn(pRes.data.custom_values?.is_visible || false);
-        
+
       try {
         if (isPublicCardOnly) {
           const settings = await api.get(`events/public/${eventId}`).then(res => res.data);
@@ -1085,46 +1085,46 @@ const ParticipantPortal = () => {
           setPolls(activePolls || []);
           setDocuments(eventDocs || []);
           setQuestions(qList || []);
-        if (logisticsData) {
-          setLogistics(logisticsData);
-        }
-        if (activitiesData) {
-          setActivities(activitiesData);
-        }
-        if (cateringData) {
-          setCatering(cateringData);
-        }
-        if (mealsData) {
-          setEventMeals(mealsData);
-        }
-        setNotifications(notificationsData || []);
-        setUnreadNotificationsCount((notificationsData || []).filter(n => !n.is_read).length);
-
-        try {
-          localStorage.setItem(`diwan_cache_settings_${eventId}`, JSON.stringify(settings || {}));
-          localStorage.setItem(`diwan_cache_agenda_${eventId}`, JSON.stringify(ag || []));
-          localStorage.setItem(`diwan_cache_leaderboard_${eventId}`, JSON.stringify(lead || []));
-          localStorage.setItem(`diwan_cache_directory_${eventId}`, JSON.stringify(dirRes.data || []));
-          localStorage.setItem(`diwan_cache_posts_${eventId}`, JSON.stringify(wallPosts || []));
-          localStorage.setItem(`diwan_cache_polls_${eventId}`, JSON.stringify(activePolls || []));
-          localStorage.setItem(`diwan_cache_documents_${eventId}`, JSON.stringify(eventDocs || []));
-          localStorage.setItem(`diwan_cache_questions_${eventId}`, JSON.stringify(qList || []));
           if (logisticsData) {
-            localStorage.setItem(`diwan_cache_logistics_${eventId}`, JSON.stringify(logisticsData));
+            setLogistics(logisticsData);
           }
           if (activitiesData) {
-            localStorage.setItem(`diwan_cache_activities_${eventId}`, JSON.stringify(activitiesData));
+            setActivities(activitiesData);
           }
           if (cateringData) {
-            localStorage.setItem(`diwan_cache_catering_${eventId}`, JSON.stringify(cateringData));
+            setCatering(cateringData);
           }
           if (mealsData) {
-            localStorage.setItem(`diwan_cache_meals_${eventId}`, JSON.stringify(mealsData));
+            setEventMeals(mealsData);
           }
-        } catch (e) {
-          console.error('Failed to write resource cache', e);
+          setNotifications(notificationsData || []);
+          setUnreadNotificationsCount((notificationsData || []).filter(n => !n.is_read).length);
+
+          try {
+            localStorage.setItem(`diwan_cache_settings_${eventId}`, JSON.stringify(settings || {}));
+            localStorage.setItem(`diwan_cache_agenda_${eventId}`, JSON.stringify(ag || []));
+            localStorage.setItem(`diwan_cache_leaderboard_${eventId}`, JSON.stringify(lead || []));
+            localStorage.setItem(`diwan_cache_directory_${eventId}`, JSON.stringify(dirRes.data || []));
+            localStorage.setItem(`diwan_cache_posts_${eventId}`, JSON.stringify(wallPosts || []));
+            localStorage.setItem(`diwan_cache_polls_${eventId}`, JSON.stringify(activePolls || []));
+            localStorage.setItem(`diwan_cache_documents_${eventId}`, JSON.stringify(eventDocs || []));
+            localStorage.setItem(`diwan_cache_questions_${eventId}`, JSON.stringify(qList || []));
+            if (logisticsData) {
+              localStorage.setItem(`diwan_cache_logistics_${eventId}`, JSON.stringify(logisticsData));
+            }
+            if (activitiesData) {
+              localStorage.setItem(`diwan_cache_activities_${eventId}`, JSON.stringify(activitiesData));
+            }
+            if (cateringData) {
+              localStorage.setItem(`diwan_cache_catering_${eventId}`, JSON.stringify(cateringData));
+            }
+            if (mealsData) {
+              localStorage.setItem(`diwan_cache_meals_${eventId}`, JSON.stringify(mealsData));
+            }
+          } catch (e) {
+            console.error('Failed to write resource cache', e);
+          }
         }
-      }
       } catch (e) {
         console.warn('Optional data fetch failed, fallback to cache', e);
         loadOptionalDataFromCache();
@@ -1134,11 +1134,11 @@ const ParticipantPortal = () => {
 
       // ── انتهت الفعالية (410) ───────────────────────────────────────
       if (status === 410) {
-        try { localStorage.removeItem('last_active_participant_portal'); } catch (_) {}
+        try { localStorage.removeItem('last_active_participant_portal'); } catch (_) { }
         setPortalError('event_ended');
-      // ── رابط غير صالح من الخادم (401/403/404/422) ───────────────────
+        // ── رابط غير صالح من الخادم (401/403/404/422) ───────────────────
       } else if (status === 401 || status === 403 || status === 404 || status === 422) {
-        try { localStorage.removeItem('last_active_participant_portal'); } catch (_) {}
+        try { localStorage.removeItem('last_active_participant_portal'); } catch (_) { }
         setPortalError(status === 404 ? 'not_found' : 'expired');
       } else {
         // فشل شبكي حقيقي → محاولة تحميل من الكاش المحلي
@@ -1157,7 +1157,7 @@ const ParticipantPortal = () => {
       [sessionId]: rating
     }));
     toast.success("\u0634\u0643\u0631\u0627\u064b \u0644\u062a\u0642\u064a\u064a\u0645\u0643 \u0627\u0644\u062c\u0644\u0633\u0629! \u2B50"); // شكراً لتقييمك الجلسة! ⭐
-    
+
     try {
       await api.post('social/session-feedback', {
         session_id: sessionId,
@@ -1193,14 +1193,14 @@ const ParticipantPortal = () => {
         image_url: uploadedImageUrl || imagePreview,
         is_pending: true
       };
-      
+
       setPosts([newOptimisticPost, ...posts]);
       setNewPost('');
       handleClearImage();
       toast.success('تم إرسال منشورك للمراجعة بنجاح! 💬');
-    } catch (err) { 
+    } catch (err) {
       console.error('Failed to post to wall:', err);
-      toast.error('فشل النشر، يرجى المحاولة مرة أخرى.'); 
+      toast.error('فشل النشر، يرجى المحاولة مرة أخرى.');
     } finally {
       setIsUploadingImage(false);
     }
@@ -1221,7 +1221,7 @@ const ParticipantPortal = () => {
 
   const handleToggleLike = async (postId) => {
     const isLiked = likedPosts.includes(postId);
-    
+
     // 1. Optimistic UI update
     setLikedPosts(prev => isLiked ? prev.filter(id => id !== postId) : [...prev, postId]);
     setPosts(prev => prev.map(p => {
@@ -1242,7 +1242,7 @@ const ParticipantPortal = () => {
         });
       } else {
         await api.post(`social/${postId}/like`, null, {
-          params: { 
+          params: {
             session_key: participant.qr_code,
             user_name: participant.full_name
           }
@@ -1295,14 +1295,14 @@ const ParticipantPortal = () => {
         author_name: participant.full_name,
         content: text
       });
-      
+
       const newComment = {
         id: response.data?.id || Date.now(),
         author_name: participant.full_name,
         content: text,
         timestamp: new Date().toISOString()
       };
-      
+
       setPostComments(prev => ({
         ...prev,
         [postId]: [newComment, ...(prev[postId] || [])]
@@ -1336,7 +1336,7 @@ const ParticipantPortal = () => {
       });
       setNewQuestion('');
       toast.success(lang === 'ar' ? 'تم إرسال سؤالك بنجاح ✅' : 'Question submitted successfully ✅');
-      
+
       // جلب قائمة الأسئلة المحدثة
       const qList = await interactionService.getQuestions(eventId).catch(() => []);
       setQuestions(qList || []);
@@ -1370,7 +1370,7 @@ const ParticipantPortal = () => {
   const handleSaveLogistics = async (e) => {
     if (e) e.preventDefault();
     setIsSavingLogistics(true);
-    
+
     const parseSafeDate = (val) => {
       if (!val) return null;
       const d = new Date(val);
@@ -1392,14 +1392,14 @@ const ParticipantPortal = () => {
         check_in_date: parseSafeDate(logistics.check_in_date),
         check_out_date: parseSafeDate(logistics.check_out_date)
       });
-      
+
       setLogistics(response);
-      
+
       // Update local storage cache
       try {
         localStorage.setItem(`diwan_cache_logistics_${eventId}`, JSON.stringify(response));
-      } catch (err) {}
-      
+      } catch (err) { }
+
       toast.success(lang === 'ar' ? 'تم حفظ تفاصيل السفر والإقامة بنجاح! 🚗' : 'Travel and lodging details saved successfully! 🚗');
     } catch (err) {
       console.error('Failed to save logistics details:', err);
@@ -1422,12 +1422,12 @@ const ParticipantPortal = () => {
           toast.success(lang === 'ar' ? 'تم التسجيل في النشاط بنجاح! 🎉' : 'Registered in activity successfully! 🎉');
         }
       }
-      
+
       const updated = await interactionService.listActivities(eventId, participant.id).catch(() => []);
       setActivities(updated);
       try {
         localStorage.setItem(`diwan_cache_activities_${eventId}`, JSON.stringify(updated));
-      } catch (err) {}
+      } catch (err) { }
     } catch (err) {
       console.error('Failed to toggle activity registration:', err);
       toast.error(err.response?.data?.detail || (lang === 'ar' ? 'فشل معالجة الطلب' : 'Failed to process request'));
@@ -1441,12 +1441,12 @@ const ParticipantPortal = () => {
     try {
       await interactionService.updateActivityRegistration(activityId, participant.id, requested, notes);
       toast.success(lang === 'ar' ? 'تم تحديث طلب النقل بنجاح! 🚗' : 'Shuttle request updated successfully! 🚗');
-      
+
       const updated = await interactionService.listActivities(eventId, participant.id).catch(() => []);
       setActivities(updated);
       try {
         localStorage.setItem(`diwan_cache_activities_${eventId}`, JSON.stringify(updated));
-      } catch (err) {}
+      } catch (err) { }
     } catch (err) {
       console.error('Failed to update activity pickup request:', err);
       toast.error(err.response?.data?.detail || (lang === 'ar' ? 'فشل تحديث طلب النقل' : 'Failed to update shuttle request'));
@@ -1467,7 +1467,7 @@ const ParticipantPortal = () => {
       setCatering(response);
       try {
         localStorage.setItem(`diwan_cache_catering_${eventId}`, JSON.stringify(response));
-      } catch (err) {}
+      } catch (err) { }
       toast.success(lang === 'ar' ? 'تم حفظ تفضيلاتك الغذائية بنجاح! 🍽️' : 'Dietary preferences saved successfully! 🍽️');
     } catch (err) {
       console.error('Failed to save catering details:', err);
@@ -1494,8 +1494,8 @@ const ParticipantPortal = () => {
       setEventMeals(updatedMeals);
       try {
         localStorage.setItem(`diwan_cache_meals_${eventId}`, JSON.stringify(updatedMeals));
-      } catch (err) {}
-      
+      } catch (err) { }
+
       if (attending) {
         toast.success(lang === 'ar' ? 'تم تأكيد حضورك الوجبة بنجاح! 🍽️' : 'Meal attendance confirmed successfully! 🍽️');
       } else {
@@ -1541,11 +1541,11 @@ const ParticipantPortal = () => {
       };
       const roleLower = (participant.role || '').toLowerCase();
       const normRoleLower = normalize(roleLower);
-      
-      const isGeneral = !participant.role || 
-        normRoleLower === 'organizer' || 
-        normRoleLower === 'منظم' || 
-        (normRoleLower.includes('عام') && !normRoleLower.includes('طعام')) || 
+
+      const isGeneral = !participant.role ||
+        normRoleLower === 'organizer' ||
+        normRoleLower === 'منظم' ||
+        (normRoleLower.includes('عام') && !normRoleLower.includes('طعام')) ||
         normRoleLower.includes('general') ||
         localStorage.getItem('diwan_force_organizer') === 'true';
 
@@ -1703,13 +1703,13 @@ const ParticipantPortal = () => {
   const handleCreateTask = async (e) => {
     if (e) e.preventDefault();
     if (!newTaskForm.title) return;
-    
+
     let assignedName = '';
     if (newTaskForm.assigned_to_id) {
       const helper = receptionList.find(p => p.id === parseInt(newTaskForm.assigned_to_id));
       if (helper) assignedName = helper.full_name;
     }
-    
+
     try {
       await interactionService.createTask({
         event_id: eventId,
@@ -1747,7 +1747,7 @@ const ParticipantPortal = () => {
     try {
       await interactionService.updateTaskStatus(taskId, newStatus, apologyReason);
       toast.success(lang === 'ar' ? 'تم تحديث حالة المهمة' : 'Task status updated');
-      
+
       setDetailedTask(prev => {
         if (prev && prev.id === taskId) {
           if (newStatus === 'apologized') {
@@ -1775,10 +1775,10 @@ const ParticipantPortal = () => {
     try {
       const targetParticipant = receptionList.find(p => p.id === parseInt(assignedToId));
       const assignedToName = targetParticipant ? targetParticipant.full_name : '';
-      
+
       const updated = await interactionService.reassignTask(taskId, assignedToId, assignedToName);
       toast.success(lang === 'ar' ? 'تم إسناد المهمة للعضو الجديد' : 'Task successfully reassigned');
-      
+
       setDetailedTask(updated);
       setSelectedReassigneeId('');
       fetchCommitteeTasks();
@@ -1806,7 +1806,7 @@ const ParticipantPortal = () => {
       await interactionService.assignTaskDriver(taskId, driverData);
       toast.success(lang === 'ar' ? 'تم تعيين السائق للمهمة بنجاح! 🚗' : 'Driver assigned to task successfully! 🚗');
       setEditingDriverTaskId(null);
-      
+
       // Fetch fresh tasks and update detailedTask view if it's currently open
       const updatedTasks = await interactionService.listTasks(eventId, selectedTaskCommittee);
       setTasksList(updatedTasks);
@@ -1842,7 +1842,7 @@ const ParticipantPortal = () => {
 
       toast.success(lang === 'ar' ? 'تم حفظ تفاصيل سفر وإقامة الضيف بنجاح! 🚗' : 'Guest travel and lodging details saved successfully! 🚗');
       setIsEditingGuestLogistics(false);
-      
+
       // Fetch fresh logistics & tasks to update current view
       const freshLogistics = await interactionService.listEventLogistics(eventId);
       setStaffLogisticsList(freshLogistics || []);
@@ -1861,25 +1861,25 @@ const ParticipantPortal = () => {
         toast.error(lang === 'ar' ? 'يرجى إدخال رقم هاتف السائق أولاً' : 'Please enter driver phone number first');
         return;
       }
-      
+
       const guestObj = receptionList.find(p => p.id === task.participant_id);
       const guestName = guestObj ? guestObj.full_name : (lang === 'ar' ? 'غير محدد' : 'Not specified');
       const taskTitle = task.title;
       const taskDesc = task.description || '';
-      
+
       const text = lang === 'ar'
         ? `أهلاً بك، تم إسناد المهمة الميدانية التالية إليك:\n\n📋 المهمة: ${taskTitle}\n📝 التفاصيل: ${taskDesc}\n👤 الضيف المستهدف: ${guestName}`
         : `Hello, the following field task has been assigned to you:\n\n📋 Task: ${taskTitle}\n📝 Details: ${taskDesc}\n👤 Target Guest: ${guestName}`;
-      
+
       // Open WhatsApp
       window.open(`https://wa.me/${driverPhone.replace(/\+/g, '')}?text=${encodeURIComponent(text)}`, '_blank');
-      
+
       // Update database status
       await interactionService.markTaskWhatsAppSent(task.id);
-      
+
       // Update local state to reflect WhatsApp sent state
       setDetailedTask(prev => prev ? { ...prev, whatsapp_sent: true } : null);
-      
+
       // Fetch fresh tasks
       fetchCommitteeTasks();
     } catch (err) {
@@ -1891,31 +1891,31 @@ const ParticipantPortal = () => {
     if (!selectedStaffParticipant) return null;
     const currentPhone = staffDispatchForm.driver_phone.trim();
     if (!currentPhone) return null;
-    
+
     const currentGuestId = selectedStaffParticipant.participant_id;
     const currentArrivalTime = selectedStaffParticipant.arrival_time ? new Date(selectedStaffParticipant.arrival_time) : null;
     if (!currentArrivalTime) return null;
-    
+
     const conflict = staffLogisticsList.find(item => {
       if (item.participant_id === currentGuestId) return false;
       if (!item.driver_phone || item.driver_phone.trim() !== currentPhone) return false;
       if (!item.arrival_time) return false;
-      
+
       const otherTime = new Date(item.arrival_time);
       const diffHours = Math.abs(currentArrivalTime - otherTime) / (1000 * 60 * 60);
       return diffHours < 2;
     });
-    
+
     if (conflict) {
       // Check if same pickup location and same hotel
       const currentLoc = (selectedStaffParticipant.arrival_location || '').trim().toLowerCase();
       const conflictLoc = (conflict.arrival_location || '').trim().toLowerCase();
       const currentHotel = (selectedStaffParticipant.hotel_name || '').trim().toLowerCase();
       const conflictHotel = (conflict.hotel_name || '').trim().toLowerCase();
-      
+
       const isSameLoc = currentLoc && conflictLoc && currentLoc === conflictLoc;
       const isSameHotel = currentHotel && conflictHotel && currentHotel === conflictHotel;
-      
+
       if (isSameLoc && isSameHotel) {
         // Suggest Carpooling
         return lang === 'ar'
@@ -1936,34 +1936,34 @@ const ParticipantPortal = () => {
 
   const getMemberConflictWarning = () => {
     if (!newTaskForm.assigned_to_id || !newTaskForm.due_time) return null;
-    
+
     const currentMemberId = parseInt(newTaskForm.assigned_to_id);
     const currentDueTime = new Date(newTaskForm.due_time);
     const currentGuestId = newTaskForm.participant_id ? parseInt(newTaskForm.participant_id) : null;
-    
+
     // Find if the committee member has another task within 2 hours
     const conflictTask = tasksList.find(t => {
       if (t.assigned_to_id !== currentMemberId) return false;
       if (t.status === 'completed' || t.status === 'cancelled') return false;
       if (!t.due_time) return false;
-      
+
       const otherTime = new Date(t.due_time);
       const diffHours = Math.abs(currentDueTime - otherTime) / (1000 * 60 * 60);
       return diffHours < 2;
     });
-    
+
     if (conflictTask) {
       // Look up locations if both tasks are related to guests
       const currentGuest = currentGuestId ? staffLogisticsList.find(item => item.participant_id === currentGuestId) : null;
       const conflictGuest = conflictTask.participant_id ? staffLogisticsList.find(item => item.participant_id === conflictTask.participant_id) : null;
-      
+
       const currentLoc = currentGuest ? (currentGuest.arrival_location || '').trim().toLowerCase() : '';
       const conflictLoc = conflictGuest ? (conflictGuest.arrival_location || '').trim().toLowerCase() : '';
       const currentHotel = currentGuest ? (currentGuest.hotel_name || '').trim().toLowerCase() : '';
       const conflictHotel = conflictGuest ? (conflictGuest.hotel_name || '').trim().toLowerCase() : '';
-      
+
       const locationsDefined = currentLoc || conflictLoc || currentHotel || conflictHotel;
-      
+
       if (locationsDefined && (currentLoc !== conflictLoc || currentHotel !== conflictHotel)) {
         // Different locations/hotels - Real conflict warning
         const currentLocStr = currentGuest ? `${currentGuest.arrival_location || ''} / ${currentGuest.hotel_name || ''}` : (lang === 'ar' ? 'غير محدد' : 'Not specified');
@@ -2026,7 +2026,7 @@ const ParticipantPortal = () => {
       const res = await api.patch(`participants/public/visibility/${participantToken}`);
       const newStatus = res.data.is_visible;
       setIsOptedIn(newStatus);
-      
+
       // تحديث الدليل فوراً ليظهر المشترك نفسه أو يختفي
       const dirRes = await api.get(`networking/directory?event_id=${eventId}`);
       setDirectory(dirRes.data || []);
@@ -2081,14 +2081,14 @@ const ParticipantPortal = () => {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       const newAvatarUrl = res.data.avatar_url;
-      
+
       const updatedParticipant = { ...participant, avatar_url: newAvatarUrl };
       setParticipant(updatedParticipant);
       setAvatarError(false);
       setAvatarError2(false);
-      
+
       localStorage.setItem(`diwan_cache_participant_${participantToken}`, JSON.stringify(updatedParticipant));
-      
+
       toast.success('تم تحديث صورتك الشخصية بنجاح ✅');
     } catch (err) {
       toast.error(err.response?.data?.detail || 'فشل رفع الصورة الشخصية');
@@ -2141,10 +2141,10 @@ const ParticipantPortal = () => {
 
   const handleShareCard = async () => {
     const shareUrl = `${window.location.origin}/card/${eventId}/${participant?.public_card_token || participantToken}`;
-    const shareText = lang === 'ar' 
+    const shareText = lang === 'ar'
       ? `بطاقة الأعمال الرقمية للمشارك: ${participant?.full_name}\nالفعالية: ${eventSettings?.event_name || eventSettings?.name}`
       : `Digital Business Card of: ${participant?.full_name}\nEvent: ${eventSettings?.event_name || eventSettings?.name}`;
-      
+
     if (navigator.share) {
       try {
         await navigator.share({
@@ -2169,7 +2169,7 @@ const ParticipantPortal = () => {
   const handleShareWhatsApp = () => {
     const shareUrl = `${window.location.origin}/card/${eventId}/${participant?.public_card_token || participantToken}`;
     const shareText = encodeURIComponent(
-      (lang === 'ar' 
+      (lang === 'ar'
         ? `أهلاً بك، إليك بطاقة أعمالي الرقمية الخاصة بـ ${eventSettings?.event_name || eventSettings?.name}:\n`
         : `Hello, here is my digital business card for ${eventSettings?.event_name || eventSettings?.name}:\n`) + shareUrl
     );
@@ -2179,7 +2179,7 @@ const ParticipantPortal = () => {
   const handleDownloadCardAsImage = async () => {
     try {
       toast.loading(lang === 'ar' ? 'جاري تجهيز صورة البطاقة...' : 'Preparing card image...', { id: 'card-gen' });
-      
+
       const canvas = document.createElement('canvas');
       canvas.width = 1012;
       canvas.height = 638;
@@ -2207,7 +2207,7 @@ const ParticipantPortal = () => {
       const w = canvas.width;
       const h = canvas.height;
       const pad = 12;
-      
+
       const drawRoundedRect = (x, y, width, height, radius) => {
         ctx.beginPath();
         ctx.moveTo(x + radius, y);
@@ -2221,7 +2221,7 @@ const ParticipantPortal = () => {
         ctx.quadraticCurveTo(x, y, x + radius, y);
         ctx.closePath();
       };
-      
+
       drawRoundedRect(pad, pad, w - pad * 2, h - pad * 2, r);
       ctx.stroke();
 
@@ -2235,26 +2235,26 @@ const ParticipantPortal = () => {
       const chipY = 70;
       const chipW = 100;
       const chipH = 70;
-      
+
       const chipGrad = ctx.createLinearGradient(chipX, chipY, chipX + chipW, chipY + chipH);
       chipGrad.addColorStop(0, '#FFE082');
       chipGrad.addColorStop(0.5, '#FFB300');
       chipGrad.addColorStop(1, '#FF6F00');
       ctx.fillStyle = chipGrad;
-      
+
       ctx.beginPath();
       if (ctx.roundRect) ctx.roundRect(chipX, chipY, chipW, chipH, 10); else ctx.rect(chipX, chipY, chipW, chipH);
       ctx.fill();
       ctx.lineWidth = 2;
       ctx.strokeStyle = 'rgba(255,255,255,0.4)';
       ctx.stroke();
-      
+
       ctx.strokeStyle = 'rgba(0,0,0,0.15)';
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(chipX + chipW/3, chipY); ctx.lineTo(chipX + chipW/3, chipY + chipH);
-      ctx.moveTo(chipX + 2*chipW/3, chipY); ctx.lineTo(chipX + 2*chipW/3, chipY + chipH);
-      ctx.moveTo(chipX, chipY + chipH/2); ctx.lineTo(chipX + chipW, chipY + chipH/2);
+      ctx.moveTo(chipX + chipW / 3, chipY); ctx.lineTo(chipX + chipW / 3, chipY + chipH);
+      ctx.moveTo(chipX + 2 * chipW / 3, chipY); ctx.lineTo(chipX + 2 * chipW / 3, chipY + chipH);
+      ctx.moveTo(chipX, chipY + chipH / 2); ctx.lineTo(chipX + chipW, chipY + chipH / 2);
       ctx.stroke();
 
       // Event Branding
@@ -2271,7 +2271,7 @@ const ParticipantPortal = () => {
       const badgeH = 36;
       const badgeX = w - badgeW - 75;
       const badgeY = 70;
-      
+
       ctx.fillStyle = 'rgba(212, 175, 55, 0.1)';
       ctx.strokeStyle = 'rgba(212, 175, 55, 0.4)';
       ctx.lineWidth = 1.5;
@@ -2279,10 +2279,10 @@ const ParticipantPortal = () => {
       if (ctx.roundRect) ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 18); else ctx.rect(badgeX, badgeY, badgeW, badgeH);
       ctx.fill();
       ctx.stroke();
-      
+
       ctx.fillStyle = '#D4AF37';
       ctx.textAlign = 'center';
-      ctx.fillText(badgeText, badgeX + badgeW/2, badgeY + 24);
+      ctx.fillText(badgeText, badgeX + badgeW / 2, badgeY + 24);
 
       // Name & Details
       ctx.textAlign = 'right';
@@ -2320,13 +2320,13 @@ const ParticipantPortal = () => {
       ctx.font = '500 20px Cairo, system-ui, sans-serif';
       ctx.fillStyle = 'rgba(255,255,255,0.7)';
       let contactY = 375;
-      
+
       const phone = participant.phone_number || participant.phone;
       if (phone) {
         ctx.fillText(`${phone}  📞`, w - 75, contactY);
         contactY += 35;
       }
-      
+
       if (participant.email) {
         ctx.fillText(`${participant.email}  ✉️`, w - 75, contactY);
         contactY += 35;
@@ -2342,15 +2342,15 @@ const ParticipantPortal = () => {
       // Load Avatar (or fallback to text initial)
       const avatarImg = new Image();
       avatarImg.crossOrigin = 'anonymous';
-      const avatarUrl = participant.avatar_url 
+      const avatarUrl = participant.avatar_url
         ? getFullUrl(participant.avatar_url) + (participant.avatar_url.includes('?') ? '&' : '?') + 't=' + new Date().getTime()
         : null;
-      
+
       const drawAvatarAndFinalize = () => {
         const size = 180;
         const ax = 75;
         const ay = 170;
-        
+
         ctx.save();
         ctx.beginPath();
         if (ctx.roundRect) {
@@ -2359,7 +2359,7 @@ const ParticipantPortal = () => {
           ctx.rect(ax, ay, size, size);
         }
         ctx.clip();
-        
+
         if (avatarUrl && avatarImg.complete && avatarImg.naturalWidth !== 0) {
           ctx.drawImage(avatarImg, ax, ay, size, size);
         } else {
@@ -2369,15 +2369,15 @@ const ParticipantPortal = () => {
           fGrad.addColorStop(1, '#FFB300');
           ctx.fillStyle = fGrad;
           ctx.fillRect(ax, ay, size, size);
-          
+
           ctx.fillStyle = '#111827';
           ctx.font = 'bold 72px Cairo, system-ui, sans-serif';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillText(participant.full_name ? participant.full_name.trim().charAt(0) : 'D', ax + size/2, ay + size/2);
+          ctx.fillText(participant.full_name ? participant.full_name.trim().charAt(0) : 'D', ax + size / 2, ay + size / 2);
         }
         ctx.restore();
-        
+
         // Gold outline
         ctx.strokeStyle = 'rgba(212, 175, 55, 0.4)';
         ctx.lineWidth = 3;
@@ -2396,7 +2396,7 @@ const ParticipantPortal = () => {
         }
 
         const dataUrl = canvas.toDataURL('image/png');
-        
+
         // Share File API
         if (navigator.canShare && navigator.share) {
           fetch(dataUrl)
@@ -2409,11 +2409,11 @@ const ParticipantPortal = () => {
                   title: participant.full_name,
                   text: lang === 'ar' ? 'إليك بطاقة أعمالي الرقمية الرسمية' : 'Here is my official guest business card'
                 })
-                .then(() => toast.success(lang === 'ar' ? 'تمت المشاركة بنجاح' : 'Shared successfully'))
-                .catch(err => {
-                  console.log('Share error, downloading instead:', err);
-                  triggerDownload(dataUrl);
-                });
+                  .then(() => toast.success(lang === 'ar' ? 'تمت المشاركة بنجاح' : 'Shared successfully'))
+                  .catch(err => {
+                    console.log('Share error, downloading instead:', err);
+                    triggerDownload(dataUrl);
+                  });
               } else {
                 triggerDownload(dataUrl);
               }
@@ -2440,7 +2440,7 @@ const ParticipantPortal = () => {
       } else {
         drawAvatarAndFinalize();
       }
-      
+
     } catch (err) {
       console.error(err);
       toast.dismiss('card-gen');
@@ -2475,8 +2475,8 @@ const ParticipantPortal = () => {
   const normRole = normalizeArabic(participant?.role || '');
 
   const isOrganizer = participant && (
-    participant.role === 'organizer' || 
-    participant.role === 'منظم' || 
+    participant.role === 'organizer' ||
+    participant.role === 'منظم' ||
     participant.custom_values?.is_organizer ||
     normRole.includes('organizer') ||
     normRole.includes('منظم') ||
@@ -2489,54 +2489,54 @@ const ParticipantPortal = () => {
     localStorage.getItem('diwan_force_organizer') === 'true'
   );
 
-  const isPressOrExhibitor = normRole.includes('press') || 
-    normRole.includes('صحافه') || 
-    normRole.includes('exhibitor') || 
+  const isPressOrExhibitor = normRole.includes('press') ||
+    normRole.includes('صحافه') ||
+    normRole.includes('exhibitor') ||
     normRole.includes('عارض') ||
     normRole.includes('صحافي');
-  
-  const isGeneralOrganizer = !participant?.role || 
-    normRole === 'organizer' || 
-    normRole === 'منظم' || 
-    (normRole.includes('عام') && !normRole.includes('طعام')) || 
+
+  const isGeneralOrganizer = !participant?.role ||
+    normRole === 'organizer' ||
+    normRole === 'منظم' ||
+    (normRole.includes('عام') && !normRole.includes('طعام')) ||
     normRole.includes('general') ||
     localStorage.getItem('diwan_force_organizer') === 'true';
 
-  const hasLogisticsStaffAccess = isOrganizer && !isPressOrExhibitor && (isGeneralOrganizer || 
-    normRole.includes('نقل') || 
-    normRole.includes('لوجست') || 
-    normRole.includes('transport') || 
+  const hasLogisticsStaffAccess = isOrganizer && !isPressOrExhibitor && (isGeneralOrganizer ||
+    normRole.includes('نقل') ||
+    normRole.includes('لوجست') ||
+    normRole.includes('transport') ||
     normRole.includes('logistics'));
 
-  const hasCateringStaffAccess = isOrganizer && !isPressOrExhibitor && (isGeneralOrganizer || 
-    normRole.includes('اطعام') || 
-    normRole.includes('ضيافه') || 
-    normRole.includes('تموين') || 
-    normRole.includes('catering') || 
+  const hasCateringStaffAccess = isOrganizer && !isPressOrExhibitor && (isGeneralOrganizer ||
+    normRole.includes('اطعام') ||
+    normRole.includes('ضيافه') ||
+    normRole.includes('تموين') ||
+    normRole.includes('catering') ||
     normRole.includes('food'));
 
-  const hasAccommodationStaffAccess = isOrganizer && !isPressOrExhibitor && (isGeneralOrganizer || 
-    normRole.includes('ايواء') || 
-    normRole.includes('تسكين') || 
-    normRole.includes('فندق') || 
-    normRole.includes('hotel') || 
-    normRole.includes('accommodation') || 
+  const hasAccommodationStaffAccess = isOrganizer && !isPressOrExhibitor && (isGeneralOrganizer ||
+    normRole.includes('ايواء') ||
+    normRole.includes('تسكين') ||
+    normRole.includes('فندق') ||
+    normRole.includes('hotel') ||
+    normRole.includes('accommodation') ||
     normRole.includes('lodging'));
 
-  const hasEntertainmentStaffAccess = isOrganizer && !isPressOrExhibitor && (isGeneralOrganizer || 
-    normRole.includes('ترفيه') || 
-    normRole.includes('نشاط') || 
-    normRole.includes('انشطه') || 
-    normRole.includes('entertainment') || 
-    normRole.includes('excursion') || 
+  const hasEntertainmentStaffAccess = isOrganizer && !isPressOrExhibitor && (isGeneralOrganizer ||
+    normRole.includes('ترفيه') ||
+    normRole.includes('نشاط') ||
+    normRole.includes('انشطه') ||
+    normRole.includes('entertainment') ||
+    normRole.includes('excursion') ||
     normRole.includes('activity'));
 
-  const hasReceptionStaffAccess = isOrganizer && !isPressOrExhibitor && (isGeneralOrganizer || 
-    normRole.includes('استقبال') || 
-    normRole.includes('تسجيل') || 
-    normRole.includes('reception') || 
-    normRole.includes('checkin') || 
-    normRole.includes('gate') || 
+  const hasReceptionStaffAccess = isOrganizer && !isPressOrExhibitor && (isGeneralOrganizer ||
+    normRole.includes('استقبال') ||
+    normRole.includes('تسجيل') ||
+    normRole.includes('reception') ||
+    normRole.includes('checkin') ||
+    normRole.includes('gate') ||
     normRole.includes('scanner'));
 
   if (isOrganizer && !isPressOrExhibitor) {
@@ -2552,15 +2552,15 @@ const ParticipantPortal = () => {
 
   if (loading) return (
     <div className="min-h-screen bg-[#050B18] flex items-center justify-center">
-       <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full shadow-[0_0_20px_rgba(245,158,11,0.2)]" />
+      <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full shadow-[0_0_20px_rgba(245,158,11,0.2)]" />
     </div>
   );
-  
+
   // ── حالة: انتهت الفعالية — روني
   if (portalError === 'event_ended') return (
     <div className="min-h-screen bg-[#050B18] flex flex-col items-center justify-center p-6 text-center">
       <div className="w-20 h-20 bg-blue-500/10 rounded-full flex items-center justify-center mb-6">
-        <span style={{fontSize:'2.5rem'}}>🎉</span>
+        <span style={{ fontSize: '2.5rem' }}>🎉</span>
       </div>
       <h2 className="text-2xl font-black mb-2 text-white">انتهت الفعالية</h2>
       <p className="text-white/50 font-bold mb-8 max-w-xs leading-relaxed">
@@ -2569,10 +2569,10 @@ const ParticipantPortal = () => {
       <button
         onClick={() => window.location.href = '/'}
         style={{
-          background:'rgba(255,255,255,0.06)', color:'rgba(255,255,255,0.6)',
-          fontWeight:700, padding:'12px 32px', borderRadius:14,
-          border:'1px solid rgba(255,255,255,0.1)',
-          fontFamily:'Cairo,system-ui,sans-serif', fontSize:'1rem', cursor:'pointer'
+          background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.6)',
+          fontWeight: 700, padding: '12px 32px', borderRadius: 14,
+          border: '1px solid rgba(255,255,255,0.1)',
+          fontFamily: 'Cairo,system-ui,sans-serif', fontSize: '1rem', cursor: 'pointer'
         }}
       >
         العودة للرئيسية
@@ -2584,7 +2584,7 @@ const ParticipantPortal = () => {
   if (portalError === 'expired') return (
     <div className="min-h-screen bg-[#050B18] flex flex-col items-center justify-center p-6 text-center">
       <div className="w-20 h-20 bg-amber-500/10 rounded-full flex items-center justify-center mb-6">
-        <span style={{fontSize:'2.5rem'}}>⏳</span>
+        <span style={{ fontSize: '2.5rem' }}>⏳</span>
       </div>
       <h2 className="text-2xl font-black mb-2 text-white">انتهت صلاحية الرابط</h2>
       <p className="text-white/50 font-bold mb-8 max-w-xs leading-relaxed">
@@ -2593,9 +2593,9 @@ const ParticipantPortal = () => {
       <button
         onClick={() => window.location.href = '/'}
         style={{
-          background: 'linear-gradient(135deg,#D4AF37,#F0C040)', color:'#050B18',
-          fontWeight:900, padding:'12px 32px', borderRadius:14, border:'none',
-          fontFamily:'Cairo,system-ui,sans-serif', fontSize:'1rem', cursor:'pointer'
+          background: 'linear-gradient(135deg,#D4AF37,#F0C040)', color: '#050B18',
+          fontWeight: 900, padding: '12px 32px', borderRadius: 14, border: 'none',
+          fontFamily: 'Cairo,system-ui,sans-serif', fontSize: '1rem', cursor: 'pointer'
         }}
       >
         العودة للرئيسية
@@ -2616,37 +2616,37 @@ const ParticipantPortal = () => {
 
   const renderCommitteeTasks = (committeeKey) => {
     const roleLower = (participant.role || '').toLowerCase();
-    const isGeneral = !participant.role || 
-      roleLower === 'organizer' || 
-      roleLower === 'منظم' || 
-      (roleLower.includes('عام') && !roleLower.includes('طعام')) || 
+    const isGeneral = !participant.role ||
+      roleLower === 'organizer' ||
+      roleLower === 'منظم' ||
+      (roleLower.includes('عام') && !roleLower.includes('طعام')) ||
       roleLower.includes('general') ||
       localStorage.getItem('diwan_force_organizer') === 'true';
 
     const isPresident = roleLower.includes('رئيس') || roleLower.includes('president') || isGeneral;
-    
+
     const filteredTasks = tasksList.filter(t => {
       if (t.committee !== committeeKey) return false;
       if (!isPresident && Number(t.assigned_to_id) !== Number(participant.id)) return false;
-      
+
       if (committeeKey === 'transport' && searchStaffQuery) {
         const query = searchStaffQuery.toLowerCase();
         const guest = receptionList.find(p => p.id === t.participant_id);
         const guestArrival = staffLogisticsList.find(l => l.participant_id === t.participant_id);
-        
+
         const guestName = (guest?.full_name || guestArrival?.participant_name || t.title || '').toLowerCase();
         const driverName = (t.driver_name || '').toLowerCase();
         const vehicle = (t.driver_vehicle || '').toLowerCase();
         const flight = (guestArrival?.flight_number || '').toLowerCase();
-        
-        return guestName.includes(query) || 
-               driverName.includes(query) || 
-               vehicle.includes(query) || 
-               flight.includes(query);
+
+        return guestName.includes(query) ||
+          driverName.includes(query) ||
+          vehicle.includes(query) ||
+          flight.includes(query);
       }
       return true;
     });
-    
+
     const availableHelpers = receptionList.filter(p => {
       const r = (p.role || '').toLowerCase();
       return r.includes('منظم') || r.includes('organizer') || r.includes('سائق') || r.includes('مرافق') || r.includes('driver') || r.includes('companion') || r.includes('helper') || r.includes('مساعد') || r.includes('رئيس');
@@ -2657,7 +2657,7 @@ const ParticipantPortal = () => {
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6" dir="rtl">
           <div className="flex items-center gap-2">
             <h4 className="text-lg font-black text-white">
-              {committeeKey === 'transport' 
+              {committeeKey === 'transport'
                 ? (lang === 'ar' ? 'سجل الاستقبال والمهام المسندة' : 'Reception Registry & Tasks')
                 : (lang === 'ar' ? 'المهام الميدانية والتفويض' : 'Field Tasks & Delegation')}
             </h4>
@@ -2701,14 +2701,14 @@ const ParticipantPortal = () => {
           <div className="space-y-3">
             {filteredTasks.map(task => {
               const guest = receptionList.find(p => p.id === task.participant_id);
-              
+
               if (committeeKey === 'transport') {
                 const guestArrival = staffLogisticsList.find(l => l.participant_id === task.participant_id);
                 const guestPhone = guest?.phone || guest?.phone_number || guestArrival?.participant_phone;
-                
+
                 return (
-                  <div 
-                    key={task.id} 
+                  <div
+                    key={task.id}
                     onClick={() => setDetailedTask(task)}
                     className="p-5 rounded-3xl border border-white/5 bg-white/[0.01] hover:bg-white/[0.02] hover:border-amber-500/20 transition-all relative cursor-pointer text-right space-y-4"
                   >
@@ -2727,31 +2727,31 @@ const ParticipantPortal = () => {
                               ⏳ {lang === 'ar' ? 'في انتظار تسجيل بيانات الوصول من الضيف' : 'Awaiting arrival details from guest'}
                             </span>
                           )}
-                          
+
                           <span className={cn(
                             "text-[9px] px-2.5 py-0.5 rounded-full font-bold",
                             task.status === 'completed' ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400" :
-                            task.status === 'confirmed' ? "bg-amber-500/10 border border-amber-500/20 text-amber-400" :
-                            task.status === 'on_the_way_to_task' ? "bg-blue-500/10 border border-blue-500/20 text-blue-400" :
-                            task.status === 'awaiting_guest' ? "bg-sky-500/10 border border-sky-500/20 text-sky-400" :
-                            task.status === 'guest_delayed' ? "bg-red-500/10 border border-red-500/20 text-red-400" :
-                            task.status === 'returning_from_task' ? "bg-violet-500/10 border border-violet-500/20 text-violet-400" :
-                            task.status === 'in_progress' ? "bg-blue-500/10 border border-blue-500/20 text-blue-400" :
-                            task.status === 'cancelled' ? "bg-red-500/10 border border-red-500/20 text-red-400" :
-                            "bg-amber-500/10 border border-amber-500/20 text-amber-400"
+                              task.status === 'confirmed' ? "bg-amber-500/10 border border-amber-500/20 text-amber-400" :
+                                task.status === 'on_the_way_to_task' ? "bg-blue-500/10 border border-blue-500/20 text-blue-400" :
+                                  task.status === 'awaiting_guest' ? "bg-sky-500/10 border border-sky-500/20 text-sky-400" :
+                                    task.status === 'guest_delayed' ? "bg-red-500/10 border border-red-500/20 text-red-400" :
+                                      task.status === 'returning_from_task' ? "bg-violet-500/10 border border-violet-500/20 text-violet-400" :
+                                        task.status === 'in_progress' ? "bg-blue-500/10 border border-blue-500/20 text-blue-400" :
+                                          task.status === 'cancelled' ? "bg-red-500/10 border border-red-500/20 text-red-400" :
+                                            "bg-amber-500/10 border border-amber-500/20 text-amber-400"
                           )}>
                             {task.status === 'completed' ? (lang === 'ar' ? '✅ مكتملة بنجاح' : 'Completed') :
-                             task.status === 'confirmed' ? (lang === 'ar' ? '✔️ تم الاستلام' : 'Confirmed') :
-                             task.status === 'on_the_way_to_task' ? (lang === 'ar' ? '🚗 في الطريق للمهمة' : 'On Way to Task') :
-                             task.status === 'awaiting_guest' ? (lang === 'ar' ? '🕒 في انتظار الضيف' : 'Awaiting Guest') :
-                             task.status === 'guest_delayed' ? (lang === 'ar' ? '⚠️ الضيف متأخر' : 'Guest Delayed') :
-                             task.status === 'returning_from_task' ? (lang === 'ar' ? '🔄 في طريق العودة' : 'Returning') :
-                             task.status === 'in_progress' ? (lang === 'ar' ? '⚙️ جاري العمل' : 'In Progress') :
-                             task.status === 'cancelled' ? (lang === 'ar' ? '❌ ملغاة' : 'Cancelled') :
-                             (lang === 'ar' ? '⏳ قيد الانتظار' : 'Pending')}
+                              task.status === 'confirmed' ? (lang === 'ar' ? '✔️ تم الاستلام' : 'Confirmed') :
+                                task.status === 'on_the_way_to_task' ? (lang === 'ar' ? '🚗 في الطريق للمهمة' : 'On Way to Task') :
+                                  task.status === 'awaiting_guest' ? (lang === 'ar' ? '🕒 في انتظار الضيف' : 'Awaiting Guest') :
+                                    task.status === 'guest_delayed' ? (lang === 'ar' ? '⚠️ الضيف متأخر' : 'Guest Delayed') :
+                                      task.status === 'returning_from_task' ? (lang === 'ar' ? '🔄 في طريق العودة' : 'Returning') :
+                                        task.status === 'in_progress' ? (lang === 'ar' ? '⚙️ جاري العمل' : 'In Progress') :
+                                          task.status === 'cancelled' ? (lang === 'ar' ? '❌ ملغاة' : 'Cancelled') :
+                                            (lang === 'ar' ? '⏳ قيد الانتظار' : 'Pending')}
                           </span>
                         </div>
-                        
+
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5 text-xs text-white/50 font-bold" dir="rtl">
                           {guestArrival?.flight_number && (
                             <div>✈️ {lang === 'ar' ? 'رحلة رقم' : 'Flight'}: <span className="text-white">{guestArrival.flight_number}</span></div>
@@ -2910,8 +2910,8 @@ const ParticipantPortal = () => {
               }
 
               return (
-                <div 
-                  key={task.id} 
+                <div
+                  key={task.id}
                   onClick={() => setDetailedTask(task)}
                   className="p-4 bg-white/[0.01] border border-white/5 hover:border-amber-500/20 rounded-2xl transition-all cursor-pointer hover:bg-white/[0.02]"
                 >
@@ -2926,28 +2926,28 @@ const ParticipantPortal = () => {
                           🗑️
                         </button>
                       )}
-                      
+
                       <span className={cn(
                         "text-[10px] px-2 py-0.5 rounded font-black",
                         task.status === 'completed' ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" :
-                        task.status === 'confirmed' ? "bg-amber-500/10 text-amber-400 border border-amber-500/20" :
-                        task.status === 'on_the_way_to_task' ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" :
-                        task.status === 'awaiting_guest' ? "bg-sky-500/10 text-sky-400 border border-sky-500/20" :
-                        task.status === 'guest_delayed' ? "bg-red-500/10 text-red-400 border border-red-500/20" :
-                        task.status === 'returning_from_task' ? "bg-violet-500/10 text-violet-400 border border-violet-500/20" :
-                        task.status === 'in_progress' ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" :
-                        task.status === 'cancelled' ? "bg-red-500/10 text-red-400 border border-red-500/20" :
-                        "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                          task.status === 'confirmed' ? "bg-amber-500/10 text-amber-400 border border-amber-500/20" :
+                            task.status === 'on_the_way_to_task' ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" :
+                              task.status === 'awaiting_guest' ? "bg-sky-500/10 text-sky-400 border border-sky-500/20" :
+                                task.status === 'guest_delayed' ? "bg-red-500/10 text-red-400 border border-red-500/20" :
+                                  task.status === 'returning_from_task' ? "bg-violet-500/10 text-violet-400 border border-violet-500/20" :
+                                    task.status === 'in_progress' ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" :
+                                      task.status === 'cancelled' ? "bg-red-500/10 text-red-400 border border-red-500/20" :
+                                        "bg-amber-500/10 text-amber-400 border border-amber-500/20"
                       )}>
                         {task.status === 'completed' ? (lang === 'ar' ? '✅ اكتملت بنجاح' : 'Completed') :
-                         task.status === 'confirmed' ? (lang === 'ar' ? '✔️ تم الاستلام' : 'Confirmed') :
-                         task.status === 'on_the_way_to_task' ? (lang === 'ar' ? '🚗 في الطريق إلى المهمة' : 'On the Way to Task') :
-                         task.status === 'awaiting_guest' ? (lang === 'ar' ? '🕒 في انتظار وصول الضيف' : 'Awaiting Guest') :
-                         task.status === 'guest_delayed' ? (lang === 'ar' ? '⚠️ تأخر وصول الضيف' : 'Guest Delayed') :
-                         task.status === 'returning_from_task' ? (lang === 'ar' ? '🔄 في طريق العودة' : 'Returning from Task') :
-                         task.status === 'in_progress' ? (lang === 'ar' ? '⚙️ جاري العمل' : 'In Progress') :
-                         task.status === 'cancelled' ? (lang === 'ar' ? '❌ ملغاة' : 'Cancelled') :
-                         (lang === 'ar' ? '⏳ قيد الانتظار' : 'Pending')}
+                          task.status === 'confirmed' ? (lang === 'ar' ? '✔️ تم الاستلام' : 'Confirmed') :
+                            task.status === 'on_the_way_to_task' ? (lang === 'ar' ? '🚗 في الطريق إلى المهمة' : 'On the Way to Task') :
+                              task.status === 'awaiting_guest' ? (lang === 'ar' ? '🕒 في انتظار وصول الضيف' : 'Awaiting Guest') :
+                                task.status === 'guest_delayed' ? (lang === 'ar' ? '⚠️ تأخر وصول الضيف' : 'Guest Delayed') :
+                                  task.status === 'returning_from_task' ? (lang === 'ar' ? '🔄 في طريق العودة' : 'Returning from Task') :
+                                    task.status === 'in_progress' ? (lang === 'ar' ? '⚙️ جاري العمل' : 'In Progress') :
+                                      task.status === 'cancelled' ? (lang === 'ar' ? '❌ ملغاة' : 'Cancelled') :
+                                        (lang === 'ar' ? '⏳ قيد الانتظار' : 'Pending')}
                       </span>
                     </div>
 
@@ -3101,7 +3101,7 @@ const ParticipantPortal = () => {
 
                     <div className="flex flex-wrap items-center gap-3 justify-end">
                       {task.due_time && (
-                        <span>⏰ {new Date(task.due_time).toLocaleTimeString(lang === 'ar' ? 'ar-DZ' : 'en-US', {hour:'2-digit', minute:'2-digit'})}</span>
+                        <span>⏰ {new Date(task.due_time).toLocaleTimeString(lang === 'ar' ? 'ar-DZ' : 'en-US', { hour: '2-digit', minute: '2-digit' })}</span>
                       )}
                       {guest && (
                         <span className="text-amber-500">👤 {lang === 'ar' ? `الضيف: ${guest.full_name}` : `Guest: ${guest.full_name}`}</span>
@@ -3127,10 +3127,10 @@ const ParticipantPortal = () => {
   const myPoints = myLeaderboardEntry ? myLeaderboardEntry.points : 0;
 
   const roleLower = (participant?.role || '').toLowerCase();
-  const isGeneral = !participant?.role || 
-    roleLower === 'organizer' || 
-    roleLower === 'منظم' || 
-    (roleLower.includes('عام') && !roleLower.includes('طعام')) || 
+  const isGeneral = !participant?.role ||
+    roleLower === 'organizer' ||
+    roleLower === 'منظم' ||
+    (roleLower.includes('عام') && !roleLower.includes('طعام')) ||
     roleLower.includes('general') ||
     localStorage.getItem('diwan_force_organizer') === 'true';
   const isPresident = roleLower.includes('رئيس') || roleLower.includes('president') || isGeneral;
@@ -3147,8 +3147,8 @@ const ParticipantPortal = () => {
   const unassignedDriverTasksCount = transportTasks.filter(t => !t.driver_name).length;
   const assignedDriverTasksCount = totalTransportTasksCount - unassignedDriverTasksCount;
 
-  const completionPercentage = totalTransportTasksCount > 0 
-    ? Math.round((completedTransportTasksCount / totalTransportTasksCount) * 100) 
+  const completionPercentage = totalTransportTasksCount > 0
+    ? Math.round((completedTransportTasksCount / totalTransportTasksCount) * 100)
     : 0;
 
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(participant?.qr_code || '')}`;
@@ -3168,9 +3168,9 @@ const ParticipantPortal = () => {
         {/* Header/Brand logo */}
         <div className="mb-8 text-center z-10 space-y-3">
           {eventSettings?.logo_url ? (
-            <img 
-              src={getFullUrl(eventSettings.logo_url)} 
-              alt="Logo" 
+            <img
+              src={getFullUrl(eventSettings.logo_url)}
+              alt="Logo"
               className="w-16 h-16 mx-auto rounded-3xl object-cover shadow-2xl border border-white/10"
             />
           ) : (
@@ -3193,10 +3193,10 @@ const ParticipantPortal = () => {
             <div className="relative w-full aspect-[1.586/1] rounded-[32px] p-6 bg-gradient-to-br from-amber-500/20 via-[#0A0F1D]/98 to-[#02050E]/98 border-2 border-amber-500/40 backdrop-blur-3xl overflow-hidden shadow-[0_25px_60px_rgba(212,175,55,0.25)] flex flex-col justify-between text-right group/vcard relative">
               {/* Shiny Metallic Light Effect Overlay */}
               <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/[0.04] to-transparent -translate-x-full group-hover/vcard:translate-x-full transition-transform duration-1000 ease-out pointer-events-none" />
-              
+
               {/* Background Glowing Orb */}
               <div className="absolute top-[-20%] right-[-20%] w-48 h-48 bg-amber-500/10 rounded-full blur-[80px] pointer-events-none -z-10 group-hover/vcard:bg-amber-500/15 transition-colors duration-500" />
-              
+
               {/* Card Header (Chip & Event Logo) */}
               <div className="flex justify-between items-center w-full mb-4">
                 {/* Gold Smart Chip */}
@@ -3210,7 +3210,7 @@ const ParticipantPortal = () => {
                     <div className="border border-white/10 rounded-sm"></div>
                   </div>
                 </div>
-                
+
                 <div className="text-left">
                   <span className="text-[9px] font-black uppercase text-amber-500 border border-amber-500/30 px-2 py-0.5 rounded-full tracking-widest bg-amber-500/5">
                     {participant.role === 'vip' ? 'VIP PASS 👑' : 'EXECUTIVE PASS'}
@@ -3239,11 +3239,10 @@ const ParticipantPortal = () => {
                   <h4 className="text-xl font-black text-white leading-tight tracking-tight">{participant.full_name}</h4>
                   <p className="text-[10px] text-amber-500 font-bold uppercase tracking-wider">
                     {participant.organization}
-                    {participant.role && ` - ${
-                      participant.role === 'attendee' || participant.role === 'مشارك'
+                    {participant.role && ` - ${participant.role === 'attendee' || participant.role === 'مشارك'
                         ? (lang === 'ar' ? 'مشارك' : 'Attendee')
                         : participant.role
-                    }`}
+                      }`}
                   </p>
                   {participant.department && (
                     <p className="text-[9px] text-white/50 font-medium">{participant.department}</p>
@@ -3307,11 +3306,11 @@ const ParticipantPortal = () => {
     );
   }
 
-  const requiresPaymentCheck = eventSettings.require_payment === true && 
-                               participant && 
-                               participant.payment_status !== 'paid' && 
-                               participant.payment_status !== 'free' &&
-                               !isOrganizer;
+  const requiresPaymentCheck = eventSettings.require_payment === true &&
+    participant &&
+    participant.payment_status !== 'paid' &&
+    participant.payment_status !== 'free' &&
+    !isOrganizer;
 
   if (requiresPaymentCheck) {
     const isPending = participant.payment_status === 'pending';
@@ -3330,13 +3329,13 @@ const ParticipantPortal = () => {
         </div>
 
         <div className="w-full max-w-xl bg-gradient-to-b from-white/[0.04] to-white/[0.01] border border-white/10 rounded-[36px] p-6 md:p-8 backdrop-blur-3xl shadow-[0_24px_80px_rgba(0,0,0,0.5)] z-10 text-right space-y-6">
-          
+
           {/* Logo & Header */}
           <div className="flex flex-col items-center text-center space-y-3 pb-4 border-b border-white/5">
             {eventSettings?.logo_url ? (
-              <img 
-                src={getFullUrl(eventSettings.logo_url)} 
-                alt="Logo" 
+              <img
+                src={getFullUrl(eventSettings.logo_url)}
+                alt="Logo"
                 className="w-16 h-16 rounded-2xl object-cover shadow-xl border border-white/10"
               />
             ) : (
@@ -3356,8 +3355,8 @@ const ParticipantPortal = () => {
               <div className={cn(
                 "w-12 h-12 rounded-xl flex items-center justify-center text-xl shrink-0",
                 isPending ? "bg-amber-500/10 text-amber-500" :
-                isTransferPending ? "bg-blue-500/10 text-blue-400" :
-                "bg-red-500/10 text-red-500"
+                  isTransferPending ? "bg-blue-500/10 text-blue-400" :
+                    "bg-red-500/10 text-red-500"
               )}>
                 {isPending ? "⏳" : isTransferPending ? "🔍" : "⚠️"}
               </div>
@@ -3419,7 +3418,7 @@ const ParticipantPortal = () => {
                 <div className="space-y-3 pt-2">
                   <h4 className="font-black text-xs text-white">📤 رفع إثبات الدفع (وصل التحويل)</h4>
                   <div className="border-2 border-dashed border-white/10 rounded-2xl p-4 text-center hover:border-amber-500/40 transition-colors relative">
-                    <input 
+                    <input
                       type="file"
                       id="proof-upload-input"
                       accept="image/*,application/pdf"
@@ -3444,7 +3443,7 @@ const ParticipantPortal = () => {
                           <span className="text-3xl">📄</span>
                         )}
                         <p className="text-xs text-white font-bold truncate">{proofFile.name}</p>
-                        <button 
+                        <button
                           onClick={(e) => { e.stopPropagation(); setProofFile(null); setProofPreview(null); }}
                           className="text-[10px] text-red-400 font-bold hover:underline"
                         >
@@ -3459,7 +3458,7 @@ const ParticipantPortal = () => {
                       </div>
                     )}
                   </div>
-                  
+
                   {proofFile && (
                     <button
                       onClick={handleUploadProof}
@@ -3480,9 +3479,9 @@ const ParticipantPortal = () => {
               {isTransferPending && participant.transfer_proof_url && (
                 <div className="space-y-2 pt-2 text-right">
                   <h4 className="font-black text-xs text-white">📄 إثبات الدفع المرفوع سابقاً:</h4>
-                  <a 
-                    href={getFullUrl(participant.transfer_proof_url)} 
-                    target="_blank" 
+                  <a
+                    href={getFullUrl(participant.transfer_proof_url)}
+                    target="_blank"
                     rel="noreferrer"
                     className="inline-flex items-center gap-2 p-2.5 rounded-xl bg-white/5 border border-white/10 text-xs text-amber-500 hover:text-amber-400 hover:bg-white/10 font-bold transition-all"
                   >
@@ -3542,9 +3541,9 @@ const ParticipantPortal = () => {
       <header className="p-6 bg-white/[0.03] backdrop-blur-3xl border-b border-white/10 sticky top-0 z-50 flex items-center justify-between">
         <div className="flex items-center gap-4">
           {eventSettings?.logo_url ? (
-            <img 
-              src={getFullUrl(eventSettings.logo_url)} 
-              alt="Logo" 
+            <img
+              src={getFullUrl(eventSettings.logo_url)}
+              alt="Logo"
               className="w-12 h-12 rounded-2xl object-cover shadow-xl border border-white/10"
             />
           ) : (
@@ -3602,437 +3601,436 @@ const ParticipantPortal = () => {
         <AnimatePresence mode="wait">
           {activeTab === 'home' && (
             <motion.div key="home" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="space-y-6">
-               
-               {/* Event Information Banner */}
-               {(eventSettings?.event_name || eventSettings?.name || eventSettings?.event_date || eventSettings?.location) && (
-                 <div className="bg-gradient-to-r from-amber-500/10 to-amber-500/5 border border-amber-500/20 rounded-3xl p-5 text-right relative overflow-hidden shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-4">
-                   <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-3xl pointer-events-none"></div>
-                   <div className="space-y-1.5 z-10">
-                     <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20 font-black uppercase">
-                       {lang === 'ar' ? '📅 تفاصيل الفعالية' : '📅 Event Details'}
-                     </span>
-                     {eventSettings?.map_url ? (
-                       <a
-                         href={eventSettings.map_url}
-                         target="_blank"
-                         rel="noreferrer"
-                         className="hover:underline"
-                       >
-                         <h3 className="text-base font-black text-white mt-1 hover:text-amber-400 transition-colors cursor-pointer">
-                           {eventSettings?.event_name || eventSettings?.name}
-                         </h3>
-                       </a>
-                     ) : (
-                       <h3 className="text-base font-black text-white mt-1">
-                         {eventSettings?.event_name || eventSettings?.name}
-                       </h3>
-                     )}
-                     <div className="flex flex-wrap items-center gap-4 text-xs text-white/60 font-bold mt-2" dir="rtl">
-                       {eventSettings?.event_date && (
-                         <span className="flex items-center gap-1.5">
-                           <span>📅</span>
-                           <span>{new Date(eventSettings.event_date).toLocaleDateString(lang === 'ar' ? 'ar-DZ' : 'en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
-                         </span>
-                       )}
-                       {eventSettings?.location && (
-                         <span className="flex items-center gap-1.5">
-                           <span>📍</span>
-                           <span>{eventSettings.location}</span>
-                         </span>
-                       )}
-                     </div>
-                   </div>
-                   
-                   {/* Map URL Quick Link if available */}
-                   {eventSettings?.map_url && (
-                     <a
-                       href={eventSettings.map_url}
-                       target="_blank"
-                       rel="noreferrer"
-                       className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-brand-dark text-xs font-black transition-all flex items-center justify-center gap-1.5 shadow-md shadow-amber-500/10 z-10 self-start md:self-center"
-                     >
-                       <span>📍</span>
-                       {lang === 'ar' ? 'عرض خريطة الموقع' : 'View Venue Map'}
-                     </a>
-                   )}
-                 </div>
-               )}
-               
-               {/* 1. Profile Card (Luxury Golden Styling) */}
-               <div className="bg-gradient-to-b from-white/[0.06] to-white/[0.01] border border-white/10 rounded-[40px] p-8 backdrop-blur-3xl text-center relative shadow-[0_24px_80px_rgba(0,0,0,0.4)]">
-                  <div className="relative w-32 h-32 mx-auto mb-6 group/avatar">
-                    {participant?.avatar_url ? (
-                      <img 
-                        src={participant.avatar_url} 
-                        alt="Profile" 
-                        className="w-full h-full object-cover rounded-[32px] border-2 border-amber-500/30 shadow-[0_0_30px_rgba(212,175,55,0.2)]"
-                      />
-                    ) : (
-                      <div className="w-full h-full rounded-[32px] bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 flex items-center justify-center border-2 border-amber-500/30 text-brand-dark shadow-[0_12px_40px_rgba(212,175,55,0.25)]">
-                        <span className="text-5xl font-black">{participant?.full_name?.charAt(0) || 'U'}</span>
-                      </div>
-                    )}
-                    
-                    <button 
-                      onClick={() => document.getElementById('participant-avatar-input')?.click()}
-                      disabled={isUploadingAvatar}
-                      className="absolute bottom-0 right-0 w-9 h-9 bg-amber-500 rounded-full flex items-center justify-center text-brand-dark shadow-lg group-hover/avatar:scale-110 transition-transform disabled:opacity-50"
-                    >
-                      <Camera className="w-4 h-4 text-brand-dark" />
-                    </button>
-                    <input 
-                      type="file"
-                      id="participant-avatar-input"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleParticipantAvatarChange}
-                      disabled={isUploadingAvatar}
-                    />
-                  </div>
-                  
-                  <h2 className="text-3xl font-black mb-1 tracking-tight text-[#F0F4F2]">{participant.full_name}</h2>
-                  <p className="text-[#F0F4F2]/60 font-bold text-xs mb-3 uppercase tracking-wider">{participant.organization}</p>
-                  
-                  {/* Gamification Hub Badge */}
-                  <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs font-black text-amber-500 uppercase tracking-wider mb-6 shadow-sm">
-                    <span>{myPoints >= 200 ? 'مشارك بلاتيني 👑' : myPoints >= 100 ? 'مشارك ذهبي 🏆' : myPoints >= 50 ? 'مشارك فضي 🎖️' : 'مشارك نشط 👤'}</span>
-                    <span className="w-1 h-1 rounded-full bg-amber-500/40" />
-                    <span>{myPoints} نقطة تفاعلية</span>
-                  </div>
-                  
-                  {participant.custom_values?.specialties?.length > 0 && (
-                    <div className="flex flex-wrap justify-center gap-2 mb-6">
-                       {participant.custom_values.specialties.map((s, i) => (
-                          <span key={i} className="px-3 py-1 bg-amber-500/10 border border-amber-500/20 rounded-full text-[11px] font-black text-amber-500">
-                             {s}
-                          </span>
-                       ))}
-                    </div>
-                  )}
 
-                  {!isEditingProfile ? (
-                    <div className="space-y-6">
-                      {participant.custom_values?.bio && (
-                        <p className="text-white/70 text-sm leading-relaxed mb-4 px-4">{participant.custom_values.bio}</p>
-                      )}
-                      <div className="grid grid-cols-2 gap-3">
-                        <Button 
-                          variant="outline" 
-                          className={cn(
-                            "rounded-2xl font-bold py-3 text-xs",
-                            theme === 'dark' 
-                              ? "border-white/10 text-white hover:bg-white/5" 
-                              : "border-slate-300 text-slate-800 hover:bg-slate-100"
-                          )} 
-                          onClick={() => setIsEditingProfile(true)}
-                        >
-                          {t('profile_edit')}
-                        </Button>
-                        <Button variant="gold" className="rounded-2xl font-bold py-3 text-xs" onClick={() => setActiveTab('networking')}>
-                          {t('profile_networking')}
-                        </Button>
-                      </div>
-
-                      {/* Virtual 3D Glassmorphic Business Card Switch */}
-                      <div className="mt-6 pt-4 border-t border-white/5">
-                        <button
-                          onClick={() => setShowPremiumCard(!showPremiumCard)}
-                          className="text-xs text-amber-500 hover:text-amber-400 font-black tracking-wider flex items-center justify-center gap-2 mx-auto uppercase"
-                        >
-                          <span>✨</span>
-                          <span>
-                            {showPremiumCard 
-                              ? (lang === 'ar' ? 'إخفاء بطاقة المعلومات المهنية' : 'Hide Professional Info Card')
-                              : (lang === 'ar' ? 'عرض بطاقة المعلومات المهنية' : 'Show Professional Info Card')}
-                          </span>
-                        </button>
-                      </div>
-
-                      {/* Redesigned Titanium Gold Business Card */}
-                      <AnimatePresence>
-                        {showPremiumCard && (
-                          <motion.div
-                            initial={{ opacity: 0, rotateY: 90, scale: 0.95 }}
-                            animate={{ opacity: 1, rotateY: 0, scale: 1 }}
-                            exit={{ opacity: 0, rotateY: -90, scale: 0.95 }}
-                            transition={{ duration: 0.6, ease: 'easeOut' }}
-                            className="mt-6 perspective-[1000px] w-full"
-                          >
-                            {/* Card Body */}
-                            <div className="relative w-full max-w-sm mx-auto rounded-[32px] p-6 bg-gradient-to-br from-amber-500/20 via-[#0A0F1D]/98 to-[#02050E]/98 border-2 border-amber-500/40 backdrop-blur-3xl overflow-hidden shadow-[0_25px_60px_rgba(212,175,55,0.25)] flex flex-col justify-between text-right group/vcard relative">
-                              {/* Shiny Metallic Light Effect Overlay */}
-                              <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/[0.04] to-transparent -translate-x-full group-hover/vcard:translate-x-full transition-transform duration-1000 ease-out pointer-events-none" />
-                              
-                              {/* Background Glowing Orb */}
-                              <div className="absolute top-[-20%] right-[-20%] w-48 h-48 bg-amber-500/10 rounded-full blur-[80px] pointer-events-none -z-10 group-hover/vcard:bg-amber-500/15 transition-colors duration-500" />
-                              
-                              {/* Card Header (Chip & Event Logo) */}
-                              <div className="flex justify-between items-center w-full mb-4">
-                                {/* Gold Smart Chip */}
-                                <div className="w-11 h-8 rounded-lg bg-gradient-to-br from-amber-300 via-amber-500 to-amber-600 p-1 flex flex-col justify-between border border-amber-400/40 relative overflow-hidden shadow-md">
-                                  <div className="absolute inset-0 bg-black/10 grid grid-cols-3 gap-0.5 pointer-events-none p-0.5">
-                                    <div className="border border-white/10 rounded-sm"></div>
-                                    <div className="border border-white/10 rounded-sm"></div>
-                                    <div className="border border-white/10 rounded-sm"></div>
-                                    <div className="border border-white/10 rounded-sm"></div>
-                                    <div className="border border-white/10 rounded-sm"></div>
-                                    <div className="border border-white/10 rounded-sm"></div>
-                                  </div>
-                                </div>
-                                
-                                <div className="text-left">
-                                  <span className="text-[9px] font-black uppercase text-amber-500 border border-amber-500/30 px-2 py-0.5 rounded-full tracking-widest bg-amber-500/5">
-                                    {participant.role === 'vip' ? 'VIP PASS 👑' : 'EXECUTIVE PASS'}
-                                  </span>
-                                </div>
-                              </div>
-
-                              {/* Card Middle: Split Name & Avatar */}
-                              <div className="flex items-center justify-between gap-4 my-3 text-right">
-                                {/* Left: Rounded Avatar */}
-                                <div className="flex-shrink-0 w-16 h-16 rounded-2xl border border-amber-500/30 overflow-hidden shadow-md bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center font-black text-brand-dark text-xl">
-                                  {participant?.avatar_url && !avatarError2 ? (
-                                    <img 
-                                      src={getFullUrl(participant.avatar_url)} 
-                                      alt="Avatar" 
-                                      className="w-full h-full object-cover"
-                                      onError={() => setAvatarError2(true)}
-                                    />
-                                  ) : (
-                                    <span>{participant?.full_name ? participant.full_name.trim().charAt(0) : 'D'}</span>
-                                  )}
-                                </div>
-
-                                {/* Right: Name & Job details */}
-                                <div className="space-y-1 flex-1">
-                                  <h4 className="text-xl font-black text-white leading-tight tracking-tight">{participant.full_name}</h4>
-                                  <p className="text-[10px] text-amber-500 font-bold uppercase tracking-wider">
-                                    {participant.organization}
-                                    {participant.role && ` - ${
-                                      participant.role === 'attendee' || participant.role === 'مشارك'
-                                        ? (lang === 'ar' ? 'مشارك' : 'Attendee')
-                                        : participant.role
-                                    }`}
-                                  </p>
-                                  {participant.department && (
-                                    <p className="text-[9px] text-white/50 font-medium">{participant.department}</p>
-                                  )}
-                                  {participant.custom_values?.professional_address && (
-                                    <p className="text-[9px] text-white/45 font-medium">{participant.custom_values.professional_address}</p>
-                                  )}
-                                </div>
-                              </div>
-
-                              {/* Card Contact Info Details */}
-                              <div className="space-y-1 py-3 border-t border-white/5 text-right text-[10px] text-white/60 font-medium">
-                                {(participant.phone_number || participant.phone) && (
-                                  <div className="flex items-center justify-end gap-1.5" dir="ltr">
-                                    <span>{participant.phone_number || participant.phone}</span>
-                                    <span>📞</span>
-                                  </div>
-                                )}
-                                {participant.email && (
-                                  <div className="flex items-center justify-end gap-1.5" dir="ltr">
-                                    <span>{participant.email}</span>
-                                    <span>✉️</span>
-                                  </div>
-                                )}
-                                {participant.custom_values?.linkedin && (
-                                  <div className="flex items-center justify-end gap-1.5 text-blue-400" dir="ltr">
-                                    <span>linkedin.com/in/{participant.custom_values.linkedin}</span>
-                                    <span>🔗</span>
-                                  </div>
-                                )}
-                              </div>
-
-                              {/* Bottom: Specialties tags & Event Identity */}
-                              <div className="flex justify-between items-center w-full pt-3 border-t border-white/5 text-right">
-                                <div className="text-[8px] font-black text-white/30 tracking-wider">
-                                  {eventSettings?.event_name || 'DIWAN EVENTS'}
-                                </div>
-                                <div className="flex gap-1 flex-wrap justify-end">
-                                  {(participant.custom_values?.specialties || []).slice(0, 2).map((s, idx) => (
-                                    <span key={idx} className="px-2 py-0.5 bg-amber-500/10 border border-amber-500/20 rounded-full text-[8px] font-black text-amber-500">
-                                      #{s}
-                                    </span>
-                                  ))}
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Card Actions Panel */}
-                            <div className="mt-4 max-w-xs mx-auto">
-                              <button
-                                onClick={handleDownloadCardAsImage}
-                                className="w-full py-3 px-4 bg-amber-500 hover:bg-amber-600 text-brand-dark text-xs font-black rounded-2xl transition-all shadow-lg shadow-amber-500/10 flex items-center justify-center gap-2"
-                              >
-                                <span>🖼️</span>
-                                <span>{lang === 'ar' ? 'مشاركة بطاقة الأعمال كصورة' : 'Share Business Card as Image'}</span>
-                              </button>
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-
-                      {/* Push Notification Manager for PWA */}
-                      <div className="mt-6 pt-6 border-t border-white/5 text-right">
-                        <PushNotificationManager />
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-4 bg-black/20 p-6 rounded-[30px] border border-white/5 text-right mt-4">
-                       <div>
-                          <label className="text-[11px] text-white/50 font-bold mb-2 block">النبذة المهنية</label>
-                          <textarea 
-                            value={profileData.bio}
-                            onChange={e => setProfileData({...profileData, bio: e.target.value})}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white text-sm focus:border-amber-500 outline-none min-h-[80px] resize-none"
-                            placeholder="نبذة قصيرة..."
-                          />
-                       </div>
-                       <div>
-                          <label className="text-[11px] text-white/50 font-bold mb-2 block">رابط LinkedIn</label>
-                          <input 
-                            type="text"
-                            value={profileData.linkedin}
-                            onChange={e => setProfileData({...profileData, linkedin: e.target.value})}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white text-sm focus:border-amber-500 outline-none"
-                          />
-                       </div>
-                       <div>
-                          <label className="text-[11px] text-white/50 font-bold mb-2 block">{lang === 'ar' ? 'رقم الهاتف (الواتساب)' : 'Phone Number (WhatsApp)'}</label>
-                          <input 
-                            type="text"
-                            value={profileData.phone_number}
-                            onChange={e => setProfileData({...profileData, phone_number: e.target.value})}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white text-sm focus:border-amber-500 outline-none text-left"
-                            placeholder="+213XXXXXXXXX"
-                            dir="ltr"
-                          />
-                       </div>
-                       <div>
-                          <label className="text-[11px] text-white/50 font-bold mb-2 block">{lang === 'ar' ? 'البريد الإلكتروني' : 'Email Address'}</label>
-                          <input 
-                            type="email"
-                            value={profileData.email}
-                            onChange={e => setProfileData({...profileData, email: e.target.value})}
-                            className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white text-sm focus:border-amber-500 outline-none text-left"
-                            placeholder="example@mail.com"
-                            dir="ltr"
-                          />
-                       </div>
-                       <div>
-                          <label className="text-[11px] text-white/50 font-bold mb-2 block">التخصصات المهنية</label>
-                          <div className="w-full bg-white/5 border border-white/10 rounded-2xl p-2 flex flex-wrap gap-2 focus-within:border-amber-500 transition-all min-h-[50px] cursor-text" onClick={() => document.getElementById('tag-input-field')?.focus()}>
-                            {(profileData.specialties || []).map((tag, i) => (
-                              <span key={i} className="bg-amber-500/20 text-amber-500 px-3 py-1 rounded-full text-[10px] font-black flex items-center gap-2 border border-amber-500/20">
-                                {tag}
-                                <button onClick={(e) => { e.stopPropagation(); setProfileData({...profileData, specialties: profileData.specialties.filter((_, idx) => idx !== i)}); }} className="hover:text-white">
-                                  <X size={12} />
-                                </button>
-                              </span>
-                            ))}
-                            <input 
-                              id="tag-input-field"
-                              type="text"
-                              value={tagInput}
-                              onChange={e => setTagInput(e.target.value)}
-                              onKeyDown={e => {
-                                if (e.key === 'Enter' || e.key === ',') {
-                                  e.preventDefault();
-                                  const val = tagInput.trim().replace(',', '');
-                                  if (val && !profileData.specialties.includes(val)) {
-                                    setProfileData({...profileData, specialties: [...profileData.specialties, val]});
-                                    setTagInput('');
-                                  }
-                                }
-                              }}
-                              className="flex-1 bg-transparent border-none outline-none text-white text-sm p-1 min-w-[100px]"
-                              placeholder="أضف تخصص..."
-                            />
-                          </div>
-                          <p className="text-[9px] text-white/20 mt-2">اضغط Enter أو فاصلة للإضافة</p>
-                       </div>
-                        <div className="flex gap-2 pt-2">
-                          <Button className="flex-1 rounded-xl font-bold bg-amber-500 text-brand-dark py-2" onClick={handleUpdateProfile}>حفظ</Button>
-                          <Button variant="outline" className="flex-1 rounded-xl font-bold border-white/10 py-2" onClick={() => setIsEditingProfile(false)}>إلغاء</Button>
-                        </div>
-                    </div>
-                  )}
-               </div>
-
-               {/* 2. Digital Badge Card (Apple / Google Wallet Theme) */}
-               <div className="bg-gradient-to-br from-[#0D1527] to-[#050B18] border border-amber-500/20 rounded-[40px] p-8 text-center shadow-[0_24px_60px_rgba(212,175,55,0.08)]">
-                  <h3 className="text-amber-500 font-black mb-6 tracking-widest text-sm uppercase">البطاقة الرقمية</h3>
-                  
-                  <div className="relative inline-block group mb-8">
-                    <div className="absolute -inset-6 bg-gradient-to-br from-amber-500 to-amber-600/30 blur-[30px] rounded-full opacity-60 transition-opacity" />
-                    <div className="relative bg-white p-4 rounded-[30px] shadow-2xl">
-                      <img src={qrUrl} alt="QR Code" className="w-40 h-40" />
-                    </div>
-                  </div>
-
-                  <div className="mb-6">
-                    <button 
-                      onClick={toggleScanMode}
-                      className={cn(
-                        "w-full flex items-center justify-center gap-3 py-4 px-6 rounded-2xl font-black text-xs uppercase tracking-widest transition-all duration-300 shadow-lg border",
-                        isScanMode 
-                          ? "bg-amber-500 text-brand-dark border-amber-400 animate-pulse shadow-[0_0_20px_rgba(245,158,11,0.4)]" 
-                          : theme === 'dark'
-                            ? "bg-white/5 text-white border-white/10 hover:bg-white/10 hover:border-amber-500/30"
-                            : "bg-slate-100 text-slate-800 border-slate-200 hover:bg-slate-200 hover:border-amber-500/30"
-                      )}
-                    >
-                      <Smartphone size={16} className={isScanMode ? "text-brand-dark" : "text-amber-500"} />
-                      تفعيل وضع المسح السريع ⚡
-                    </button>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4 mb-8">
-                     <div className="bg-white/[0.03] p-4 rounded-2xl border border-white/5">
-                        <div className="text-[10px] text-amber-500/50 font-bold uppercase tracking-widest mb-1">المقعد</div>
-                        <div className="font-black text-xl text-amber-500">{participant.seat_info || '--'}</div>
-                     </div>
-                     <div className="bg-white/[0.03] p-4 rounded-2xl border border-white/5">
-                        <div className="text-[10px] text-amber-500/50 font-bold uppercase tracking-widest mb-1">رقم التسجيل</div>
-                        <div className="font-black text-xl text-white">#{participant.order_num?.split('-')[1] || participant.order_num}</div>
-                     </div>
-                  </div>
-                  
-                  {eventSettings?.map_url && (
-                    <div className="mt-6 pt-6 border-t border-white/10">
-                      <a 
+              {/* Event Information Banner */}
+              {(eventSettings?.event_name || eventSettings?.name || eventSettings?.event_date || eventSettings?.location) && (
+                <div className="bg-gradient-to-r from-amber-500/10 to-amber-500/5 border border-amber-500/20 rounded-3xl p-5 text-right relative overflow-hidden shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-3xl pointer-events-none"></div>
+                  <div className="space-y-1.5 z-10">
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20 font-black uppercase">
+                      {lang === 'ar' ? '📅 تفاصيل الفعالية' : '📅 Event Details'}
+                    </span>
+                    {eventSettings?.map_url ? (
+                      <a
                         href={eventSettings.map_url}
                         target="_blank"
-                        rel="noopener noreferrer"
-                        className="w-full flex items-center justify-center gap-3 py-4 px-6 rounded-2xl font-black text-xs uppercase tracking-widest transition-all duration-300 shadow-lg border bg-gradient-to-r from-amber-500/20 to-amber-600/10 text-amber-500 border-amber-500/30 hover:border-amber-400 hover:from-amber-500/30 hover:to-amber-600/20"
+                        rel="noreferrer"
+                        className="hover:underline"
                       >
-                        <MapPin size={16} className="text-amber-500 animate-bounce" />
-                        {t('badge_map')}
+                        <h3 className="text-base font-black text-white mt-1 hover:text-amber-400 transition-colors cursor-pointer">
+                          {eventSettings?.event_name || eventSettings?.name}
+                        </h3>
                       </a>
+                    ) : (
+                      <h3 className="text-base font-black text-white mt-1">
+                        {eventSettings?.event_name || eventSettings?.name}
+                      </h3>
+                    )}
+                    <div className="flex flex-wrap items-center gap-4 text-xs text-white/60 font-bold mt-2" dir="rtl">
+                      {eventSettings?.event_date && (
+                        <span className="flex items-center gap-1.5">
+                          <span>📅</span>
+                          <span>{new Date(eventSettings.event_date).toLocaleDateString(lang === 'ar' ? 'ar-DZ' : 'en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                        </span>
+                      )}
+                      {eventSettings?.location && (
+                        <span className="flex items-center gap-1.5">
+                          <span>📍</span>
+                          <span>{eventSettings.location}</span>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Map URL Quick Link if available */}
+                  {eventSettings?.map_url && (
+                    <a
+                      href={eventSettings.map_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-brand-dark text-xs font-black transition-all flex items-center justify-center gap-1.5 shadow-md shadow-amber-500/10 z-10 self-start md:self-center"
+                    >
+                      <span>📍</span>
+                      {lang === 'ar' ? 'عرض خريطة الموقع' : 'View Venue Map'}
+                    </a>
+                  )}
+                </div>
+              )}
+
+              {/* 1. Profile Card (Luxury Golden Styling) */}
+              <div className="bg-gradient-to-b from-white/[0.06] to-white/[0.01] border border-white/10 rounded-[40px] p-8 backdrop-blur-3xl text-center relative shadow-[0_24px_80px_rgba(0,0,0,0.4)]">
+                <div className="relative w-32 h-32 mx-auto mb-6 group/avatar">
+                  {participant?.avatar_url ? (
+                    <img
+                      src={participant.avatar_url}
+                      alt="Profile"
+                      className="w-full h-full object-cover rounded-[32px] border-2 border-amber-500/30 shadow-[0_0_30px_rgba(212,175,55,0.2)]"
+                    />
+                  ) : (
+                    <div className="w-full h-full rounded-[32px] bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 flex items-center justify-center border-2 border-amber-500/30 text-brand-dark shadow-[0_12px_40px_rgba(212,175,55,0.25)]">
+                      <span className="text-5xl font-black">{participant?.full_name?.charAt(0) || 'U'}</span>
                     </div>
                   )}
 
-                  {/* Personal Digital Notebook Button */}
-                  <div className="mt-4 pt-4 border-t border-white/10">
-                    <button
-                      onClick={() => setIsNotebookOpen(true)}
-                      className={cn(
-                        "w-full flex items-center justify-center gap-3 py-4 px-6 rounded-2xl font-black text-xs uppercase tracking-widest transition-all duration-300 shadow-lg border",
-                        theme === 'dark'
-                          ? "bg-white/5 text-[#F0F4F2] border-white/10 hover:bg-white/10 hover:border-amber-500/30"
-                          : "bg-slate-100 text-slate-800 border-slate-200 hover:bg-slate-200 hover:border-amber-500/30"
-                      )}
-                    >
-                      <span className="text-base">📝</span>
-                      <span>{lang === 'ar' ? 'مفكرتي الرقمية الشخصية' : 'My Digital Notebook'}</span>
-                      <span className="ml-auto bg-amber-500 text-brand-dark px-2 py-0.5 rounded-full text-[9px] font-black">
-                        {Object.values(sessionNotes).filter(Boolean).length}
+                  <button
+                    onClick={() => document.getElementById('participant-avatar-input')?.click()}
+                    disabled={isUploadingAvatar}
+                    className="absolute bottom-0 right-0 w-9 h-9 bg-amber-500 rounded-full flex items-center justify-center text-brand-dark shadow-lg group-hover/avatar:scale-110 transition-transform disabled:opacity-50"
+                  >
+                    <Camera className="w-4 h-4 text-brand-dark" />
+                  </button>
+                  <input
+                    type="file"
+                    id="participant-avatar-input"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleParticipantAvatarChange}
+                    disabled={isUploadingAvatar}
+                  />
+                </div>
+
+                <h2 className="text-3xl font-black mb-1 tracking-tight text-[#F0F4F2]">{participant.full_name}</h2>
+                <p className="text-[#F0F4F2]/60 font-bold text-xs mb-3 uppercase tracking-wider">{participant.organization}</p>
+
+                {/* Gamification Hub Badge */}
+                <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs font-black text-amber-500 uppercase tracking-wider mb-6 shadow-sm">
+                  <span>{myPoints >= 200 ? 'مشارك بلاتيني 👑' : myPoints >= 100 ? 'مشارك ذهبي 🏆' : myPoints >= 50 ? 'مشارك فضي 🎖️' : 'مشارك نشط 👤'}</span>
+                  <span className="w-1 h-1 rounded-full bg-amber-500/40" />
+                  <span>{myPoints} نقطة تفاعلية</span>
+                </div>
+
+                {participant.custom_values?.specialties?.length > 0 && (
+                  <div className="flex flex-wrap justify-center gap-2 mb-6">
+                    {participant.custom_values.specialties.map((s, i) => (
+                      <span key={i} className="px-3 py-1 bg-amber-500/10 border border-amber-500/20 rounded-full text-[11px] font-black text-amber-500">
+                        {s}
                       </span>
-                    </button>
+                    ))}
                   </div>
-               </div>
+                )}
+
+                {!isEditingProfile ? (
+                  <div className="space-y-6">
+                    {participant.custom_values?.bio && (
+                      <p className="text-white/70 text-sm leading-relaxed mb-4 px-4">{participant.custom_values.bio}</p>
+                    )}
+                    <div className="grid grid-cols-2 gap-3">
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "rounded-2xl font-bold py-3 text-xs",
+                          theme === 'dark'
+                            ? "border-white/10 text-white hover:bg-white/5"
+                            : "border-slate-300 text-slate-800 hover:bg-slate-100"
+                        )}
+                        onClick={() => setIsEditingProfile(true)}
+                      >
+                        {t('profile_edit')}
+                      </Button>
+                      <Button variant="gold" className="rounded-2xl font-bold py-3 text-xs" onClick={() => setActiveTab('networking')}>
+                        {t('profile_networking')}
+                      </Button>
+                    </div>
+
+                    {/* Virtual 3D Glassmorphic Business Card Switch */}
+                    <div className="mt-6 pt-4 border-t border-white/5">
+                      <button
+                        onClick={() => setShowPremiumCard(!showPremiumCard)}
+                        className="text-xs text-amber-500 hover:text-amber-400 font-black tracking-wider flex items-center justify-center gap-2 mx-auto uppercase"
+                      >
+                        <span>✨</span>
+                        <span>
+                          {showPremiumCard
+                            ? (lang === 'ar' ? 'إخفاء بطاقة المعلومات المهنية' : 'Hide Professional Info Card')
+                            : (lang === 'ar' ? 'عرض بطاقة المعلومات المهنية' : 'Show Professional Info Card')}
+                        </span>
+                      </button>
+                    </div>
+
+                    {/* Redesigned Titanium Gold Business Card */}
+                    <AnimatePresence>
+                      {showPremiumCard && (
+                        <motion.div
+                          initial={{ opacity: 0, rotateY: 90, scale: 0.95 }}
+                          animate={{ opacity: 1, rotateY: 0, scale: 1 }}
+                          exit={{ opacity: 0, rotateY: -90, scale: 0.95 }}
+                          transition={{ duration: 0.6, ease: 'easeOut' }}
+                          className="mt-6 perspective-[1000px] w-full"
+                        >
+                          {/* Card Body */}
+                          <div className="relative w-full max-w-sm mx-auto rounded-[32px] p-6 bg-gradient-to-br from-amber-500/20 via-[#0A0F1D]/98 to-[#02050E]/98 border-2 border-amber-500/40 backdrop-blur-3xl overflow-hidden shadow-[0_25px_60px_rgba(212,175,55,0.25)] flex flex-col justify-between text-right group/vcard relative">
+                            {/* Shiny Metallic Light Effect Overlay */}
+                            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/[0.04] to-transparent -translate-x-full group-hover/vcard:translate-x-full transition-transform duration-1000 ease-out pointer-events-none" />
+
+                            {/* Background Glowing Orb */}
+                            <div className="absolute top-[-20%] right-[-20%] w-48 h-48 bg-amber-500/10 rounded-full blur-[80px] pointer-events-none -z-10 group-hover/vcard:bg-amber-500/15 transition-colors duration-500" />
+
+                            {/* Card Header (Chip & Event Logo) */}
+                            <div className="flex justify-between items-center w-full mb-4">
+                              {/* Gold Smart Chip */}
+                              <div className="w-11 h-8 rounded-lg bg-gradient-to-br from-amber-300 via-amber-500 to-amber-600 p-1 flex flex-col justify-between border border-amber-400/40 relative overflow-hidden shadow-md">
+                                <div className="absolute inset-0 bg-black/10 grid grid-cols-3 gap-0.5 pointer-events-none p-0.5">
+                                  <div className="border border-white/10 rounded-sm"></div>
+                                  <div className="border border-white/10 rounded-sm"></div>
+                                  <div className="border border-white/10 rounded-sm"></div>
+                                  <div className="border border-white/10 rounded-sm"></div>
+                                  <div className="border border-white/10 rounded-sm"></div>
+                                  <div className="border border-white/10 rounded-sm"></div>
+                                </div>
+                              </div>
+
+                              <div className="text-left">
+                                <span className="text-[9px] font-black uppercase text-amber-500 border border-amber-500/30 px-2 py-0.5 rounded-full tracking-widest bg-amber-500/5">
+                                  {participant.role === 'vip' ? 'VIP PASS 👑' : 'EXECUTIVE PASS'}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Card Middle: Split Name & Avatar */}
+                            <div className="flex items-center justify-between gap-4 my-3 text-right">
+                              {/* Left: Rounded Avatar */}
+                              <div className="flex-shrink-0 w-16 h-16 rounded-2xl border border-amber-500/30 overflow-hidden shadow-md bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center font-black text-brand-dark text-xl">
+                                {participant?.avatar_url && !avatarError2 ? (
+                                  <img
+                                    src={getFullUrl(participant.avatar_url)}
+                                    alt="Avatar"
+                                    className="w-full h-full object-cover"
+                                    onError={() => setAvatarError2(true)}
+                                  />
+                                ) : (
+                                  <span>{participant?.full_name ? participant.full_name.trim().charAt(0) : 'D'}</span>
+                                )}
+                              </div>
+
+                              {/* Right: Name & Job details */}
+                              <div className="space-y-1 flex-1">
+                                <h4 className="text-xl font-black text-white leading-tight tracking-tight">{participant.full_name}</h4>
+                                <p className="text-[10px] text-amber-500 font-bold uppercase tracking-wider">
+                                  {participant.organization}
+                                  {participant.role && ` - ${participant.role === 'attendee' || participant.role === 'مشارك'
+                                      ? (lang === 'ar' ? 'مشارك' : 'Attendee')
+                                      : participant.role
+                                    }`}
+                                </p>
+                                {participant.department && (
+                                  <p className="text-[9px] text-white/50 font-medium">{participant.department}</p>
+                                )}
+                                {participant.custom_values?.professional_address && (
+                                  <p className="text-[9px] text-white/45 font-medium">{participant.custom_values.professional_address}</p>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Card Contact Info Details */}
+                            <div className="space-y-1 py-3 border-t border-white/5 text-right text-[10px] text-white/60 font-medium">
+                              {(participant.phone_number || participant.phone) && (
+                                <div className="flex items-center justify-end gap-1.5" dir="ltr">
+                                  <span>{participant.phone_number || participant.phone}</span>
+                                  <span>📞</span>
+                                </div>
+                              )}
+                              {participant.email && (
+                                <div className="flex items-center justify-end gap-1.5" dir="ltr">
+                                  <span>{participant.email}</span>
+                                  <span>✉️</span>
+                                </div>
+                              )}
+                              {participant.custom_values?.linkedin && (
+                                <div className="flex items-center justify-end gap-1.5 text-blue-400" dir="ltr">
+                                  <span>linkedin.com/in/{participant.custom_values.linkedin}</span>
+                                  <span>🔗</span>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Bottom: Specialties tags & Event Identity */}
+                            <div className="flex justify-between items-center w-full pt-3 border-t border-white/5 text-right">
+                              <div className="text-[8px] font-black text-white/30 tracking-wider">
+                                {eventSettings?.event_name || 'DIWAN EVENTS'}
+                              </div>
+                              <div className="flex gap-1 flex-wrap justify-end">
+                                {(participant.custom_values?.specialties || []).slice(0, 2).map((s, idx) => (
+                                  <span key={idx} className="px-2 py-0.5 bg-amber-500/10 border border-amber-500/20 rounded-full text-[8px] font-black text-amber-500">
+                                    #{s}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Card Actions Panel */}
+                          <div className="mt-4 max-w-xs mx-auto">
+                            <button
+                              onClick={handleDownloadCardAsImage}
+                              className="w-full py-3 px-4 bg-amber-500 hover:bg-amber-600 text-brand-dark text-xs font-black rounded-2xl transition-all shadow-lg shadow-amber-500/10 flex items-center justify-center gap-2"
+                            >
+                              <span>🖼️</span>
+                              <span>{lang === 'ar' ? 'مشاركة بطاقة الأعمال كصورة' : 'Share Business Card as Image'}</span>
+                            </button>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
+                    {/* Push Notification Manager for PWA */}
+                    <div className="mt-6 pt-6 border-t border-white/5 text-right">
+                      <PushNotificationManager />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4 bg-black/20 p-6 rounded-[30px] border border-white/5 text-right mt-4">
+                    <div>
+                      <label className="text-[11px] text-white/50 font-bold mb-2 block">النبذة المهنية</label>
+                      <textarea
+                        value={profileData.bio}
+                        onChange={e => setProfileData({ ...profileData, bio: e.target.value })}
+                        className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white text-sm focus:border-amber-500 outline-none min-h-[80px] resize-none"
+                        placeholder="نبذة قصيرة..."
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] text-white/50 font-bold mb-2 block">رابط LinkedIn</label>
+                      <input
+                        type="text"
+                        value={profileData.linkedin}
+                        onChange={e => setProfileData({ ...profileData, linkedin: e.target.value })}
+                        className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white text-sm focus:border-amber-500 outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] text-white/50 font-bold mb-2 block">{lang === 'ar' ? 'رقم الهاتف (الواتساب)' : 'Phone Number (WhatsApp)'}</label>
+                      <input
+                        type="text"
+                        value={profileData.phone_number}
+                        onChange={e => setProfileData({ ...profileData, phone_number: e.target.value })}
+                        className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white text-sm focus:border-amber-500 outline-none text-left"
+                        placeholder="+213XXXXXXXXX"
+                        dir="ltr"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] text-white/50 font-bold mb-2 block">{lang === 'ar' ? 'البريد الإلكتروني' : 'Email Address'}</label>
+                      <input
+                        type="email"
+                        value={profileData.email}
+                        onChange={e => setProfileData({ ...profileData, email: e.target.value })}
+                        className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white text-sm focus:border-amber-500 outline-none text-left"
+                        placeholder="example@mail.com"
+                        dir="ltr"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] text-white/50 font-bold mb-2 block">التخصصات المهنية</label>
+                      <div className="w-full bg-white/5 border border-white/10 rounded-2xl p-2 flex flex-wrap gap-2 focus-within:border-amber-500 transition-all min-h-[50px] cursor-text" onClick={() => document.getElementById('tag-input-field')?.focus()}>
+                        {(profileData.specialties || []).map((tag, i) => (
+                          <span key={i} className="bg-amber-500/20 text-amber-500 px-3 py-1 rounded-full text-[10px] font-black flex items-center gap-2 border border-amber-500/20">
+                            {tag}
+                            <button onClick={(e) => { e.stopPropagation(); setProfileData({ ...profileData, specialties: profileData.specialties.filter((_, idx) => idx !== i) }); }} className="hover:text-white">
+                              <X size={12} />
+                            </button>
+                          </span>
+                        ))}
+                        <input
+                          id="tag-input-field"
+                          type="text"
+                          value={tagInput}
+                          onChange={e => setTagInput(e.target.value)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter' || e.key === ',') {
+                              e.preventDefault();
+                              const val = tagInput.trim().replace(',', '');
+                              if (val && !profileData.specialties.includes(val)) {
+                                setProfileData({ ...profileData, specialties: [...profileData.specialties, val] });
+                                setTagInput('');
+                              }
+                            }
+                          }}
+                          className="flex-1 bg-transparent border-none outline-none text-white text-sm p-1 min-w-[100px]"
+                          placeholder="أضف تخصص..."
+                        />
+                      </div>
+                      <p className="text-[9px] text-white/20 mt-2">اضغط Enter أو فاصلة للإضافة</p>
+                    </div>
+                    <div className="flex gap-2 pt-2">
+                      <Button className="flex-1 rounded-xl font-bold bg-amber-500 text-brand-dark py-2" onClick={handleUpdateProfile}>حفظ</Button>
+                      <Button variant="outline" className="flex-1 rounded-xl font-bold border-white/10 py-2" onClick={() => setIsEditingProfile(false)}>إلغاء</Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* 2. Digital Badge Card (Apple / Google Wallet Theme) */}
+              <div className="bg-gradient-to-br from-[#0D1527] to-[#050B18] border border-amber-500/20 rounded-[40px] p-8 text-center shadow-[0_24px_60px_rgba(212,175,55,0.08)]">
+                <h3 className="text-amber-500 font-black mb-6 tracking-widest text-sm uppercase">البطاقة الرقمية</h3>
+
+                <div className="relative inline-block group mb-8">
+                  <div className="absolute -inset-6 bg-gradient-to-br from-amber-500 to-amber-600/30 blur-[30px] rounded-full opacity-60 transition-opacity" />
+                  <div className="relative bg-white p-4 rounded-[30px] shadow-2xl">
+                    <img src={qrUrl} alt="QR Code" className="w-40 h-40" />
+                  </div>
+                </div>
+
+                <div className="mb-6">
+                  <button
+                    onClick={toggleScanMode}
+                    className={cn(
+                      "w-full flex items-center justify-center gap-3 py-4 px-6 rounded-2xl font-black text-xs uppercase tracking-widest transition-all duration-300 shadow-lg border",
+                      isScanMode
+                        ? "bg-amber-500 text-brand-dark border-amber-400 animate-pulse shadow-[0_0_20px_rgba(245,158,11,0.4)]"
+                        : theme === 'dark'
+                          ? "bg-white/5 text-white border-white/10 hover:bg-white/10 hover:border-amber-500/30"
+                          : "bg-slate-100 text-slate-800 border-slate-200 hover:bg-slate-200 hover:border-amber-500/30"
+                    )}
+                  >
+                    <Smartphone size={16} className={isScanMode ? "text-brand-dark" : "text-amber-500"} />
+                    تفعيل وضع المسح السريع ⚡
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 mb-8">
+                  <div className="bg-white/[0.03] p-4 rounded-2xl border border-white/5">
+                    <div className="text-[10px] text-amber-500/50 font-bold uppercase tracking-widest mb-1">المقعد</div>
+                    <div className="font-black text-xl text-amber-500">{participant.seat_info || '--'}</div>
+                  </div>
+                  <div className="bg-white/[0.03] p-4 rounded-2xl border border-white/5">
+                    <div className="text-[10px] text-amber-500/50 font-bold uppercase tracking-widest mb-1">رقم التسجيل</div>
+                    <div className="font-black text-xl text-white">#{participant.order_num?.split('-')[1] || participant.order_num}</div>
+                  </div>
+                </div>
+
+                {eventSettings?.map_url && (
+                  <div className="mt-6 pt-6 border-t border-white/10">
+                    <a
+                      href={eventSettings.map_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full flex items-center justify-center gap-3 py-4 px-6 rounded-2xl font-black text-xs uppercase tracking-widest transition-all duration-300 shadow-lg border bg-gradient-to-r from-amber-500/20 to-amber-600/10 text-amber-500 border-amber-500/30 hover:border-amber-400 hover:from-amber-500/30 hover:to-amber-600/20"
+                    >
+                      <MapPin size={16} className="text-amber-500 animate-bounce" />
+                      {t('badge_map')}
+                    </a>
+                  </div>
+                )}
+
+                {/* Personal Digital Notebook Button */}
+                <div className="mt-4 pt-4 border-t border-white/10">
+                  <button
+                    onClick={() => setIsNotebookOpen(true)}
+                    className={cn(
+                      "w-full flex items-center justify-center gap-3 py-4 px-6 rounded-2xl font-black text-xs uppercase tracking-widest transition-all duration-300 shadow-lg border",
+                      theme === 'dark'
+                        ? "bg-white/5 text-[#F0F4F2] border-white/10 hover:bg-white/10 hover:border-amber-500/30"
+                        : "bg-slate-100 text-slate-800 border-slate-200 hover:bg-slate-200 hover:border-amber-500/30"
+                    )}
+                  >
+                    <span className="text-base">📝</span>
+                    <span>{lang === 'ar' ? 'مفكرتي الرقمية الشخصية' : 'My Digital Notebook'}</span>
+                    <span className="ml-auto bg-amber-500 text-brand-dark px-2 py-0.5 rounded-full text-[9px] font-black">
+                      {Object.values(sessionNotes).filter(Boolean).length}
+                    </span>
+                  </button>
+                </div>
+              </div>
             </motion.div>
           )}
 
@@ -4132,24 +4130,24 @@ const ParticipantPortal = () => {
                           <h4 className={cn("text-sm font-black text-white break-words", !notif.is_read && "text-amber-100")}>
                             {notif.title
                               ? notif.title
-                                 .replace(/transport/g, 'النقل')
-                                 .replace(/logistics/g, 'النقل')
-                                 .replace(/catering/g, 'الإطعام')
-                                 .replace(/accommodation/g, 'الإيواء')
-                                 .replace(/reception/g, 'الاستقبال')
-                                 .replace(/entertainment/g, 'الترفيه')
+                                .replace(/transport/g, 'النقل')
+                                .replace(/logistics/g, 'النقل')
+                                .replace(/catering/g, 'الإطعام')
+                                .replace(/accommodation/g, 'الإيواء')
+                                .replace(/reception/g, 'الاستقبال')
+                                .replace(/entertainment/g, 'الترفيه')
                               : ''
                             }
                           </h4>
                           <p className="text-xs text-white/65 leading-relaxed font-medium break-words">
-                            {notif.message 
+                            {notif.message
                               ? notif.message
-                                 .replace(/لجنة transport/g, 'لجنة النقل')
-                                 .replace(/لجنة logistics/g, 'لجنة النقل')
-                                 .replace(/لجنة catering/g, 'لجنة الإطعام')
-                                 .replace(/لجنة accommodation/g, 'لجنة الإيواء')
-                                 .replace(/لجنة reception/g, 'لجنة الاستقبال والتوجيه')
-                                 .replace(/لجنة entertainment/g, 'لجنة الترفيه')
+                                .replace(/لجنة transport/g, 'لجنة النقل')
+                                .replace(/لجنة logistics/g, 'لجنة النقل')
+                                .replace(/لجنة catering/g, 'لجنة الإطعام')
+                                .replace(/لجنة accommodation/g, 'لجنة الإيواء')
+                                .replace(/لجنة reception/g, 'لجنة الاستقبال والتوجيه')
+                                .replace(/لجنة entertainment/g, 'لجنة الترفيه')
                               : ''
                             }
                           </p>
@@ -4172,251 +4170,251 @@ const ParticipantPortal = () => {
 
           {activeTab === 'agenda' && (
             <motion.div key="agenda" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
-               <div className="flex justify-between items-center mb-4">
-                 <h3 className="text-2xl font-black tracking-tight">أجندة الفعالية 📅</h3>
-               </div>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-2xl font-black tracking-tight">أجندة الفعالية 📅</h3>
+              </div>
 
-               {/* Segmented Filter Bar */}
-               <div className="flex gap-2 p-1.5 bg-white/[0.03] border border-white/10 rounded-[24px] mb-6">
-                 <button 
-                   onClick={() => setAgendaFilter('all')}
-                   className={cn(
-                     "flex-1 py-3 text-xs font-black rounded-2xl transition-all duration-300",
-                     agendaFilter === 'all' 
-                       ? "bg-amber-500 text-brand-dark shadow-[0_4px_20px_rgba(245,158,11,0.25)]" 
-                       : "text-white/50 hover:text-white"
-                   )}
-                 >
-                   كل الجلسات ({agenda.length})
-                 </button>
-                 <button 
-                   onClick={() => setAgendaFilter('favorites')}
-                   className={cn(
-                     "flex-1 py-3 text-xs font-black rounded-2xl transition-all duration-300 flex items-center justify-center gap-2",
-                     agendaFilter === 'favorites' 
-                       ? "bg-amber-500 text-brand-dark shadow-[0_4px_20px_rgba(245,158,11,0.25)]" 
-                       : "text-white/50 hover:text-white"
-                   )}
-                 >
-                   ⭐ مفضلتي ({favorites.length})
-                 </button>
-               </div>
-
-                {agendaFilter === 'favorites' && favorites.length > 0 && (
-                  <div className="mb-6 animate-fade-in">
-                    <button
-                      onClick={downloadAllFavoritesIcs}
-                      className="w-full py-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-brand-dark rounded-2xl font-black text-xs tracking-widest uppercase shadow-[0_4px_25px_rgba(245,158,11,0.25)] flex items-center justify-center gap-2.5 transition-all"
-                    >
-                      <span>📅</span>
-                      <span>{lang === 'ar' ? 'تصدير جدول المفضلات بالكامل (.ics)' : 'Export Full Schedule Bundle (.ics)'}</span>
-                    </button>
-                  </div>
-                )}
-
-               <div className="space-y-4">
-                  {agenda.filter(item => agendaFilter === 'all' || favorites.includes(item.id)).length === 0 ? (
-                    <div className="text-center py-12 bg-white/[0.02] border border-white/5 rounded-[30px] p-8">
-                      <span className="text-4xl mb-4 block">⭐</span>
-                      <p className="text-white/40 text-sm font-bold">لا توجد جلسات في القائمة حالياً.</p>
-                      {agendaFilter === 'favorites' && (
-                        <p className="text-amber-500/60 text-xs mt-2">قم بالضغط على النجمة في أي جلسة لإضافتها لجدولك الخاص!</p>
-                      )}
-                    </div>
-                  ) : (
-                    agenda
-                      .filter(item => agendaFilter === 'all' || favorites.includes(item.id))
-                      .map((item) => {
-                        const isFav = favorites.includes(item.id);
-                        const isExpanded = expandedSessionId === item.id;
-                        
-                        return (
-                          <div 
-                            key={item.id} 
-                            onClick={() => setExpandedSessionId(isExpanded ? null : item.id)}
-                            className={cn(
-                              "bg-white/5 border p-6 rounded-[35px] transition-all duration-300 cursor-pointer overflow-hidden relative",
-                              isExpanded ? "border-amber-500/40 bg-white/[0.08]" : "border-white/10 hover:bg-white/10"
-                            )}
-                          >
-                             <div className="flex items-center gap-4">
-                                <div className="w-20 text-center flex flex-col items-center shrink-0">
-                                   <div className="text-amber-500 font-black text-sm">{item.start_time}</div>
-                                   {item.end_time && <div className="text-white/30 text-[10px] mt-1 font-bold">{item.end_time}</div>}
-                                   <div className="w-1 h-8 bg-white/5 rounded-full mt-2" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                   <h4 className="font-black text-base md:text-lg mb-1 truncate text-white">{item.title}</h4>
-                                   <p className="text-brand-secondary/50 text-xs font-bold truncate">{item.speaker_name} • {item.hall}</p>
-                                </div>
-                                <button 
-                                  onClick={(e) => toggleFavorite(item.id, e)} 
-                                  className="p-3 rounded-full hover:bg-white/10 transition-colors shrink-0"
-                                >
-                                  <Star className={cn("w-5 h-5 transition-all duration-300", isFav ? "fill-amber-500 text-amber-500" : "text-white/20")} />
-                                </button>
-                             </div>
-
-                             {/* Expandable Details Container */}
-                             <AnimatePresence>
-                               {isExpanded && (
-                                 <motion.div 
-                                   initial={{ height: 0, opacity: 0, marginTop: 0 }}
-                                   animate={{ height: 'auto', opacity: 1, marginTop: 16 }}
-                                   exit={{ height: 0, opacity: 0, marginTop: 0 }}
-                                   transition={{ duration: 0.3 }}
-                                   onClick={(e) => e.stopPropagation()} // Prevent collapse when clicking details
-                                   className="border-t border-white/5 pt-4 space-y-4 text-right"
-                                 >
-                                   {item.description ? (
-                                     <p className="text-white/70 text-sm leading-relaxed bg-black/20 p-4 rounded-[20px] border border-white/5">
-                                       {item.description}
-                                     </p>
-                                   ) : (
-                                     <p className="text-white/30 text-xs italic">لا يوجد وصف مضاف لهذه الجلسة.</p>
-                                   )}
-
-                                   {/* Calendar Sync Options */}
-                                   <div className="space-y-3">
-                                     <div className="text-[10px] text-amber-500/50 font-black uppercase tracking-widest">إضافة إلى تقويمك الخاص:</div>
-                                     <div className="grid grid-cols-2 gap-3">
-                                       <a 
-                                         href={getGoogleCalendarUrl(item)} 
-                                         target="_blank" 
-                                         rel="noopener noreferrer"
-                                         className="h-12 bg-white/5 border border-white/10 hover:bg-white/10 hover:border-amber-500/30 rounded-2xl flex items-center justify-center gap-2 text-xs font-bold text-white transition-all shadow-md"
-                                       >
-                                         <span className="text-base">📅</span>
-                                         <span>تقويم Google</span>
-                                       </a>
-                                       <a 
-                                         href={getIcsCalendarUrl(item)} 
-                                         download={`${item.title.replace(/\s+/g, '_')}.ics`}
-                                         className="h-12 bg-white/5 border border-white/10 hover:bg-white/10 hover:border-amber-500/30 rounded-2xl flex items-center justify-center gap-2 text-xs font-bold text-white transition-all shadow-md"
-                                       >
-                                         <span className="text-base">📲</span>
-                                         <span>تقويم الهاتف (iCal)</span>
-                                       </a>
-                                     </div>
-                                    </div>
-
-                                    {/* Digital Session Notes */}
-                                    <div className="border-t border-white/5 pt-4 space-y-3">
-                                      <div className="text-[10px] text-amber-500/50 font-black uppercase tracking-widest">
-                                        {lang === 'ar' ? 'ملاحظاتي الشخصية حول الجلسة (تُحفظ تلقائياً):' : 'My Session Notes (Auto-saved):'}
-                                      </div>
-                                      <textarea
-                                        value={sessionNotes[item.id] || ''}
-                                        onChange={(e) => handleSaveNote(item.id, e.target.value)}
-                                        className="w-full bg-black/40 border-2 border-white/20 rounded-2xl p-4 text-slate-100 text-sm focus:border-amber-500/50 outline-none min-h-[100px] resize-none placeholder-white/40"
-                                        placeholder={lang === 'ar' ? 'اكتب أفكارك وملاحظاتك هنا...' : 'Type your thoughts and notes here...'}
-                                      />
-                                    </div>
-
-                                    {/* Live Session Rating Widget */}
-                                    <div className="border-t border-white/5 pt-4 space-y-3">
-                                      <div className="text-[10px] text-amber-500/50 font-black uppercase tracking-widest">{"تقييم الجلسة والمتحدث:"}</div>
-                                      <div className="bg-black/20 p-4 rounded-[20px] border border-white/5 flex flex-col items-center justify-center gap-3">
-                                        {sessionRatings[item.id] ? (
-                                          <div className="text-center py-2 animate-fade-in flex flex-col items-center justify-center">
-                                            <div className="flex justify-center gap-1 mb-2">
-                                              {[1, 2, 3, 4, 5].map((star) => (
-                                                <Star 
-                                                  key={star} 
-                                                  className={cn(
-                                                    "w-5 h-5", 
-                                                    star <= sessionRatings[item.id] ? "text-amber-500 fill-amber-500" : "text-white/10"
-                                                  )} 
-                                                />
-                                              ))}
-                                            </div>
-                                            <div className="text-xs text-white/40 font-bold">{"شكراً لتقييمك! تم حفظ مشاركتك بنجاح ❤️"}</div>
-                                          </div>
-                                        ) : (
-                                          <>
-                                            <div className="text-xs text-white/60 font-bold mb-1">{"ما هو تقييمك لمحتوى وأداء هذه الجلسة؟"}</div>
-                                            <div className="flex gap-2">
-                                              {[1, 2, 3, 4, 5].map((star) => (
-                                                <button
-                                                  key={star}
-                                                  onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleRateSession(item.id, star);
-                                                  }}
-                                                  className="hover:scale-125 transition-transform p-1"
-                                                >
-                                                  <Star className="w-6 h-6 text-white/20 hover:text-amber-500 hover:fill-amber-500 transition-colors" />
-                                                </button>
-                                              ))}
-                                            </div>
-                                          </>
-                                        )}
-                                      </div>
-                                    </div>
-                                  </motion.div>
-                               )}
-                             </AnimatePresence>
-                          </div>
-                        );
-                      })
+              {/* Segmented Filter Bar */}
+              <div className="flex gap-2 p-1.5 bg-white/[0.03] border border-white/10 rounded-[24px] mb-6">
+                <button
+                  onClick={() => setAgendaFilter('all')}
+                  className={cn(
+                    "flex-1 py-3 text-xs font-black rounded-2xl transition-all duration-300",
+                    agendaFilter === 'all'
+                      ? "bg-amber-500 text-brand-dark shadow-[0_4px_20px_rgba(245,158,11,0.25)]"
+                      : "text-white/50 hover:text-white"
                   )}
-               </div>
+                >
+                  كل الجلسات ({agenda.length})
+                </button>
+                <button
+                  onClick={() => setAgendaFilter('favorites')}
+                  className={cn(
+                    "flex-1 py-3 text-xs font-black rounded-2xl transition-all duration-300 flex items-center justify-center gap-2",
+                    agendaFilter === 'favorites'
+                      ? "bg-amber-500 text-brand-dark shadow-[0_4px_20px_rgba(245,158,11,0.25)]"
+                      : "text-white/50 hover:text-white"
+                  )}
+                >
+                  ⭐ مفضلتي ({favorites.length})
+                </button>
+              </div>
+
+              {agendaFilter === 'favorites' && favorites.length > 0 && (
+                <div className="mb-6 animate-fade-in">
+                  <button
+                    onClick={downloadAllFavoritesIcs}
+                    className="w-full py-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-brand-dark rounded-2xl font-black text-xs tracking-widest uppercase shadow-[0_4px_25px_rgba(245,158,11,0.25)] flex items-center justify-center gap-2.5 transition-all"
+                  >
+                    <span>📅</span>
+                    <span>{lang === 'ar' ? 'تصدير جدول المفضلات بالكامل (.ics)' : 'Export Full Schedule Bundle (.ics)'}</span>
+                  </button>
+                </div>
+              )}
+
+              <div className="space-y-4">
+                {agenda.filter(item => agendaFilter === 'all' || favorites.includes(item.id)).length === 0 ? (
+                  <div className="text-center py-12 bg-white/[0.02] border border-white/5 rounded-[30px] p-8">
+                    <span className="text-4xl mb-4 block">⭐</span>
+                    <p className="text-white/40 text-sm font-bold">لا توجد جلسات في القائمة حالياً.</p>
+                    {agendaFilter === 'favorites' && (
+                      <p className="text-amber-500/60 text-xs mt-2">قم بالضغط على النجمة في أي جلسة لإضافتها لجدولك الخاص!</p>
+                    )}
+                  </div>
+                ) : (
+                  agenda
+                    .filter(item => agendaFilter === 'all' || favorites.includes(item.id))
+                    .map((item) => {
+                      const isFav = favorites.includes(item.id);
+                      const isExpanded = expandedSessionId === item.id;
+
+                      return (
+                        <div
+                          key={item.id}
+                          onClick={() => setExpandedSessionId(isExpanded ? null : item.id)}
+                          className={cn(
+                            "bg-white/5 border p-6 rounded-[35px] transition-all duration-300 cursor-pointer overflow-hidden relative",
+                            isExpanded ? "border-amber-500/40 bg-white/[0.08]" : "border-white/10 hover:bg-white/10"
+                          )}
+                        >
+                          <div className="flex items-center gap-4">
+                            <div className="w-20 text-center flex flex-col items-center shrink-0">
+                              <div className="text-amber-500 font-black text-sm">{item.start_time}</div>
+                              {item.end_time && <div className="text-white/30 text-[10px] mt-1 font-bold">{item.end_time}</div>}
+                              <div className="w-1 h-8 bg-white/5 rounded-full mt-2" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-black text-base md:text-lg mb-1 truncate text-white">{item.title}</h4>
+                              <p className="text-brand-secondary/50 text-xs font-bold truncate">{item.speaker_name} • {item.hall}</p>
+                            </div>
+                            <button
+                              onClick={(e) => toggleFavorite(item.id, e)}
+                              className="p-3 rounded-full hover:bg-white/10 transition-colors shrink-0"
+                            >
+                              <Star className={cn("w-5 h-5 transition-all duration-300", isFav ? "fill-amber-500 text-amber-500" : "text-white/20")} />
+                            </button>
+                          </div>
+
+                          {/* Expandable Details Container */}
+                          <AnimatePresence>
+                            {isExpanded && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0, marginTop: 0 }}
+                                animate={{ height: 'auto', opacity: 1, marginTop: 16 }}
+                                exit={{ height: 0, opacity: 0, marginTop: 0 }}
+                                transition={{ duration: 0.3 }}
+                                onClick={(e) => e.stopPropagation()} // Prevent collapse when clicking details
+                                className="border-t border-white/5 pt-4 space-y-4 text-right"
+                              >
+                                {item.description ? (
+                                  <p className="text-white/70 text-sm leading-relaxed bg-black/20 p-4 rounded-[20px] border border-white/5">
+                                    {item.description}
+                                  </p>
+                                ) : (
+                                  <p className="text-white/30 text-xs italic">لا يوجد وصف مضاف لهذه الجلسة.</p>
+                                )}
+
+                                {/* Calendar Sync Options */}
+                                <div className="space-y-3">
+                                  <div className="text-[10px] text-amber-500/50 font-black uppercase tracking-widest">إضافة إلى تقويمك الخاص:</div>
+                                  <div className="grid grid-cols-2 gap-3">
+                                    <a
+                                      href={getGoogleCalendarUrl(item)}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="h-12 bg-white/5 border border-white/10 hover:bg-white/10 hover:border-amber-500/30 rounded-2xl flex items-center justify-center gap-2 text-xs font-bold text-white transition-all shadow-md"
+                                    >
+                                      <span className="text-base">📅</span>
+                                      <span>تقويم Google</span>
+                                    </a>
+                                    <a
+                                      href={getIcsCalendarUrl(item)}
+                                      download={`${item.title.replace(/\s+/g, '_')}.ics`}
+                                      className="h-12 bg-white/5 border border-white/10 hover:bg-white/10 hover:border-amber-500/30 rounded-2xl flex items-center justify-center gap-2 text-xs font-bold text-white transition-all shadow-md"
+                                    >
+                                      <span className="text-base">📲</span>
+                                      <span>تقويم الهاتف (iCal)</span>
+                                    </a>
+                                  </div>
+                                </div>
+
+                                {/* Digital Session Notes */}
+                                <div className="border-t border-white/5 pt-4 space-y-3">
+                                  <div className="text-[10px] text-amber-500/50 font-black uppercase tracking-widest">
+                                    {lang === 'ar' ? 'ملاحظاتي الشخصية حول الجلسة (تُحفظ تلقائياً):' : 'My Session Notes (Auto-saved):'}
+                                  </div>
+                                  <textarea
+                                    value={sessionNotes[item.id] || ''}
+                                    onChange={(e) => handleSaveNote(item.id, e.target.value)}
+                                    className="w-full bg-black/40 border-2 border-white/20 rounded-2xl p-4 text-slate-100 text-sm focus:border-amber-500/50 outline-none min-h-[100px] resize-none placeholder-white/40"
+                                    placeholder={lang === 'ar' ? 'اكتب أفكارك وملاحظاتك هنا...' : 'Type your thoughts and notes here...'}
+                                  />
+                                </div>
+
+                                {/* Live Session Rating Widget */}
+                                <div className="border-t border-white/5 pt-4 space-y-3">
+                                  <div className="text-[10px] text-amber-500/50 font-black uppercase tracking-widest">{"تقييم الجلسة والمتحدث:"}</div>
+                                  <div className="bg-black/20 p-4 rounded-[20px] border border-white/5 flex flex-col items-center justify-center gap-3">
+                                    {sessionRatings[item.id] ? (
+                                      <div className="text-center py-2 animate-fade-in flex flex-col items-center justify-center">
+                                        <div className="flex justify-center gap-1 mb-2">
+                                          {[1, 2, 3, 4, 5].map((star) => (
+                                            <Star
+                                              key={star}
+                                              className={cn(
+                                                "w-5 h-5",
+                                                star <= sessionRatings[item.id] ? "text-amber-500 fill-amber-500" : "text-white/10"
+                                              )}
+                                            />
+                                          ))}
+                                        </div>
+                                        <div className="text-xs text-white/40 font-bold">{"شكراً لتقييمك! تم حفظ مشاركتك بنجاح ❤️"}</div>
+                                      </div>
+                                    ) : (
+                                      <>
+                                        <div className="text-xs text-white/60 font-bold mb-1">{"ما هو تقييمك لمحتوى وأداء هذه الجلسة؟"}</div>
+                                        <div className="flex gap-2">
+                                          {[1, 2, 3, 4, 5].map((star) => (
+                                            <button
+                                              key={star}
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleRateSession(item.id, star);
+                                              }}
+                                              className="hover:scale-125 transition-transform p-1"
+                                            >
+                                              <Star className="w-6 h-6 text-white/20 hover:text-amber-500 hover:fill-amber-500 transition-colors" />
+                                            </button>
+                                          ))}
+                                        </div>
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      );
+                    })
+                )}
+              </div>
             </motion.div>
           )}
 
           {activeTab === 'leaderboard' && (
             <motion.div key="leaderboard" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-               <h3 className="text-2xl font-black tracking-tight mb-8">لوحة المتصدرين 🏆</h3>
-               <div className="space-y-3">
-                  {leaderboard.map((p, idx) => (
-                    <div key={p.id} className={cn(
-                      "p-5 rounded-[30px] flex items-center justify-between border transition-all",
-                      p.id === participant.id ? "bg-amber-500/10 border-amber-500/30" : "bg-white/5 border-white/10"
-                    )}>
-                       <div className="flex items-center gap-4">
-                          <div className={cn(
-                            "w-10 h-10 rounded-xl flex items-center justify-center font-black",
-                            idx === 0 ? "bg-amber-500 text-brand-dark" : "bg-white/5 text-brand-secondary"
-                          )}>
-                             {idx + 1}
-                          </div>
-                          <div>
-                             <div className="font-black text-white">{p.name} {p.id === participant.id && "(أنت)"}</div>
-                             <div className="text-[10px] text-brand-secondary/30 font-bold uppercase tracking-widest">{p.points} نقطة</div>
-                          </div>
-                       </div>
-                       {idx === 0 && <Award className="w-5 h-5 text-amber-500" />}
+              <h3 className="text-2xl font-black tracking-tight mb-8">لوحة المتصدرين 🏆</h3>
+              <div className="space-y-3">
+                {leaderboard.map((p, idx) => (
+                  <div key={p.id} className={cn(
+                    "p-5 rounded-[30px] flex items-center justify-between border transition-all",
+                    p.id === participant.id ? "bg-amber-500/10 border-amber-500/30" : "bg-white/5 border-white/10"
+                  )}>
+                    <div className="flex items-center gap-4">
+                      <div className={cn(
+                        "w-10 h-10 rounded-xl flex items-center justify-center font-black",
+                        idx === 0 ? "bg-amber-500 text-brand-dark" : "bg-white/5 text-brand-secondary"
+                      )}>
+                        {idx + 1}
+                      </div>
+                      <div>
+                        <div className="font-black text-white">{p.name} {p.id === participant.id && "(أنت)"}</div>
+                        <div className="text-[10px] text-brand-secondary/30 font-bold uppercase tracking-widest">{p.points} نقطة</div>
+                      </div>
                     </div>
-                  ))}
-               </div>
+                    {idx === 0 && <Award className="w-5 h-5 text-amber-500" />}
+                  </div>
+                ))}
+              </div>
             </motion.div>
           )}
 
           {activeTab === 'networking' && (
             <motion.div key="networking" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="space-y-6">
-               <div style={{ margin: '-24px -24px 0 -24px', height: 'calc(100vh - 80px)' }}>
-                 <NetworkingHub eventId={eventId} participant={participant} />
-               </div>
+              <div style={{ margin: '-24px -24px 0 -24px', height: 'calc(100vh - 80px)' }}>
+                <NetworkingHub eventId={eventId} participant={participant} />
+              </div>
             </motion.div>
           )}
 
           {/* Contact Card Modal */}
           <AnimatePresence>
             {selectedContact && (
-              <motion.div 
-                initial={{ opacity: 0 }} 
-                animate={{ opacity: 1 }} 
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-[#050B18]/80 backdrop-blur-md"
               >
-                <motion.div 
+                <motion.div
                   initial={{ scale: 0.9, y: 20 }}
                   animate={{ scale: 1, y: 0 }}
                   exit={{ scale: 0.9, y: 20 }}
                   className="bg-[#050B18] border border-white/20 rounded-[50px] p-8 w-full max-sm:max-w-full max-w-sm backdrop-blur-3xl relative overflow-hidden"
                 >
                   <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-br from-amber-500 to-amber-600 -z-10" />
-                  <button 
+                  <button
                     onClick={() => setSelectedContact(null)}
                     className="absolute top-6 left-6 w-10 h-10 rounded-full bg-black/20 flex items-center justify-center text-white"
                   >
@@ -4429,17 +4427,17 @@ const ParticipantPortal = () => {
                     </div>
                     <h4 className="text-2xl font-black text-white mb-1">{selectedContact.full_name}</h4>
                     <p className="text-amber-500 font-bold text-sm mb-6">{selectedContact.organization}</p>
-                    
+
                     {selectedContact.bio && (
                       <p className="text-white/60 text-[11px] leading-relaxed mb-6 px-4">{selectedContact.bio}</p>
                     )}
 
                     <div className="flex flex-wrap justify-center gap-2 mb-6">
-                       {(selectedContact.specialties || []).map((s, i) => (
-                          <span key={i} className="px-2 py-1 bg-white/5 border border-white/10 rounded-full text-[9px] font-black text-brand-secondary">
-                             #{s}
-                          </span>
-                       ))}
+                      {(selectedContact.specialties || []).map((s, i) => (
+                        <span key={i} className="px-2 py-1 bg-white/5 border border-white/10 rounded-full text-[9px] font-black text-brand-secondary">
+                          #{s}
+                        </span>
+                      ))}
                     </div>
 
                     <div className="grid grid-cols-1 gap-3 mb-8">
@@ -4451,11 +4449,11 @@ const ParticipantPortal = () => {
                               <div className="text-[10px] text-brand-secondary/50 font-bold uppercase">الهاتف</div>
                               <div className="text-sm font-black text-white">{selectedContact.phone || 'غير متوفر'}</div>
                             </div>
-                            <button 
+                            <button
                               onClick={() => window.open(`https://wa.me/${selectedContact.phone?.replace(/[^0-9]/g, '')}`, '_blank')}
                               className="w-10 h-10 rounded-xl bg-brand-primary text-brand-dark flex items-center justify-center hover:scale-110 transition-all"
                             >
-                               <MessageSquare className="w-4 h-4" />
+                              <MessageSquare className="w-4 h-4" />
                             </button>
                           </div>
                           <div className="bg-brand-primary/10 p-4 rounded-2xl border border-brand-primary/20 flex items-center gap-4">
@@ -4465,14 +4463,14 @@ const ParticipantPortal = () => {
                               <div className="text-sm font-black text-white">{selectedContact.email || 'غير متوفر'}</div>
                             </div>
                           </div>
-                          
+
                           {selectedContact.linkedin && (
                             <div className="bg-blue-500/10 p-4 rounded-2xl border border-blue-500/20 flex items-center gap-4 cursor-pointer" onClick={() => window.open(selectedContact.linkedin, '_blank')}>
-                               <LinkIcon className="w-5 h-5 text-blue-400" />
-                               <div className="text-right flex-1">
-                                  <div className="text-[10px] text-blue-400/50 font-bold uppercase">LinkedIn</div>
-                                  <div className="text-sm font-black text-white">زيارة الملف الشخصي</div>
-                               </div>
+                              <LinkIcon className="w-5 h-5 text-blue-400" />
+                              <div className="text-right flex-1">
+                                <div className="text-[10px] text-blue-400/50 font-bold uppercase">LinkedIn</div>
+                                <div className="text-sm font-black text-white">زيارة الملف الشخصي</div>
+                              </div>
                             </div>
                           )}
                         </>
@@ -4497,9 +4495,9 @@ const ParticipantPortal = () => {
                     </div>
 
                     <div className="space-y-3">
-                      <Button 
-                        variant={selectedContact.connection_status === 'accepted' ? 'outline' : 'gold'} 
-                        className="w-full h-16 rounded-2xl font-black text-lg gap-2" 
+                      <Button
+                        variant={selectedContact.connection_status === 'accepted' ? 'outline' : 'gold'}
+                        className="w-full h-16 rounded-2xl font-black text-lg gap-2"
                         onClick={handleRequestConnection}
                         disabled={selectedContact.connection_status !== 'none'}
                       >
@@ -4511,19 +4509,19 @@ const ParticipantPortal = () => {
                           <><LinkIcon className="w-5 h-5" /> طلب بيانات التواصل</>
                         )}
                       </Button>
-                      
+
                       {selectedContact.connection_status === 'accepted' && (
-                        <Button 
-                          variant="gold" 
-                          className="w-full h-16 rounded-2xl font-black text-lg gap-2" 
+                        <Button
+                          variant="gold"
+                          className="w-full h-16 rounded-2xl font-black text-lg gap-2"
                           onClick={() => handleDownloadVCard(selectedContact)}
                         >
-                           <Download className="w-5 h-5" />
-                           حفظ في جهات الاتصال
+                          <Download className="w-5 h-5" />
+                          حفظ في جهات الاتصال
                         </Button>
                       )}
                     </div>
-                    
+
                     <p className="mt-4 text-[10px] text-white/30 font-bold text-center">
                       {selectedContact.connection_status === 'accepted' ? "بيانات التواصل ظاهرة لك الآن" : "سيتم إرسال طلبك لهذا المشارك للموافقة"}
                     </p>
@@ -4535,387 +4533,387 @@ const ParticipantPortal = () => {
 
           {activeTab === 'social' && (
             <motion.div key="social" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-               <h3 className="text-2xl font-black">الحائط التفاعلي 💬</h3>
-               <div className="bg-white/5 border border-white/10 rounded-[40px] p-8 backdrop-blur-3xl mb-8">
-                  <textarea 
-                    value={newPost}
-                    onChange={(e) => setNewPost(e.target.value)}
-                    placeholder="شاركنا انطباعك عن الفعالية..." 
-                    className="w-full bg-transparent border-none outline-none text-xl font-bold placeholder:text-white/10 min-h-[120px] resize-none"
-                  />
+              <h3 className="text-2xl font-black">الحائط التفاعلي 💬</h3>
+              <div className="bg-white/5 border border-white/10 rounded-[40px] p-8 backdrop-blur-3xl mb-8">
+                <textarea
+                  value={newPost}
+                  onChange={(e) => setNewPost(e.target.value)}
+                  placeholder="شاركنا انطباعك عن الفعالية..."
+                  className="w-full bg-transparent border-none outline-none text-xl font-bold placeholder:text-white/10 min-h-[120px] resize-none"
+                />
 
-                  {/* Image Attachment Preview */}
-                  {imagePreview && (
-                    <div className="relative mt-2 mb-6 inline-block group">
-                      <img src={imagePreview} alt="Attached Preview" className="max-h-40 rounded-2xl border border-white/10 shadow-lg object-cover" />
-                      <button 
-                        onClick={handleClearImage}
-                        className="absolute -top-2 -left-2 w-7 h-7 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors"
-                      >
-                        <X size={14} />
-                      </button>
-                    </div>
-                  )}
-
-                  <input 
-                    type="file" 
-                    id="social-post-image-input" 
-                    accept="image/*" 
-                    className="hidden" 
-                    onChange={handleImageSelect} 
-                  />
-
-                  <div className="flex items-center justify-between pt-6 border-t border-white/5">
-                     <button 
-                       onClick={() => document.getElementById('social-post-image-input')?.click()}
-                       disabled={isUploadingImage}
-                       className="w-14 h-14 rounded-2xl bg-white/5 text-brand-secondary flex items-center justify-center border border-white/10 hover:bg-white/10 hover:border-amber-500/30 transition-all"
-                     >
-                        <Camera className="w-6 h-6 text-amber-500" />
-                     </button>
-                     <Button 
-                       variant="gold" 
-                       className="px-12 h-14 rounded-[20px] text-lg font-black shadow-lg" 
-                       onClick={handlePostToWall}
-                       disabled={isUploadingImage}
-                     >
-                       {isUploadingImage ? 'جاري النشر...' : 'نشر'}
-                     </Button>
+                {/* Image Attachment Preview */}
+                {imagePreview && (
+                  <div className="relative mt-2 mb-6 inline-block group">
+                    <img src={imagePreview} alt="Attached Preview" className="max-h-40 rounded-2xl border border-white/10 shadow-lg object-cover" />
+                    <button
+                      onClick={handleClearImage}
+                      className="absolute -top-2 -left-2 w-7 h-7 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors"
+                    >
+                      <X size={14} />
+                    </button>
                   </div>
-               </div>
+                )}
 
-               <div className="space-y-4">
-                 {posts.map(post => (
-                   <div key={post.id} className="bg-white/5 border border-white/10 rounded-[30px] p-6 relative">
-                     {post.is_pending && (
-                       <span className="absolute top-4 left-4 bg-amber-500/20 text-amber-500 text-[10px] font-black px-3 py-1 rounded-full border border-amber-500/30">
-                         قيد المراجعة
-                       </span>
-                     )}
-                     <div className="flex items-center gap-3 mb-4">
-                        <div className="w-10 h-10 rounded-full bg-brand-primary/20 flex items-center justify-center text-brand-secondary font-bold border border-brand-primary/20">
-                          {post.author_name ? post.author_name[0] : '👤'}
-                        </div>
-                       <div>
-                         <div className="font-black text-white text-sm">{post.author_name}</div>
-                         <div className="text-[10px] text-white/30 font-bold flex items-center gap-1">
-                           <Clock size={9} />
-                           {formatPostTime(post.created_at)}
-                         </div>
-                       </div>
-                     </div>
-                      <p className="text-white/80 font-bold text-lg leading-relaxed">{post.content}</p>
-                      {post.image_url && (
-                        <div className="mt-4 overflow-hidden rounded-[20px] border border-white/5 max-h-[300px] bg-black/20">
-                          <img 
-                            src={getFullUrl(post.image_url)} 
-                            alt="Social Wall Attached Media" 
-                            className="w-full h-full object-contain max-h-[300px]"
-                            onError={(e) => {
-                              e.target.style.display = 'none';
-                            }}
-                          />
-                        </div>
-                      )}
+                <input
+                  type="file"
+                  id="social-post-image-input"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleImageSelect}
+                />
 
-                      {/* Action Buttons: Like & Comment */}
-                      <div className="flex items-center gap-6 mt-6 pt-4 border-t border-white/5 text-sm font-bold">
-                        <button 
-                          onClick={() => handleToggleLike(post.id)}
-                          className={cn(
-                            "flex items-center gap-2 transition-all hover:scale-105",
-                            likedPosts.includes(post.id) ? "text-rose-500 font-black animate-heartbeat" : "text-white/60 hover:text-white"
-                          )}
-                        >
-                          <Heart className={cn("w-5 h-5", likedPosts.includes(post.id) && "fill-current")} />
-                          <span>{likedPosts.includes(post.id) ? "\u0623\u0639\u062c\u0628\u0646\u064a" : "\u0625\u0639\u062c\u0627\u0628"} ({post.likes_count || 0})</span>
-                        </button>
-                        
-                        <button 
-                          onClick={() => handleToggleComments(post.id)}
-                          className={cn(
-                            "flex items-center gap-2 transition-all hover:scale-105",
-                            expandedCommentsPostId === post.id ? "text-amber-500 font-black" : "text-white/60 hover:text-white"
-                          )}
-                        >
-                          <MessageCircle className="w-5 h-5" />
-                          <span>{"\u0627\u0644\u062a\u0639\u0644\u064a\u0642\u0627\u062a"} ({post.comments_count || 0})</span>
-                        </button>
-                        {post.author_name === participant.full_name && (
-                           <button
-                             onClick={() => handleDeletePost(post.id)}
-                             className="mr-auto flex items-center gap-1 text-red-400/40 hover:text-red-400 transition-all hover:scale-110"
-                             title="حذف منشوري"
-                           >
-                             <Trash2 className="w-4 h-4" />
-                           </button>
-                         )}
+                <div className="flex items-center justify-between pt-6 border-t border-white/5">
+                  <button
+                    onClick={() => document.getElementById('social-post-image-input')?.click()}
+                    disabled={isUploadingImage}
+                    className="w-14 h-14 rounded-2xl bg-white/5 text-brand-secondary flex items-center justify-center border border-white/10 hover:bg-white/10 hover:border-amber-500/30 transition-all"
+                  >
+                    <Camera className="w-6 h-6 text-amber-500" />
+                  </button>
+                  <Button
+                    variant="gold"
+                    className="px-12 h-14 rounded-[20px] text-lg font-black shadow-lg"
+                    onClick={handlePostToWall}
+                    disabled={isUploadingImage}
+                  >
+                    {isUploadingImage ? 'جاري النشر...' : 'نشر'}
+                  </Button>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                {posts.map(post => (
+                  <div key={post.id} className="bg-white/5 border border-white/10 rounded-[30px] p-6 relative">
+                    {post.is_pending && (
+                      <span className="absolute top-4 left-4 bg-amber-500/20 text-amber-500 text-[10px] font-black px-3 py-1 rounded-full border border-amber-500/30">
+                        قيد المراجعة
+                      </span>
+                    )}
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 rounded-full bg-brand-primary/20 flex items-center justify-center text-brand-secondary font-bold border border-brand-primary/20">
+                        {post.author_name ? post.author_name[0] : '👤'}
                       </div>
+                      <div>
+                        <div className="font-black text-white text-sm">{post.author_name}</div>
+                        <div className="text-[10px] text-white/30 font-bold flex items-center gap-1">
+                          <Clock size={9} />
+                          {formatPostTime(post.created_at)}
+                        </div>
+                      </div>
+                    </div>
+                    <p className="text-white/80 font-bold text-lg leading-relaxed">{post.content}</p>
+                    {post.image_url && (
+                      <div className="mt-4 overflow-hidden rounded-[20px] border border-white/5 max-h-[300px] bg-black/20">
+                        <img
+                          src={getFullUrl(post.image_url)}
+                          alt="Social Wall Attached Media"
+                          className="w-full h-full object-contain max-h-[300px]"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                          }}
+                        />
+                      </div>
+                    )}
 
-                      {/* Expandable Comments Tray */}
-                      <AnimatePresence>
-                        {expandedCommentsPostId === post.id && (
-                          <motion.div 
-                            initial={{ opacity: 0, height: 0 }} 
-                            animate={{ opacity: 1, height: "auto" }} 
-                            exit={{ opacity: 0, height: 0 }}
-                            className="overflow-hidden mt-4 pt-4 border-t border-white/5 space-y-4"
-                          >
-                            {/* Comment Input */}
-                            <div className="flex gap-2">
-                              <input 
-                                type="text"
-                                value={commentInputs[post.id] || ""}
-                                onChange={(e) => setCommentInputs(prev => ({ ...prev, [post.id]: e.target.value }))}
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter") handleSubmitComment(post.id);
-                                }}
-                                placeholder="\u0627\u0643\u062a\u0628 \u062a\u0639\u0644\u064a\u0642\u0627\u064b..."
-                                className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-amber-500/50 text-right"
-                              />
-                              <button 
-                                onClick={() => handleSubmitComment(post.id)}
-                                disabled={isSubmittingComment || !commentInputs[post.id]?.trim()}
-                                className="px-4 py-2 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 disabled:hover:bg-amber-500 text-brand-dark font-black rounded-xl text-xs transition-colors"
-                              >
-                                {"\u0625\u0631\u0633\u0627\u0644"}
-                              </button>
-                            </div>
-
-                            {/* Comments List */}
-                            <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
-                              {postComments[post.id]?.map(comment => (
-                                <div key={comment.id} className="bg-white/[0.02] border border-white/5 rounded-xl p-3 text-right">
-                                  <div className="flex justify-between items-center mb-1">
-                                    <span className="font-bold text-white text-xs">{comment.author_name}</span>
-                                    <span className="text-[9px] text-white/40">
-                                      {comment.timestamp ? new Date(comment.timestamp).toLocaleTimeString("ar-EG", { numberingSystem: 'latn', hour: "2-digit", minute: "2-digit" }) : "الآن"}
-                                    </span>
-                                  </div>
-                                  <p className="text-white/80 text-xs leading-relaxed">{comment.content}</p>
-                                </div>
-                              ))}
-                              {(!postComments[post.id] || postComments[post.id].length === 0) && (
-                                <div className="text-center py-4 text-white/30 text-xs">{"\u0644\u0627 \u062a\u0648\u062c\u062f \u062aع\u0644\u064a\u0642\u0627\u062a \u0628\u0639\u062f؎ \u0643\u0646 \u0623و\u0644 \u0645\u0646 \u064aعلق!"}</div>
-                              )}
-                            </div>
-                          </motion.div>
+                    {/* Action Buttons: Like & Comment */}
+                    <div className="flex items-center gap-6 mt-6 pt-4 border-t border-white/5 text-sm font-bold">
+                      <button
+                        onClick={() => handleToggleLike(post.id)}
+                        className={cn(
+                          "flex items-center gap-2 transition-all hover:scale-105",
+                          likedPosts.includes(post.id) ? "text-rose-500 font-black animate-heartbeat" : "text-white/60 hover:text-white"
                         )}
-                      </AnimatePresence>
-                   </div>
-                 ))}
-                 {posts.length === 0 && (
-                   <div className="text-center py-10 text-white/30 font-bold">لا توجد منشورات حتى الآن. كن أول من يشارك!</div>
-                 )}
-               </div>
+                      >
+                        <Heart className={cn("w-5 h-5", likedPosts.includes(post.id) && "fill-current")} />
+                        <span>{likedPosts.includes(post.id) ? "\u0623\u0639\u062c\u0628\u0646\u064a" : "\u0625\u0639\u062c\u0627\u0628"} ({post.likes_count || 0})</span>
+                      </button>
+
+                      <button
+                        onClick={() => handleToggleComments(post.id)}
+                        className={cn(
+                          "flex items-center gap-2 transition-all hover:scale-105",
+                          expandedCommentsPostId === post.id ? "text-amber-500 font-black" : "text-white/60 hover:text-white"
+                        )}
+                      >
+                        <MessageCircle className="w-5 h-5" />
+                        <span>{"\u0627\u0644\u062a\u0639\u0644\u064a\u0642\u0627\u062a"} ({post.comments_count || 0})</span>
+                      </button>
+                      {post.author_name === participant.full_name && (
+                        <button
+                          onClick={() => handleDeletePost(post.id)}
+                          className="mr-auto flex items-center gap-1 text-red-400/40 hover:text-red-400 transition-all hover:scale-110"
+                          title="حذف منشوري"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Expandable Comments Tray */}
+                    <AnimatePresence>
+                      {expandedCommentsPostId === post.id && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="overflow-hidden mt-4 pt-4 border-t border-white/5 space-y-4"
+                        >
+                          {/* Comment Input */}
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              value={commentInputs[post.id] || ""}
+                              onChange={(e) => setCommentInputs(prev => ({ ...prev, [post.id]: e.target.value }))}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") handleSubmitComment(post.id);
+                              }}
+                              placeholder="\u0627\u0643\u062a\u0628 \u062a\u0639\u0644\u064a\u0642\u0627\u064b..."
+                              className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-amber-500/50 text-right"
+                            />
+                            <button
+                              onClick={() => handleSubmitComment(post.id)}
+                              disabled={isSubmittingComment || !commentInputs[post.id]?.trim()}
+                              className="px-4 py-2 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 disabled:hover:bg-amber-500 text-brand-dark font-black rounded-xl text-xs transition-colors"
+                            >
+                              {"\u0625\u0631\u0633\u0627\u0644"}
+                            </button>
+                          </div>
+
+                          {/* Comments List */}
+                          <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
+                            {postComments[post.id]?.map(comment => (
+                              <div key={comment.id} className="bg-white/[0.02] border border-white/5 rounded-xl p-3 text-right">
+                                <div className="flex justify-between items-center mb-1">
+                                  <span className="font-bold text-white text-xs">{comment.author_name}</span>
+                                  <span className="text-[9px] text-white/40">
+                                    {comment.timestamp ? new Date(comment.timestamp).toLocaleTimeString("ar-EG", { numberingSystem: 'latn', hour: "2-digit", minute: "2-digit" }) : "الآن"}
+                                  </span>
+                                </div>
+                                <p className="text-white/80 text-xs leading-relaxed">{comment.content}</p>
+                              </div>
+                            ))}
+                            {(!postComments[post.id] || postComments[post.id].length === 0) && (
+                              <div className="text-center py-4 text-white/30 text-xs">{"\u0644\u0627 \u062a\u0648\u062c\u062f \u062aع\u0644\u064a\u0642\u0627\u062a \u0628\u0639\u062f؎ \u0643\u0646 \u0623و\u0644 \u0645\u0646 \u064aعلق!"}</div>
+                            )}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                ))}
+                {posts.length === 0 && (
+                  <div className="text-center py-10 text-white/30 font-bold">لا توجد منشورات حتى الآن. كن أول من يشارك!</div>
+                )}
+              </div>
             </motion.div>
           )}
 
           {activeTab === 'cert' && (
             <motion.div key="cert" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-center py-10 px-4">
-               <div className="relative inline-block mb-12">
-                  <div className="absolute inset-0 bg-amber-500/20 blur-[100px] rounded-full" />
-                  <Award className="relative w-24 h-24 text-amber-500 mx-auto" />
-               </div>
-               <h3 className="text-4xl font-black mb-4 tracking-tight">شهادة الحضور</h3>
-               <p className="text-brand-secondary/50 font-bold mb-12 max-w-xs mx-auto leading-relaxed">تهانينا! يمكنك الآن تحميل شهادة حضورك المعتمدة والموثقة رقمياً.</p>
-               <Button 
-                 variant="gold" 
-                 className="w-full h-20 text-xl font-black gap-3 rounded-[35px] shadow-[0_20px_50px_rgba(245,158,11,0.2)]"
-                 onClick={() => {
-                   if(participant?.order_num) window.open(credentialService.getCertificateUrl(participant.order_num), '_blank');
-                 }}
-               >
-                 <Download className="w-7 h-7" />
-                 تحميل الشهادة المعتمدة
-               </Button>
-               <Button 
-                 variant="outline" 
-                 className="w-full h-16 text-lg font-black gap-3 rounded-[28px] mt-4 border-white/10 hover:bg-white/5"
-                 onClick={() => {
-                   if(participant?.order_num) window.open(credentialService.getBadgeUrl(participant.order_num), '_blank');
-                 }}
-               >
-                 <Printer className="w-6 h-6" />
-                 تحميل بطاقة الحضور (Badge)
-               </Button>
+              <div className="relative inline-block mb-12">
+                <div className="absolute inset-0 bg-amber-500/20 blur-[100px] rounded-full" />
+                <Award className="relative w-24 h-24 text-amber-500 mx-auto" />
+              </div>
+              <h3 className="text-4xl font-black mb-4 tracking-tight">شهادة الحضور</h3>
+              <p className="text-brand-secondary/50 font-bold mb-12 max-w-xs mx-auto leading-relaxed">تهانينا! يمكنك الآن تحميل شهادة حضورك المعتمدة والموثقة رقمياً.</p>
+              <Button
+                variant="gold"
+                className="w-full h-20 text-xl font-black gap-3 rounded-[35px] shadow-[0_20px_50px_rgba(245,158,11,0.2)]"
+                onClick={() => {
+                  if (participant?.order_num) window.open(credentialService.getCertificateUrl(participant.order_num), '_blank');
+                }}
+              >
+                <Download className="w-7 h-7" />
+                تحميل الشهادة المعتمدة
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full h-16 text-lg font-black gap-3 rounded-[28px] mt-4 border-white/10 hover:bg-white/5"
+                onClick={() => {
+                  if (participant?.order_num) window.open(credentialService.getBadgeUrl(participant.order_num), '_blank');
+                }}
+              >
+                <Printer className="w-6 h-6" />
+                تحميل بطاقة الحضور (Badge)
+              </Button>
             </motion.div>
           )}
 
           {activeTab === 'docs' && (
             <motion.div key="docs" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-               <h3 className="text-2xl font-black mb-8 text-center">مركز المستندات والملفات 📂</h3>
-               
-               {documents.length === 0 && (
-                 <div className="text-center py-20 bg-white/5 rounded-[40px] border border-white/10">
-                    <FileText className="w-16 h-16 text-white/10 mx-auto mb-4" />
-                    <p className="text-white/30 font-bold">لا توجد مستندات متاحة حالياً.</p>
-                 </div>
-               )}
+              <h3 className="text-2xl font-black mb-8 text-center">مركز المستندات والملفات 📂</h3>
 
-               <div className="grid grid-cols-1 gap-4">
-                 {documents.map((doc) => (
-                   <div key={doc.id} className="bg-white/5 border border-white/10 rounded-[35px] p-6 flex items-center gap-6 group hover:bg-white/10 transition-all">
-                      <div className="w-16 h-16 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-500 border border-amber-500/10 shrink-0">
-                         <FileText className="w-8 h-8" />
+              {documents.length === 0 && (
+                <div className="text-center py-20 bg-white/5 rounded-[40px] border border-white/10">
+                  <FileText className="w-16 h-16 text-white/10 mx-auto mb-4" />
+                  <p className="text-white/30 font-bold">لا توجد مستندات متاحة حالياً.</p>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 gap-4">
+                {documents.map((doc) => (
+                  <div key={doc.id} className="bg-white/5 border border-white/10 rounded-[35px] p-6 flex items-center gap-6 group hover:bg-white/10 transition-all">
+                    <div className="w-16 h-16 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-500 border border-amber-500/10 shrink-0">
+                      <FileText className="w-8 h-8" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-black text-lg mb-1 line-clamp-2 text-white" title={doc.title}>{doc.title}</h4>
+                      <div className="flex items-center gap-3">
+                        <span className="text-[10px] text-brand-secondary font-bold uppercase tracking-widest px-2 py-0.5 bg-brand-primary/10 rounded-md">
+                          {doc.file_type || 'PDF'}
+                        </span>
+                        <span className="text-[10px] text-white/30 font-bold uppercase tracking-widest">
+                          {doc.file_size || '---'}
+                        </span>
                       </div>
-                      <div className="flex-1 min-w-0">
-                         <h4 className="font-black text-lg mb-1 line-clamp-2 text-white" title={doc.title}>{doc.title}</h4>
-                         <div className="flex items-center gap-3">
-                            <span className="text-[10px] text-brand-secondary font-bold uppercase tracking-widest px-2 py-0.5 bg-brand-primary/10 rounded-md">
-                               {doc.file_type || 'PDF'}
-                            </span>
-                            <span className="text-[10px] text-white/30 font-bold uppercase tracking-widest">
-                               {doc.file_size || '---'}
-                            </span>
-                         </div>
-                         {doc.description && <p className="text-white/40 text-xs mt-2 line-clamp-1">{doc.description}</p>}
-                      </div>
-                      <button 
-                        onClick={() => window.open(getFullUrl(doc.file_url), '_blank')}
-                        className="w-12 h-12 rounded-xl bg-amber-500 text-brand-dark flex items-center justify-center hover:scale-110 transition-all shadow-lg shrink-0"
-                      >
-                         <Download className="w-5 h-5" />
-                      </button>
-                   </div>
-                 ))}
-               </div>
+                      {doc.description && <p className="text-white/40 text-xs mt-2 line-clamp-1">{doc.description}</p>}
+                    </div>
+                    <button
+                      onClick={() => window.open(getFullUrl(doc.file_url), '_blank')}
+                      className="w-12 h-12 rounded-xl bg-amber-500 text-brand-dark flex items-center justify-center hover:scale-110 transition-all shadow-lg shrink-0"
+                    >
+                      <Download className="w-5 h-5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
             </motion.div>
           )}
 
           {activeTab === 'polls' && (
-             <motion.div key="polls" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-                <h3 className="text-2xl font-black mb-8 text-center">استطلاعات الرأي النشطة 📊</h3>
-                
-                {polls.length === 0 && (
-                  <div className="text-center py-20 bg-white/5 rounded-[40px] border border-white/10">
-                     <BarChart2 className="w-16 h-16 text-white/10 mx-auto mb-4" />
-                     <p className="text-white/30 font-bold">لا توجد استطلاعات رأي نشطة في الوقت الحالي.</p>
-                  </div>
-                )}
+            <motion.div key="polls" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+              <h3 className="text-2xl font-black mb-8 text-center">استطلاعات الرأي النشطة 📊</h3>
 
-                {polls.map((poll) => (
-                  <div key={poll.id} className="bg-white/5 border border-white/10 rounded-[40px] p-8 backdrop-blur-3xl">
-                     <h4 className="text-xl font-bold mb-8 text-brand-secondary">{poll.question}</h4>
-                     
-                     <div className="space-y-4">
-                        {poll.options.map((opt) => {
-                          const isVoted = votedPolls.includes(poll.id);
-                          return (
-                            <button
-                              key={opt.id}
-                              disabled={isVoted}
-                              onClick={() => handleVote(poll.id, opt.id)}
-                              className={cn(
-                                "w-full p-6 rounded-[24px] text-right font-bold transition-all border flex justify-between items-center",
-                                isVoted 
-                                  ? "bg-brand-primary/10 border-brand-primary/20 text-brand-secondary opacity-50"
-                                  : "bg-white/5 border-white/10 hover:border-amber-500/50 hover:bg-white/10 text-white"
-                              )}
-                            >
-                               <span>{opt.text}</span>
-                               {isVoted && <CheckCircle className="w-5 h-5" />}
-                            </button>
-                          );
-                        })}
-                     </div>
-                     {votedPolls.includes(poll.id) && (
-                       <p className="text-center mt-6 text-brand-secondary/50 text-sm font-bold">شكراً لمشاركتك!</p>
-                     )}
+              {polls.length === 0 && (
+                <div className="text-center py-20 bg-white/5 rounded-[40px] border border-white/10">
+                  <BarChart2 className="w-16 h-16 text-white/10 mx-auto mb-4" />
+                  <p className="text-white/30 font-bold">لا توجد استطلاعات رأي نشطة في الوقت الحالي.</p>
+                </div>
+              )}
+
+              {polls.map((poll) => (
+                <div key={poll.id} className="bg-white/5 border border-white/10 rounded-[40px] p-8 backdrop-blur-3xl">
+                  <h4 className="text-xl font-bold mb-8 text-brand-secondary">{poll.question}</h4>
+
+                  <div className="space-y-4">
+                    {poll.options.map((opt) => {
+                      const isVoted = votedPolls.includes(poll.id);
+                      return (
+                        <button
+                          key={opt.id}
+                          disabled={isVoted}
+                          onClick={() => handleVote(poll.id, opt.id)}
+                          className={cn(
+                            "w-full p-6 rounded-[24px] text-right font-bold transition-all border flex justify-between items-center",
+                            isVoted
+                              ? "bg-brand-primary/10 border-brand-primary/20 text-brand-secondary opacity-50"
+                              : "bg-white/5 border-white/10 hover:border-amber-500/50 hover:bg-white/10 text-white"
+                          )}
+                        >
+                          <span>{opt.text}</span>
+                          {isVoted && <CheckCircle className="w-5 h-5" />}
+                        </button>
+                      );
+                    })}
                   </div>
-                ))}
-             </motion.div>
+                  {votedPolls.includes(poll.id) && (
+                    <p className="text-center mt-6 text-brand-secondary/50 text-sm font-bold">شكراً لمشاركتك!</p>
+                  )}
+                </div>
+              ))}
+            </motion.div>
           )}
 
           {activeTab === 'ai' && (
             <motion.div key="ai" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-               <div className="text-center mb-10">
-                  <HelpCircle className="w-16 h-16 text-amber-500 mx-auto mb-6" />
-                  <h3 className="text-3xl font-black">الأسئلة التفاعلية 💬</h3>
-                  <p className="text-brand-secondary/50 font-bold mt-2">اطرح سؤالك على المنظمين أو المتحدثين للمناقشة المباشرة.</p>
-               </div>
-               {/* <AIConcierge eventId={eventId} participant={participant} /> */}
-               
-                {/* Live Questions List */}
-                <div className="space-y-4 mb-8">
-                  <h4 className="text-sm font-black uppercase tracking-widest text-brand-secondary/30 mt-6">
-                    {lang === 'ar' ? 'الأسئلة المطروحة حالياً 💬' : 'Current Questions 💬'}
-                  </h4>
+              <div className="text-center mb-10">
+                <HelpCircle className="w-16 h-16 text-amber-500 mx-auto mb-6" />
+                <h3 className="text-3xl font-black">الأسئلة التفاعلية 💬</h3>
+                <p className="text-brand-secondary/50 font-bold mt-2">اطرح سؤالك على المنظمين أو المتحدثين للمناقشة المباشرة.</p>
+              </div>
+              {/* <AIConcierge eventId={eventId} participant={participant} /> */}
 
-                  {questions.filter(q => q.is_approved).length === 0 ? (
-                    <div className="text-center py-8 bg-white/[0.02] border border-white/5 rounded-[30px] p-6">
-                      <span className="text-3xl mb-2 block">💬</span>
-                      <p className="text-white/40 text-xs font-bold">{lang === 'ar' ? 'لا توجد أسئلة معتمدة حالياً.' : 'No approved questions yet.'}</p>
-                      <p className="text-amber-500/40 text-[10px] mt-1">{lang === 'ar' ? 'كن أول من يطرح سؤالاً باستخدام النموذج أدناه!' : 'Be the first to ask a question using the form below!'}</p>
-                    </div>
-                  ) : (
-                    questions.filter(q => q.is_approved).map(q => {
-                      const sessionTitle = agenda.find(s => s.id === q.session_id)?.title;
-                      return (
-                        <div key={q.id} className={cn(
-                          "p-5 rounded-[30px] border transition-all relative overflow-hidden flex items-center justify-between gap-4",
-                          q.pinned ? "bg-amber-500/10 border-amber-500/30 shadow-[0_0_20px_rgba(245,158,11,0.15)]" : "bg-white/5 border-white/10"
-                        )}>
-                          {q.pinned && (
-                            <div className="absolute top-0 left-0 bg-amber-500 text-brand-dark px-3 py-0.5 rounded-br-2xl text-[8px] font-black uppercase tracking-widest">
-                              {lang === 'ar' ? 'مـثـبـت 📌' : 'PINNED 📌'}
-                            </div>
-                          )}
+              {/* Live Questions List */}
+              <div className="space-y-4 mb-8">
+                <h4 className="text-sm font-black uppercase tracking-widest text-brand-secondary/30 mt-6">
+                  {lang === 'ar' ? 'الأسئلة المطروحة حالياً 💬' : 'Current Questions 💬'}
+                </h4>
 
-                          <div className="flex-1 text-right min-w-0">
-                            <div className="flex items-center gap-2 mb-1.5 flex-wrap justify-end">
-                              {sessionTitle && (
-                                <span className="bg-white/5 border border-white/10 px-2 py-0.5 rounded-full text-[9px] font-black text-amber-500">
-                                  {sessionTitle}
-                                </span>
-                              )}
-                              <span className="text-[10px] text-white/50 font-black">{q.name}</span>
-                            </div>
-                            <p className="text-[#F0F4F2] text-sm font-bold leading-relaxed">{q.text}</p>
+                {questions.filter(q => q.is_approved).length === 0 ? (
+                  <div className="text-center py-8 bg-white/[0.02] border border-white/5 rounded-[30px] p-6">
+                    <span className="text-3xl mb-2 block">💬</span>
+                    <p className="text-white/40 text-xs font-bold">{lang === 'ar' ? 'لا توجد أسئلة معتمدة حالياً.' : 'No approved questions yet.'}</p>
+                    <p className="text-amber-500/40 text-[10px] mt-1">{lang === 'ar' ? 'كن أول من يطرح سؤالاً باستخدام النموذج أدناه!' : 'Be the first to ask a question using the form below!'}</p>
+                  </div>
+                ) : (
+                  questions.filter(q => q.is_approved).map(q => {
+                    const sessionTitle = agenda.find(s => s.id === q.session_id)?.title;
+                    return (
+                      <div key={q.id} className={cn(
+                        "p-5 rounded-[30px] border transition-all relative overflow-hidden flex items-center justify-between gap-4",
+                        q.pinned ? "bg-amber-500/10 border-amber-500/30 shadow-[0_0_20px_rgba(245,158,11,0.15)]" : "bg-white/5 border-white/10"
+                      )}>
+                        {q.pinned && (
+                          <div className="absolute top-0 left-0 bg-amber-500 text-brand-dark px-3 py-0.5 rounded-br-2xl text-[8px] font-black uppercase tracking-widest">
+                            {lang === 'ar' ? 'مـثـبـت 📌' : 'PINNED 📌'}
                           </div>
+                        )}
 
-                          {/* Upvote Action Button */}
-                          <button
-                            onClick={() => handleUpvoteQuestion(q.id)}
-                            className="flex flex-col items-center justify-center p-3 rounded-2xl bg-white/5 border border-white/10 hover:border-amber-500/30 hover:bg-white/10 transition-all shrink-0 min-w-[50px] group/upvote"
-                          >
-                            <span className="text-lg group-hover/upvote:scale-125 transition-transform">🔺</span>
-                            <span className="text-[10px] font-black text-amber-500 mt-1">{q.votes_count || 0}</span>
-                          </button>
+                        <div className="flex-1 text-right min-w-0">
+                          <div className="flex items-center gap-2 mb-1.5 flex-wrap justify-end">
+                            {sessionTitle && (
+                              <span className="bg-white/5 border border-white/10 px-2 py-0.5 rounded-full text-[9px] font-black text-amber-500">
+                                {sessionTitle}
+                              </span>
+                            )}
+                            <span className="text-[10px] text-white/50 font-black">{q.name}</span>
+                          </div>
+                          <p className="text-[#F0F4F2] text-sm font-bold leading-relaxed">{q.text}</p>
                         </div>
-                      );
-                    })
-                  )}
+
+                        {/* Upvote Action Button */}
+                        <button
+                          onClick={() => handleUpvoteQuestion(q.id)}
+                          className="flex flex-col items-center justify-center p-3 rounded-2xl bg-white/5 border border-white/10 hover:border-amber-500/30 hover:bg-white/10 transition-all shrink-0 min-w-[50px] group/upvote"
+                        >
+                          <span className="text-lg group-hover/upvote:scale-125 transition-transform">🔺</span>
+                          <span className="text-[10px] font-black text-amber-500 mt-1">{q.votes_count || 0}</span>
+                        </button>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              <div className="mt-12 pt-10 border-t border-white/5">
+                <h4 className="text-sm font-black mb-6 uppercase tracking-widest text-brand-secondary/30">طرح سؤال على المنصة</h4>
+
+                <div className="mb-4">
+                  <label className="text-xs font-bold text-brand-secondary/50 mb-2 block">اختر الجلسة الموجه لها السؤال</label>
+                  <select
+                    value={selectedSessionId}
+                    onChange={(e) => setSelectedSessionId(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl h-14 px-4 outline-none text-brand-secondary font-bold"
+                  >
+                    <option value="">عام (كل الجلسات)</option>
+                    {agenda.map(session => (
+                      <option key={session.id} value={session.id} className="bg-slate-900">{session.title}</option>
+                    ))}
+                  </select>
                 </div>
 
-                <div className="mt-12 pt-10 border-t border-white/5">
-                  <h4 className="text-sm font-black mb-6 uppercase tracking-widest text-brand-secondary/30">طرح سؤال على المنصة</h4>
-                  
-                  <div className="mb-4">
-                     <label className="text-xs font-bold text-brand-secondary/50 mb-2 block">اختر الجلسة الموجه لها السؤال</label>
-                     <select 
-                       value={selectedSessionId}
-                       onChange={(e) => setSelectedSessionId(e.target.value)}
-                       className="w-full bg-white/5 border border-white/10 rounded-2xl h-14 px-4 outline-none text-brand-secondary font-bold"
-                     >
-                       <option value="">عام (كل الجلسات)</option>
-                       {agenda.map(session => (
-                         <option key={session.id} value={session.id} className="bg-slate-900">{session.title}</option>
-                       ))}
-                     </select>
-                   </div>
-
-                  <textarea 
-                    value={newQuestion}
-                    onChange={(e) => setNewQuestion(e.target.value)}
-                    placeholder="سؤالك سيظهر للمنظمين مباشرة..." 
-                    className="w-full bg-white/5 border border-white/10 rounded-[30px] p-6 text-lg font-bold min-h-[120px] outline-none focus:border-amber-500/50 transition-all"
-                  />
-                  <Button variant="gold" className="w-full h-16 rounded-[24px] mt-6 text-xl font-black gap-3" onClick={() => handleAskQuestion(selectedSessionId)}>
-                     <Send className="w-6 h-6 ltr:rotate-0 rtl:rotate-180" />
-                     إرسال السؤال
-                  </Button>
-               </div>
+                <textarea
+                  value={newQuestion}
+                  onChange={(e) => setNewQuestion(e.target.value)}
+                  placeholder="سؤالك سيظهر للمنظمين مباشرة..."
+                  className="w-full bg-white/5 border border-white/10 rounded-[30px] p-6 text-lg font-bold min-h-[120px] outline-none focus:border-amber-500/50 transition-all"
+                />
+                <Button variant="gold" className="w-full h-16 rounded-[24px] mt-6 text-xl font-black gap-3" onClick={() => handleAskQuestion(selectedSessionId)}>
+                  <Send className="w-6 h-6 ltr:rotate-0 rtl:rotate-180" />
+                  إرسال السؤال
+                </Button>
+              </div>
             </motion.div>
           )}
 
@@ -4925,7 +4923,7 @@ const ParticipantPortal = () => {
                 <Truck className="w-16 h-16 text-amber-500 mx-auto mb-6 animate-bounce" />
                 <h3 className="text-3xl font-black">{lang === 'ar' ? 'النقل والإقامة 🚗' : 'Transport & Lodging 🚗'}</h3>
                 <p className="text-brand-secondary/50 font-bold mt-2">
-                  {lang === 'ar' 
+                  {lang === 'ar'
                     ? 'نظم وصولك ومكان إقامتك لضمان تقديم أفضل تجربة استقبال وضيافة.'
                     : 'Submit your travel details and hotel lodging for smooth transport & hosting.'}
                 </p>
@@ -4983,36 +4981,33 @@ const ParticipantPortal = () => {
                       </div>
                     </div>
                   </div>
-              {logistics.status && (
+                  {logistics.status && (
                     <div className="mt-4 text-center">
-                      <span className={`inline-block px-4 py-1.5 border rounded-full text-xs font-black ${
-                        logistics.status === 'completed' ? 'bg-emerald-500/25 text-emerald-400 border-emerald-500/40' :
-                        logistics.status === 'confirmed' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' :
-                        logistics.status === 'on_the_way_to_task' || logistics.status === 'dispatched' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' :
-                        logistics.status === 'awaiting_guest' || logistics.status === 'arrived' ? 'bg-sky-500/20 text-sky-400 border-sky-500/30' :
-                        logistics.status === 'guest_delayed' ? 'bg-red-500/20 text-red-400 border-red-500/30' :
-                        logistics.status === 'returning_from_task' ? 'bg-violet-500/20 text-violet-400 border-violet-500/30' :
-                        'bg-amber-500/20 text-amber-400 border-amber-500/30'
-                      }`}>
+                      <span className={`inline-block px-4 py-1.5 border rounded-full text-xs font-black ${logistics.status === 'completed' ? 'bg-emerald-500/25 text-emerald-400 border-emerald-500/40' :
+                          logistics.status === 'confirmed' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' :
+                            logistics.status === 'on_the_way_to_task' || logistics.status === 'dispatched' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' :
+                              logistics.status === 'awaiting_guest' || logistics.status === 'arrived' ? 'bg-sky-500/20 text-sky-400 border-sky-500/30' :
+                                logistics.status === 'guest_delayed' ? 'bg-red-500/20 text-red-400 border-red-500/30' :
+                                  logistics.status === 'returning_from_task' ? 'bg-violet-500/20 text-violet-400 border-violet-500/30' :
+                                    'bg-amber-500/20 text-amber-400 border-amber-500/30'
+                        }`}>
                         {lang === 'ar'
-                          ? `حالة الاستقبال: ${
-                              logistics.status === 'completed' ? '🎉 اكتمل الاستقبال والتوصيل بنجاح' :
-                              logistics.status === 'confirmed' ? '✔️ تم تأكيد استلام المهمة من المستقبل الميداني' :
+                          ? `حالة الاستقبال: ${logistics.status === 'completed' ? '🎉 اكتمل الاستقبال والتوصيل بنجاح' :
+                            logistics.status === 'confirmed' ? '✔️ تم تأكيد استلام المهمة من المستقبل الميداني' :
                               logistics.status === 'on_the_way_to_task' || logistics.status === 'dispatched' ? '🚗 المستقبل الميداني في طريقه إليك الآن' :
-                              logistics.status === 'awaiting_guest' || logistics.status === 'arrived' ? '🙋‍♂️ المستقبل في انتظاركم الآن في موقع الاستقبال' :
-                              logistics.status === 'guest_delayed' ? '⚠️ تم تسجيل تأخر الوصول - نتابع جدولكم بدقة' :
-                              logistics.status === 'returning_from_task' ? '🚘 جاري نقلكم الآن إلى فندق الإقامة' :
-                              '⏳ قيد التنسيق والترتيب لاستقبالكم'
-                            }`
-                          : `Status: ${
-                              logistics.status === 'completed' ? '🎉 Reception & transport completed' :
-                              logistics.status === 'confirmed' ? '✔️ Task receipt confirmed by host' :
+                                logistics.status === 'awaiting_guest' || logistics.status === 'arrived' ? '🙋‍♂️ المستقبل في انتظاركم الآن في موقع الاستقبال' :
+                                  logistics.status === 'guest_delayed' ? '⚠️ تم تسجيل تأخر الوصول - نتابع جدولكم بدقة' :
+                                    logistics.status === 'returning_from_task' ? '🚘 جاري نقلكم الآن إلى فندق الإقامة' :
+                                      '⏳ قيد التنسيق والترتيب لاستقبالكم'
+                          }`
+                          : `Status: ${logistics.status === 'completed' ? '🎉 Reception & transport completed' :
+                            logistics.status === 'confirmed' ? '✔️ Task receipt confirmed by host' :
                               logistics.status === 'on_the_way_to_task' || logistics.status === 'dispatched' ? '🚗 Host is on their way to you' :
-                              logistics.status === 'awaiting_guest' || logistics.status === 'arrived' ? '🙋‍♂️ Host is waiting for you at pickup location' :
-                              logistics.status === 'guest_delayed' ? '⚠️ Delay recorded - monitoring your arrival' :
-                              logistics.status === 'returning_from_task' ? '🚘 Transferring you to the hotel' :
-                              '⏳ Pending coordination'
-                            }`
+                                logistics.status === 'awaiting_guest' || logistics.status === 'arrived' ? '🙋‍♂️ Host is waiting for you at pickup location' :
+                                  logistics.status === 'guest_delayed' ? '⚠️ Delay recorded - monitoring your arrival' :
+                                    logistics.status === 'returning_from_task' ? '🚘 Transferring you to the hotel' :
+                                      '⏳ Pending coordination'
+                          }`
                         }
                       </span>
                     </div>
@@ -5044,8 +5039,8 @@ const ParticipantPortal = () => {
                         onClick={() => setLogistics({ ...logistics, transport_type: type.id })}
                         className={cn(
                           "w-full p-4 rounded-2xl border text-xs font-bold transition-all flex items-center justify-center gap-2",
-                          logistics.transport_type === type.id 
-                            ? "bg-amber-500/20 border-amber-500 text-amber-500 shadow-lg shadow-amber-500/5" 
+                          logistics.transport_type === type.id
+                            ? "bg-amber-500/20 border-amber-500 text-amber-500 shadow-lg shadow-amber-500/5"
                             : "bg-white/5 border-white/10 hover:border-white/20 text-white/70"
                         )}
                       >
@@ -5060,8 +5055,8 @@ const ParticipantPortal = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="text-xs font-bold text-brand-secondary/50 mb-2 block">{lang === 'ar' ? 'رقم رحلة الطيران' : 'Flight Number'}</label>
-                      <input 
-                        type="text" 
+                      <input
+                        type="text"
                         value={logistics.flight_number || ''}
                         onChange={(e) => setLogistics({ ...logistics, flight_number: e.target.value })}
                         placeholder="e.g. SV-102"
@@ -5070,8 +5065,8 @@ const ParticipantPortal = () => {
                     </div>
                     <div>
                       <label className="text-xs font-bold text-brand-secondary/50 mb-2 block">{lang === 'ar' ? 'مطار الوصول / مبنى الركاب' : 'Arrival Terminal / Airport'}</label>
-                      <input 
-                        type="text" 
+                      <input
+                        type="text"
                         value={logistics.arrival_location || ''}
                         onChange={(e) => setLogistics({ ...logistics, arrival_location: e.target.value })}
                         placeholder={lang === 'ar' ? 'مطار الملك خالد - الصالة 5' : 'RUH Airport - Terminal 5'}
@@ -5085,8 +5080,8 @@ const ParticipantPortal = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="text-xs font-bold text-brand-secondary/50 mb-2 block">{lang === 'ar' ? 'رقم قطار الحرمين / التذكرة' : 'Train / Ticket Number'}</label>
-                      <input 
-                        type="text" 
+                      <input
+                        type="text"
                         value={logistics.flight_number || ''}
                         onChange={(e) => setLogistics({ ...logistics, flight_number: e.target.value })}
                         placeholder="e.g. TR-209"
@@ -5095,8 +5090,8 @@ const ParticipantPortal = () => {
                     </div>
                     <div>
                       <label className="text-xs font-bold text-brand-secondary/50 mb-2 block">{lang === 'ar' ? 'محطة الوصول' : 'Arrival Station'}</label>
-                      <input 
-                        type="text" 
+                      <input
+                        type="text"
                         value={logistics.arrival_location || ''}
                         onChange={(e) => setLogistics({ ...logistics, arrival_location: e.target.value })}
                         placeholder={lang === 'ar' ? 'محطة قطار السليمانية - جدة' : 'Sulaymaniyah Station - Jeddah'}
@@ -5111,8 +5106,8 @@ const ParticipantPortal = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="text-xs font-bold text-brand-secondary/50 mb-2 block">{lang === 'ar' ? 'تاريخ ووقت الوصول المتوقع' : 'Estimated Arrival Date & Time'}</label>
-                      <input 
-                        type="datetime-local" 
+                      <input
+                        type="datetime-local"
                         value={logistics.arrival_time ? logistics.arrival_time.slice(0, 16) : ''}
                         onChange={(e) => setLogistics({ ...logistics, arrival_time: e.target.value })}
                         className="w-full bg-white/5 border border-white/10 rounded-2xl h-14 text-right px-4 outline-none text-white font-bold focus:border-amber-500/50 transition-all"
@@ -5120,8 +5115,8 @@ const ParticipantPortal = () => {
                     </div>
                     <div>
                       <label className="text-xs font-bold text-brand-secondary/50 mb-2 block">{lang === 'ar' ? 'تاريخ ووقت المغادرة المتوقع' : 'Estimated Departure Date & Time'}</label>
-                      <input 
-                        type="datetime-local" 
+                      <input
+                        type="datetime-local"
                         value={logistics.departure_time ? logistics.departure_time.slice(0, 16) : ''}
                         onChange={(e) => setLogistics({ ...logistics, departure_time: e.target.value })}
                         className="w-full bg-white/5 border border-white/10 rounded-2xl h-14 text-right px-4 outline-none text-white font-bold focus:border-amber-500/50 transition-all"
@@ -5138,8 +5133,8 @@ const ParticipantPortal = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="text-xs font-bold text-brand-secondary/50 mb-2 block">{lang === 'ar' ? 'اسم فندق الإقامة' : 'Hotel Name'}</label>
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       value={logistics.hotel_name || ''}
                       onChange={(e) => setLogistics({ ...logistics, hotel_name: e.target.value })}
                       placeholder={lang === 'ar' ? 'فندق الريتز كارلتون / ماريوت' : 'Ritz Carlton / Marriott'}
@@ -5148,8 +5143,8 @@ const ParticipantPortal = () => {
                   </div>
                   <div>
                     <label className="text-xs font-bold text-brand-secondary/50 mb-2 block">{lang === 'ar' ? 'رقم الغرفة (إذا حجزت بالفعل)' : 'Room Number (If already booked)'}</label>
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       value={logistics.room_number || ''}
                       onChange={(e) => setLogistics({ ...logistics, room_number: e.target.value })}
                       placeholder="e.g. 504"
@@ -5161,8 +5156,8 @@ const ParticipantPortal = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="text-xs font-bold text-brand-secondary/50 mb-2 block">{lang === 'ar' ? 'تاريخ تسجيل الدخول للفندق' : 'Hotel Check-in Date'}</label>
-                    <input 
-                      type="date" 
+                    <input
+                      type="date"
                       value={logistics.check_in_date ? logistics.check_in_date.split('T')[0] : ''}
                       onChange={(e) => setLogistics({ ...logistics, check_in_date: e.target.value })}
                       className="w-full bg-white/5 border border-white/10 rounded-2xl h-14 text-right px-4 outline-none text-white font-bold focus:border-amber-500/50 transition-all"
@@ -5170,8 +5165,8 @@ const ParticipantPortal = () => {
                   </div>
                   <div>
                     <label className="text-xs font-bold text-brand-secondary/50 mb-2 block">{lang === 'ar' ? 'تاريخ تسجيل المغادرة للفندق' : 'Hotel Check-out Date'}</label>
-                    <input 
-                      type="date" 
+                    <input
+                      type="date"
                       value={logistics.check_out_date ? logistics.check_out_date.split('T')[0] : ''}
                       onChange={(e) => setLogistics({ ...logistics, check_out_date: e.target.value })}
                       className="w-full bg-white/5 border border-white/10 rounded-2xl h-14 text-right px-4 outline-none text-white font-bold focus:border-amber-500/50 transition-all"
@@ -5180,10 +5175,10 @@ const ParticipantPortal = () => {
                 </div>
 
                 {/* Submit button */}
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   disabled={isSavingLogistics}
-                  variant="gold" 
+                  variant="gold"
                   className="w-full h-16 rounded-[24px] mt-8 text-xl font-black gap-3 shadow-[0_15px_35px_rgba(245,158,11,0.2)]"
                 >
                   {isSavingLogistics ? (
@@ -5201,7 +5196,7 @@ const ParticipantPortal = () => {
                 <Compass className="w-16 h-16 text-amber-500 mx-auto mb-6 animate-spin-slow" />
                 <h3 className="text-3xl font-black">{lang === 'ar' ? 'الرحلات والأنشطة الترفيهية 🏕️' : 'Sideline Excursions & Activities 🏕️'}</h3>
                 <p className="text-brand-secondary/50 font-bold mt-2">
-                  {lang === 'ar' 
+                  {lang === 'ar'
                     ? 'اكتشف الرحلات السياحية والأنشطة الترفيهية المصاحبة للفعالية وسجل حضورك فيها.'
                     : 'Discover excursions & entertainment activities programmed on the sidelines of the event.'}
                 </p>
@@ -5218,20 +5213,20 @@ const ParticipantPortal = () => {
                   {activities.map((activity) => {
                     const isFull = activity.max_capacity && activity.current_count >= activity.max_capacity;
                     return (
-                      <div 
+                      <div
                         key={activity.id}
                         className={cn(
-                          theme === 'light' 
-                            ? "bg-white border-slate-200" 
+                          theme === 'light'
+                            ? "bg-white border-slate-200"
                             : "bg-[#0D1527] border-white/10",
                           "border rounded-[35px] p-6 relative overflow-hidden transition-all duration-300 shadow-xl",
-                          activity.is_registered 
+                          activity.is_registered
                             ? (theme === 'light'
-                                ? "border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 via-white to-slate-50"
-                                : "border-emerald-500/30 bg-gradient-to-br from-emerald-500/5 via-[#0D1527] to-[#050B18]")
+                              ? "border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 via-white to-slate-50"
+                              : "border-emerald-500/30 bg-gradient-to-br from-emerald-500/5 via-[#0D1527] to-[#050B18]")
                             : (theme === 'light'
-                                ? "hover:border-slate-300"
-                                : "hover:border-white/20")
+                              ? "hover:border-slate-300"
+                              : "hover:border-white/20")
                         )}
                       >
                         {/* Registered Ribbon */}
@@ -5276,8 +5271,8 @@ const ParticipantPortal = () => {
                             <div>
                               <span className="text-white/40 text-[10px] block">{lang === 'ar' ? 'التكلفة' : 'Cost'}</span>
                               <span className={cn("font-black", activity.price === 0 ? "text-emerald-400" : "text-amber-500")}>
-                                {activity.price === 0 
-                                  ? (lang === 'ar' ? 'مجانى ✨' : 'Free ✨') 
+                                {activity.price === 0
+                                  ? (lang === 'ar' ? 'مجانى ✨' : 'Free ✨')
                                   : `${activity.price} ${activity.currency}`}
                               </span>
                             </div>
@@ -5290,10 +5285,10 @@ const ParticipantPortal = () => {
                             <span className="text-amber-500 text-xs font-black block mb-1">📍 {lang === 'ar' ? 'نقطة التجمع والانطلاق:' : 'Gathering Point:'}</span>
                             <span className="text-white text-xs font-bold block">{activity.gathering_point || (lang === 'ar' ? 'محددة في الخريطة' : 'Specified on Map')}</span>
                             {activity.gathering_point_map_url && (
-                              <a 
-                                href={activity.gathering_point_map_url} 
-                                target="_blank" 
-                                rel="noopener noreferrer" 
+                              <a
+                                href={activity.gathering_point_map_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
                                 className="text-[10px] text-blue-400 hover:text-blue-300 font-black underline mt-1 inline-flex items-center gap-1"
                               >
                                 🗺️ {lang === 'ar' ? 'عرض على خرائط Google' : 'View on Google Maps'}
@@ -5309,23 +5304,23 @@ const ParticipantPortal = () => {
                               <div className="flex flex-col">
                                 <span className="text-xs font-black text-white">{lang === 'ar' ? 'طلب نقل من فندق الإقامة' : 'Shuttle from hotel'}</span>
                                 <span className="text-[9px] text-white/40 mt-0.5">
-                                  {logistics.hotel_name 
+                                  {logistics.hotel_name
                                     ? `🏨 ${logistics.hotel_name}`
                                     : (lang === 'ar' ? '🏨 لم تحدد فندق إقامة بعد' : '🏨 No hotel set yet')}
                                 </span>
                               </div>
-                              <input 
+                              <input
                                 type="checkbox"
                                 checked={activity.pickup_requested || false}
                                 onChange={(e) => handleToggleActivityPickup(activity.id, e.target.checked, activity.pickup_notes)}
                                 className="w-5 h-5 rounded border-white/10 bg-white/5 accent-amber-500 cursor-pointer"
                               />
                             </div>
-                            
+
                             {activity.pickup_requested && (
                               <div className="space-y-1.5">
                                 <label className="text-[9px] text-white/50 block font-bold">{lang === 'ar' ? 'ملاحظات النقل (انقر خارج الحقل للحفظ):' : 'Transport notes (blur to save):'}</label>
-                                <input 
+                                <input
                                   type="text"
                                   defaultValue={activity.pickup_notes || ''}
                                   onBlur={(e) => handleToggleActivityPickup(activity.id, true, e.target.value)}
@@ -5334,13 +5329,13 @@ const ParticipantPortal = () => {
                                 />
                               </div>
                             )}
-                            
+
                             {activity.pickup_status && activity.pickup_status !== 'none' && (
                               <div className="text-[10px] font-black text-emerald-400">
                                 🚍 {lang === 'ar' ? 'حالة النقل:' : 'Transport Status:'} {
                                   activity.pickup_status === 'pending' ? (lang === 'ar' ? 'قيد الانتظار' : 'Pending') :
-                                  activity.pickup_status === 'assigned' ? (lang === 'ar' ? 'تم تعيين السائق' : 'Driver Assigned') :
-                                  (lang === 'ar' ? 'اكتمل' : 'Completed')
+                                    activity.pickup_status === 'assigned' ? (lang === 'ar' ? 'تم تعيين السائق' : 'Driver Assigned') :
+                                      (lang === 'ar' ? 'اكتمل' : 'Completed')
                                 }
                               </div>
                             )}
@@ -5352,11 +5347,11 @@ const ParticipantPortal = () => {
                           <div className="flex justify-between items-center text-[11px] font-black mb-6 px-1">
                             <span className="text-white/40">{lang === 'ar' ? 'الأماكن المتوفرة' : 'Available Places'}</span>
                             <span className={cn(isFull ? "text-red-400" : "text-emerald-400")}>
-                              {isFull 
-                                ? (lang === 'ar' ? 'مكتمل العدد 🚫' : 'Sold Out 🚫') 
-                                : (lang === 'ar' 
-                                    ? `متبقي ${activity.max_capacity - activity.current_count} من ${activity.max_capacity} مكان متوفر`
-                                    : `${activity.max_capacity - activity.current_count} of ${activity.max_capacity} places left`)}
+                              {isFull
+                                ? (lang === 'ar' ? 'مكتمل العدد 🚫' : 'Sold Out 🚫')
+                                : (lang === 'ar'
+                                  ? `متبقي ${activity.max_capacity - activity.current_count} من ${activity.max_capacity} مكان متوفر`
+                                  : `${activity.max_capacity - activity.current_count} of ${activity.max_capacity} places left`)}
                             </span>
                           </div>
                         )}
@@ -5373,8 +5368,8 @@ const ParticipantPortal = () => {
                           ) : (
                             <>
                               {activity.is_registered ? '🗑️' : '✍️'}
-                              {activity.is_registered 
-                                ? (lang === 'ar' ? 'إلغاء التسجيل' : 'Cancel Registration') 
+                              {activity.is_registered
+                                ? (lang === 'ar' ? 'إلغاء التسجيل' : 'Cancel Registration')
                                 : (lang === 'ar' ? 'تسجيل الحضور الآن' : 'Register to Attend')}
                             </>
                           )}
@@ -5394,7 +5389,7 @@ const ParticipantPortal = () => {
                 <Utensils className="w-16 h-16 text-amber-500 mx-auto mb-6 animate-pulse" />
                 <h3 className="text-3xl font-black">{lang === 'ar' ? 'الإطعام والضيافة 🍽️' : 'Smart Catering 🍽️'}</h3>
                 <p className="text-brand-secondary/50 font-bold mt-2">
-                  {lang === 'ar' 
+                  {lang === 'ar'
                     ? 'أعلم اللجنة المنظمة بنوع حميتك الغذائية، وأكد حضور الوجبات.'
                     : 'Share your dietary requirements and RSVP for programmed meals.'}
                 </p>
@@ -5402,7 +5397,7 @@ const ParticipantPortal = () => {
 
               {/* Grid with 2 columns: left is meals RSVP list, right is diet selection */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                
+
                 {/* Right: Dietary Profile Form */}
                 <div className="lg:col-span-5 space-y-6">
                   <div className="bg-gradient-to-b from-white/[0.06] to-white/[0.01] border border-white/10 rounded-[35px] p-6 backdrop-blur-3xl relative shadow-xl">
@@ -5509,8 +5504,8 @@ const ParticipantPortal = () => {
                                 <div className="flex items-start gap-3">
                                   <span className="text-2xl mt-1">
                                     {meal.meal_type === 'breakfast' ? '🥐' :
-                                     meal.meal_type === 'lunch' ? '🥗' :
-                                     meal.meal_type === 'dinner' ? '🥩' : '☕'}
+                                      meal.meal_type === 'lunch' ? '🥗' :
+                                        meal.meal_type === 'dinner' ? '🥩' : '☕'}
                                   </span>
                                   <div>
                                     <h5 className="font-black text-sm text-white">{meal.title}</h5>
@@ -5571,14 +5566,14 @@ const ParticipantPortal = () => {
                 <Shield className="w-16 h-16 text-amber-500 mx-auto mb-6 animate-pulse" />
                 <h3 className="text-3xl font-black">{lang === 'ar' ? 'إدارة اللجان والعمليات الميدانية 🛠️' : 'Staff Operations Panel 🛠️'}</h3>
                 <p className="text-brand-secondary/50 font-bold mt-2">
-                  {lang === 'ar' 
+                  {lang === 'ar'
                     ? 'لوحة التحكم الموحدة لإدارة لجان الاستقبال والتوجيه، النقل، الايواء، الاطعام، والترفيه 🌱.'
                     : 'Unified operations hub for managing committees of Reception & Orientation, Transport, Accommodation, Catering, and Entertainment 🌱.'}
                 </p>
               </div>
 
               {/* Operations Sub-Tabs Navigation */}
-              <div 
+              <div
                 className="flex items-center justify-start md:justify-center gap-2 p-1.5 bg-[#0D1527]/60 border border-white/5 rounded-2xl max-w-2xl mx-auto overflow-x-auto scrollbar-none"
                 style={{
                   scrollbarWidth: 'none',
@@ -5598,7 +5593,7 @@ const ParticipantPortal = () => {
                     {lang === 'ar' ? 'لجنة النقل' : 'Transport Committee'}
                   </button>
                 )}
-                
+
                 {hasCateringStaffAccess && (
                   <button
                     onClick={() => setStaffActiveSubTab('catering')}
@@ -5660,8 +5655,8 @@ const ParticipantPortal = () => {
                     {/* Card 1: Guest Registration Status */}
                     <div className={cn(
                       "rounded-3xl p-5 text-right transition-all duration-300 relative overflow-hidden group shadow-lg",
-                      theme === 'dark' 
-                        ? "bg-[#0D1527]/60 border border-blue-500/25 hover:border-blue-500/50 shadow-blue-950/10" 
+                      theme === 'dark'
+                        ? "bg-[#0D1527]/60 border border-blue-500/25 hover:border-blue-500/50 shadow-blue-950/10"
                         : "bg-[#F8FAFC] border border-slate-200 hover:border-blue-400 shadow-slate-200/50"
                     )}>
                       <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full blur-2xl group-hover:bg-blue-500/10 transition-all"></div>
@@ -5682,7 +5677,7 @@ const ParticipantPortal = () => {
                       <p className={cn("text-3xl font-black mt-1", theme === 'dark' ? "text-white" : "text-slate-800")}>
                         {totalLogisticsGuests}
                       </p>
-                      
+
                       <div className={cn(
                         "mt-4 pt-3 border-t grid grid-cols-2 gap-2 text-[11px] font-bold",
                         theme === 'dark' ? "border-white/5" : "border-slate-200/60"
@@ -5701,8 +5696,8 @@ const ParticipantPortal = () => {
                     {/* Card 2: Field Tasks Overview */}
                     <div className={cn(
                       "rounded-3xl p-5 text-right transition-all duration-300 relative overflow-hidden group shadow-lg",
-                      theme === 'dark' 
-                        ? "bg-[#0D1527]/60 border border-violet-500/25 hover:border-violet-500/50 shadow-violet-950/10" 
+                      theme === 'dark'
+                        ? "bg-[#0D1527]/60 border border-violet-500/25 hover:border-violet-500/50 shadow-violet-950/10"
                         : "bg-[#F8FAFC] border border-slate-200 hover:border-violet-400 shadow-slate-200/50"
                     )}>
                       <div className="absolute top-0 right-0 w-24 h-24 bg-violet-500/5 rounded-full blur-2xl group-hover:bg-violet-500/10 transition-all"></div>
@@ -5723,7 +5718,7 @@ const ParticipantPortal = () => {
                       <p className={cn("text-3xl font-black mt-1", theme === 'dark' ? "text-white" : "text-slate-800")}>
                         {totalTransportTasksCount}
                       </p>
-                      
+
                       <div className={cn(
                         "mt-4 pt-3 border-t grid grid-cols-2 gap-2 text-[11px] font-bold",
                         theme === 'dark' ? "border-white/5" : "border-slate-200/60"
@@ -5742,8 +5737,8 @@ const ParticipantPortal = () => {
                     {/* Card 3: Completion Rate */}
                     <div className={cn(
                       "rounded-3xl p-5 text-right transition-all duration-300 relative overflow-hidden group shadow-lg",
-                      theme === 'dark' 
-                        ? "bg-[#0D1527]/60 border border-emerald-500/25 hover:border-emerald-500/50 shadow-emerald-950/10" 
+                      theme === 'dark'
+                        ? "bg-[#0D1527]/60 border border-emerald-500/25 hover:border-emerald-500/50 shadow-emerald-950/10"
                         : "bg-[#F8FAFC] border border-slate-200 hover:border-emerald-400 shadow-slate-200/50"
                     )}>
                       <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full blur-2xl group-hover:bg-emerald-500/10 transition-all"></div>
@@ -5767,7 +5762,7 @@ const ParticipantPortal = () => {
                           ({completionPercentage}%)
                         </span>
                       </p>
-                      
+
                       <div className={cn(
                         "mt-4 pt-3 border-t text-[11px] font-bold",
                         theme === 'dark' ? "border-white/5 text-white/40" : "border-slate-200/60 text-slate-500"
@@ -5779,8 +5774,8 @@ const ParticipantPortal = () => {
                     {/* Card 4: Driver Assignments Coverage */}
                     <div className={cn(
                       "rounded-3xl p-5 text-right transition-all duration-300 relative overflow-hidden group shadow-lg",
-                      theme === 'dark' 
-                        ? "bg-[#0D1527]/60 border border-red-500/25 hover:border-red-500/50 shadow-red-950/10" 
+                      theme === 'dark'
+                        ? "bg-[#0D1527]/60 border border-red-500/25 hover:border-red-500/50 shadow-red-950/10"
                         : "bg-[#F8FAFC] border border-slate-200 hover:border-red-400 shadow-slate-200/50"
                     )}>
                       <div className="absolute top-0 right-0 w-24 h-24 bg-red-500/5 rounded-full blur-2xl group-hover:bg-red-500/10 transition-all"></div>
@@ -5799,7 +5794,7 @@ const ParticipantPortal = () => {
                         {lang === 'ar' ? 'مهام بدون سائق' : 'Tasks Awaiting Driver'}
                       </h4>
                       <p className="text-3xl font-black text-red-500 mt-1">{unassignedDriverTasksCount}</p>
-                      
+
                       <div className={cn(
                         "mt-4 pt-3 border-t text-[11px] font-bold text-emerald-500",
                         theme === 'dark' ? "border-white/5" : "border-slate-200/60"
@@ -5902,8 +5897,8 @@ const ParticipantPortal = () => {
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 {driversList.map(driver => {
                                   // Find if driver has any active transport task
-                                  const activeMissions = staffLogisticsList.filter(item => 
-                                    item.driver_phone && item.driver_phone.trim() === driver.phone.trim() && 
+                                  const activeMissions = staffLogisticsList.filter(item =>
+                                    item.driver_phone && item.driver_phone.trim() === driver.phone.trim() &&
                                     item.status !== 'completed'
                                   );
                                   return (
@@ -5978,15 +5973,15 @@ const ParticipantPortal = () => {
                           if (!searchStaffQuery) return true;
                           const q = searchStaffQuery.toLowerCase();
                           return (item.participant_name || '').toLowerCase().includes(q) ||
-                                 (item.flight_number || '').toLowerCase().includes(q) ||
-                                 (item.hotel_name || '').toLowerCase().includes(q) ||
-                                 (item.driver_name || '').toLowerCase().includes(q);
+                            (item.flight_number || '').toLowerCase().includes(q) ||
+                            (item.hotel_name || '').toLowerCase().includes(q) ||
+                            (item.driver_name || '').toLowerCase().includes(q);
                         })
                         .map((item) => {
                           // Find if this guest has an active transport task
                           const guestTask = tasksList.find(t => t.participant_id === item.participant_id && t.committee === 'transport' && t.status !== 'cancelled');
                           const hasTask = !!guestTask;
-                          
+
                           return (
                             <div key={item.id} className="p-5 bg-white/[0.02] border border-white/5 hover:border-white/10 rounded-3xl flex flex-col md:flex-row md:items-center justify-between gap-4 text-right transition-all">
                               <div className="space-y-2">
@@ -6006,7 +6001,7 @@ const ParticipantPortal = () => {
                                   )}
                                   {item.arrival_time && (
                                     <span className="mr-2 text-amber-500">
-                                      📅 {lang === 'ar' ? 'الوصول:' : 'Arrival:'} {new Date(item.arrival_time).toLocaleString([], {hour: '2-digit', minute:'2-digit', day:'numeric', month:'short'})}
+                                      📅 {lang === 'ar' ? 'الوصول:' : 'Arrival:'} {new Date(item.arrival_time).toLocaleString([], { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' })}
                                     </span>
                                   )}
                                   {item.arrival_location && (
@@ -6020,7 +6015,7 @@ const ParticipantPortal = () => {
                                     🏨 {lang === 'ar' ? `الفندق الموجه إليه: ${item.hotel_name}` : `Target Hotel: ${item.hotel_name}`} {item.room_number ? `(غرفة: ${item.room_number})` : ''}
                                   </p>
                                 )}
-                                
+
                                 <div className="mt-2 pt-2 border-t border-white/5 flex flex-wrap gap-4 items-center justify-end md:justify-start text-xs font-black">
                                   {hasTask ? (
                                     <div className="text-emerald-400 flex items-center gap-1.5">
@@ -6043,16 +6038,15 @@ const ParticipantPortal = () => {
 
                               <div className="flex items-center gap-2.5 self-start md:self-center">
                                 {/* Status Badge */}
-                                <span className={`px-2.5 py-1 rounded-xl text-[10px] font-black ${
-                                  item.status === 'completed' ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400' :
-                                  item.status === 'confirmed' ? 'bg-amber-500/10 border border-amber-500/20 text-amber-400' :
-                                  item.status === 'dispatched' ? 'bg-blue-500/10 border border-blue-500/20 text-blue-400' :
-                                  'bg-white/5 border border-white/10 text-white/40'
-                                }`}>
+                                <span className={`px-2.5 py-1 rounded-xl text-[10px] font-black ${item.status === 'completed' ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400' :
+                                    item.status === 'confirmed' ? 'bg-amber-500/10 border border-amber-500/20 text-amber-400' :
+                                      item.status === 'dispatched' ? 'bg-blue-500/10 border border-blue-500/20 text-blue-400' :
+                                        'bg-white/5 border border-white/10 text-white/40'
+                                  }`}>
                                   {item.status === 'completed' ? (lang === 'ar' ? 'مكتمل ✅' : 'Completed') :
-                                   item.status === 'confirmed' ? (lang === 'ar' ? 'مؤكد 🟢' : 'Confirmed') :
-                                   item.status === 'dispatched' ? (lang === 'ar' ? 'جاري الاستقبال 🚗' : 'Dispatched') :
-                                   (lang === 'ar' ? 'معلق ⏳' : 'Pending')}
+                                    item.status === 'confirmed' ? (lang === 'ar' ? 'مؤكد 🟢' : 'Confirmed') :
+                                      item.status === 'dispatched' ? (lang === 'ar' ? 'جاري الاستقبال 🚗' : 'Dispatched') :
+                                        (lang === 'ar' ? 'معلق ⏳' : 'Pending')}
                                 </span>
 
                                 {isPresident && (
@@ -6415,8 +6409,8 @@ const ParticipantPortal = () => {
                       <span className="text-3xl block mb-2">✨</span>
                       <h4 className="text-sm font-black text-white/50">{lang === 'ar' ? 'النسبة الكلية للامتلاء' : 'Average Booking Rate'}</h4>
                       <p className="text-3xl font-black text-blue-400 mt-1 font-mono">
-                        {activities.length > 0 
-                          ? `${Math.round((activities.reduce((acc, curr) => acc + (curr.current_count || 0), 0) / (activities.reduce((acc, curr) => acc + (curr.max_capacity || 999), 0) || 1)) * 100)}%` 
+                        {activities.length > 0
+                          ? `${Math.round((activities.reduce((acc, curr) => acc + (curr.current_count || 0), 0) / (activities.reduce((acc, curr) => acc + (curr.max_capacity || 999), 0) || 1)) * 100)}%`
                           : '0%'}
                       </p>
                     </div>
@@ -6443,18 +6437,18 @@ const ParticipantPortal = () => {
                                 📍 {act.location} | 📅 {new Date(act.date_time).toLocaleDateString(lang === 'ar' ? 'ar-DZ' : 'en-US')}
                               </p>
                               <div className="w-48 bg-white/5 h-2 rounded-full overflow-hidden mt-2">
-                                <div 
+                                <div
                                   className="bg-amber-500 h-full rounded-full transition-all"
                                   style={{ width: `${Math.min(100, ((act.current_count || 0) / (act.max_capacity || 100)) * 100)}%` }}
                                 />
                               </div>
                               <span className="text-[10px] text-white/50 block font-bold">
-                                {lang === 'ar' 
+                                {lang === 'ar'
                                   ? `تم حجز ${act.current_count} من أصل ${act.max_capacity || '∞'}`
                                   : `${act.current_count} / ${act.max_capacity || 'unlimited'} reserved`}
                               </span>
                             </div>
-                            
+
                             <div className="flex items-center gap-2">
                               <button
                                 onClick={async () => {
@@ -6504,8 +6498,8 @@ const ParticipantPortal = () => {
                       <span className="text-3xl block mb-2">📈</span>
                       <h4 className="text-sm font-black text-white/50">{lang === 'ar' ? 'نسبة الحضور الحالية' : 'Attendance Rate'}</h4>
                       <p className="text-3xl font-black text-blue-400 mt-1 font-mono">
-                        {receptionList.length > 0 
-                          ? `${Math.round((receptionList.filter(p => p.check_in_time).length / receptionList.length) * 100)}%` 
+                        {receptionList.length > 0
+                          ? `${Math.round((receptionList.filter(p => p.check_in_time).length / receptionList.length) * 100)}%`
                           : '0%'}
                       </p>
                     </div>
@@ -6518,7 +6512,7 @@ const ParticipantPortal = () => {
                         <span>🎟️</span>
                         {lang === 'ar' ? 'سجل الحضور والتحقق السريع البوابي' : 'Live Gate Check-in sheet'}
                       </h4>
-                      
+
                       {/* Search Input */}
                       <div className="relative w-full sm:w-64">
                         <input
@@ -6615,238 +6609,238 @@ const ParticipantPortal = () => {
                       exit={{ scale: 0.9, y: 20 }}
                       className="w-full max-w-lg bg-gradient-to-b from-[#0D1527] to-[#050B18] border border-white/10 rounded-[40px] p-6 relative shadow-[0_24px_80px_rgba(0,0,0,0.6)] text-right"
                     >
-                        <div className="flex justify-between items-center pb-4 border-b border-white/5 mb-4">
-                          <div className="flex items-center gap-2">
-                            <span>🚗</span>
-                            <h3 className="text-lg font-black">{lang === 'ar' ? 'تخصيص السائق وتفاصيل المركبة 🚗' : 'Assign Driver & Vehicle Details 🚗'}</h3>
-                          </div>
-                          <button
-                            onClick={() => setIsStaffDispatchModalOpen(false)}
-                            className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-white/60 hover:bg-white/10 hover:text-white"
-                          >
-                            <X size={16} />
-                          </button>
+                      <div className="flex justify-between items-center pb-4 border-b border-white/5 mb-4">
+                        <div className="flex items-center gap-2">
+                          <span>🚗</span>
+                          <h3 className="text-lg font-black">{lang === 'ar' ? 'تخصيص السائق وتفاصيل المركبة 🚗' : 'Assign Driver & Vehicle Details 🚗'}</h3>
                         </div>
+                        <button
+                          onClick={() => setIsStaffDispatchModalOpen(false)}
+                          className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-white/60 hover:bg-white/10 hover:text-white"
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
 
-                        <p className="text-xs text-white/50 mb-6 font-bold leading-relaxed">
-                          {lang === 'ar'
-                            ? `سيتم حفظ هذه البيانات وإرسالها فوراً بهاتف الضيف (${selectedStaffParticipant.participant_name}) وتعديل لوحة وصوله لحظياً.`
-                            : `These details will be saved and immediately sent/updated on the guest's mobile portal.`}
-                        </p>
+                      <p className="text-xs text-white/50 mb-6 font-bold leading-relaxed">
+                        {lang === 'ar'
+                          ? `سيتم حفظ هذه البيانات وإرسالها فوراً بهاتف الضيف (${selectedStaffParticipant.participant_name}) وتعديل لوحة وصوله لحظياً.`
+                          : `These details will be saved and immediately sent/updated on the guest's mobile portal.`}
+                      </p>
 
-                        <form onSubmit={handleSaveStaffDispatch} className="space-y-4">
-                          {/* Predefined Driver Registry Select */}
-                          <div className="space-y-2">
-                            <label className="text-xs font-black text-amber-500 block">
-                              {lang === 'ar' ? '🚗 اختر سائقاً من السجل المعتمد' : '🚗 Select Predefined Driver'}
-                            </label>
-                            <select
-                              onChange={(e) => {
-                                const val = e.target.value;
-                                if (val === 'manual') {
+                      <form onSubmit={handleSaveStaffDispatch} className="space-y-4">
+                        {/* Predefined Driver Registry Select */}
+                        <div className="space-y-2">
+                          <label className="text-xs font-black text-amber-500 block">
+                            {lang === 'ar' ? '🚗 اختر سائقاً من السجل المعتمد' : '🚗 Select Predefined Driver'}
+                          </label>
+                          <select
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (val === 'manual') {
+                                setStaffDispatchForm({
+                                  ...staffDispatchForm,
+                                  driver_name: '',
+                                  driver_phone: '',
+                                  vehicle_details: ''
+                                });
+                              } else {
+                                const d = driversList.find(x => x.id === parseInt(val));
+                                if (d) {
                                   setStaffDispatchForm({
                                     ...staffDispatchForm,
-                                    driver_name: '',
-                                    driver_phone: '',
-                                    vehicle_details: ''
+                                    driver_name: d.name,
+                                    driver_phone: d.phone,
+                                    vehicle_details: d.vehicle_details || ''
                                   });
-                                } else {
-                                  const d = driversList.find(x => x.id === parseInt(val));
-                                  if (d) {
-                                    setStaffDispatchForm({
-                                      ...staffDispatchForm,
-                                      driver_name: d.name,
-                                      driver_phone: d.phone,
-                                      vehicle_details: d.vehicle_details || ''
-                                    });
-                                  }
                                 }
-                              }}
-                              className="w-full bg-[#050B18] border border-white/10 rounded-2xl h-14 px-4 text-white font-bold outline-none focus:border-amber-500/50 transition-all text-right"
-                              dir="rtl"
-                            >
-                              <option value="manual">{lang === 'ar' ? '✍️ إدخال يدوي حر...' : '✍️ Manual Custom Entry...'}</option>
-                              {driversList.map(d => {
-                                const activeMissions = staffLogisticsList.filter(item => 
-                                  item.driver_phone && item.driver_phone.trim() === d.phone.trim() && 
-                                  item.status !== 'completed'
-                                );
-                                const statusStr = activeMissions.length > 0 
-                                  ? (lang === 'ar' ? `🔴 مشغول مع ${activeMissions.map(m => m.participant_name).join(', ')}` : `🔴 Busy with ${activeMissions.map(m => m.participant_name).join(', ')}`)
-                                  : (lang === 'ar' ? '🟢 متوفر' : '🟢 Available');
-                                return (
-                                  <option key={d.id} value={d.id}>
-                                    👤 {d.name} ({d.phone}) - {statusStr} {d.vehicle_details ? `[${d.vehicle_details}]` : ''}
-                                  </option>
-                                );
-                              })}
-                            </select>
-                            
-                            {/* Driver conflict alert */}
-                            {getDriverConflictWarning() && (
-                              <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-400 rounded-2xl text-xs font-black text-right mt-2">
-                                {getDriverConflictWarning()}
-                              </div>
-                            )}
+                              }
+                            }}
+                            className="w-full bg-[#050B18] border border-white/10 rounded-2xl h-14 px-4 text-white font-bold outline-none focus:border-amber-500/50 transition-all text-right"
+                            dir="rtl"
+                          >
+                            <option value="manual">{lang === 'ar' ? '✍️ إدخال يدوي حر...' : '✍️ Manual Custom Entry...'}</option>
+                            {driversList.map(d => {
+                              const activeMissions = staffLogisticsList.filter(item =>
+                                item.driver_phone && item.driver_phone.trim() === d.phone.trim() &&
+                                item.status !== 'completed'
+                              );
+                              const statusStr = activeMissions.length > 0
+                                ? (lang === 'ar' ? `🔴 مشغول مع ${activeMissions.map(m => m.participant_name).join(', ')}` : `🔴 Busy with ${activeMissions.map(m => m.participant_name).join(', ')}`)
+                                : (lang === 'ar' ? '🟢 متوفر' : '🟢 Available');
+                              return (
+                                <option key={d.id} value={d.id}>
+                                  👤 {d.name} ({d.phone}) - {statusStr} {d.vehicle_details ? `[${d.vehicle_details}]` : ''}
+                                </option>
+                              );
+                            })}
+                          </select>
 
-                            {/* Organizer On-The-Fly Driver Manager */}
-                            {(isPresident || roleLower.includes('رئيس') || roleLower.includes('منظم')) && (
-                              <div className="border-t border-white/5 pt-2 mt-1">
-                                {!isAddingNewDriver ? (
-                                  <button
-                                    type="button"
-                                    onClick={() => setIsAddingNewDriver(true)}
-                                    className="text-[11px] font-black text-amber-500/80 hover:text-amber-400 flex items-center gap-1"
-                                  >
-                                    ➕ {lang === 'ar' ? 'إضافة سائق جديد إلى السجل المعتمد للفعالية' : 'Add New Driver to Event Registry'}
-                                  </button>
-                                ) : (
-                                  <div className="bg-white/5 p-3 rounded-2xl border border-white/5 space-y-2 mt-2 text-right" dir="rtl">
-                                    <div className="flex justify-between items-center mb-1">
-                                      <span className="text-[10px] font-black text-amber-500">{lang === 'ar' ? 'إضافة سائق جديد للسجل' : 'Add Driver to Registry'}</span>
-                                      <button
-                                        type="button"
-                                        onClick={() => setIsAddingNewDriver(false)}
-                                        className="text-white/40 hover:text-white text-[10px] font-black"
-                                      >
-                                        {lang === 'ar' ? 'إلغاء' : 'Cancel'}
-                                      </button>
-                                    </div>
-                                    
-                                    <input
-                                      value={newDriverForm.name}
-                                      onChange={(e) => setNewDriverForm({ ...newDriverForm, name: e.target.value })}
-                                      placeholder={lang === 'ar' ? 'اسم السائق' : 'Driver Name'}
-                                      className="w-full bg-[#050B18] border border-white/10 rounded-xl h-10 px-3 text-xs text-white text-right"
-                                      dir="rtl"
-                                    />
-                                    <input
-                                      value={newDriverForm.phone}
-                                      onChange={(e) => setNewDriverForm({ ...newDriverForm, phone: e.target.value })}
-                                      placeholder={lang === 'ar' ? 'رقم الهاتف' : 'Phone Number'}
-                                      className="w-full bg-[#050B18] border border-white/10 rounded-xl h-10 px-3 text-xs text-white text-right"
-                                      dir="rtl"
-                                    />
-                                    <input
-                                      value={newDriverForm.vehicle_details}
-                                      onChange={(e) => setNewDriverForm({ ...newDriverForm, vehicle_details: e.target.value })}
-                                      placeholder={lang === 'ar' ? 'تفاصيل ولون ورقم السيارة' : 'Vehicle Make, Model & Plate'}
-                                      className="w-full bg-[#050B18] border border-white/10 rounded-xl h-10 px-3 text-xs text-white text-right"
-                                      dir="rtl"
-                                    />
-                                    
+                          {/* Driver conflict alert */}
+                          {getDriverConflictWarning() && (
+                            <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-400 rounded-2xl text-xs font-black text-right mt-2">
+                              {getDriverConflictWarning()}
+                            </div>
+                          )}
+
+                          {/* Organizer On-The-Fly Driver Manager */}
+                          {(isPresident || roleLower.includes('رئيس') || roleLower.includes('منظم')) && (
+                            <div className="border-t border-white/5 pt-2 mt-1">
+                              {!isAddingNewDriver ? (
+                                <button
+                                  type="button"
+                                  onClick={() => setIsAddingNewDriver(true)}
+                                  className="text-[11px] font-black text-amber-500/80 hover:text-amber-400 flex items-center gap-1"
+                                >
+                                  ➕ {lang === 'ar' ? 'إضافة سائق جديد إلى السجل المعتمد للفعالية' : 'Add New Driver to Event Registry'}
+                                </button>
+                              ) : (
+                                <div className="bg-white/5 p-3 rounded-2xl border border-white/5 space-y-2 mt-2 text-right" dir="rtl">
+                                  <div className="flex justify-between items-center mb-1">
+                                    <span className="text-[10px] font-black text-amber-500">{lang === 'ar' ? 'إضافة سائق جديد للسجل' : 'Add Driver to Registry'}</span>
                                     <button
                                       type="button"
-                                      disabled={isSavingNewDriver || !newDriverForm.name || !newDriverForm.phone}
-                                      onClick={async () => {
-                                        setIsSavingNewDriver(true);
-                                        try {
-                                          const newD = await interactionService.createDriver({
-                                            event_id: eventId,
-                                            name: newDriverForm.name,
-                                            phone: newDriverForm.phone,
-                                            vehicle_details: newDriverForm.vehicle_details
-                                          });
-                                          toast.success(lang === 'ar' ? 'تمت إضافة السائق للسجل بنجاح! 🚗' : 'Driver added successfully! 🚗');
-                                          setDriversList(prev => [...prev, newD]);
-                                          setIsAddingNewDriver(false);
-                                          setNewDriverForm({ name: '', phone: '', vehicle_details: '' });
-                                        } catch (err) {
-                                          console.error('Failed to save driver:', err);
-                                          toast.error(lang === 'ar' ? 'فشل حفظ السائق' : 'Failed to save driver');
-                                        } finally {
-                                          setIsSavingNewDriver(false);
-                                        }
-                                      }}
-                                      className="w-full h-10 bg-amber-500 hover:bg-amber-600 text-brand-dark rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5"
+                                      onClick={() => setIsAddingNewDriver(false)}
+                                      className="text-white/40 hover:text-white text-[10px] font-black"
                                     >
-                                      {isSavingNewDriver && <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} className="w-3.5 h-3.5 border border-brand-dark border-t-transparent rounded-full" />}
-                                      {lang === 'ar' ? 'حفظ السائق في السجل' : 'Save Driver'}
+                                      {lang === 'ar' ? 'إلغاء' : 'Cancel'}
                                     </button>
                                   </div>
-                                )}
-                              </div>
-                            )}
-                          </div>
 
-                          {/* Driver Name */}
-                          <div className="space-y-2">
-                            <label className="text-xs font-black text-white/50 block">{lang === 'ar' ? 'اسم السائق' : 'Driver Name'}</label>
-                            <Input
-                              required
-                              value={staffDispatchForm.driver_name}
-                              onChange={(e) => setStaffDispatchForm({ ...staffDispatchForm, driver_name: e.target.value })}
-                              placeholder={lang === 'ar' ? 'مثال: محمد الشريف' : 'e.g. Mohamed Al-Sharif'}
-                              className="w-full bg-[#050B18] border border-white/10 rounded-2xl h-14 text-right px-4 text-white"
-                            />
-                          </div>
+                                  <input
+                                    value={newDriverForm.name}
+                                    onChange={(e) => setNewDriverForm({ ...newDriverForm, name: e.target.value })}
+                                    placeholder={lang === 'ar' ? 'اسم السائق' : 'Driver Name'}
+                                    className="w-full bg-[#050B18] border border-white/10 rounded-xl h-10 px-3 text-xs text-white text-right"
+                                    dir="rtl"
+                                  />
+                                  <input
+                                    value={newDriverForm.phone}
+                                    onChange={(e) => setNewDriverForm({ ...newDriverForm, phone: e.target.value })}
+                                    placeholder={lang === 'ar' ? 'رقم الهاتف' : 'Phone Number'}
+                                    className="w-full bg-[#050B18] border border-white/10 rounded-xl h-10 px-3 text-xs text-white text-right"
+                                    dir="rtl"
+                                  />
+                                  <input
+                                    value={newDriverForm.vehicle_details}
+                                    onChange={(e) => setNewDriverForm({ ...newDriverForm, vehicle_details: e.target.value })}
+                                    placeholder={lang === 'ar' ? 'تفاصيل ولون ورقم السيارة' : 'Vehicle Make, Model & Plate'}
+                                    className="w-full bg-[#050B18] border border-white/10 rounded-xl h-10 px-3 text-xs text-white text-right"
+                                    dir="rtl"
+                                  />
 
-                          {/* Driver Phone */}
-                          <div className="space-y-2">
-                            <label className="text-xs font-black text-white/50 block">{lang === 'ar' ? 'رقم هاتف السائق' : 'Driver Phone Number'}</label>
-                            <Input
-                              required
-                              value={staffDispatchForm.driver_phone}
-                              onChange={(e) => setStaffDispatchForm({ ...staffDispatchForm, driver_phone: e.target.value })}
-                              placeholder="+213555123456"
-                              className="w-full bg-[#050B18] border border-white/10 rounded-2xl h-14 text-right px-4 text-white"
-                            />
-                          </div>
+                                  <button
+                                    type="button"
+                                    disabled={isSavingNewDriver || !newDriverForm.name || !newDriverForm.phone}
+                                    onClick={async () => {
+                                      setIsSavingNewDriver(true);
+                                      try {
+                                        const newD = await interactionService.createDriver({
+                                          event_id: eventId,
+                                          name: newDriverForm.name,
+                                          phone: newDriverForm.phone,
+                                          vehicle_details: newDriverForm.vehicle_details
+                                        });
+                                        toast.success(lang === 'ar' ? 'تمت إضافة السائق للسجل بنجاح! 🚗' : 'Driver added successfully! 🚗');
+                                        setDriversList(prev => [...prev, newD]);
+                                        setIsAddingNewDriver(false);
+                                        setNewDriverForm({ name: '', phone: '', vehicle_details: '' });
+                                      } catch (err) {
+                                        console.error('Failed to save driver:', err);
+                                        toast.error(lang === 'ar' ? 'فشل حفظ السائق' : 'Failed to save driver');
+                                      } finally {
+                                        setIsSavingNewDriver(false);
+                                      }
+                                    }}
+                                    className="w-full h-10 bg-amber-500 hover:bg-amber-600 text-brand-dark rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5"
+                                  >
+                                    {isSavingNewDriver && <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} className="w-3.5 h-3.5 border border-brand-dark border-t-transparent rounded-full" />}
+                                    {lang === 'ar' ? 'حفظ السائق في السجل' : 'Save Driver'}
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
 
-                          {/* Vehicle details */}
-                          <div className="space-y-2">
-                            <label className="text-xs font-black text-white/50 block">{lang === 'ar' ? 'تفاصيل ولون ورقم السيارة' : 'Vehicle Make, Model & Plate'}</label>
-                            <Input
-                              required
-                              value={staffDispatchForm.vehicle_details}
-                              onChange={(e) => setStaffDispatchForm({ ...staffDispatchForm, vehicle_details: e.target.value })}
-                              placeholder={lang === 'ar' ? 'مثال: مرسيدس سوداء رقم 12345-120-16' : 'e.g. Black Mercedes S-Class, Plate 12345-120-16'}
-                              className="w-full bg-[#050B18] border border-white/10 rounded-2xl h-14 text-right px-4 text-white"
-                            />
-                          </div>
+                        {/* Driver Name */}
+                        <div className="space-y-2">
+                          <label className="text-xs font-black text-white/50 block">{lang === 'ar' ? 'اسم السائق' : 'Driver Name'}</label>
+                          <Input
+                            required
+                            value={staffDispatchForm.driver_name}
+                            onChange={(e) => setStaffDispatchForm({ ...staffDispatchForm, driver_name: e.target.value })}
+                            placeholder={lang === 'ar' ? 'مثال: محمد الشريف' : 'e.g. Mohamed Al-Sharif'}
+                            className="w-full bg-[#050B18] border border-white/10 rounded-2xl h-14 text-right px-4 text-white"
+                          />
+                        </div>
 
-                          {/* Status Select */}
-                          <div className="space-y-2">
-                            <label className="text-xs font-black text-white/50 block">{lang === 'ar' ? 'حالة الاستقبال والوصول' : 'Dispatch & Arrival Status'}</label>
-                            <select
-                              value={staffDispatchForm.status}
-                              onChange={(e) => setStaffDispatchForm({ ...staffDispatchForm, status: e.target.value })}
-                              className="w-full bg-[#050B18] border border-white/10 rounded-2xl h-14 px-4 text-white font-bold outline-none focus:border-amber-500/50 transition-all text-right"
-                              dir="rtl"
-                            >
-                              <option value="pending">{lang === 'ar' ? '⏳ قيد الانتظار' : 'Pending'}</option>
-                              <option value="dispatched">{lang === 'ar' ? '🚗 تم إرسال السائق للموقع' : 'Driver Dispatched'}</option>
-                              <option value="arrived">{lang === 'ar' ? '✈️ وصل لمكان اللقاء' : 'Arrived at pickup location'}</option>
-                              <option value="completed">{lang === 'ar' ? '✅ تم التوصيل بنجاح' : 'Completed'}</option>
-                            </select>
-                          </div>
+                        {/* Driver Phone */}
+                        <div className="space-y-2">
+                          <label className="text-xs font-black text-white/50 block">{lang === 'ar' ? 'رقم هاتف السائق' : 'Driver Phone Number'}</label>
+                          <Input
+                            required
+                            value={staffDispatchForm.driver_phone}
+                            onChange={(e) => setStaffDispatchForm({ ...staffDispatchForm, driver_phone: e.target.value })}
+                            placeholder="+213555123456"
+                            className="w-full bg-[#050B18] border border-white/10 rounded-2xl h-14 text-right px-4 text-white"
+                          />
+                        </div>
 
-                          {/* Share with Driver Button */}
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const driverPhone = staffDispatchForm.driver_phone.replace(/\+/g, '').replace(/[^0-9]/g, '');
-                              if (!driverPhone) {
-                                toast.error(lang === 'ar' ? 'يرجى إدخال رقم هاتف السائق أولاً' : 'Please enter the driver phone number first');
-                                return;
-                              }
-                              const guestName = selectedStaffParticipant.participant_name;
-                              const hotel = selectedStaffParticipant.hotel_name || '---';
-                              const flight = selectedStaffParticipant.flight_number || '---';
-                              const arrivalTime = selectedStaffParticipant.arrival_time ? new Date(selectedStaffParticipant.arrival_time).toLocaleString() : '---';
-                              const location = selectedStaffParticipant.arrival_location || '---';
-                              
-                              const text = lang === 'ar'
-                                ? `أهلاً بك، تفاصيل استقبال الضيف:\n\n👤 اسم الضيف: ${guestName}\n✈️ رقم الرحلة: ${flight}\n⏰ موعد الوصول: ${arrivalTime}\n📍 موقع اللقاء: ${location}\n🏨 وجهة التوصيل (الفندق): ${hotel}`
-                                : `Hello, here are the guest arrival details:\n\n👤 Guest Name: ${guestName}\n✈️ Flight: ${flight}\n⏰ Arrival Time: ${arrivalTime}\n📍 Pickup Location: ${location}\n🏨 Destination Hotel: ${hotel}`;
-                                
-                              window.open(`https://wa.me/${driverPhone}?text=${encodeURIComponent(text)}`, '_blank');
-                            }}
-                            className="w-full py-3.5 px-4 rounded-2xl bg-[#25D366]/10 border border-[#25D366]/20 hover:bg-[#25D366]/20 text-[#25D366] text-xs font-black transition-all flex items-center justify-center gap-2 mt-4"
+                        {/* Vehicle details */}
+                        <div className="space-y-2">
+                          <label className="text-xs font-black text-white/50 block">{lang === 'ar' ? 'تفاصيل ولون ورقم السيارة' : 'Vehicle Make, Model & Plate'}</label>
+                          <Input
+                            required
+                            value={staffDispatchForm.vehicle_details}
+                            onChange={(e) => setStaffDispatchForm({ ...staffDispatchForm, vehicle_details: e.target.value })}
+                            placeholder={lang === 'ar' ? 'مثال: مرسيدس سوداء رقم 12345-120-16' : 'e.g. Black Mercedes S-Class, Plate 12345-120-16'}
+                            className="w-full bg-[#050B18] border border-white/10 rounded-2xl h-14 text-right px-4 text-white"
+                          />
+                        </div>
+
+                        {/* Status Select */}
+                        <div className="space-y-2">
+                          <label className="text-xs font-black text-white/50 block">{lang === 'ar' ? 'حالة الاستقبال والوصول' : 'Dispatch & Arrival Status'}</label>
+                          <select
+                            value={staffDispatchForm.status}
+                            onChange={(e) => setStaffDispatchForm({ ...staffDispatchForm, status: e.target.value })}
+                            className="w-full bg-[#050B18] border border-white/10 rounded-2xl h-14 px-4 text-white font-bold outline-none focus:border-amber-500/50 transition-all text-right"
+                            dir="rtl"
                           >
-                            <span>💬</span>
-                            {lang === 'ar' ? 'مشاركة تفاصيل الرحلة مع السائق عبر واتساب' : 'Share Flight Details with Driver via WhatsApp'}
-                          </button>
+                            <option value="pending">{lang === 'ar' ? '⏳ قيد الانتظار' : 'Pending'}</option>
+                            <option value="dispatched">{lang === 'ar' ? '🚗 تم إرسال السائق للموقع' : 'Driver Dispatched'}</option>
+                            <option value="arrived">{lang === 'ar' ? '✈️ وصل لمكان اللقاء' : 'Arrived at pickup location'}</option>
+                            <option value="completed">{lang === 'ar' ? '✅ تم التوصيل بنجاح' : 'Completed'}</option>
+                          </select>
+                        </div>
+
+                        {/* Share with Driver Button */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const driverPhone = staffDispatchForm.driver_phone.replace(/\+/g, '').replace(/[^0-9]/g, '');
+                            if (!driverPhone) {
+                              toast.error(lang === 'ar' ? 'يرجى إدخال رقم هاتف السائق أولاً' : 'Please enter the driver phone number first');
+                              return;
+                            }
+                            const guestName = selectedStaffParticipant.participant_name;
+                            const hotel = selectedStaffParticipant.hotel_name || '---';
+                            const flight = selectedStaffParticipant.flight_number || '---';
+                            const arrivalTime = selectedStaffParticipant.arrival_time ? new Date(selectedStaffParticipant.arrival_time).toLocaleString() : '---';
+                            const location = selectedStaffParticipant.arrival_location || '---';
+
+                            const text = lang === 'ar'
+                              ? `أهلاً بك، تفاصيل استقبال الضيف:\n\n👤 اسم الضيف: ${guestName}\n✈️ رقم الرحلة: ${flight}\n⏰ موعد الوصول: ${arrivalTime}\n📍 موقع اللقاء: ${location}\n🏨 وجهة التوصيل (الفندق): ${hotel}`
+                              : `Hello, here are the guest arrival details:\n\n👤 Guest Name: ${guestName}\n✈️ Flight: ${flight}\n⏰ Arrival Time: ${arrivalTime}\n📍 Pickup Location: ${location}\n🏨 Destination Hotel: ${hotel}`;
+
+                            window.open(`https://wa.me/${driverPhone}?text=${encodeURIComponent(text)}`, '_blank');
+                          }}
+                          className="w-full py-3.5 px-4 rounded-2xl bg-[#25D366]/10 border border-[#25D366]/20 hover:bg-[#25D366]/20 text-[#25D366] text-xs font-black transition-all flex items-center justify-center gap-2 mt-4"
+                        >
+                          <span>💬</span>
+                          {lang === 'ar' ? 'مشاركة تفاصيل الرحلة مع السائق عبر واتساب' : 'Share Flight Details with Driver via WhatsApp'}
+                        </button>
 
                         {/* Dispatch Save Button */}
                         <Button
@@ -7044,7 +7038,7 @@ const ParticipantPortal = () => {
                               </div>
                               {guestArrival.arrival_time && (
                                 <div className="text-white/60">
-                                  📅 {lang === 'ar' ? 'تاريخ ووقت الوصول:' : 'Arrival Time:'} {new Date(guestArrival.arrival_time).toLocaleString([], {hour: '2-digit', minute:'2-digit', day:'numeric', month:'short'})}
+                                  📅 {lang === 'ar' ? 'تاريخ ووقت الوصول:' : 'Arrival Time:'} {new Date(guestArrival.arrival_time).toLocaleString([], { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' })}
                                 </div>
                               )}
                               {guestArrival.arrival_location && (
@@ -7092,15 +7086,15 @@ const ParticipantPortal = () => {
                                   return str.replace(/[أإآأ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').toLowerCase();
                                 };
                                 const normRole = normalize(role);
-                                
+
                                 // Get logged-in user's role
                                 const userRole = (participant?.role || '').toLowerCase();
                                 const normUserRole = normalize(userRole);
                                 const isUserPresident = normUserRole.includes('رئيس') || normUserRole.includes('president');
-                                
+
                                 // Determine active committee
                                 const committeeKey = selectedTaskCommittee || 'reception';
-                                
+
                                 // If logged in as president, restrict to matching committee
                                 if (isUserPresident) {
                                   let userCommittee = null;
@@ -7109,21 +7103,21 @@ const ParticipantPortal = () => {
                                   else if (normUserRole.includes('ايواء') || normUserRole.includes('accommodation') || normUserRole.includes('hotel') || normUserRole.includes('lodging') || normUserRole.includes('تسكين')) userCommittee = 'accommodation';
                                   else if (normUserRole.includes('نقل') || normUserRole.includes('logistics') || normUserRole.includes('سائق') || normUserRole.includes('transport') || normUserRole.includes('driver')) userCommittee = 'transport';
                                   else if (normUserRole.includes('ترفيه') || normUserRole.includes('نشاط') || normUserRole.includes('انشطه') || normUserRole.includes('excursion') || normUserRole.includes('activity')) userCommittee = 'entertainment';
-                                  
-                                  const matchesCommittee = (userCommittee === committeeKey) || 
-                                                           (userCommittee === 'transport' && committeeKey === 'logistics') || 
-                                                           (userCommittee === 'logistics' && committeeKey === 'transport');
+
+                                  const matchesCommittee = (userCommittee === committeeKey) ||
+                                    (userCommittee === 'transport' && committeeKey === 'logistics') ||
+                                    (userCommittee === 'logistics' && committeeKey === 'transport');
                                   if (userCommittee && !matchesCommittee) {
                                     return false;
                                   }
                                 }
-                                
+
                                 // General organizers can be seen if logged in user is NOT a specific committee president
                                 if (!isUserPresident) {
                                   const isGeneral = normRole === 'organizer' || normRole === 'منظم' || (normRole.includes('عام') && !normRole.includes('طعام')) || normRole.includes('general') || normRole.includes('اداري');
                                   if (isGeneral) return true;
                                 }
-                                
+
                                 // Filter matching committee members (excluding other presidents)
                                 if (committeeKey === 'reception') {
                                   return (normRole.includes('استقبل') || normRole.includes('تسجيل') || normRole.includes('reception')) && !normRole.includes('رئيس') && !normRole.includes('president');
@@ -7227,19 +7221,19 @@ const ParticipantPortal = () => {
                             <span className={cn(
                               "text-xs px-2.5 py-1 rounded font-black inline-block mt-1",
                               detailedTask.status === 'completed' ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" :
-                              detailedTask.status === 'in_progress' ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" :
-                              detailedTask.status === 'cancelled' ? "bg-red-500/10 text-red-400 border border-red-500/20" :
-                              "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                                detailedTask.status === 'in_progress' ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" :
+                                  detailedTask.status === 'cancelled' ? "bg-red-500/10 text-red-400 border border-red-500/20" :
+                                    "bg-amber-500/10 text-amber-400 border border-amber-500/20"
                             )}>
                               {detailedTask.status === 'completed' ? (lang === 'ar' ? '✅ مكتملة' : 'Completed') :
-                               detailedTask.status === 'in_progress' ? (lang === 'ar' ? '⚙️ جاري العمل' : 'In Progress') :
-                               detailedTask.status === 'cancelled' ? (lang === 'ar' ? '❌ ملغاة' : 'Cancelled') :
-                               (lang === 'ar' ? '⏳ قيد الانتظار' : 'Pending')}
+                                detailedTask.status === 'in_progress' ? (lang === 'ar' ? '⚙️ جاري العمل' : 'In Progress') :
+                                  detailedTask.status === 'cancelled' ? (lang === 'ar' ? '❌ ملغاة' : 'Cancelled') :
+                                    (lang === 'ar' ? '⏳ قيد الانتظار' : 'Pending')}
                             </span>
                           </div>
 
                           <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
-                             <span className="text-[10px] text-white/40 block mb-1 font-bold">
+                            <span className="text-[10px] text-white/40 block mb-1 font-bold">
                               {detailedTask.committee === 'transport' || detailedTask.committee === 'logistics'
                                 ? (lang === 'ar' ? 'تاريخ ووقت الوصول' : 'Arrival Time')
                                 : (lang === 'ar' ? 'تاريخ الاستحقاق' : 'Due Time')}
@@ -7247,7 +7241,7 @@ const ParticipantPortal = () => {
                             <p className="text-xs text-white font-bold mt-1.5">
                               {(() => {
                                 const targetTime = detailedTask.due_time || staffLogisticsList.find(l => l.participant_id === detailedTask.participant_id)?.arrival_time;
-                                return targetTime 
+                                return targetTime
                                   ? new Date(targetTime).toLocaleString(lang === 'ar' ? 'ar-DZ' : 'en-US')
                                   : (lang === 'ar' ? 'مفتوح' : 'Anytime');
                               })()}
@@ -7268,7 +7262,7 @@ const ParticipantPortal = () => {
                             if (!guest) return null;
                             const guestPhone = guest.phone_number || guest.phone;
                             const guestEmail = guest.email;
-                            
+
                             return (
                               <div className="p-4 bg-white/5 rounded-2xl border border-white/5 col-span-2 space-y-3">
                                 <span className="text-[10px] text-white/40 block font-bold">{lang === 'ar' ? '🙋‍♂️ الضيف المستهدف وتفاصيل الاتصال' : '🙋‍♂️ Target Guest & Contact Details'}</span>
@@ -7279,7 +7273,7 @@ const ParticipantPortal = () => {
                                       <span className="text-white/40 text-[10px] block font-bold">{guest.organization}</span>
                                     )}
                                   </div>
-                                  
+
                                   {/* Contact Buttons */}
                                   <div className="flex flex-wrap gap-2">
                                     {guestPhone && (
@@ -7357,13 +7351,13 @@ const ParticipantPortal = () => {
                                   onClick={() => handleShareTaskWithDriver(detailedTask)}
                                   className={cn(
                                     "w-full py-2.5 px-4 rounded-xl border text-xs font-black transition-all flex items-center justify-center gap-2 mt-2",
-                                    detailedTask.whatsapp_sent 
+                                    detailedTask.whatsapp_sent
                                       ? "bg-blue-600/10 border-blue-600/20 text-blue-400 hover:bg-blue-600/20"
                                       : "bg-[#25D366]/10 border-[#25D366]/20 text-[#25D366] hover:bg-[#25D366]/20"
                                   )}
                                 >
                                   <span>💬</span>
-                                  {detailedTask.whatsapp_sent 
+                                  {detailedTask.whatsapp_sent
                                     ? (lang === 'ar' ? '✅ تم إعلام السائق (إعادة الإرسال عبر واتساب)' : '✅ Driver Notified (Resend via WhatsApp)')
                                     : (lang === 'ar' ? 'إرسال تفاصيل المهمة للسائق عبر واتساب' : 'Send Task Details to Driver via WhatsApp')}
                                 </button>
@@ -7617,7 +7611,7 @@ const ParticipantPortal = () => {
                                     };
                                     const normRole = normalize(role);
                                     const committeeKey = detailedTask.committee;
-                                    
+
                                     if (committeeKey === 'reception') {
                                       return (normRole.includes('استقبل') || normRole.includes('تسجيل') || normRole.includes('reception')) && !normRole.includes('رئيس') && !normRole.includes('president');
                                     }
@@ -7796,7 +7790,7 @@ const ParticipantPortal = () => {
 
                       <div className="space-y-4" dir="rtl">
                         <p className="text-xs text-white/70 font-bold leading-relaxed">
-                          {lang === 'ar' 
+                          {lang === 'ar'
                             ? 'يرجى كتابة سبب الاعتذار بالتفصيل. سيصل إشعار لرئيس اللجنة بذلك، وسيتم إرجاع المهمة لقيد الانتظار لإسنادها لعضو آخر.'
                             : 'Please write down the reason for your apology. The committee president will be notified, and the task will revert to pending to be assigned to someone else.'}
                         </p>
@@ -7864,7 +7858,7 @@ const ParticipantPortal = () => {
             boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
           },
           success: { iconTheme: { primary: '#38BDF8', secondary: '#050B18' } },
-          error:   { iconTheme: { primary: '#F87171', secondary: '#050B18' } },
+          error: { iconTheme: { primary: '#F87171', secondary: '#050B18' } },
         }}
       />
 
@@ -7924,7 +7918,7 @@ const ParticipantPortal = () => {
       {/* Scan Mode Fullscreen Modal */}
       <AnimatePresence>
         {isScanMode && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -7933,8 +7927,8 @@ const ParticipantPortal = () => {
             {/* Top Close Button */}
             <div className="w-full flex justify-between items-center">
               <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">منصة ديوان الذكية · وضع المسح السريع</span>
-              <button 
-                onClick={toggleScanMode} 
+              <button
+                onClick={toggleScanMode}
                 className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-slate-200 transition-colors"
               >
                 <X size={20} />
@@ -7946,17 +7940,17 @@ const ParticipantPortal = () => {
               <div className="relative p-8 bg-white border-4 border-amber-500 rounded-[40px] shadow-[0_0_60px_rgba(245,158,11,0.3)] mb-8">
                 {/* Pulsing Corner Brackets — لا تعيق قراءة الـ QR */}
                 <div className="absolute top-2 left-2 w-9 h-9 border-t-[4px] border-l-[4px] border-amber-500 rounded-tl-2xl animate-pulse" />
-                <div className="absolute top-2 right-2 w-9 h-9 border-t-[4px] border-r-[4px] border-amber-500 rounded-tr-2xl animate-pulse" style={{animationDelay:'0.3s'}} />
-                <div className="absolute bottom-2 left-2 w-9 h-9 border-b-[4px] border-l-[4px] border-amber-500 rounded-bl-2xl animate-pulse" style={{animationDelay:'0.6s'}} />
-                <div className="absolute bottom-2 right-2 w-9 h-9 border-b-[4px] border-r-[4px] border-amber-500 rounded-br-2xl animate-pulse" style={{animationDelay:'0.9s'}} />
+                <div className="absolute top-2 right-2 w-9 h-9 border-t-[4px] border-r-[4px] border-amber-500 rounded-tr-2xl animate-pulse" style={{ animationDelay: '0.3s' }} />
+                <div className="absolute bottom-2 left-2 w-9 h-9 border-b-[4px] border-l-[4px] border-amber-500 rounded-bl-2xl animate-pulse" style={{ animationDelay: '0.6s' }} />
+                <div className="absolute bottom-2 right-2 w-9 h-9 border-b-[4px] border-r-[4px] border-amber-500 rounded-br-2xl animate-pulse" style={{ animationDelay: '0.9s' }} />
                 <img src={qrUrl} alt="QR Code Large" className="w-64 h-64" />
               </div>
               <h2 className="text-3xl font-black mb-2 text-slate-900 leading-tight">{participant.full_name}</h2>
               <p className="text-amber-600 font-bold text-sm uppercase tracking-wider mb-2">{participant.organization}</p>
               <div className="px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-[10px] font-black text-amber-600 uppercase tracking-widest">
-                {participant.role === 'vip' ? 'ضيف شرف ⭐ VIP' : 
-                 participant.role === 'speaker' ? 'متحدث / خبير 🎤 SPEAKER' : 
-                 participant.role === 'press' ? 'صحافة وإعلام 📰 PRESS' : 'مشارك معتمد 👤 ATTENDEE'}
+                {participant.role === 'vip' ? 'ضيف شرف ⭐ VIP' :
+                  participant.role === 'speaker' ? 'متحدث / خبير 🎤 SPEAKER' :
+                    participant.role === 'press' ? 'صحافة وإعلام 📰 PRESS' : 'مشارك معتمد 👤 ATTENDEE'}
               </div>
             </div>
 
@@ -7969,7 +7963,7 @@ const ParticipantPortal = () => {
                 </span>
                 تم تنشيط الشاشة ومنع القفل التلقائي تلقائياً
               </div>
-              <button 
+              <button
                 onClick={toggleScanMode}
                 className="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-black text-xs tracking-widest uppercase shadow-xl transition-colors"
               >

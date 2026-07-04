@@ -844,7 +844,7 @@ async def public_register_participant(
     
     if event.require_payment and event.ticket_price > 0:
         if body.payment_method == 'transfer' and event.allow_transfer_payment:
-            initial_payment_status = 'transfer_pending'
+            initial_payment_status = 'pending'
             is_transfer = True
 
     participant = Participant(
