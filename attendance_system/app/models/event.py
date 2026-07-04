@@ -78,6 +78,7 @@ class Event(Base, TimestampMixin):
     announcement_text = Column(Text, default='')
     registration_enabled = Column(Boolean, default=False)
     verify_email_on_register = Column(Boolean, default=False)
+    allow_online_payment = Column(Boolean, default=True)      # السماح بالدفع الإلكتروني عبر البوابة
 
     # Bank Transfer Payment
     allow_transfer_payment = Column(Boolean, default=False)   # السماح بالدفع عبر الحوالة

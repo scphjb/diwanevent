@@ -89,6 +89,17 @@ const AttendeeRegistrationPage = () => {
           fieldsRes.data.forEach(f => { initialCustom[f.field_name] = f.default_value || ''; });
           setCustomValues(initialCustom);
         }
+
+        // ضبط طريقة الدفع التلقائية
+        if (eventData.require_payment && eventData.ticket_price > 0) {
+          const isOnlineAvail = eventData.allow_online_payment !== false && eventData.payment_gateway && eventData.payment_gateway !== 'none';
+          const isTransferAvail = eventData.allow_transfer_payment;
+          if (isOnlineAvail && !isTransferAvail) {
+            setPaymentMethod('online');
+          } else if (!isOnlineAvail && isTransferAvail) {
+            setPaymentMethod('transfer');
+          }
+        }
       } catch (err) {
         setError('تعذر جلب بيانات الفعالية.');
       } finally {
@@ -661,31 +672,43 @@ const AttendeeRegistrationPage = () => {
               )}
 
               {/* اختيار طريقة الدفع */}
-              {event.require_payment && event.ticket_price > 0 && event.allow_transfer_payment && (
-                <div className="space-y-3">
-                  <p className="text-sm font-bold text-brand-secondary/50">طريقة التسديد</p>
-                  <div className="grid grid-cols-2 gap-3">
-                    {event.payment_gateway && event.payment_gateway !== 'none' && (
-                      <button type="button"
-                        onClick={() => setPaymentMethod('online')}
-                        className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 font-bold transition-all text-sm ${paymentMethod === 'online' ? 'border-amber-500 bg-amber-500/10 text-amber-400' : 'border-white/10 bg-white/3 text-white/40 hover:bg-white/8'}`}>
-                        <span className="text-2xl">💳</span>
-                        <span>دفع إلكتروني</span>
-                      </button>
-                    )}
-                    <button type="button"
-                      onClick={() => setPaymentMethod('transfer')}
-                      className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 font-bold transition-all text-sm ${paymentMethod === 'transfer' ? 'border-amber-500 bg-amber-500/10 text-amber-400' : 'border-white/10 bg-white/3 text-white/40 hover:bg-white/8'}`}>
-                      <span className="text-2xl">🏦</span>
-                      <span>حوالة بنكية</span>
-                    </button>
-                  </div>
-                  {paymentMethod === 'transfer' && (
-                    <p className="text-xs text-amber-500/60 bg-amber-500/5 border border-amber-500/10 rounded-xl p-3">
-                      ستُسجَّل بحالة مؤقتة. بعد التسجيل، حوّل المبلغ وارفع صورة الوصل من بوابتك لتفعيل حسابك.
-                    </p>
-                  )}
-                </div>
+              {event.require_payment && event.ticket_price > 0 && (
+                (() => {
+                  const showOnlineOption = event.allow_online_payment !== false && event.payment_gateway && event.payment_gateway !== 'none';
+                  const showTransferOption = event.allow_transfer_payment;
+                  const hasMultiple = showOnlineOption && showTransferOption;
+
+                  if (!hasMultiple) return null;
+
+                  return (
+                    <div className="space-y-3">
+                      <p className="text-sm font-bold text-brand-secondary/50">طريقة التسديد</p>
+                      <div className="grid grid-cols-2 gap-3">
+                        {showOnlineOption && (
+                          <button type="button"
+                            onClick={() => setPaymentMethod('online')}
+                            className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 font-bold transition-all text-sm ${paymentMethod === 'online' ? 'border-amber-500 bg-amber-500/10 text-amber-400' : 'border-white/10 bg-white/3 text-white/40 hover:bg-white/8'}`}>
+                            <span className="text-2xl">💳</span>
+                            <span>دفع إلكتروني</span>
+                          </button>
+                        )}
+                        {showTransferOption && (
+                          <button type="button"
+                            onClick={() => setPaymentMethod('transfer')}
+                            className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 font-bold transition-all text-sm ${paymentMethod === 'transfer' ? 'border-amber-500 bg-amber-500/10 text-amber-400' : 'border-white/10 bg-white/3 text-white/40 hover:bg-white/8'}`}>
+                            <span className="text-2xl">🏦</span>
+                            <span>حوالة بنكية</span>
+                          </button>
+                        )}
+                      </div>
+                      {paymentMethod === 'transfer' && (
+                        <p className="text-xs text-amber-500/60 bg-amber-500/5 border border-amber-500/10 rounded-xl p-3">
+                          ستُسجَّل بحالة مؤقتة. بعد التسجيل، حوّل المبلغ وارفع صورة الوصل من بوابتك لتفعيل حسابك.
+                        </p>
+                      )}
+                    </div>
+                  );
+                })()
               )}
 
               <Button type="submit" disabled={submitting || sendingOtp || !event.registration_enabled} className="w-full h-16 bg-amber-500 hover:bg-amber-600 text-brand-dark rounded-[24px] text-lg font-black flex items-center justify-center gap-3 shadow-2xl shadow-amber-500/20 mt-2">

@@ -448,6 +448,45 @@ const ParticipantPortal = () => {
   const [avatarError, setAvatarError] = useState(false);
   const [avatarError2, setAvatarError2] = useState(false);
 
+  const [isUploadingProof, setIsUploadingProof] = useState(false);
+  const [proofFile, setProofFile] = useState(null);
+  const [proofPreview, setProofPreview] = useState(null);
+
+  const handleUploadProof = async () => {
+    if (!proofFile) {
+      toast.error(lang === 'ar' ? 'الرجاء اختيار ملف الوصل أولاً' : 'Please select a proof file first');
+      return;
+    }
+    setIsUploadingProof(true);
+    try {
+      const formData = new FormData();
+      formData.append('proof_file', proofFile);
+      await api.post('payments/submit-transfer', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'Authorization': `Bearer ${participantToken}`
+        }
+      });
+      toast.success(lang === 'ar' ? 'تم رفع وصل الدفع بنجاح! سيتم مراجعته' : 'Payment proof uploaded successfully! It will be reviewed.');
+      
+      setParticipant(prev => ({
+        ...prev,
+        payment_status: 'transfer_pending',
+        transfer_proof_url: URL.createObjectURL(proofFile),
+        transfer_submitted_at: new Date().toISOString()
+      }));
+      setProofFile(null);
+      setProofPreview(null);
+      
+      fetchInitialData();
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.detail || (lang === 'ar' ? 'فشل رفع الوصل، يرجى المحاولة لاحقاً' : 'Failed to upload proof, please try again later'));
+    } finally {
+      setIsUploadingProof(false);
+    }
+  };
+
   const handleSaveNote = (sessionId, text) => {
     const updated = { ...sessionNotes, [sessionId]: text };
     setSessionNotes(updated);
@@ -3264,6 +3303,219 @@ const ParticipantPortal = () => {
             </div>
           </div>
         )}
+      </div>
+    );
+  }
+
+  const requiresPaymentCheck = eventSettings.require_payment === true && 
+                               participant && 
+                               participant.payment_status !== 'paid' && 
+                               participant.payment_status !== 'free' &&
+                               !isOrganizer;
+
+  if (requiresPaymentCheck) {
+    const isPending = participant.payment_status === 'pending';
+    const isTransferPending = participant.payment_status === 'transfer_pending';
+    const isRejected = participant.payment_status === 'transfer_rejected';
+
+    return (
+      <div dir={lang === 'ar' ? 'rtl' : 'ltr'} className={cn(
+        "min-h-screen bg-[#050B18] text-[#F0F4F2] flex flex-col items-center justify-center p-4 relative overflow-hidden",
+        lang === 'ar' ? 'font-arabic' : 'font-sans'
+      )}>
+        {/* Glows */}
+        <div className="fixed inset-0 pointer-events-none z-0">
+          <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-brand-primary/10 blur-[120px] rounded-full" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-amber-500/5 blur-[120px] rounded-full" />
+        </div>
+
+        <div className="w-full max-w-xl bg-gradient-to-b from-white/[0.04] to-white/[0.01] border border-white/10 rounded-[36px] p-6 md:p-8 backdrop-blur-3xl shadow-[0_24px_80px_rgba(0,0,0,0.5)] z-10 text-right space-y-6">
+          
+          {/* Logo & Header */}
+          <div className="flex flex-col items-center text-center space-y-3 pb-4 border-b border-white/5">
+            {eventSettings?.logo_url ? (
+              <img 
+                src={getFullUrl(eventSettings.logo_url)} 
+                alt="Logo" 
+                className="w-16 h-16 rounded-2xl object-cover shadow-xl border border-white/10"
+              />
+            ) : (
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center font-black text-brand-dark shadow-xl text-xl">
+                D
+              </div>
+            )}
+            <div>
+              <h2 className="text-lg font-black text-white">{eventSettings?.event_name || eventSettings?.name || 'Diwan Event'}</h2>
+              <p className="text-xs text-amber-500/80 font-bold mt-1">بوابة المشارك الرقمية</p>
+            </div>
+          </div>
+
+          {/* Status Badge & Message */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 justify-start p-4 rounded-2xl bg-white/[0.02] border border-white/5" dir="rtl">
+              <div className={cn(
+                "w-12 h-12 rounded-xl flex items-center justify-center text-xl shrink-0",
+                isPending ? "bg-amber-500/10 text-amber-500" :
+                isTransferPending ? "bg-blue-500/10 text-blue-400" :
+                "bg-red-500/10 text-red-500"
+              )}>
+                {isPending ? "⏳" : isTransferPending ? "🔍" : "⚠️"}
+              </div>
+              <div className="text-right">
+                <h4 className="font-black text-sm text-white">
+                  {isPending && (lang === 'ar' ? 'سداد رسوم الاشتراك مطلوب' : 'Payment Required')}
+                  {isTransferPending && (lang === 'ar' ? 'إثبات السداد قيد التحقق والمراجعة' : 'Payment Verification Pending')}
+                  {isRejected && (lang === 'ar' ? 'تم رفض إثبات السداد المرفوع' : 'Payment Proof Rejected')}
+                </h4>
+                <p className="text-xs text-white/50 font-bold mt-1">
+                  {isPending && (lang === 'ar' ? 'يرجى إتمام عملية الدفع لتفعيل حسابك وتصفح البوابة.' : 'Please make payment to activate your account.')}
+                  {isTransferPending && (lang === 'ar' ? 'لقد استلمنا وصل التحويل، ويقوم فريق العمل بمراجعته حالياً. سيتم تفعيل حسابك فور تأكيده.' : 'We have received your receipt and are verifying it.')}
+                  {isRejected && (lang === 'ar' ? 'الرجاء مراجعة سبب الرفض وإعادة رفع وصل التحويل الصحيح.' : 'Please review rejection notes and re-upload the correct receipt.')}
+                </p>
+              </div>
+            </div>
+
+            {/* Rejection Notes */}
+            {isRejected && participant.payment_notes && (
+              <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold text-right" dir="rtl">
+                <strong>⚠️ سبب الرفض من اللجنة المنظمة:</strong>
+                <p className="mt-1.5 text-white/80 leading-relaxed font-normal">{participant.payment_notes}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Subscription Info */}
+          <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-between text-xs font-bold" dir="rtl">
+            <span className="text-white/60 font-bold">مبلغ الاشتراك المطلوب:</span>
+            <span className="text-md font-black text-amber-500">{eventSettings.ticket_price} {eventSettings.currency}</span>
+          </div>
+
+          {/* Bank Transfer Section */}
+          {eventSettings.allow_transfer_payment && (
+            <div className="space-y-4 pt-2">
+              <h4 className="font-black text-sm text-white border-b border-white/5 pb-2">🏦 معلومات التحويل البنكي</h4>
+              <div className="space-y-2 text-xs font-bold text-white/70" dir="rtl">
+                <div className="flex justify-between p-2 rounded-lg bg-white/[0.01]">
+                  <span className="text-white/40">اسم البنك:</span>
+                  <span className="text-white">{eventSettings.bank_name || '---'}</span>
+                </div>
+                <div className="flex justify-between p-2 rounded-lg bg-white/[0.01]">
+                  <span className="text-white/40">رقم الحساب (RIB/RIP):</span>
+                  <span className="text-white select-all font-mono">{eventSettings.bank_account_number || '---'}</span>
+                </div>
+                <div className="flex justify-between p-2 rounded-lg bg-white/[0.01]">
+                  <span className="text-white/40">اسم صاحب الحساب:</span>
+                  <span className="text-white">{eventSettings.bank_account_name || '---'}</span>
+                </div>
+                {eventSettings.bank_instructions && (
+                  <div className="p-3 rounded-xl bg-amber-500/5 border border-amber-500/10 text-[11px] leading-relaxed text-amber-500/90 font-normal">
+                    💡 <strong>تعليمات:</strong> {eventSettings.bank_instructions}
+                  </div>
+                )}
+              </div>
+
+              {/* Upload Form (only if pending or rejected) */}
+              {(isPending || isRejected) && (
+                <div className="space-y-3 pt-2">
+                  <h4 className="font-black text-xs text-white">📤 رفع إثبات الدفع (وصل التحويل)</h4>
+                  <div className="border-2 border-dashed border-white/10 rounded-2xl p-4 text-center hover:border-amber-500/40 transition-colors relative">
+                    <input 
+                      type="file"
+                      id="proof-upload-input"
+                      accept="image/*,application/pdf"
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setProofFile(file);
+                          if (file.type.startsWith('image/')) {
+                            setProofPreview(URL.createObjectURL(file));
+                          } else {
+                            setProofPreview(null);
+                          }
+                        }
+                      }}
+                    />
+                    {proofFile ? (
+                      <div className="space-y-2">
+                        {proofPreview ? (
+                          <img src={proofPreview} alt="Preview" className="max-h-32 mx-auto rounded-lg object-contain border border-white/10" />
+                        ) : (
+                          <span className="text-3xl">📄</span>
+                        )}
+                        <p className="text-xs text-white font-bold truncate">{proofFile.name}</p>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); setProofFile(null); setProofPreview(null); }}
+                          className="text-[10px] text-red-400 font-bold hover:underline"
+                        >
+                          إلغاء الملف
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-1 py-2">
+                        <span className="text-2xl block">📸</span>
+                        <p className="text-xs text-white/50 font-bold">اضغط هنا أو اسحب الملف لرفعه</p>
+                        <p className="text-[10px] text-white/30">يُقبل صور أو ملفات PDF (بحد أقصى 5MB)</p>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {proofFile && (
+                    <button
+                      onClick={handleUploadProof}
+                      disabled={isUploadingProof}
+                      className="w-full py-3 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-brand-dark text-xs font-black rounded-xl transition-all shadow-lg shadow-amber-500/10 flex items-center justify-center gap-2"
+                    >
+                      {isUploadingProof ? (
+                        <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} className="w-4 h-4 border-2 border-brand-dark border-t-transparent rounded-full" />
+                      ) : (
+                        <span>🚀 إرسال وصل الدفع للمراجعة</span>
+                      )}
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* Uploaded receipt detail (if transfer is pending) */}
+              {isTransferPending && participant.transfer_proof_url && (
+                <div className="space-y-2 pt-2 text-right">
+                  <h4 className="font-black text-xs text-white">📄 إثبات الدفع المرفوع سابقاً:</h4>
+                  <a 
+                    href={getFullUrl(participant.transfer_proof_url)} 
+                    target="_blank" 
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-2 p-2.5 rounded-xl bg-white/5 border border-white/10 text-xs text-amber-500 hover:text-amber-400 hover:bg-white/10 font-bold transition-all"
+                  >
+                    <span>🖼️ عرض الوصل المرفوع ↗</span>
+                  </a>
+                  {participant.transfer_submitted_at && (
+                    <p className="text-[10px] text-white/30">تاريخ الرفع: {new Date(participant.transfer_submitted_at).toLocaleString('ar-DZ')}</p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Footer Actions */}
+          <div className="flex gap-3 pt-4 border-t border-white/5">
+            <button
+              onClick={() => {
+                localStorage.removeItem('participant_token');
+                localStorage.removeItem('last_active_participant_portal');
+                window.location.href = `/e/${eventId}`;
+              }}
+              className="flex-1 py-3 border border-white/15 hover:bg-white/5 rounded-xl text-xs font-bold text-white transition-all text-center"
+            >
+              تسجيل الخروج
+            </button>
+            <button
+              onClick={() => fetchInitialData()}
+              className="flex-1 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-bold text-white transition-all text-center"
+            >
+              🔄 تحديث الحالة
+            </button>
+          </div>
+        </div>
       </div>
     );
   }

@@ -105,20 +105,21 @@ async def get_public_event(
         "show_docs": event.show_docs,
         "show_qa": event.show_qa,
         "map_url": getattr(event, "map_url", "") or "",
+        "require_payment": event.require_payment,
+        "ticket_price": float(event.ticket_price or 0),
+        "currency": event.currency or "DZD",
+        "payment_gateway": event.payment_gateway,
+        "allow_online_payment": getattr(event, "allow_online_payment", True) if getattr(event, "allow_online_payment", True) is not None else True,
+        "allow_transfer_payment": getattr(event, "allow_transfer_payment", False) or False,
+        "bank_name": getattr(event, "bank_name", None),
+        "bank_account_number": getattr(event, "bank_account_number", None),
+        "bank_account_name": getattr(event, "bank_account_name", None),
+        "bank_instructions": getattr(event, "bank_instructions", None),
     }
 
     # بيانات إضافية للتسجيل — فقط إذا كان مفتوحاً
     if event.registration_enabled:
         public_info.update({
-            "require_payment":        event.require_payment,
-            "ticket_price":           float(event.ticket_price or 0),  # type: ignore
-            "currency":               event.currency or "DZD",
-            "payment_gateway":        event.payment_gateway,
-            "allow_transfer_payment": getattr(event, "allow_transfer_payment", False) or False,
-            "bank_name":              getattr(event, "bank_name", None),
-            "bank_account_number":    getattr(event, "bank_account_number", None),
-            "bank_account_name":      getattr(event, "bank_account_name", None),
-            "bank_instructions":      getattr(event, "bank_instructions", None),
             "welcome_title":          event.welcome_title,
             "welcome_subtitle":       event.welcome_subtitle,
             "show_countdown":         event.show_countdown,
@@ -394,8 +395,8 @@ async def ensure_default_fields(event_id: int, db: AsyncSession):
     existing_names = {f.field_name for f in existing}
     system_fields = {"full_name", "email", "phone_number", "organization"}
     
-    # إذا كانت الفعالية تفتقر تماماً لكل الحقول الأساسية للنظام (لم تتم تهيئتها بعد)
-    if not (existing_names & system_fields):
+    # إذا كانت الفعالية لا تحتوي على أي حقل على الإطلاق (لم تتم تهيئتها بعد)
+    if not existing:
         defaults = [
             CustomFieldDefinition(
                 event_id=event_id,
@@ -664,12 +665,6 @@ async def delete_registration_field(
     event = await db.get(Event, event_id)
     if not event or (current_user.role != "super_admin" and event.created_by != current_user.id):
         raise HTTPException(status_code=403, detail="Not authorized")
-
-    if field.field_name in ["full_name", "email", "phone_number", "organization"]:
-        raise HTTPException(
-            status_code=400,
-            detail="لا يمكن حذف الحقول الأساسية للنظام. يمكنك إخفاؤها من العرض بدلاً من ذلك."
-        )
 
     await db.delete(field)
     await db.commit()

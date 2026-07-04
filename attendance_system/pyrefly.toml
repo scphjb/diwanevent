@@ -1,0 +1,3 @@
+python_interpreter = "venv/Scripts/python.exe"
+project_roots = ["."]
+search_path = ["."]

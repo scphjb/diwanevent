@@ -165,7 +165,11 @@ async def get_participant_by_token(
         "role": participant.role or "",
         "phone": participant.phone_number or "",
         "email": participant.email or "",
-        "public_card_token": public_card_token
+        "public_card_token": public_card_token,
+        "payment_status": participant.payment_status or "pending",
+        "transfer_proof_url": participant.transfer_proof_url,
+        "transfer_submitted_at": participant.transfer_submitted_at.isoformat() if participant.transfer_submitted_at else None,
+        "payment_notes": participant.payment_notes
     }
 
 @router.get("/public/card/{token}")

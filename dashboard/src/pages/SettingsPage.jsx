@@ -624,6 +624,13 @@ const SettingsPage = () => {
                         <label className="text-sm font-bold text-brand-secondary/50">العملة</label>
                         <Input value={settings.currency || 'DZD'} onChange={(e) => handleChange('currency', e.target.value)} />
                       </div>
+                      <div className="flex items-center gap-3 bg-brand-primary/10 border border-brand-primary/20 p-4 rounded-2xl md:col-span-2">
+                        <input type="checkbox" id="allow_online_payment" checked={settings.allow_online_payment !== false} onChange={(e) => handleChange('allow_online_payment', e.target.checked)} className="w-5 h-5 accent-brand-primary" />
+                        <div>
+                          <label htmlFor="allow_online_payment" className="font-bold text-brand-secondary block">💳 السماح بالدفع الإلكتروني عبر البوابة</label>
+                          <span className="text-xs text-brand-secondary/60">يتيح للمشتركين الدفع الفوري عبر البطاقات البنكية لتفعيل حساباتهم تلقائياً</span>
+                        </div>
+                      </div>
                       <div className="space-y-2 md:col-span-2">
                         <label className="text-sm font-bold text-brand-secondary/50">مفتاح Chargily Pay API</label>
                         <Input type="password" value={settings.chargily_api_key || ''} onChange={(e) => handleChange('chargily_api_key', e.target.value)} />
