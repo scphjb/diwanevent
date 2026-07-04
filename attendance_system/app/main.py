@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Depends
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -382,7 +382,7 @@ if os.path.exists(DASHBOARD_DIST):
 
 
 @app.get("/{full_path:path}", include_in_schema=False)
-async def serve_react_app(request: Request, full_path: str = ""):
+async def serve_react_app(request: Request, full_path: str = "", db: AsyncSession = Depends(get_db)):
     # If it's an API call or static asset, don't handle it here
     if full_path.startswith("api") or full_path.startswith("static") or full_path.startswith("assets"):
         return JSONResponse(status_code=404, content={"detail": "Not found"})
@@ -401,6 +401,58 @@ async def serve_react_app(request: Request, full_path: str = ""):
     # Serve React index for everything else (SPA routing)
     index_path = os.path.join(DASHBOARD_DIST, "index.html")
     if os.path.exists(index_path):
+        # 🔗 تحقق مما إذا كان المسار يخص فعالية معينة للحصول على معاينة مميزة للمشاركة الاجتماعية
+        import re
+        event_match = re.match(r"^(register|p|card|display|kiosk)/([0-9]+)", full_path)
+        if event_match:
+            try:
+                event_id = int(event_match.group(2))
+                event = await db.get(Event, event_id)
+                if event:
+                    with open(index_path, "r", encoding="utf-8") as f:
+                        html_content = f.read()
+
+                    # إعداد نصوص المعاينة
+                    event_name = event.event_name or "فعالية"
+                    app_subtitle = event.app_subtitle or "منصة ديوان إيفنت"
+                    title_text = f"{event_name} — {app_subtitle}"
+                    description_text = event.app_subtitle or f"سجل حضورك وتفاعل في فعالية {event_name} عبر منصة ديوان إيفنت."
+                    
+                    # هروب علامات الاقتباس لحماية هيكل HTML
+                    title_text = title_text.replace('"', '&quot;')
+                    description_text = description_text.replace('"', '&quot;')
+
+                    # استخراج وتصحيح رابط الصورة (Logo/Cover)
+                    if event.logo_url:
+                        if event.logo_url.startswith("http://") or event.logo_url.startswith("https://"):
+                            image_url = event.logo_url
+                        else:
+                            base = str(request.base_url).rstrip("/")
+                            path = event.logo_url.lstrip("/")
+                            image_url = f"{base}/{path}"
+                    else:
+                        image_url = f"{str(request.base_url).rstrip('/')}/dashboard_mockup.png"
+
+                    # استبدال وسوم Meta بشكل ديناميكي لشبكات التواصل الاجتماعي (Open Graph / SEO)
+                    html_content = re.sub(r"<title>.*?</title>", f"<title>{title_text}</title>", html_content)
+                    html_content = re.sub(r'<meta property=["\']og:title["\'] content=["\'].*?["\']\s*/?>', f'<meta property="og:title" content="{title_text}" />', html_content)
+                    html_content = re.sub(r'<meta property=["\']og:description["\'] content=["\'].*?["\']\s*/?>', f'<meta property="og:description" content="{description_text}" />', html_content)
+                    html_content = re.sub(r'<meta property=["\']og:image["\'] content=["\'].*?["\']\s*/?>', f'<meta property="og:image" content="{image_url}" />', html_content)
+                    html_content = re.sub(r'<meta name=["\']description["\'] content=["\'].*?["\']\s*/?>', f'<meta name="description" content="{description_text}" />', html_content)
+
+                    # حقن Twitter Card لمزيد من التوافق
+                    twitter_tags = f"""
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="{title_text}" />
+    <meta name="twitter:description" content="{description_text}" />
+    <meta name="twitter:image" content="{image_url}" />
+                    """
+                    html_content = html_content.replace("</head>", f"{twitter_tags}\n</head>")
+
+                    return HTMLResponse(content=html_content, status_code=200)
+            except Exception as db_err:
+                logger.warning(f"Error rendering dynamic event metadata for route: {full_path}. Error: {db_err}")
+
         return FileResponse(index_path)
 
     return JSONResponse(
