@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../layouts/DashboardLayout';
 import { useTranslation } from 'react-i18next';
 import { 
@@ -10,7 +10,8 @@ import {
   Briefcase,
   BookOpen,
   Image as ImageIcon,
-  Check
+  Check,
+  Edit
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '../components/ui/Button';
@@ -169,17 +170,17 @@ const SpeakersPage = () => {
                   </div>
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-[#050B18] to-transparent opacity-60" />
-                <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                <div className="absolute top-4 right-4 flex gap-2 md:opacity-0 opacity-100 group-hover:opacity-100 transition-all z-10">
                   <button 
                     onClick={(e) => { e.stopPropagation(); handleEditOpen(speaker); }}
-                    className="p-3 rounded-xl bg-amber-500/10 text-amber-500 backdrop-blur-md"
+                    className="p-3 rounded-xl bg-amber-500/80 md:bg-amber-500/10 hover:bg-amber-500/20 text-white md:text-amber-500 backdrop-blur-md transition-all"
                     title={t('speakers.edit_btn', 'تعديل')}
                   >
-                    <Plus className="w-4 h-4 rotate-45 scale-125" /> 
+                    <Edit className="w-4 h-4" /> 
                   </button>
                   <button 
                     onClick={(e) => { e.stopPropagation(); handleDelete(speaker.id); }}
-                    className="p-3 rounded-xl bg-red-500/10 text-red-500 backdrop-blur-md"
+                    className="p-3 rounded-xl bg-red-500/80 md:bg-red-500/10 hover:bg-red-500/20 text-white md:text-red-500 backdrop-blur-md transition-all"
                     title={t('speakers.delete_btn', 'حذف')}
                   >
                     <Trash2 className="w-4 h-4" />

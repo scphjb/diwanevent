@@ -12,6 +12,7 @@ class AgendaSession(Base, TimestampMixin):
     end_time = Column(String)
     hall = Column(String)
     description = Column(Text)
+    session_date = Column(String, nullable=True)
     sort_order = Column(Integer, default=0)
     is_active = Column(Boolean, default=False)
     

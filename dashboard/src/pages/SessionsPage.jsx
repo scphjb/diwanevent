@@ -36,14 +36,20 @@ const SessionCard = ({ session, idx, onEdit, onDelete, t }) => (
     <div className="absolute top-0 right-0 w-2 h-full bg-blue-500" />
     <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
       <div className="flex-1">
-        <div className="flex items-center gap-3 mb-4">
+        <div className="flex flex-wrap items-center gap-3 mb-4">
           <span className="px-3 py-1 rounded-full bg-brand-primary/10 text-brand-secondary text-[10px] font-bold uppercase tracking-wider border border-brand-primary/20">
             {session.hall || t('sessions.main_hall', 'Main Hall')}
           </span>
           <span className="text-brand-secondary/30 text-xs flex items-center gap-1">
-            <Clock className="w-3 h-3" />
+            <Clock className="w-3.5 h-3.5 text-amber-500" />
             {session.start_time} - {session.end_time}
           </span>
+          {session.session_date && (
+            <span className="text-brand-secondary/30 text-xs flex items-center gap-1 bg-white/5 px-2 py-0.5 rounded-md border border-white/5">
+              <Calendar className="w-3.5 h-3.5 text-amber-500" />
+              {session.session_date}
+            </span>
+          )}
         </div>
         <h3 className="text-xl font-bold text-white mb-4 group-hover:text-amber-500 transition-colors">
           {session.title}
@@ -64,7 +70,7 @@ const SessionCard = ({ session, idx, onEdit, onDelete, t }) => (
         </div>
       </div>
       <div className="flex md:flex-col gap-2">
-        <Button variant="outline" className="p-3 h-12 w-12 rounded-2xl text-amber-500" onClick={(e) => { e.stopPropagation(); onEdit(session); }}>
+        <Button variant="outline" className="p-3 h-12 w-12 rounded-2xl text-amber-500 animate-pulse-slow hover:animate-none" onClick={(e) => { e.stopPropagation(); onEdit(session); }}>
           <Plus className="w-5 h-5 rotate-45 scale-125" />
         </Button>
         <Button variant="outline" className="p-3 h-12 w-12 rounded-2xl text-red-500" onClick={(e) => { e.stopPropagation(); onDelete(session.id); }}>
@@ -101,12 +107,13 @@ const EMPTY_FORM = {
   hall: '',
   start_time: '',
   end_time: '',
+  session_date: '',
   description: '',
 };
 
 const SessionModal = ({ eventId, onClose, onSaved, initialData = null }) => {
   const { t } = useTranslation();
-  const [form, setForm] = useState(initialData || EMPTY_FORM);
+  const [form, setForm] = useState(() => initialData ? { ...EMPTY_FORM, ...initialData } : EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -193,6 +200,14 @@ const SessionModal = ({ eventId, onClose, onSaved, initialData = null }) => {
               <FormField label={t('sessions.modal.form.start_time', 'وقت البداية')} name="start_time" type="time" required value={form.start_time} onChange={handleChange} />
               <FormField label={t('sessions.modal.form.end_time', 'وقت النهاية')} name="end_time"   type="time" required value={form.end_time}   onChange={handleChange} />
             </div>
+
+            <FormField 
+              label={t('sessions.modal.form.session_date', 'تاريخ الجلسة')} 
+              name="session_date" 
+              type="date" 
+              value={form.session_date || ''} 
+              onChange={handleChange} 
+            />
 
             <div className="flex flex-col gap-1.5">
               <label className="text-sm text-brand-secondary/70 font-medium">{t('sessions.modal.form.description', 'وصف الجلسة')}</label>

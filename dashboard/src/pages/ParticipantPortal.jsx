@@ -812,10 +812,11 @@ const ParticipantPortal = () => {
         return;
       }
 
-      const dateStr = eventSettings.event_date ? eventSettings.event_date.split('T')[0] : new Date().toISOString().split('T')[0];
-      const dateFormatted = dateStr.replace(/-/g, '');
+      const defaultDateStr = eventSettings.event_date ? eventSettings.event_date.split('T')[0] : new Date().toISOString().split('T')[0];
 
       const icsEvents = favoritedSessions.map(session => {
+        const sessionDateStr = session.session_date || defaultDateStr;
+        const dateFormatted = sessionDateStr.replace(/-/g, '');
         const startTime = session.start_time || '09:00';
         const endTime = session.end_time || '10:00';
         const startISO = `${dateFormatted}T${startTime.replace(/:/g, '')}00`;
@@ -854,7 +855,7 @@ const ParticipantPortal = () => {
 
   const getGoogleCalendarUrl = (session) => {
     try {
-      const dateStr = eventSettings.event_date ? eventSettings.event_date.split('T')[0] : new Date().toISOString().split('T')[0];
+      const dateStr = session.session_date || (eventSettings.event_date ? eventSettings.event_date.split('T')[0] : new Date().toISOString().split('T')[0]);
       const startTime = session.start_time || '09:00';
       const endTime = session.end_time || '10:00';
       const startISO = `${dateStr.replace(/-/g, '')}T${startTime.replace(/:/g, '')}00`;
@@ -865,7 +866,7 @@ const ParticipantPortal = () => {
 
   const getIcsCalendarUrl = (session) => {
     try {
-      const dateStr = eventSettings.event_date ? eventSettings.event_date.split('T')[0] : new Date().toISOString().split('T')[0];
+      const dateStr = session.session_date || (eventSettings.event_date ? eventSettings.event_date.split('T')[0] : new Date().toISOString().split('T')[0]);
       const startTime = session.start_time || '09:00';
       const endTime = session.end_time || '10:00';
       const startISO = `${dateStr.replace(/-/g, '')}T${startTime.replace(/:/g, '')}00`;
@@ -4238,14 +4239,18 @@ const ParticipantPortal = () => {
                           )}
                         >
                           <div className="flex items-center gap-4">
-                            <div className="w-20 text-center flex flex-col items-center shrink-0">
+                            <div className="w-24 text-center flex flex-col items-center shrink-0">
+                              {item.session_date && <div className="text-amber-500/80 text-[9px] mb-1 font-black bg-white/5 px-1.5 py-0.5 rounded border border-white/5">{item.session_date}</div>}
                               <div className="text-amber-500 font-black text-sm">{item.start_time}</div>
                               {item.end_time && <div className="text-white/30 text-[10px] mt-1 font-bold">{item.end_time}</div>}
                               <div className="w-1 h-8 bg-white/5 rounded-full mt-2" />
                             </div>
                             <div className="flex-1 min-w-0">
                               <h4 className="font-black text-base md:text-lg mb-1 truncate text-white">{item.title}</h4>
-                              <p className="text-brand-secondary/50 text-xs font-bold truncate">{item.speaker_name} • {item.hall}</p>
+                              <p className="text-brand-secondary/50 text-xs font-bold truncate">
+                                {item.speaker_name} • {item.hall}
+                                {item.session_date && ` • ${item.session_date}`}
+                              </p>
                             </div>
                             <button
                               onClick={(e) => toggleFavorite(item.id, e)}
