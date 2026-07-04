@@ -300,8 +300,14 @@ const AttendeeRegistrationPage = () => {
           )}
 
           <p className="text-white/40 text-xs mb-6">
-            بعد التحويل، سجّل دخولك للبوابة برقمك وارفع صورة الوصل. سيتم مراجعتها وتفعيل حسابك خلال 24 ساعة.
+            سيتم مراجعة الوصل وتفعيل حسابك بالكامل خلال 24 ساعة من رفعه.
           </p>
+          <button
+            onClick={() => navigate(`/p/${eventId}/${registrationResult?.order_num}`)}
+            className="w-full h-14 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black text-base hover:opacity-90 transition-all mb-3 shadow-lg shadow-amber-500/20"
+          >
+            الذهاب للبوابة لرفع الوصل الآن ←
+          </button>
           <button
             onClick={() => navigate('/')}
             className="w-full h-12 rounded-2xl bg-white/5 hover:bg-white/10 text-white font-bold text-sm transition-all border border-white/10"

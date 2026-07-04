@@ -510,12 +510,19 @@ async def send_transfer_instruction_email(
     bank_name: str,
     bank_account_name: str,
     bank_account_number: str,
+    event_id: int,
+    qr_code: str,
     bank_instructions: Optional[str] = None
 ) -> bool:
     """إرسال إيميل يحتوي على معلومات الحساب البنكي والتعليمات للمسجّلين بالحوالة"""
     try:
         from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
         from app.core.config import settings
+
+        frontend_url = settings.FRONTEND_URL
+        if "localhost" in frontend_url and "localhost" not in settings.APP_DOMAIN:
+            frontend_url = settings.APP_DOMAIN
+        magic_link = f"{frontend_url}/p/{event_id}/{qr_code}?origin=email"
 
         if not settings.SMTP_PASSWORD or not settings.EMAILS_FROM_EMAIL:
             return False
@@ -617,7 +624,7 @@ async def send_transfer_instruction_email(
               <!-- CTA to upload receipt -->
               <div style="text-align:center; margin:30px 0;">
                 <p style="margin:0 0 10px; color:#475569; font-size:12.5px;">بعد إتمام الحوالة، ارفع الوصل لتسريع عملية التفعيل:</p>
-                <a href="{settings.FRONTEND_URL}/participant-login?order_num={order_num}&email={email}" target="_blank" style="background:linear-gradient(135deg,#050B18 0%,#0F1E36 100%); color:#ffffff; padding:14px 28px; border-radius:12px; text-decoration:none; font-weight:bold; font-size:13px; display:inline-block; box-shadow:0 8px 20px rgba(5,11,24,0.15);">
+                <a href="{magic_link}" target="_blank" style="background:linear-gradient(135deg,#050B18 0%,#0F1E36 100%); color:#ffffff; padding:14px 28px; border-radius:12px; text-decoration:none; font-weight:bold; font-size:13px; display:inline-block; box-shadow:0 8px 20px rgba(5,11,24,0.15);">
                   رفع إثبات الدفع (الوصل) ←
                 </a>
               </div>
@@ -879,6 +886,8 @@ async def public_register_participant(
             bank_name=event.bank_name or '',
             bank_account_name=event.bank_account_name or '',
             bank_account_number=event.bank_account_number or '',
+            event_id=participant.event_id,
+            qr_code=participant.qr_code,
             bank_instructions=event.bank_instructions
         )
     
