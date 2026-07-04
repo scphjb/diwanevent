@@ -390,7 +390,12 @@ async def ensure_default_fields(event_id: int, db: AsyncSession):
     stmt = select(CustomFieldDefinition).filter(CustomFieldDefinition.event_id == event_id)
     res = await db.execute(stmt)
     existing = res.scalars().all()
-    if not existing:
+    
+    existing_names = {f.field_name for f in existing}
+    system_fields = {"full_name", "email", "phone_number", "organization"}
+    
+    # إذا كانت الفعالية تفتقر تماماً لكل الحقول الأساسية للنظام (لم تتم تهيئتها بعد)
+    if not (existing_names & system_fields):
         defaults = [
             CustomFieldDefinition(
                 event_id=event_id,
