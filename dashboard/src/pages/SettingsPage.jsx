@@ -432,16 +432,11 @@ const SettingsPage = () => {
                                 className="p-2 text-brand-secondary/30 hover:text-brand-secondary hover:bg-white/5 rounded-xl transition-all">
                                 ✎
                               </button>
-                              {!['full_name', 'email', 'phone_number', 'organization'].includes(field.field_name) ? (
-                                <button onClick={() => handleDeleteField(field.id)}
-                                  className="p-2 text-red-400/30 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all">
-                                  <Trash2 size={16} />
-                                </button>
-                              ) : (
-                                <span className="p-2 text-white/10 text-xs select-none" title="لا يمكن حذف الحقول الأساسية، يمكنك إخفاؤها">
-                                  🔒
-                                </span>
-                              )}
+                              <button onClick={() => handleDeleteField(field.id)}
+                                className="p-2 text-red-400/30 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all"
+                                title="حذف الحقل">
+                                <Trash2 size={16} />
+                              </button>
                             </div>
                           </div>
                           {/* نموذج التعديل المضمّن */}

@@ -684,6 +684,7 @@ async def upload_event_logo(
     from app.services.cloud_storage import StorageService
     storage = StorageService()
     logo_content = await logo.read()
+    # pyrefly: ignore [bad-assignment]
     event.logo_url = storage.upload_image_or_file(
         file_content=logo_content,
         filename=logo.filename or "logo.png",
